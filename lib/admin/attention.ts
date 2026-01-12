@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { Role } from "@prisma/client"
+import { Role } from "@/lib/types"
 import type { Priority } from "./insights"
 
 export interface AttentionScore {
@@ -47,9 +47,9 @@ export class AttentionScoreCalculator {
     }
 
     // Fetch entity names/emails for cached scores
-    const userIds = cachedScores.filter(s => s.entityType === "user").map(s => s.entityId)
-    const coachIds = cachedScores.filter(s => s.entityType === "coach").map(s => s.entityId)
-    const cohortIds = cachedScores.filter(s => s.entityType === "cohort").map(s => s.entityId)
+    const userIds = cachedScores.filter((s) => s.entityType === "user").map((s) => s.entityId)
+    const coachIds = cachedScores.filter((s) => s.entityType === "coach").map((s) => s.entityId)
+    const cohortIds = cachedScores.filter((s) => s.entityType === "cohort").map((s) => s.entityId)
 
     const [users, coaches, cohorts] = await Promise.all([
       userIds.length > 0 ? db.user.findMany({
@@ -66,11 +66,11 @@ export class AttentionScoreCalculator {
       }) : [],
     ])
 
-    const userMap = new Map(users.map(u => [u.id, u]))
-    const coachMap = new Map(coaches.map(c => [c.id, c]))
-    const cohortMap = new Map(cohorts.map(c => [c.id, c]))
+    const userMap = new Map(users.map((u) => [u.id, u] as [string, any]))
+    const coachMap = new Map(coaches.map((c) => [c.id, c] as [string, any]))
+    const cohortMap = new Map(cohorts.map((c) => [c.id, c] as [string, any]))
 
-    return cachedScores.map(score => {
+    return cachedScores.map((score) => {
       let entityName = ""
       let entityEmail: string | undefined
 
@@ -320,7 +320,7 @@ export class AttentionScoreCalculator {
       const fourteenDaysAgo = new Date()
       fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
 
-      const clientIds = cohort.memberships.map((m) => m.userId)
+      const clientIds = cohort.memberships.map((m: { userId: string }) => m.userId)
       const recentEntries = clientIds.reduce((sum, clientId) => {
         return sum + (clientEntryCounts.get(clientId) || 0)
       }, 0)
@@ -486,7 +486,7 @@ export class AttentionScoreCalculator {
     }
 
     // Get all latest entries for all clients in one batch query
-    const clientIds = clients.map(c => c.id)
+    const clientIds = clients.map((c: { id: string }) => c.id)
     const allClientEntries = await db.entry.findMany({
       where: {
         userId: { in: clientIds },
@@ -620,7 +620,7 @@ export class AttentionScoreCalculator {
           lte: new Date(),
         },
       },
-    }).catch((err) => {
+    }).catch((err: unknown) => {
       console.error("Error cleaning up expired scores:", err)
     })
   }
@@ -706,7 +706,7 @@ export class AttentionScoreCalculator {
     }
 
     // Get entry counts for this coach's clients
-    const clientIds = coach.Cohort.flatMap((c) => c.memberships.map((m) => m.userId))
+    const clientIds = coach.Cohort.flatMap((c: { memberships: { userId: string }[] }) => c.memberships.map((m: { userId: string }) => m.userId))
     const fourteenDaysAgo = new Date()
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
 
@@ -767,7 +767,7 @@ export class AttentionScoreCalculator {
       }
     }
 
-    const clientIds = cohort.memberships.map((m) => m.userId)
+    const clientIds = cohort.memberships.map((m: { userId: string }) => m.userId)
     const fourteenDaysAgo = new Date()
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
 

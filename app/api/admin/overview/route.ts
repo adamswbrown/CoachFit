@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { isAdmin } from "@/lib/permissions"
 import { db } from "@/lib/db"
-import { Role } from "@prisma/client"
+import { Role } from "@/lib/types"
 import { AdminInsightEngine } from "@/lib/admin/insights"
 
 export async function GET(req: NextRequest) {
@@ -121,18 +121,19 @@ export async function GET(req: NextRequest) {
     const expectedEntriesPerDay = totalClients * 1
     const completionRate = expectedEntriesPerDay > 0 ? (avgEntriesPerDay / expectedEntriesPerDay) * 100 : 0
 
-    const coachClientCounts = coaches.map((coach) => ({
+    const coachClientCounts = coaches.map((coach: { id: string; name: string | null; email: string; Cohort: { id: string; memberships: { userId: string }[] }[] }) => ({
       coachId: coach.id,
       coachName: coach.name || coach.email,
-      clientCount: coach.Cohort.reduce((sum, cohort) => sum + cohort.memberships.length, 0),
+      clientCount: coach.Cohort.reduce((sum: number, cohort: { id: string; memberships: { userId: string }[] }) => sum + cohort.memberships.length, 0),
     }))
 
     const avgClientsPerCoach = totalCoaches > 0
-      ? coachClientCounts.reduce((sum, c) => sum + c.clientCount, 0) / totalCoaches
+      ? coachClientCounts.reduce((sum: number, c: { coachId: string; coachName: string; clientCount: number }) => sum + c.clientCount, 0) / totalCoaches
       : 0
 
-    const overloadedCoaches = coachClientCounts.filter((c) => c.clientCount > 50).length
-    const underutilizedCoaches = coachClientCounts.filter((c) => c.clientCount > 0 && c.clientCount < 10).length
+    type CoachClientCount = { coachId: string; coachName: string; clientCount: number }
+    const overloadedCoaches = coachClientCounts.filter((c: CoachClientCount) => c.clientCount > 50).length
+    const underutilizedCoaches = coachClientCounts.filter((c: CoachClientCount) => c.clientCount > 0 && c.clientCount < 10).length
 
     // Generate insights asynchronously (don't block response)
     const insightEngine = new AdminInsightEngine()

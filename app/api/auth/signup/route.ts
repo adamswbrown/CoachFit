@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { signupSchema } from "@/lib/validations"
 import { sendTransactionalEmail } from "@/lib/email"
-import { Role } from "@prisma/client"
+import { Role } from "@/lib/types"
 import bcrypt from "bcryptjs"
 
 export async function POST(req: NextRequest) {

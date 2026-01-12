@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { createCohortSchema } from "@/lib/validations"
-import { Role } from "@prisma/client"
+import { Role } from "@/lib/types"
 import { isAdminOrCoach } from "@/lib/permissions"
 import { z } from "zod"
 
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     // Create cohort with check-in config in a transaction
     // Mandatory prompts (weightLbs, steps, calories) are always included
-    const cohort = await db.$transaction(async (tx) => {
+    const cohort = await db.$transaction(async (tx: any) => {
       // Create the cohort
       const newCohort = await tx.cohort.create({
         data: {

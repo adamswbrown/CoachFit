@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { upsertEntrySchema } from "@/lib/validations"
-import { Role } from "@prisma/client"
+import { Role } from "@/lib/types"
 
 export async function POST(req: NextRequest) {
   try {

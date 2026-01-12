@@ -36,12 +36,12 @@ export async function GET(req: NextRequest) {
     })
 
     // Fetch coaches for all cohorts
-    const coachIds = [...new Set(cohorts.map(c => c.coachId))]
+    const coachIds = [...new Set(cohorts.map((c: { coachId: string }) => c.coachId))]
     const coaches = await db.user.findMany({
       where: { id: { in: coachIds } },
       select: { id: true, name: true, email: true },
     })
-    const coachMap = new Map(coaches.map(c => [c.id, c]))
+    const coachMap = new Map(coaches.map((c) => [c.id, c]))
 
     const cohortsWithCounts = cohorts.map((cohort) => {
       const coach = coachMap.get(cohort.coachId)

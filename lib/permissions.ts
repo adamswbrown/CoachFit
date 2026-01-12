@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client"
+import { Role } from "./types"
 
 /**
  * Permission helpers for role-based access control.

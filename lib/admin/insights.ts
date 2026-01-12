@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { Role } from "@prisma/client"
+import { Role } from "@/lib/types"
 
 export type EntityType = "user" | "coach" | "cohort" | "system"
 export type InsightType = "trend" | "anomaly" | "opportunity" | "alert"
@@ -70,7 +70,7 @@ export class AdminInsightEngine {
           userId: true,
         },
         distinct: ["userId"],
-      }).then(entries => new Set(entries.map(e => e.userId))),
+      }).then((entries: { userId: string }[]) => new Set(entries.map((e: { userId: string }) => e.userId))),
 
       // All coaches
       db.user.findMany({
@@ -93,7 +93,7 @@ export class AdminInsightEngine {
         select: {
           id: true,
         },
-      }).then(coaches => new Set(coaches.map(c => c.id))),
+      }).then((coaches: { id: string }[]) => new Set(coaches.map((c: { id: string }) => c.id))),
 
       // All cohorts with memberships
       db.cohort.findMany({
@@ -131,8 +131,8 @@ export class AdminInsightEngine {
     ])
 
     // Process inactive clients (in memory)
-    const inactiveClients = allClients.filter((client) => !activeClientIds.has(client.id))
-    inactiveClients.forEach((client) => {
+    const inactiveClients = allClients.filter((client: { id: string; name: string | null; email: string }) => !activeClientIds.has(client.id))
+    inactiveClients.forEach((client: { id: string; name: string | null; email: string }) => {
       insights.push({
         entityType: "user",
         entityId: client.id,
@@ -152,8 +152,8 @@ export class AdminInsightEngine {
     })
 
     // Process coaches without cohorts (in memory)
-    const coachesWithoutCohorts = allCoaches.filter((coach) => !coachesWithCohorts.has(coach.id))
-    coachesWithoutCohorts.forEach((coach) => {
+    const coachesWithoutCohorts = allCoaches.filter((coach: { id: string; name: string | null; email: string }) => !coachesWithCohorts.has(coach.id))
+    coachesWithoutCohorts.forEach((coach: { id: string; name: string | null; email: string }) => {
       insights.push({
         entityType: "coach",
         entityId: coach.id,
@@ -172,7 +172,7 @@ export class AdminInsightEngine {
     })
 
     // Process empty cohorts (in memory)
-    cohorts.forEach((cohort) => {
+    cohorts.forEach((cohort: { id: string; name: string; memberships: { userId: string }[] }) => {
       if (cohort.memberships.length === 0) {
         insights.push({
           entityType: "cohort",
@@ -194,9 +194,9 @@ export class AdminInsightEngine {
 
     // Process overloaded coaches (in memory)
     const MAX_RECOMMENDED_CLIENTS = 50
-    coachClientCounts.forEach((coach) => {
+    coachClientCounts.forEach((coach: { id: string; name: string | null; email: string; Cohort: { memberships: { userId: string }[] }[] }) => {
       const totalClients = coach.Cohort.reduce(
-        (sum, cohort) => sum + cohort.memberships.length,
+        (sum: number, cohort: { memberships: { userId: string }[] }) => sum + cohort.memberships.length,
         0
       )
 
@@ -263,16 +263,16 @@ export class AdminInsightEngine {
     ])
 
     // Calculate coach utilization
-    const coachClientCounts = coaches.map((coach) => ({
+    const coachClientCounts = coaches.map((coach: { id: string; Cohort: { memberships: { userId: string }[] }[] }) => ({
       coachId: coach.id,
-      clientCount: coach.Cohort.reduce((sum, cohort) => sum + cohort.memberships.length, 0),
+      clientCount: coach.Cohort.reduce((sum: number, cohort: { memberships: { userId: string }[] }) => sum + cohort.memberships.length, 0),
     }))
 
     const avgClientsPerCoach = coaches.length > 0
-      ? coachClientCounts.reduce((sum, c) => sum + c.clientCount, 0) / coaches.length
+      ? coachClientCounts.reduce((sum: number, c: { coachId: string; clientCount: number }) => sum + c.clientCount, 0) / coaches.length
       : 0
 
-    const underutilizedCoaches = coachClientCounts.filter((c) => c.clientCount > 0 && c.clientCount < 10)
+    const underutilizedCoaches = coachClientCounts.filter((c: { coachId: string; clientCount: number }) => c.clientCount > 0 && c.clientCount < 10)
 
     if (underutilizedCoaches.length > 0) {
       opportunities.push({
@@ -289,7 +289,7 @@ export class AdminInsightEngine {
     }
 
     // Check for empty cohorts
-    const emptyCohorts = cohorts.filter((c) => c.memberships.length === 0)
+    const emptyCohorts = cohorts.filter((c: { id: string; name: string; memberships: { userId: string }[] }) => c.memberships.length === 0)
     if (emptyCohorts.length > 0) {
       opportunities.push({
         type: "cohort_engagement",
@@ -332,7 +332,7 @@ export class AdminInsightEngine {
 
       // Group by day and count
       const dailyCounts = new Map<string, number>()
-      users.forEach((user) => {
+      users.forEach((user: { createdAt: Date }) => {
         const dateKey = user.createdAt.toISOString().split("T")[0]
         dailyCounts.set(dateKey, (dailyCounts.get(dateKey) || 0) + 1)
       })
@@ -378,7 +378,7 @@ export class AdminInsightEngine {
 
       // Group by day and count
       const dailyCounts = new Map<string, number>()
-      entries.forEach((entry) => {
+      entries.forEach((entry: { date: Date }) => {
         const dateKey = entry.date.toISOString().split("T")[0]
         dailyCounts.set(dateKey, (dailyCounts.get(dateKey) || 0) + 1)
       })

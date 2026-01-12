@@ -4,7 +4,7 @@ import GoogleProvider from "next-auth/providers/google"
 import AppleProvider from "next-auth/providers/apple"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { db } from "./db"
-import { Role } from "@prisma/client"
+import { Role } from "./types"
 import type { Adapter } from "next-auth/adapters"
 import bcrypt from "bcryptjs"
 
@@ -166,7 +166,7 @@ export const authOptions: NextAuthConfig = {
           })
 
           for (const invite of cohortInvites) {
-            await db.$transaction(async (tx) => {
+            await db.$transaction(async (tx: any) => {
               // Check if membership already exists
               const existing = await tx.cohortMembership.findUnique({
                 where: {

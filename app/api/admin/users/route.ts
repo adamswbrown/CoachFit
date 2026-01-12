@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
       // skip: 0,
     })
 
-    const formattedUsers = users.map((user) => ({
+    const formattedUsers = users.map((user: { id: string; email: string; name: string | null; roles: string[]; isTestUser: boolean; createdAt: Date; passwordHash: string | null; Account: { provider: string }[]; CohortMembership: { Cohort: { id: string; name: string } }[]; Cohort: { id: string; name: string }[] }) => ({
       id: user.id,
       email: user.email,
       name: user.name,
@@ -61,12 +61,12 @@ export async function GET(req: NextRequest) {
       isTestUser: user.isTestUser,
       createdAt: user.createdAt,
       hasPassword: !!user.passwordHash,
-      authProviders: user.Account.map((a) => a.provider),
-      cohortsMemberOf: user.CohortMembership.map((m) => ({
+      authProviders: user.Account.map((a: { provider: string }) => a.provider),
+      cohortsMemberOf: user.CohortMembership.map((m: { Cohort: { id: string; name: string } }) => ({
         id: m.Cohort.id,
         name: m.Cohort.name,
       })),
-      cohortsCoaching: user.Cohort.map((c) => ({
+      cohortsCoaching: user.Cohort.map((c: { id: string; name: string }) => ({
         id: c.id,
         name: c.name,
       })),

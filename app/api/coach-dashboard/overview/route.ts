@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { Role } from "@prisma/client"
+import { Role } from "@/lib/types"
 import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
 
 export async function GET(req: NextRequest) {
@@ -328,15 +328,24 @@ export async function GET(req: NextRequest) {
     }
 
     // Convert map to array and sort cohort names alphabetically for each client
-    const clients = Array.from(clientMap.values()).map((client) => ({
-      ...client,
+    type ClientMapValue = { id?: string; name?: string | null; email: string; status: string; cohorts: string[]; lastCheckInDate?: string | null; checkInCount?: number; adherenceRate?: number; weightTrend?: string | null; latestWeight?: number | null }
+    const clients = Array.from(clientMap.values()).map((client: ClientMapValue) => ({
+      id: client.id,
+      name: client.name ?? undefined,
+      email: client.email,
+      status: client.status,
       cohorts: [...client.cohorts].sort(),
+      lastCheckInDate: client.lastCheckInDate ?? undefined,
+      checkInCount: client.checkInCount,
+      adherenceRate: client.adherenceRate,
+      weightTrend: client.weightTrend ?? undefined,
+      latestWeight: client.latestWeight ?? undefined,
     }))
 
     // Calculate stats
-    const totalClients = clients.filter((c) => c.status === "active").length
-    const pendingInvites = clients.filter((c) => c.status === "invited").length
-    const unassignedCount = clients.filter((c) => c.status === "unassigned").length
+    const totalClients = clients.filter((c: ClientMapValue) => c.status === "active").length
+    const pendingInvites = clients.filter((c: ClientMapValue) => c.status === "invited").length
+    const unassignedCount = clients.filter((c: ClientMapValue) => c.status === "unassigned").length
     const totalCohorts = cohorts.length
 
     // Format cohorts with counts
@@ -358,7 +367,7 @@ export async function GET(req: NextRequest) {
         },
         clients,
         cohorts: cohortsWithCounts,
-        globalInvites: globalInvites.map((i) => ({
+        globalInvites: globalInvites.map((i: { id: string; email: string; createdAt: Date }) => ({
           id: i.id,
           email: i.email,
           createdAt: i.createdAt.toISOString(),

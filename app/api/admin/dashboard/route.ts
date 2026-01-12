@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { isAdmin } from "@/lib/permissions"
 import { db } from "@/lib/db"
-import { Role } from "@prisma/client"
+import { Role } from "@/lib/types"
 
 /**
  * Combined dashboard endpoint that returns cohorts, coaches, and users in one request
@@ -93,12 +93,13 @@ export async function GET(req: NextRequest) {
     ])
 
     // Map coaches for cohort data
-    const coachIds = [...new Set(cohorts.map(c => c.coachId))]
+    const coachIds = [...new Set(cohorts.map((c: { coachId: string }) => c.coachId))]
     const cohortCoaches = await db.user.findMany({
       where: { id: { in: coachIds } },
       select: { id: true, name: true, email: true },
     })
-    const coachMap = new Map(cohortCoaches.map(c => [c.id, c]))
+    type Coach = { id: string; name: string; email: string }
+    const coachMap = new Map<string, Coach>(cohortCoaches.map((c: Coach) => [c.id, c]))
 
     // Format cohorts
     const formattedCohorts = cohorts.map((cohort) => {
@@ -118,7 +119,7 @@ export async function GET(req: NextRequest) {
     })
 
     // Format users
-    const formattedUsers = users.map((user) => ({
+    const formattedUsers = users.map((user: { id: string; email: string; name: string | null; roles: string[]; isTestUser: boolean; createdAt: Date; passwordHash: string | null; Account: { provider: string }[]; CohortMembership: { Cohort: { id: string; name: string } }[]; Cohort: { id: string; name: string }[] }) => ({
       id: user.id,
       email: user.email,
       name: user.name,

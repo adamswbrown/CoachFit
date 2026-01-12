@@ -92,13 +92,13 @@ export async function GET(
       createdAt: user.createdAt,
       onboardingComplete: user.onboardingComplete,
       hasPassword: !!user.passwordHash,
-      authProviders: user.Account.map((a) => a.provider),
-      cohortsMemberOf: user.CohortMembership.map((m) => ({
+      authProviders: user.Account.map((a: { provider: string }) => a.provider),
+      cohortsMemberOf: user.CohortMembership.map((m: { Cohort: { id: string; name: string; createdAt: Date } }) => ({
         id: m.Cohort.id,
         name: m.Cohort.name,
         createdAt: m.Cohort.createdAt,
       })),
-      cohortsCoaching: user.Cohort.map((c) => ({
+      cohortsCoaching: user.Cohort.map((c: { id: string; name: string; createdAt: Date; memberships: { userId: string }[] }) => ({
         id: c.id,
         name: c.name,
         createdAt: c.createdAt,

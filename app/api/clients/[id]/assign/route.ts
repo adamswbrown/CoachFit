@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
-import { Role } from "@prisma/client"
+import { Role } from "@/lib/types"
 import { z } from "zod"
 
 const assignClientSchema = z.object({

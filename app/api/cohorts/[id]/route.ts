@@ -91,7 +91,7 @@ export async function DELETE(
 
     // Delete cohort and memberships in a transaction
     // This ensures atomic deletion even if cascade delete isn't working
-    await db.$transaction(async (tx) => {
+    await db.$transaction(async (tx: any) => {
       // Delete memberships first
       await tx.cohortMembership.deleteMany({
         where: { cohortId: id },

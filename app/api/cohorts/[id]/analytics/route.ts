@@ -57,7 +57,7 @@ export async function GET(
     }
 
     // Get all active clients (users with memberships)
-    const activeClients = cohort.memberships.map((m) => m.user)
+    const activeClients = cohort.memberships.map((m: { user: { id: string; email: string; name: string | null } }) => m.user)
 
     if (activeClients.length === 0) {
       return NextResponse.json(
@@ -75,7 +75,7 @@ export async function GET(
     }
 
     // Fetch entries for all clients
-    const clientIds = activeClients.map((c) => c.id)
+    const clientIds = activeClients.map((c: { id: string; email: string; name: string | null }) => c.id)
     const allEntries = await db.entry.findMany({
       where: {
         userId: { in: clientIds },
@@ -101,8 +101,9 @@ export async function GET(
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
     // Process data for each client
-    const clientData = activeClients.map((client) => {
-      const clientEntries = allEntries.filter((e) => e.userId === client.id)
+    const clientData = activeClients.map((client: { id: string; email: string; name: string | null }) => {
+      type Entry = { userId: string; date: Date; weightLbs: number | null; steps: number | null; calories: number | null }
+      const clientEntries = allEntries.filter((e: Entry) => e.userId === client.id)
 
       if (clientEntries.length === 0) {
         return {
@@ -128,45 +129,45 @@ export async function GET(
           : null
 
       // Filter entries for date ranges
-      const entries7d = clientEntries.filter((entry) => {
+      const entries7d = clientEntries.filter((entry: Entry) => {
         const entryDate = new Date(entry.date)
         return entryDate >= sevenDaysAgo
       })
 
-      const entries30d = clientEntries.filter((entry) => {
+      const entries30d = clientEntries.filter((entry: Entry) => {
         const entryDate = new Date(entry.date)
         return entryDate >= thirtyDaysAgo
       })
 
       // Calculate averages (filter null values)
-      const steps7dWithValues = entries7d.filter((e) => e.steps !== null).map((e) => e.steps!)
+      const steps7dWithValues = entries7d.filter((e: Entry) => e.steps !== null).map((e: Entry) => e.steps!)
       const avgSteps7d =
         steps7dWithValues.length > 0
-          ? steps7dWithValues.reduce((sum, s) => sum + s, 0) / steps7dWithValues.length
+          ? steps7dWithValues.reduce((sum: number, s: number) => sum + s, 0) / steps7dWithValues.length
           : null
 
-      const steps30dWithValues = entries30d.filter((e) => e.steps !== null).map((e) => e.steps!)
+      const steps30dWithValues = entries30d.filter((e: Entry) => e.steps !== null).map((e: Entry) => e.steps!)
       const avgSteps30d =
         steps30dWithValues.length > 0
-          ? steps30dWithValues.reduce((sum, s) => sum + s, 0) / steps30dWithValues.length
+          ? steps30dWithValues.reduce((sum: number, s: number) => sum + s, 0) / steps30dWithValues.length
           : null
 
-      const calories7dWithValues = entries7d.filter((e) => e.calories !== null).map((e) => e.calories!)
+      const calories7dWithValues = entries7d.filter((e: Entry) => e.calories !== null).map((e: Entry) => e.calories!)
       const avgCalories7d =
         calories7dWithValues.length > 0
-          ? calories7dWithValues.reduce((sum, c) => sum + c, 0) / calories7dWithValues.length
+          ? calories7dWithValues.reduce((sum: number, c: number) => sum + c, 0) / calories7dWithValues.length
           : null
 
-      const calories30dWithValues = entries30d.filter((e) => e.calories !== null).map((e) => e.calories!)
+      const calories30dWithValues = entries30d.filter((e: Entry) => e.calories !== null).map((e: Entry) => e.calories!)
       const avgCalories30d =
         calories30dWithValues.length > 0
-          ? calories30dWithValues.reduce((sum, c) => sum + c, 0) / calories30dWithValues.length
+          ? calories30dWithValues.reduce((sum: number, c: number) => sum + c, 0) / calories30dWithValues.length
           : null
 
       // Sparkline data (last 30 days weight)
       const sparklineData = entries30d
         .slice(-30) // Last 30 entries
-        .map((entry) => ({
+        .map((entry: Entry) => ({
           date: entry.date.toISOString().split("T")[0],
           weight: entry.weightLbs,
         }))
@@ -186,26 +187,27 @@ export async function GET(
     })
 
     // Calculate cohort averages (only from clients with data)
+    type ClientData = { id: string; name: string | null; email: string; latestWeight: number | null; weightChange: number | null; avgSteps7d: number | null; avgSteps30d: number | null; avgCalories7d: number | null; avgCalories30d: number | null; sparklineData: Array<{ date: string; weight: number | null }> }
     const clientsWithWeightChange = clientData.filter(
-      (c) => c.weightChange !== null
+      (c: ClientData) => c.weightChange !== null
     )
     const avgWeightChange =
       clientsWithWeightChange.length > 0
-        ? clientsWithWeightChange.reduce((sum, c) => sum + (c.weightChange || 0), 0) /
+        ? clientsWithWeightChange.reduce((sum: number, c: ClientData) => sum + (c.weightChange || 0), 0) /
           clientsWithWeightChange.length
         : null
 
-    const clientsWithSteps7d = clientData.filter((c) => c.avgSteps7d !== null)
+    const clientsWithSteps7d = clientData.filter((c: ClientData) => c.avgSteps7d !== null)
     const avgSteps7d =
       clientsWithSteps7d.length > 0
-        ? clientsWithSteps7d.reduce((sum, c) => sum + (c.avgSteps7d || 0), 0) /
+        ? clientsWithSteps7d.reduce((sum: number, c: ClientData) => sum + (c.avgSteps7d || 0), 0) /
           clientsWithSteps7d.length
         : null
 
-    const clientsWithSteps30d = clientData.filter((c) => c.avgSteps30d !== null)
+    const clientsWithSteps30d = clientData.filter((c: ClientData) => c.avgSteps30d !== null)
     const avgSteps30d =
       clientsWithSteps30d.length > 0
-        ? clientsWithSteps30d.reduce((sum, c) => sum + (c.avgSteps30d || 0), 0) /
+        ? clientsWithSteps30d.reduce((sum: number, c: ClientData) => sum + (c.avgSteps30d || 0), 0) /
           clientsWithSteps30d.length
         : null
 

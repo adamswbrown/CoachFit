@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/permissions"
-import { Role } from "@prisma/client"
+import { Role } from "@/lib/types"
 import { z } from "zod"
 
 const updateRolesSchema = z.object({
@@ -85,7 +85,7 @@ export async function PATCH(
           { status: 400 }
         )
       }
-      newRoles = user.roles.filter((r) => r !== role)
+      newRoles = user.roles.filter((r: string) => r !== role)
 
       // Ensure user always has at least CLIENT role
       if (newRoles.length === 0) {
@@ -139,12 +139,12 @@ export async function PATCH(
           isTestUser: updatedUser.isTestUser,
           createdAt: updatedUser.createdAt,
           hasPassword: !!updatedUser.passwordHash,
-          authProviders: updatedUser.Account.map((a) => a.provider),
-          cohortsMemberOf: updatedUser.CohortMembership.map((m) => ({
+          authProviders: updatedUser.Account.map((a: { provider: string }) => a.provider),
+          cohortsMemberOf: updatedUser.CohortMembership.map((m: { Cohort: { id: string; name: string } }) => ({
             id: m.Cohort.id,
             name: m.Cohort.name,
           })),
-          cohortsCoaching: updatedUser.Cohort.map((c) => ({
+          cohortsCoaching: updatedUser.Cohort.map((c: { id: string; name: string }) => ({
             id: c.id,
             name: c.name,
           })),

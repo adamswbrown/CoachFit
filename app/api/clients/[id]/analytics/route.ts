@@ -112,35 +112,36 @@ export async function GET(
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
     // Filter entries for last 7 and 30 days (only count entries with values)
-    const entries7d = entries.filter((entry) => {
+    type Entry = { date: Date; weightLbs: number | null; steps: number | null; calories: number | null; heightInches: number | null; sleepQuality: number | null; perceivedEffort: number | null }
+    const entries7d = entries.filter((entry: Entry) => {
       const entryDate = new Date(entry.date)
       return entryDate >= sevenDaysAgo
     })
 
-    const entries30d = entries.filter((entry) => {
+    const entries30d = entries.filter((entry: Entry) => {
       const entryDate = new Date(entry.date)
       return entryDate >= thirtyDaysAgo
     })
 
     // Calculate averages (only for entries with values, handle nulls)
-    const steps7d = entries7d.filter((e) => e.steps !== null).map((e) => e.steps!)
+    const steps7d = entries7d.filter((e: Entry) => e.steps !== null).map((e: Entry) => e.steps!)
     const avgSteps7d = steps7d.length > 0
-      ? steps7d.reduce((sum, s) => sum + s, 0) / steps7d.length
+      ? steps7d.reduce((sum: number, s: number) => sum + s, 0) / steps7d.length
       : null
 
-    const steps30d = entries30d.filter((e) => e.steps !== null).map((e) => e.steps!)
+    const steps30d = entries30d.filter((e: Entry) => e.steps !== null).map((e: Entry) => e.steps!)
     const avgSteps30d = steps30d.length > 0
-      ? steps30d.reduce((sum, s) => sum + s, 0) / steps30d.length
+      ? steps30d.reduce((sum: number, s: number) => sum + s, 0) / steps30d.length
       : null
 
-    const calories7d = entries7d.filter((e) => e.calories !== null).map((e) => e.calories!)
+    const calories7d = entries7d.filter((e: Entry) => e.calories !== null).map((e: Entry) => e.calories!)
     const avgCalories7d = calories7d.length > 0
-      ? calories7d.reduce((sum, c) => sum + c, 0) / calories7d.length
+      ? calories7d.reduce((sum: number, c: number) => sum + c, 0) / calories7d.length
       : null
 
-    const calories30d = entries30d.filter((e) => e.calories !== null).map((e) => e.calories!)
+    const calories30d = entries30d.filter((e: Entry) => e.calories !== null).map((e: Entry) => e.calories!)
     const avgCalories30d = calories30d.length > 0
-      ? calories30d.reduce((sum, c) => sum + c, 0) / calories30d.length
+      ? calories30d.reduce((sum: number, c: number) => sum + c, 0) / calories30d.length
       : null
 
     return NextResponse.json(
@@ -157,7 +158,7 @@ export async function GET(
           avgCalories7d: avgCalories7d ? Math.round(avgCalories7d) : null,
           avgCalories30d: avgCalories30d ? Math.round(avgCalories30d) : null,
         },
-        entries: entries.map((entry) => {
+        entries: entries.map((entry: Entry) => {
           const bmi = calculateBMI(entry.weightLbs, entry.heightInches)
           return {
             date: entry.date.toISOString().split("T")[0],

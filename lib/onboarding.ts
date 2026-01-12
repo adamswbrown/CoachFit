@@ -1,5 +1,5 @@
 import { db } from "./db"
-import { Role } from "@prisma/client"
+import { Role } from "./types"
 import { isAdmin, isCoach } from "./permissions"
 
 export type AccountOrigin = 
@@ -44,7 +44,7 @@ export async function detectOnboardingState(userId: string): Promise<OnboardingS
         take: 1,
       },
     },
-  }).catch((error) => {
+  }).catch((error: unknown) => {
     console.error("Error fetching user in detectOnboardingState:", error)
     throw error
   })

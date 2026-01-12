@@ -149,19 +149,20 @@ export async function GET(
     }
 
     // Calculate summary stats
-    const entriesWithData = weekEntries.filter((e) => e.hasEntry)
+    type WeekEntry = { date: string; weightLbs: number | null; steps: number | null; calories: number | null; sleepQuality: number | null; perceivedEffort: number | null; bmi: number | null; hasEntry: boolean }
+    const entriesWithData = weekEntries.filter((e: WeekEntry) => e.hasEntry)
     const checkInCount = entriesWithData.length
     const checkInRate = checkInCount / 7
 
     // Weight stats (only if all days have weight)
     const weightsWithValues = weekEntries
-      .filter((e) => e.weightLbs !== null)
-      .map((e) => e.weightLbs!)
+      .filter((e: WeekEntry) => e.weightLbs !== null)
+      .map((e: WeekEntry) => e.weightLbs!)
     const weekStartWeight = weekEntries[0].weightLbs
     const weekEndWeight = weekEntries[6].weightLbs
     const avgWeight =
       weightsWithValues.length > 0
-        ? weightsWithValues.reduce((sum, w) => sum + w, 0) /
+        ? weightsWithValues.reduce((sum: number, w: number) => sum + w, 0) /
           weightsWithValues.length
         : null
     const weightTrend =
@@ -171,35 +172,35 @@ export async function GET(
 
     // Steps stats
     const stepsWithValues = weekEntries
-      .filter((e) => e.steps !== null)
-      .map((e) => e.steps!)
+      .filter((e: WeekEntry) => e.steps !== null)
+      .map((e: WeekEntry) => e.steps!)
     const avgSteps =
       stepsWithValues.length > 0
-        ? stepsWithValues.reduce((sum, s) => sum + s, 0) / stepsWithValues.length
+        ? stepsWithValues.reduce((sum: number, s: number) => sum + s, 0) / stepsWithValues.length
         : null
 
     // Calories stats
     const caloriesWithValues = weekEntries
-      .filter((e) => e.calories !== null)
-      .map((e) => e.calories!)
+      .filter((e: WeekEntry) => e.calories !== null)
+      .map((e: WeekEntry) => e.calories!)
     const avgCalories =
       caloriesWithValues.length > 0
-        ? caloriesWithValues.reduce((sum, c) => sum + c, 0) /
+        ? caloriesWithValues.reduce((sum: number, c: number) => sum + c, 0) /
           caloriesWithValues.length
         : null
 
     // BMI stats (COACH ONLY)
     const bmisWithValues = weekEntries
-      .filter((e) => e.bmi !== null)
-      .map((e) => e.bmi!)
+      .filter((e: WeekEntry) => e.bmi !== null)
+      .map((e: WeekEntry) => e.bmi!)
     const avgBMI =
       bmisWithValues.length > 0
-        ? bmisWithValues.reduce((sum, b) => sum + b, 0) / bmisWithValues.length
+        ? bmisWithValues.reduce((sum: number, b: number) => sum + b, 0) / bmisWithValues.length
         : null
 
     // Adherence score: composite of check-ins (70%) + completeness (30%)
     // Completeness = average of fields filled per entry (weight, steps, calories, sleepQuality, perceivedEffort)
-    const completenessScores = entriesWithData.map((entry) => {
+    const completenessScores = entriesWithData.map((entry: WeekEntry) => {
       let fieldsFilled = 0
       let totalFields = 5 // weight, steps, calories, sleepQuality, perceivedEffort
       if (entry.weightLbs !== null) fieldsFilled++
@@ -272,14 +273,14 @@ export async function GET(
       .map((e) => e.weightLbs!)
     const prevAvgWeight =
       prevWeights.length > 0
-        ? prevWeights.reduce((sum, w) => sum + w, 0) / prevWeights.length
+        ? prevWeights.reduce((sum: number, w: number) => sum + w, 0) / prevWeights.length
         : null
     const prevSteps = prevWeekEntries
       .filter((e) => e.steps !== null)
       .map((e) => e.steps!)
     const prevAvgSteps =
       prevSteps.length > 0
-        ? prevSteps.reduce((sum, s) => sum + s, 0) / prevSteps.length
+        ? prevSteps.reduce((sum: number, s: number) => sum + s, 0) / prevSteps.length
         : null
 
     return NextResponse.json(
