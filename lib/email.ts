@@ -1,6 +1,13 @@
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy initialization to avoid build errors when RESEND_API_KEY is missing
+let resend: Resend | null = null
+function getResendClient() {
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resend
+}
 
 export interface SendEmailOptions {
   to: string
@@ -32,7 +39,13 @@ export async function sendTransactionalEmail(
       return { success: true } // Return success to not block user flows
     }
 
-    const result = await resend.emails.send({
+    const client = getResendClient()
+    if (!client) {
+      console.warn("Resend client not initialized. Email not sent:", { to, subject })
+      return { success: true } // Return success to not block user flows
+    }
+
+    const result = await client.emails.send({
       from: "CoachSync <onboarding@resend.dev>", // Default Resend domain, should be updated to custom domain
       to,
       subject,
