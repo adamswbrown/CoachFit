@@ -4,17 +4,35 @@ import { randomUUID } from "crypto"
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log("Seeding test users for development...")
+  console.log("Seeding test users for production testing...")
 
-  // Seed test users for local development
+  // Seed test users with onboarding complete
   // Note: Users created by this script don't have passwords set
   // Use `npm run password:set <email> <password>` to set passwords for test users
+
+  await prisma.user.upsert({
+    where: { email: "admin@test.local" },
+    update: {
+      roles: [Role.ADMIN],
+      isTestUser: true,
+      onboardingComplete: true,
+    },
+    create: {
+      id: randomUUID(),
+      email: "admin@test.local",
+      name: "Test Admin",
+      roles: [Role.ADMIN],
+      isTestUser: true,
+      onboardingComplete: true,
+    },
+  })
 
   await prisma.user.upsert({
     where: { email: "coach@test.local" },
     update: {
       roles: [Role.COACH],
       isTestUser: true,
+      onboardingComplete: true,
     },
     create: {
       id: randomUUID(),
@@ -22,6 +40,7 @@ async function main() {
       name: "Test Coach",
       roles: [Role.COACH],
       isTestUser: true,
+      onboardingComplete: true,
     },
   })
 
@@ -30,6 +49,7 @@ async function main() {
     update: {
       roles: [Role.CLIENT],
       isTestUser: true,
+      onboardingComplete: true,
     },
     create: {
       id: randomUUID(),
@@ -37,6 +57,7 @@ async function main() {
       name: "Test Client",
       roles: [Role.CLIENT],
       isTestUser: true,
+      onboardingComplete: true,
     },
   })
 
@@ -47,6 +68,7 @@ async function main() {
     update: {
       roles: [Role.CLIENT],
       isTestUser: true,
+      onboardingComplete: true,
     },
     create: {
       id: randomUUID(),
@@ -54,6 +76,7 @@ async function main() {
       name: "No Invite Client",
       roles: [Role.CLIENT],
       isTestUser: true,
+      onboardingComplete: true,
     },
   })
 
@@ -63,6 +86,7 @@ async function main() {
     update: {
       roles: [Role.CLIENT],
       isTestUser: true,
+      onboardingComplete: true,
     },
     create: {
       id: randomUUID(),
@@ -70,10 +94,12 @@ async function main() {
       name: "Unassigned Client",
       roles: [Role.CLIENT],
       isTestUser: true,
+      onboardingComplete: true,
     },
   })
 
   console.log("✅ Test users seeded successfully!")
+  console.log("   - admin@test.local (ADMIN role)")
   console.log("   - coach@test.local (COACH role)")
   console.log("   - client@test.local (CLIENT role)")
   console.log("   - noinvite@test.local (CLIENT role, no cohort)")

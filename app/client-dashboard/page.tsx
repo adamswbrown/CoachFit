@@ -438,9 +438,9 @@ export default function ClientDashboard() {
                           setFormData({ ...formData, weightLbs: e.target.value })
                         }
                         disabled={hasCoach === false}
-                        className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-2.5 pr-12 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">lbs</span>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">lbs</span>
                     </div>
                   </div>
                   
@@ -459,9 +459,9 @@ export default function ClientDashboard() {
                           setFormData({ ...formData, steps: e.target.value })
                         }
                         disabled={hasCoach === false}
-                        className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-2.5 pr-16 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">steps</span>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">steps</span>
                     </div>
                   </div>
                   
@@ -480,9 +480,9 @@ export default function ClientDashboard() {
                           setFormData({ ...formData, calories: e.target.value })
                         }
                         disabled={hasCoach === false}
-                        className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-2.5 pr-14 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">kcal</span>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">kcal</span>
                     </div>
                   </div>
                 </div>

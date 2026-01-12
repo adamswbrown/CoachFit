@@ -23,15 +23,24 @@ function parseJWT(token: string): any {
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
-  // Public routes - allow access
+  // Public routes - allow access (no auth check needed)
   if (
     pathname === "/" ||
     pathname.startsWith("/api/auth") ||
     pathname === "/login" ||
     pathname === "/signup" ||
+    pathname === "/dashboard" ||
+    pathname === "/admin" ||
+    pathname === "/coach-dashboard" ||
+    pathname === "/client-dashboard" ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/api/onboarding")
   ) {
+    return NextResponse.next()
+  }
+
+  // For API routes, if we can't parse the JWT properly, let NextAuth handle it
+  if (pathname.startsWith("/api/")) {
     return NextResponse.next()
   }
 
@@ -48,33 +57,31 @@ export async function middleware(req: NextRequest) {
   const tokenData = parseJWT(tokenCookie.value)
   const userRoles = (tokenData?.roles as string[]) || []
 
-  // Client routes
-  if (pathname.startsWith("/api/entries") || pathname === "/client-dashboard") {
-    if (!userRoles.includes("CLIENT")) {
-      return NextResponse.redirect(new URL("/coach-dashboard", req.url))
+  // Determine if user is a coach/admin or client
+  const isCoach = userRoles.includes("COACH") || userRoles.includes("ADMIN")
+  const isClient = userRoles.includes("CLIENT")
+
+  // API routes - check roles for API access
+  if (pathname.startsWith("/api/entries")) {
+    if (!isClient) {
+      return NextResponse.redirect(new URL("/login", req.url))
     }
   }
 
-  // Coach routes - allow both COACH and ADMIN
   if (
     pathname.startsWith("/api/cohorts") ||
     pathname.startsWith("/api/clients") ||
-    pathname.startsWith("/cohorts") ||
-    pathname.startsWith("/clients") ||
-    pathname === "/coach-dashboard" ||
     pathname.startsWith("/api/coach-dashboard") ||
     pathname.startsWith("/api/invites")
   ) {
-    // Allow COACH or ADMIN to access coach routes
-    if (!userRoles.includes("COACH") && !userRoles.includes("ADMIN")) {
-      return NextResponse.redirect(new URL("/client-dashboard", req.url))
+    if (!isCoach) {
+      return NextResponse.redirect(new URL("/login", req.url))
     }
   }
 
-  // Admin routes
-  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+  if (pathname.startsWith("/api/admin")) {
     if (!userRoles.includes("ADMIN")) {
-      return NextResponse.redirect(new URL("/coach-dashboard", req.url))
+      return NextResponse.redirect(new URL("/login", req.url))
     }
   }
 
