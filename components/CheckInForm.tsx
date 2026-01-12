@@ -64,10 +64,7 @@ export const CheckInForm: React.FC<CheckInFormProps> = ({
             type="date"
             value={formData.date}
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1"
-            style={{ 
-              focusRingColor: brandColors.orange,
-            }}
+            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff6b35] focus:ring-offset-1"
           />
         </div>
 
@@ -82,10 +79,7 @@ export const CheckInForm: React.FC<CheckInFormProps> = ({
               step="0.1"
               value={formData.weightLbs || ''}
               onChange={(e) => setFormData({ ...formData, weightLbs: parseFloat(e.target.value) || 0 })}
-              className="flex-1 px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1"
-              style={{ 
-                focusRingColor: brandColors.orange,
-              }}
+              className="flex-1 px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff6b35] focus:ring-offset-1"
             />
             <div className="flex flex-col gap-1">
               <button
@@ -119,10 +113,7 @@ export const CheckInForm: React.FC<CheckInFormProps> = ({
               type="number"
               value={formData.steps || ''}
               onChange={(e) => setFormData({ ...formData, steps: parseInt(e.target.value) || 0 })}
-              className="flex-1 px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1"
-              style={{ 
-                focusRingColor: brandColors.orange,
-              }}
+              className="flex-1 px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff6b35] focus:ring-offset-1"
             />
             <div className="flex flex-col gap-1">
               <button
@@ -156,10 +147,7 @@ export const CheckInForm: React.FC<CheckInFormProps> = ({
               type="number"
               value={formData.calories || ''}
               onChange={(e) => setFormData({ ...formData, calories: parseInt(e.target.value) || 0 })}
-              className="flex-1 px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1"
-              style={{ 
-                focusRingColor: brandColors.orange,
-              }}
+              className="flex-1 px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff6b35] focus:ring-offset-1"
             />
             <div className="flex flex-col gap-1">
               <button
@@ -194,10 +182,7 @@ export const CheckInForm: React.FC<CheckInFormProps> = ({
             max="10"
             value={formData.sleepQuality || ''}
             onChange={(e) => setFormData({ ...formData, sleepQuality: parseInt(e.target.value) || undefined })}
-            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1"
-            style={{ 
-              focusRingColor: brandColors.orange,
-            }}
+            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#ff6b35] focus:ring-offset-1"
             placeholder="1-10"
           />
         </div>
