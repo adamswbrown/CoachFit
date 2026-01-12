@@ -4,7 +4,6 @@ import { useSession, signOut } from "next-auth/react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useState } from "react"
-import { UsersIcon, OverviewIcon, AttentionIcon, SystemIcon } from "@/components/icons"
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -19,10 +18,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   if (!session) return null
 
   const navigation = [
-    { name: "Users", href: "/admin", icon: UsersIcon },
-    { name: "Overview", href: "/admin/overview", icon: OverviewIcon },
-    { name: "Attention", href: "/admin/attention", icon: AttentionIcon },
-    { name: "System", href: "/admin/system", icon: SystemIcon },
+    { name: "Users", href: "/admin", icon: "👤" },
+    { name: "Overview", href: "/admin/overview", icon: "📈" },
+    { name: "Attention", href: "/admin/attention", icon: "🔔" },
+    { name: "System", href: "/admin/system", icon: "⚙️" },
   ]
 
   return (
@@ -74,7 +73,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
                   }`}
                 >
-                  <item.icon size={20} />
+                  <span>{item.icon}</span>
                   <span>{item.name}</span>
                 </Link>
               )

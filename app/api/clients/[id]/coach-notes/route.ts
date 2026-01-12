@@ -107,12 +107,17 @@ export async function GET(
       // Fetch note for specific date
       const noteDate = new Date(noteDateParam)
       noteDate.setHours(0, 0, 0, 0)
+      const nextDay = new Date(noteDate)
+      nextDay.setDate(nextDay.getDate() + 1)
 
       const note = await db.coachNote.findFirst({
         where: {
           coachId: session.user.id,
           clientId: id,
-          noteDate: noteDate,
+          noteDate: {
+            gte: noteDate,
+            lt: nextDay,
+          },
         },
       })
 

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
-import { CohortsIcon, AttentionIcon } from "@/components/icons"
 
 interface Cohort {
   id: string
@@ -75,7 +74,7 @@ export default function CohortsPage() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                <AttentionIcon size={24} className="text-red-600" />
+                <span className="text-2xl">⚠️</span>
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-red-900 mb-1">Failed to load cohorts</h3>
@@ -107,7 +106,7 @@ export default function CohortsPage() {
         {cohorts.length === 0 ? (
           <div className="bg-white border border-neutral-200 rounded-lg p-12 text-center">
             <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
-              <CohortsIcon size={32} />
+              <span className="text-3xl">📁</span>
             </div>
             <h3 className="font-medium text-neutral-900 mb-1">No cohorts yet</h3>
             <p className="text-sm text-neutral-500 mb-6">
@@ -130,7 +129,7 @@ export default function CohortsPage() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <h3 className="text-lg font-semibold text-neutral-900">{cohort.name}</h3>
-                  <CohortsIcon size={24} />
+                  <span className="text-2xl">📁</span>
                 </div>
                 <div className="space-y-2 text-sm text-neutral-600">
                   <div className="flex justify-between">

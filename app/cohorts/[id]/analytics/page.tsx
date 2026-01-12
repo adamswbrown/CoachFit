@@ -150,16 +150,13 @@ export default function CohortAnalyticsPage({
         <div className="mb-4">
           <Link
             href={`/cohorts/${cohortId}`}
-            className="hover:underline font-medium transition-colors"
-            style={{ color: '#1e3a5f' }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#ff6b35'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#1e3a5f'}
+            className="text-neutral-900 hover:underline"
           >
             ← Back to Cohort
           </Link>
         </div>
 
-        <h1 className="text-3xl font-bold mb-2" style={{ color: '#1e3a5f' }}>
+        <h1 className="text-3xl font-bold mb-2">
           {cohort?.name || "Cohort"} - Analytics
         </h1>
 
@@ -211,7 +208,7 @@ export default function CohortAnalyticsPage({
 
             {/* Client Comparison Table */}
             <div className="bg-white rounded-lg border border-neutral-200 p-6">
-              <h2 className="text-xl font-semibold mb-4" style={{ color: '#1e3a5f' }}>Client Progress</h2>
+              <h2 className="text-xl font-semibold mb-4">Client Progress</h2>
               {analytics.clients.length === 0 ? (
                 <p className="text-neutral-500 py-4">
                   No client data available. Clients will appear here once they start submitting entries.
@@ -235,10 +232,7 @@ export default function CohortAnalyticsPage({
                           <td className="p-3">
                             <Link
                               href={`/clients/${client.id}/entries`}
-                              className="hover:underline font-medium transition-colors"
-                              style={{ color: '#1e3a5f' }}
-                              onMouseEnter={(e) => e.currentTarget.style.color = '#ff6b35'}
-                              onMouseLeave={(e) => e.currentTarget.style.color = '#1e3a5f'}
+                              className="text-neutral-900 hover:underline"
                             >
                               {client.name || client.email}
                             </Link>

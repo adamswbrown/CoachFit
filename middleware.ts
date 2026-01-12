@@ -55,15 +55,18 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Coach routes
+  // Coach routes - allow both COACH and ADMIN
   if (
     pathname.startsWith("/api/cohorts") ||
     pathname.startsWith("/api/clients") ||
     pathname.startsWith("/cohorts") ||
     pathname.startsWith("/clients") ||
-    pathname === "/coach-dashboard"
+    pathname === "/coach-dashboard" ||
+    pathname.startsWith("/api/coach-dashboard") ||
+    pathname.startsWith("/api/invites")
   ) {
-    if (!userRoles.includes("COACH")) {
+    // Allow COACH or ADMIN to access coach routes
+    if (!userRoles.includes("COACH") && !userRoles.includes("ADMIN")) {
       return NextResponse.redirect(new URL("/client-dashboard", req.url))
     }
   }

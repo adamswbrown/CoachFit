@@ -532,7 +532,15 @@ export class AttentionScoreCalculator {
 
     // Calculate scores for all coaches (in memory)
     for (const coach of coaches) {
-      const score = this.calculateCoachScoreFromData(coach, clientEntryCounts)
+      const score = this.calculateCoachScoreFromData(
+        {
+          id: coach.id,
+          name: coach.name,
+          email: coach.email,
+          cohorts: coach.Cohort,
+        },
+        clientEntryCounts
+      )
       if (score.score > 0) {
         queue.push({
           ...score,

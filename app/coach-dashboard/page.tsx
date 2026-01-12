@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -52,7 +52,7 @@ interface DashboardData {
   globalInvites: GlobalInvite[]
 }
 
-export default function CoachDashboard() {
+function CoachDashboardContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -380,27 +380,21 @@ export default function CoachDashboard() {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <div>
-              <h1 className="text-2xl font-semibold" style={{ color: '#1e3a5f' }}>Clients</h1>
-              <p className="text-sm mt-1" style={{ color: '#6b7280' }}>
+              <h1 className="text-2xl font-semibold text-neutral-900">Clients</h1>
+              <p className="text-neutral-600 text-sm mt-1">
                 Manage your clients and cohorts
               </p>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => { setShowInviteForm(!showInviteForm); setShowForm(false) }}
-                className="text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                style={{ backgroundColor: '#ff6b35' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e55a2b'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ff6b35'}
+                className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 text-sm"
               >
                 {showInviteForm ? "Cancel" : "Invite Client"}
               </button>
               <button
                 onClick={() => { setShowForm(!showForm); setShowInviteForm(false) }}
-                className="text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                style={{ backgroundColor: '#1e3a5f' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#152a47'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1e3a5f'}
+                className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 text-sm"
               >
                 {showForm ? "Cancel" : "Create Cohort"}
               </button>
@@ -426,10 +420,7 @@ export default function CoachDashboard() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => fetchOverview(false)}
-                    className="px-4 py-2 text-white rounded-md transition-colors text-sm font-medium"
-                    style={{ backgroundColor: '#ff6b35' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e55a2b'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ff6b35'}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
                   >
                     Retry Now
                   </button>
@@ -439,18 +430,7 @@ export default function CoachDashboard() {
                       setRetryCount(0)
                       fetchOverview(false)
                     }}
-                    className="px-4 py-2 rounded-md transition-colors text-sm font-medium"
-                    style={{ 
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #ff6b35',
-                      color: '#ff6b35'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#fff4f0'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#ffffff'
-                    }}
+                    className="px-4 py-2 bg-white border border-red-300 text-red-700 rounded-md hover:bg-red-50 transition-colors text-sm font-medium"
                   >
                     Clear & Retry
                   </button>
@@ -487,10 +467,7 @@ export default function CoachDashboard() {
               <button
                 type="submit"
                 disabled={inviteSubmitting}
-                className="text-white px-4 py-2 rounded-md font-medium transition-colors disabled:opacity-50"
-                style={{ backgroundColor: '#ff6b35' }}
-                onMouseEnter={(e) => !inviteSubmitting && (e.currentTarget.style.backgroundColor = '#e55a2b')}
-                onMouseLeave={(e) => !inviteSubmitting && (e.currentTarget.style.backgroundColor = '#ff6b35')}
+                className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 disabled:opacity-50"
               >
                 {inviteSubmitting ? "Sending..." : "Send Invite"}
               </button>
@@ -660,10 +637,7 @@ export default function CoachDashboard() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="text-white px-6 py-2 rounded-md font-medium transition-colors disabled:opacity-50"
-                  style={{ backgroundColor: '#1e3a5f' }}
-                  onMouseEnter={(e) => !submitting && (e.currentTarget.style.backgroundColor = '#152a47')}
-                  onMouseLeave={(e) => !submitting && (e.currentTarget.style.backgroundColor = '#1e3a5f')}
+                  className="bg-neutral-900 text-white px-6 py-2 rounded-md hover:bg-neutral-800 disabled:opacity-50"
                 >
                   {submitting ? "Creating..." : "Create Cohort"}
                 </button>
@@ -680,18 +654,7 @@ export default function CoachDashboard() {
                       },
                     })
                   }}
-                  className="px-6 py-2 rounded-md font-medium transition-colors"
-                  style={{ 
-                    backgroundColor: '#f3f4f6',
-                    color: '#1e3a5f',
-                    border: '1px solid #e5e7eb'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#e5e7eb'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f3f4f6'
-                  }}
+                  className="bg-neutral-100 text-neutral-700 px-6 py-2 rounded-md hover:bg-neutral-200"
                 >
                   Cancel
                 </button>
@@ -965,23 +928,23 @@ export default function CoachDashboard() {
 
             {/* Unassigned Clients Section - Only show if filter is all or unassigned */}
             {(currentFilter === "all" || currentFilter === "unassigned") && unassignedClients.length > 0 && (
-              <div className="rounded-lg border p-6 mb-8" style={{ backgroundColor: '#fff4f0', borderColor: '#ff6b35' }}>
-                <h2 className="text-xl font-semibold mb-2" style={{ color: '#ff6b35' }}>Unassigned Clients</h2>
-                <p className="text-sm mb-4" style={{ color: '#e55a2b' }}>
+              <div className="bg-orange-50 rounded-lg border border-neutral-200 p-6 mb-8 border border-orange-200">
+                <h2 className="text-xl font-semibold mb-2 text-orange-800">Unassigned Clients</h2>
+                <p className="text-sm text-orange-700 mb-4">
                   These clients have signed up but aren't in any cohort yet. Assign them to a cohort to get started.
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr style={{ borderBottomColor: '#ff6b35' }} className="border-b">
-                        <th className="text-left p-3 font-semibold" style={{ color: '#1e3a5f' }}>Name</th>
-                        <th className="text-left p-3 font-semibold" style={{ color: '#1e3a5f' }}>Email</th>
-                        <th className="text-left p-3 font-semibold" style={{ color: '#1e3a5f' }}>Assign to Cohort</th>
+                      <tr className="border-b border-amber-200">
+                        <th className="text-left p-3 font-semibold">Name</th>
+                        <th className="text-left p-3 font-semibold">Email</th>
+                        <th className="text-left p-3 font-semibold">Assign to Cohort</th>
                       </tr>
                     </thead>
                     <tbody>
                       {unassignedClients.map((client) => (
-                        <tr key={client.email} className="border-b" style={{ borderBottomColor: '#ffe5d9' }}>
+                        <tr key={client.email} className="border-b border-amber-100">
                           <td className="p-3">{client.name || "No name"}</td>
                           <td className="p-3">{client.email}</td>
                           <td className="p-3">
@@ -1007,24 +970,13 @@ export default function CoachDashboard() {
                                 <button
                                   onClick={() => handleAssignClient(client.id!)}
                                   disabled={assigningClient === client.id || !selectedCohortForAssign[client.id!]}
-                                  className="text-white px-3 py-1 rounded-md font-medium transition-colors disabled:opacity-50 text-sm"
-                                  style={{ backgroundColor: '#ff6b35' }}
-                                  onMouseEnter={(e) => {
-                                    if (!e.currentTarget.disabled) {
-                                      e.currentTarget.style.backgroundColor = '#e55a2b'
-                                    }
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (!e.currentTarget.disabled) {
-                                      e.currentTarget.style.backgroundColor = '#ff6b35'
-                                    }
-                                  }}
+                                  className="bg-neutral-900 text-white px-3 py-1 rounded-md hover:bg-neutral-800 disabled:opacity-50 text-sm"
                                 >
                                   {assigningClient === client.id ? "..." : "Assign"}
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-sm" style={{ color: '#ff6b35' }}>Create a cohort first</span>
+                              <span className="text-amber-600 text-sm">Create a cohort first</span>
                             )}
                           </td>
                         </tr>
@@ -1039,5 +991,24 @@ export default function CoachDashboard() {
         )}
       </div>
     </CoachLayout>
+  )
+}
+
+export default function CoachDashboard() {
+  return (
+    <Suspense fallback={
+      <CoachLayout>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="w-8 h-8 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-neutral-600">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </CoachLayout>
+    }>
+      <CoachDashboardContent />
+    </Suspense>
   )
 }

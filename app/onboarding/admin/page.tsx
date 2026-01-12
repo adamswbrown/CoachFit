@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
+import { SystemIcon, CheckmarkIcon } from "@/components/icons"
 
 export default function AdminOnboardingPage() {
   const router = useRouter()
@@ -39,7 +40,7 @@ export default function AdminOnboardingPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">⚙️</span>
+              <SystemIcon size={32} className="text-purple-600" />
             </div>
             <h1 className="text-3xl font-bold text-slate-900 mb-2">
               Welcome to CoachSync Admin
@@ -53,7 +54,7 @@ export default function AdminOnboardingPage() {
           <div className="space-y-6 mb-8">
             <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
               <h2 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                <span className="text-blue-600">📋</span>
+                <CheckmarkIcon size={20} className="text-blue-600" />
                 Your Role
               </h2>
               <p className="text-slate-700 text-sm leading-relaxed">
@@ -64,7 +65,7 @@ export default function AdminOnboardingPage() {
             <div className="space-y-4">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-indigo-600">1️⃣</span>
+                  <span className="text-indigo-600 font-bold">1</span>
                 </div>
                 <div>
                   <h3 className="font-semibold text-slate-900 mb-1">Create Coaches</h3>
@@ -76,7 +77,7 @@ export default function AdminOnboardingPage() {
 
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-indigo-600">2️⃣</span>
+                  <span className="text-indigo-600 font-bold">2</span>
                 </div>
                 <div>
                   <h3 className="font-semibold text-slate-900 mb-1">Coaches Manage Clients</h3>
