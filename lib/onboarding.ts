@@ -24,7 +24,7 @@ export type OnboardingState = {
  * - Whether onboarding is needed
  * - If client, whether they have a coach
  */
-export async function detectOnboardingState(userId: string): Promise<OnboardingState> {
+export async function detectOnboardingState(userId: string): Promise<OnboardingState | null> {
   const user = await db.user.findUnique({
     where: { id: userId },
     select: {
@@ -50,7 +50,8 @@ export async function detectOnboardingState(userId: string): Promise<OnboardingS
   })
 
   if (!user) {
-    throw new Error("User not found")
+    // User doesn't exist in database - likely stale session
+    return null
   }
 
   const roles = user.roles as Role[]

@@ -13,6 +13,12 @@ export default async function DashboardPage() {
   // Check onboarding status first
   try {
     const state = await detectOnboardingState(session.user.id)
+    
+    // If user not found in database, redirect to login to clear stale session
+    if (!state) {
+      redirect("/login?error=session_expired")
+    }
+    
     const onboardingRoute = getOnboardingRoute(state)
     
     if (onboardingRoute !== "/dashboard") {
@@ -25,8 +31,8 @@ export default async function DashboardPage() {
       throw error
     }
     console.error("Error detecting onboarding state:", error)
-    // Fallback to role-based routing if detection fails
-    // Continue to role-based redirects below
+    // Fallback to login if detection fails
+    redirect("/login?error=session_expired")
   }
 
   // If onboarding complete, redirect based on role
