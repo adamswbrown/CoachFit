@@ -97,11 +97,13 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Send welcome email to new coach
-    const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
-    const isTestUserEmail = email.endsWith(".test.local")
+    // Send welcome email to new coach (only if Resend is enabled)
+    // This is wrapped in a try-catch to prevent build-time errors
+    try {
+      const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
+      const isTestUserEmail = email.endsWith(".test.local")
 
-    await sendTransactionalEmail({
+      await sendTransactionalEmail({
       to: email,
       subject: "Welcome to CoachSync - Your Coach Account",
       html: `
@@ -123,7 +125,11 @@ export async function POST(req: NextRequest) {
       `,
       text: `Welcome to CoachSync!\n\nHi ${name},\n\nYour coach account has been created.\n\nEmail: ${email}\nPassword: (the one provided by your administrator)\n\nSign in: ${loginUrl}\n\nIf you have any questions, please contact your administrator.`,
       isTestUser: isTestUserEmail,
-    })
+      })
+    } catch (emailError) {
+      // Silently fail if email sending fails - don't break the user creation
+      console.warn("Failed to send welcome email:", emailError)
+    }
 
     return NextResponse.json(
       {
