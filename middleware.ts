@@ -1,9 +1,25 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { getToken } from "next-auth/jwt"
 
-// Use getToken instead of full auth() to reduce bundle size
-// This avoids importing Prisma, database connections, and other heavy dependencies
+// Lightweight JWT parsing without any NextAuth imports
+// This keeps the middleware bundle under 1MB Edge Function limit
+function parseJWT(token: string): any {
+  try {
+    const base64Url = token.split('.')[1]
+    if (!base64Url) return null
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    )
+    return JSON.parse(jsonPayload)
+  } catch {
+    return null
+  }
+}
+
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
@@ -19,19 +35,18 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // Get token from JWT (lighter than full auth check)
-  const token = await getToken({ 
-    req,
-    secret: process.env.NEXTAUTH_SECRET 
-  })
-
+  // Get JWT token from cookies (lightweight, no NextAuth import needed)
+  const tokenCookie = req.cookies.get('next-auth.session-token') || 
+                      req.cookies.get('__Secure-next-auth.session-token')
+  
   // Protected routes require authentication
-  if (!token) {
+  if (!tokenCookie) {
     return NextResponse.redirect(new URL("/login", req.url))
   }
 
-  // Get user roles from token
-  const userRoles = (token.roles as string[]) || []
+  // Parse JWT token to get user roles
+  const tokenData = parseJWT(tokenCookie.value)
+  const userRoles = (tokenData?.roles as string[]) || []
 
   // Client routes
   if (pathname.startsWith("/api/entries") || pathname === "/client-dashboard") {
