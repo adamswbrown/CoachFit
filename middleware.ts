@@ -1,10 +1,10 @@
-import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { Role } from "@/lib/types"
+import { getToken } from "next-auth/jwt"
 
-export default auth((req) => {
-  const session = req.auth
+// Use getToken instead of full auth() to reduce bundle size
+// This avoids importing Prisma, database connections, and other heavy dependencies
+export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
   // Public routes - allow access
@@ -19,16 +19,23 @@ export default auth((req) => {
     return NextResponse.next()
   }
 
+  // Get token from JWT (lighter than full auth check)
+  const token = await getToken({ 
+    req,
+    secret: process.env.NEXTAUTH_SECRET 
+  })
+
   // Protected routes require authentication
-  if (!session) {
+  if (!token) {
     return NextResponse.redirect(new URL("/login", req.url))
   }
 
-  const userRoles = (session.user?.roles as Role[]) || []
+  // Get user roles from token
+  const userRoles = (token.roles as string[]) || []
 
   // Client routes
   if (pathname.startsWith("/api/entries") || pathname === "/client-dashboard") {
-    if (!userRoles.includes(Role.CLIENT)) {
+    if (!userRoles.includes("CLIENT")) {
       return NextResponse.redirect(new URL("/coach-dashboard", req.url))
     }
   }
@@ -41,20 +48,20 @@ export default auth((req) => {
     pathname.startsWith("/clients") ||
     pathname === "/coach-dashboard"
   ) {
-    if (!userRoles.includes(Role.COACH)) {
+    if (!userRoles.includes("COACH")) {
       return NextResponse.redirect(new URL("/client-dashboard", req.url))
     }
   }
 
   // Admin routes
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
-    if (!userRoles.includes(Role.ADMIN)) {
+    if (!userRoles.includes("ADMIN")) {
       return NextResponse.redirect(new URL("/coach-dashboard", req.url))
     }
   }
 
   return NextResponse.next()
-})
+}
 
 export const config = {
   matcher: [
