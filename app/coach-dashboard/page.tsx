@@ -99,12 +99,18 @@ function CoachDashboardContent() {
       setSuccess(null)
       setLoading(true)
       fetchOverview()
+
+      // Check if showForm query param is present
+      const showFormParam = searchParams.get("showForm")
+      if (showFormParam === "true") {
+        setShowForm(true)
+      }
     } else {
       setData(null)
       setError(null)
       setLoading(false)
     }
-  }, [session])
+  }, [session, searchParams])
 
   const fetchOverview = async (isRetry: boolean = false) => {
     if (!isRetry) {

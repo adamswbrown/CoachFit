@@ -228,7 +228,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
                             All Cohorts
                           </Link>
                           <Link
-                            href="/coach-dashboard"
+                            href="/coach-dashboard?showForm=true"
                             onClick={() => setCohortsDropdownOpen(false)}
                             className="w-full text-left px-4 py-2.5 text-sm transition-colors block text-neutral-300 hover:bg-neutral-800 hover:text-white"
                           >
