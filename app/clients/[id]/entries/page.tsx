@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
+import { DataSourceBadge } from "@/components/DataSourceBadge"
 import {
   LineChart,
   Line,
@@ -24,6 +25,7 @@ interface Entry {
   sleepQuality: number | null
   perceivedEffort: number | null
   notes: string | null
+  dataSources: string[] | null
   createdAt: string
 }
 
@@ -432,6 +434,7 @@ export default function ClientEntriesPage() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-2">Date</th>
+                    <th className="text-left p-2">Source</th>
                     <th className="text-left p-2">Weight (lbs)</th>
                     <th className="text-left p-2">Steps</th>
                     <th className="text-left p-2">Calories</th>
@@ -449,6 +452,9 @@ export default function ClientEntriesPage() {
                       <tr key={entry.id} className="border-b">
                         <td className="p-2">
                           {new Date(entry.date).toLocaleDateString()}
+                        </td>
+                        <td className="p-2">
+                          <DataSourceBadge dataSources={entry.dataSources} size="sm" />
                         </td>
                         <td className="p-2">{entry.weightLbs !== null ? entry.weightLbs.toFixed(1) : "—"}</td>
                         <td className="p-2">{entry.steps !== null ? entry.steps.toLocaleString() : "—"}</td>

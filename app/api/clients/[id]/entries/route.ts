@@ -55,6 +55,22 @@ export async function GET(
       where: {
         userId: id,
       },
+      select: {
+        id: true,
+        userId: true,
+        date: true,
+        weightLbs: true,
+        steps: true,
+        calories: true,
+        heightInches: true,
+        sleepQuality: true,
+        perceivedEffort: true,
+        notes: true,
+        customResponses: true,
+        dataSources: true, // Include data source indicator
+        createdAt: true,
+        updatedAt: true,
+      },
       orderBy: {
         date: "desc",
       },

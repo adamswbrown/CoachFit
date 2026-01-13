@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useState, useEffect, useRef, Suspense } from "react"
 import { isAdmin } from "@/lib/permissions"
 import { ClientsIcon, CohortsIcon, MobileIcon } from "@/components/icons"
+import { HealthKitIcon } from "@/components/icons/HealthKitIcon"
 
 interface CoachLayoutProps {
   children: React.ReactNode
@@ -71,11 +72,23 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   const isCohortsActive = pathname === "/cohorts" || pathname?.startsWith("/cohorts/")
   const isPairingActive = pathname === "/coach-dashboard/pairing"
 
+  // Build navigation array - add admin items if user has ADMIN role
   const navigation = [
     { name: "Clients", href: "/coach-dashboard", icon: ClientsIcon, hasDropdown: true, dropdownKey: "clients" },
     { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" },
+    { name: "HealthKit Data", href: "/coach-dashboard/healthkit-data", icon: HealthKitIcon, hasDropdown: false, dropdownKey: "healthkit" },
     { name: "iOS Pairing", href: "/coach-dashboard/pairing", icon: MobileIcon, hasDropdown: false, dropdownKey: "pairing" },
   ]
+
+  // Add admin navigation items if user has ADMIN role
+  if (session?.user && isAdmin(session.user)) {
+    navigation.push(
+      { name: "Users", href: "/admin", icon: () => <span>👤</span>, hasDropdown: false, dropdownKey: "admin-users" },
+      { name: "Overview", href: "/admin/overview", icon: () => <span>📈</span>, hasDropdown: false, dropdownKey: "admin-overview" },
+      { name: "Attention", href: "/admin/attention", icon: () => <span>🔔</span>, hasDropdown: false, dropdownKey: "admin-attention" },
+      { name: "System", href: "/admin/system", icon: () => <span>⚙️</span>, hasDropdown: false, dropdownKey: "admin-system" }
+    )
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -96,14 +109,6 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
             </Link>
           </div>
           <div className="flex items-center gap-3">
-            {session?.user && isAdmin(session.user) && (
-              <Link
-                href="/admin"
-                className="px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
-              >
-                Admin
-              </Link>
-            )}
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
               className="px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"

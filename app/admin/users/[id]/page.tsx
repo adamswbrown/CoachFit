@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { isAdmin } from "@/lib/permissions"
-import { AdminLayout } from "@/components/layouts/AdminLayout"
+import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { Role } from "@/lib/types"
 
 interface UserDetails {
@@ -85,11 +85,11 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
 
   if (status === "loading" || loading) {
     return (
-      <AdminLayout>
+      <CoachLayout>
         <div className="max-w-4xl mx-auto">
           <p className="text-neutral-500">Loading user details...</p>
         </div>
-      </AdminLayout>
+      </CoachLayout>
     )
   }
 
@@ -99,24 +99,24 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
 
   if (error && !user) {
     return (
-      <AdminLayout>
+      <CoachLayout>
         <div className="max-w-4xl mx-auto">
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
             <p className="font-bold">Error</p>
             <p>{error}</p>
           </div>
         </div>
-      </AdminLayout>
+      </CoachLayout>
     )
   }
 
   if (!user) {
     return (
-      <AdminLayout>
+      <CoachLayout>
         <div className="max-w-4xl mx-auto">
           <p className="text-neutral-500">User not found</p>
         </div>
-      </AdminLayout>
+      </CoachLayout>
     )
   }
 
@@ -124,7 +124,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
   const isClient = user.roles.includes(Role.CLIENT)
 
   return (
-    <AdminLayout>
+    <CoachLayout>
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <Link href="/admin" className="text-blue-600 hover:underline text-sm">
@@ -317,6 +317,6 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
           </div>
         )}
       </div>
-    </AdminLayout>
+    </CoachLayout>
   )
 }

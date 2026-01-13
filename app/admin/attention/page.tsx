@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/permissions"
 import { AttentionCard } from "@/components/admin/AttentionCard"
-import { AdminLayout } from "@/components/layouts/AdminLayout"
+import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import type { AttentionQueueItem } from "@/lib/admin/attention"
 
@@ -93,14 +93,14 @@ export default function AttentionQueuePage() {
 
   if (status === "loading" || loading) {
     return (
-      <AdminLayout>
+      <CoachLayout>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="w-8 h-8 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-neutral-600">Loading attention queue...</p>
           </div>
         </div>
-      </AdminLayout>
+      </CoachLayout>
     )
   }
 
@@ -110,7 +110,7 @@ export default function AttentionQueuePage() {
 
   if (error) {
     return (
-      <AdminLayout>
+      <CoachLayout>
         <div className="max-w-7xl mx-auto">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <div className="flex items-start gap-4">
@@ -147,7 +147,7 @@ export default function AttentionQueuePage() {
             </div>
           </div>
         </div>
-      </AdminLayout>
+      </CoachLayout>
     )
   }
 
@@ -158,7 +158,7 @@ export default function AttentionQueuePage() {
   const filteredItems = getFilteredItems()
 
   return (
-    <AdminLayout>
+    <CoachLayout>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -251,6 +251,6 @@ export default function AttentionQueuePage() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </CoachLayout>
   )
 }

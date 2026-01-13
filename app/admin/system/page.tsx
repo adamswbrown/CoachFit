@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/permissions"
 import { MetricCard } from "@/components/admin/MetricCard"
-import { AdminLayout } from "@/components/layouts/AdminLayout"
+import { CoachLayout } from "@/components/layouts/CoachLayout"
 
 export default function SystemHealthPage() {
   const { data: session, status } = useSession()
@@ -67,7 +67,7 @@ export default function SystemHealthPage() {
 
   if (error) {
     return (
-      <AdminLayout>
+      <CoachLayout>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">{error}</p>
           <button
@@ -77,12 +77,12 @@ export default function SystemHealthPage() {
             Retry
           </button>
         </div>
-      </AdminLayout>
+      </CoachLayout>
     )
   }
 
   return (
-    <AdminLayout>
+    <CoachLayout>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -224,6 +224,6 @@ export default function SystemHealthPage() {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </CoachLayout>
   )
 }

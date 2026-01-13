@@ -17,13 +17,13 @@ export default function DashboardPage() {
       return
     }
 
-    // Redirect based on role
+    // Redirect based on role (COACH takes priority over ADMIN)
     const userRoles = session.user.roles || []
 
-    if (userRoles.includes(Role.ADMIN)) {
-      router.push("/admin")
-    } else if (userRoles.includes(Role.COACH)) {
+    if (userRoles.includes(Role.COACH)) {
       router.push("/coach-dashboard")
+    } else if (userRoles.includes(Role.ADMIN)) {
+      router.push("/admin")
     } else if (userRoles.includes(Role.CLIENT)) {
       router.push("/client-dashboard")
     } else {

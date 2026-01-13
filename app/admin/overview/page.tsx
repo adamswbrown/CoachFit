@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/permissions"
 import { MetricCard } from "@/components/admin/MetricCard"
 import { Trend } from "@/lib/admin/insights"
-import { AdminLayout } from "@/components/layouts/AdminLayout"
+import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import Link from "next/link"
 
@@ -102,14 +102,14 @@ export default function AdminOverviewPage() {
 
   if (status === "loading" || loading) {
     return (
-      <AdminLayout>
+      <CoachLayout>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="w-8 h-8 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-neutral-600">Loading overview...</p>
           </div>
         </div>
-      </AdminLayout>
+      </CoachLayout>
     )
   }
 
@@ -119,7 +119,7 @@ export default function AdminOverviewPage() {
 
   if (error) {
     return (
-      <AdminLayout>
+      <CoachLayout>
         <div className="max-w-7xl mx-auto">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <div className="flex items-start gap-4">
@@ -156,15 +156,15 @@ export default function AdminOverviewPage() {
             </div>
           </div>
         </div>
-      </AdminLayout>
+      </CoachLayout>
     )
   }
 
   if (!data) {
     return (
-      <AdminLayout>
+      <CoachLayout>
         <div>No data available</div>
-      </AdminLayout>
+      </CoachLayout>
     )
   }
 
@@ -174,7 +174,7 @@ export default function AdminOverviewPage() {
   )
 
   return (
-    <AdminLayout>
+    <CoachLayout>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -368,6 +368,6 @@ export default function AdminOverviewPage() {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </CoachLayout>
   )
 }

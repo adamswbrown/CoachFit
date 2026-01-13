@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Role } from "@/lib/types"
 import { isAdmin } from "@/lib/permissions"
-import { AdminLayout } from "@/components/layouts/AdminLayout"
+import { CoachLayout } from "@/components/layouts/CoachLayout"
 
 interface Cohort {
   id: string
@@ -272,7 +272,7 @@ export default function AdminPage() {
   }
 
   return (
-    <AdminLayout>
+    <CoachLayout>
       <div className="max-w-7xl mx-auto">
         {/* Test user banner */}
         {session?.user?.isTestUser && (
@@ -717,6 +717,6 @@ export default function AdminPage() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </CoachLayout>
   )
 }
