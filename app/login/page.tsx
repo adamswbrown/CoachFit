@@ -282,14 +282,14 @@ function LoginPageContent() {
               Login as Admin
             </button>
             <button
-              onClick={() => handleDemoLogin("coach@test.local", "TestPassword123!", "Coach")}
+              onClick={() => handleDemoLogin("alex.thompson@test.local", "TestPassword123!", "Coach")}
               disabled={submitting}
               className="w-full bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
             >
-              Login as Coach
+              Login as Coach (Alex Thompson)
             </button>
             <button
-              onClick={() => handleDemoLogin("client@test.local", "TestPassword123!", "Client")}
+              onClick={() => handleDemoLogin("client001@test.local", "TestPassword123!", "Client")}
               disabled={submitting}
               className="w-full bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
             >
