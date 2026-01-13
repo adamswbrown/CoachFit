@@ -47,7 +47,8 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({ email: "" })
   const [selectedClientId, setSelectedClientId] = useState<string>("")
-  
+  const [searchQuery, setSearchQuery] = useState("")
+
   // Check-in config state
   const [showConfigForm, setShowConfigForm] = useState(false)
   const [configSubmitting, setConfigSubmitting] = useState(false)
@@ -736,8 +737,36 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                 No active clients yet. Invite clients by email to get started.
               </p>
             ) : (
-              <div className="space-y-2">
-                {clients.map((client, index) => (
+              <>
+                {/* Search Bar */}
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    placeholder="Search clients by name or email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500"
+                  />
+                </div>
+
+                {(() => {
+                  // Filter clients based on search query
+                  const filteredClients = clients.filter((client) => {
+                    if (!searchQuery) return true
+                    const query = searchQuery.toLowerCase()
+                    return (
+                      client.email.toLowerCase().includes(query) ||
+                      client.name?.toLowerCase().includes(query)
+                    )
+                  })
+
+                  return filteredClients.length === 0 ? (
+                    <p className="text-neutral-500 py-2 text-center">
+                      No clients found matching "{searchQuery}"
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredClients.map((client, index) => (
                   <div
                     key={client.id || client.email || `client-${index}`}
                     className="p-4 border rounded-lg hover:bg-neutral-50"
@@ -773,9 +802,12 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                         )}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+              </>
             )}
           </div>
 
