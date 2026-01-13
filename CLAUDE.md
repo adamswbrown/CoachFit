@@ -670,11 +670,96 @@ Therefore:
    npm run test:cleanup  # Removes all test data
    ```
 
-## 🔀 PULL REQUEST WORKFLOW
+## 🔀 GITHUB WORKFLOW
 
-**Claude has authority to create and merge pull requests for batch deliveries.**
+**Claude has authority to create issues, pull requests, and merge PRs for batch deliveries.**
 
-### Standard PR Flow:
+### Work Size Decision Tree:
+
+**Small/Medium Work** (Direct PR):
+- Clear requirements
+- Single feature slice
+- <4 hour implementation
+- Limited architectural decisions
+- **Flow**: Branch → Implement → PR → Notify → Merge
+
+**Large/Complex Work** (Issue First):
+- Needs brainstorming/planning
+- Multiple feature slices
+- >4 hour implementation
+- Significant architectural decisions
+- Multiple valid approaches to consider
+- **Flow**: Issue with implementation guide → Discussion → Branch → Implement → PR → Merge
+
+---
+
+### Large Work: Issue-First Flow
+
+For big, brainstorming-focused work:
+
+1. **Create GitHub Issue** with implementation guide
+2. **User Reviews & Discusses** the approach
+3. **Refine Plan** based on feedback
+4. **Create Branch** and implement
+5. **Create PR** referencing the issue
+6. **Merge** after verification
+
+### Issue Template (for large work):
+```markdown
+## Problem Statement
+[What are we solving and why?]
+
+## Proposed Approach
+[High-level architectural approach]
+
+## Implementation Guide
+
+### Data Layer
+- [ ] Schema changes needed
+- [ ] Migration strategy
+- [ ] Data integrity considerations
+
+### Backend
+- [ ] API endpoints to create/modify
+- [ ] Authentication/authorization requirements
+- [ ] Business logic changes
+
+### Frontend
+- [ ] Components to create/modify
+- [ ] State management approach
+- [ ] User flows affected
+
+### Testing Strategy
+- [ ] Unit tests needed
+- [ ] Integration tests needed
+- [ ] E2E scenarios
+
+### Security Considerations
+- [ ] Auth/authz implications
+- [ ] Input validation requirements
+- [ ] Data protection concerns
+
+### Deployment Plan
+- [ ] Environment variables needed
+- [ ] Database migration steps
+- [ ] Rollback strategy
+- [ ] Monitoring requirements
+
+## Alternative Approaches Considered
+[What else could we do and why this approach is preferred]
+
+## Open Questions
+[What needs discussion/decision]
+
+## Estimated Complexity
+[Small/Medium/Large, time estimate if known]
+```
+
+---
+
+### Small/Medium Work: Direct PR Flow
+
+For straightforward feature slices:
 
 1. **Branch Creation**: Create feature branch from main
 2. **Batch Implementation**: Implement full feature slice (frontend + backend + data + tests + docs)
@@ -854,6 +939,8 @@ Each feature may log (in comments or this doc):
 ## 🎯 QUICK REFERENCE
 
 ### Starting a new feature:
+
+**For Small/Medium Features (Direct PR)**:
 1. Define the batch scope (what's the minimum shippable slice?)
 2. Create feature branch: `git checkout -b feature/[name]`
 3. Design data model changes (if needed)
@@ -868,6 +955,13 @@ Each feature may log (in comments or this doc):
 8. Verify deployment
 9. Update docs (in PR or follow-up)
 
+**For Large/Complex Features (Issue First)**:
+1. Create GitHub issue with implementation guide
+2. Present architectural approach and alternatives
+3. Discuss and refine with user
+4. Once approved, follow steps 2-9 above
+5. Reference issue number in PR description
+
 ### Daily workflow:
 ```bash
 npm run dev                    # Start dev server
@@ -875,11 +969,15 @@ npm run db:studio              # View database
 npm run test:generate          # Generate test data
 npm run password:set [email] [password]  # Set test user password
 
+# For large/complex work: Create issue first
+gh issue create --title "Feature: [name]" --body "[implementation guide]"
+# Wait for user feedback, then proceed with implementation
+
 # Make changes (frontend + backend + data + tests in one batch)
 
 npm run build                  # Verify build works
 
-# PR-based workflow (preferred)
+# PR-based workflow (preferred for features)
 git checkout -b feature/[feature-name]
 git add .
 git commit -m "Feature: [batch description]"
@@ -888,7 +986,7 @@ gh pr create --title "Feature: [name]" --body "[PR description]"
 # After user acknowledgment or immediately:
 gh pr merge --squash
 
-# OR direct push (for small fixes)
+# OR direct push (for tiny fixes only)
 git add . && git commit -m "Fix: [description]"
 git push                       # Auto-deploy via Vercel
 ```
