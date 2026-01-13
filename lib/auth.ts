@@ -12,6 +12,7 @@ export const authOptions: NextAuthConfig = {
   adapter: PrismaAdapter(db) as Adapter,
   session: {
     strategy: "jwt",
+    maxAge: 60 * 60, // 1 hour
   },
   providers: [
     // Google Sign-In is optional - only include if all required env vars are present
