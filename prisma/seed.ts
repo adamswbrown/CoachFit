@@ -27,7 +27,7 @@ async function main() {
     },
   })
 
-  await prisma.user.upsert({
+  const testCoach = await prisma.user.upsert({
     where: { email: "coach@test.local" },
     update: {
       roles: [Role.COACH],
@@ -80,13 +80,15 @@ async function main() {
     },
   })
 
-  // User with pending invite for auto-assignment testing
+  // Clients linked to test coach but not assigned to any cohort
+  // These will appear in "Add Existing Client" dropdown
   await prisma.user.upsert({
     where: { email: "unassigned@test.local" },
     update: {
       roles: [Role.CLIENT],
       isTestUser: true,
       onboardingComplete: true,
+      invitedByCoachId: testCoach.id,
     },
     create: {
       id: randomUUID(),
@@ -95,6 +97,45 @@ async function main() {
       roles: [Role.CLIENT],
       isTestUser: true,
       onboardingComplete: true,
+      invitedByCoachId: testCoach.id,
+    },
+  })
+
+  await prisma.user.upsert({
+    where: { email: "unassigned1@test.local" },
+    update: {
+      roles: [Role.CLIENT],
+      isTestUser: true,
+      onboardingComplete: true,
+      invitedByCoachId: testCoach.id,
+    },
+    create: {
+      id: randomUUID(),
+      email: "unassigned1@test.local",
+      name: "Unassigned Client 1",
+      roles: [Role.CLIENT],
+      isTestUser: true,
+      onboardingComplete: true,
+      invitedByCoachId: testCoach.id,
+    },
+  })
+
+  await prisma.user.upsert({
+    where: { email: "unassigned2@test.local" },
+    update: {
+      roles: [Role.CLIENT],
+      isTestUser: true,
+      onboardingComplete: true,
+      invitedByCoachId: testCoach.id,
+    },
+    create: {
+      id: randomUUID(),
+      email: "unassigned2@test.local",
+      name: "Unassigned Client 2",
+      roles: [Role.CLIENT],
+      isTestUser: true,
+      onboardingComplete: true,
+      invitedByCoachId: testCoach.id,
     },
   })
 
@@ -102,8 +143,10 @@ async function main() {
   console.log("   - admin@test.local (ADMIN role)")
   console.log("   - coach@test.local (COACH role)")
   console.log("   - client@test.local (CLIENT role)")
-  console.log("   - noinvite@test.local (CLIENT role, no cohort)")
-  console.log("   - unassigned@test.local (CLIENT role, has pending invite)")
+  console.log("   - noinvite@test.local (CLIENT role, no coach)")
+  console.log("   - unassigned@test.local (CLIENT role, linked to test coach, no cohort)")
+  console.log("   - unassigned1@test.local (CLIENT role, linked to test coach, no cohort)")
+  console.log("   - unassigned2@test.local (CLIENT role, linked to test coach, no cohort)")
   console.log("\n⚠️  Note: These users don't have passwords set.")
   console.log("   Use 'npm run password:set <email> <password>' to set passwords.")
 }
