@@ -517,23 +517,25 @@ const workoutResponse = await fetch("http://localhost:3000/api/healthkit/ingest/
 ### 2.1 Fork and Setup (2 hours)
 
 **Tasks:**
-1. Copy GymDashSync iOS app to `/mobile/ios/`
+1. iOS app already copied to `../mobile/ios/` (sibling to Web/)
 2. Rename project: GymDashSync → CoachFitSync
 3. Update bundle identifier: `com.coachfit.sync`
 4. Update Xcode project settings
 5. Update Info.plist with HealthKit permissions
 
 **Deliverables:**
-- [ ] iOS app copied to CoachFit repo
+- [x] iOS app copied to CoachFit repo
 - [ ] Project renamed
 - [ ] Bundle identifier updated
 - [ ] Builds successfully in Xcode
+
+**Note:** Mobile apps are located at `/CoachFit/mobile/` (parent of Web/), not inside the Web directory.
 
 ---
 
 ### 2.2 Update NetworkService (4 hours)
 
-**File:** `mobile/ios/Sources/NetworkService.swift`
+**File:** `../mobile/ios/GymDashSync/NetworkService.swift`
 
 ```swift
 class NetworkService {
@@ -571,7 +573,7 @@ class NetworkService {
 
 ### 2.3 Add Steps Collection (4 hours)
 
-**File:** `mobile/ios/Sources/ExternalObjects.swift`
+**File:** `../mobile/ios/GymDashSync/ExternalObjects.swift`
 
 ```swift
 class StepsExternalObject: HDSExternalObjectProtocol {
@@ -622,7 +624,7 @@ class StepsExternalObject: HDSExternalObjectProtocol {
 
 ### 2.4 Add Sleep Collection (4 hours)
 
-**File:** `mobile/ios/Sources/ExternalObjects.swift`
+**File:** `../mobile/ios/GymDashSync/ExternalObjects.swift`
 
 ```swift
 class SleepExternalObject: HDSExternalObjectProtocol {
@@ -653,7 +655,7 @@ class SleepExternalObject: HDSExternalObjectProtocol {
 
 ### 2.5 Update GymDashExternalStore (6 hours)
 
-**File:** `mobile/ios/Sources/GymDashExternalStore.swift`
+**File:** `../mobile/ios/GymDashSync/GymDashExternalStore.swift`
 
 Update to sync all data types:
 - Workouts (existing)
