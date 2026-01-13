@@ -22,10 +22,25 @@ interface Entry {
   updatedAt: string
 }
 
+interface Workout {
+  id: string
+  workoutType: string
+  startTime: string
+  endTime: string
+  durationSecs: number
+  caloriesActive: number | null
+  distanceMeters: number | null
+  avgHeartRate: number | null
+  maxHeartRate: number | null
+  sourceDevice: string | null
+  createdAt: string
+}
+
 export default function ClientDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [entries, setEntries] = useState<Entry[]>([])
+  const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -62,6 +77,7 @@ export default function ClientDashboard() {
       checkCohortMembership()
       fetchEntries()
       fetchCheckInConfig()
+      fetchWorkouts()
     }
   }, [session])
 
@@ -152,6 +168,20 @@ export default function ClientDashboard() {
       setError(errorMessage)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchWorkouts = async () => {
+    if (!session?.user?.id) return
+    try {
+      const res = await fetch(`/api/healthkit/workouts?clientId=${session.user.id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setWorkouts(data.workouts || [])
+      }
+    } catch (err) {
+      console.error("Error fetching workouts:", err)
+      // Don't set error state - workouts are optional
     }
   }
 
@@ -381,6 +411,76 @@ export default function ClientDashboard() {
               <p className="text-2xl font-semibold text-neutral-900">
                 {totalEntriesThisWeek} <span className="text-base font-normal text-neutral-400">/ 7</span>
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Recent Workouts */}
+        {workouts.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-neutral-900">Recent Workouts</h2>
+              <span className="text-sm text-neutral-500">{workouts.length} total</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {workouts.slice(0, 6).map((workout) => {
+                const duration = Math.floor(workout.durationSecs / 60)
+                const distance = workout.distanceMeters ? (workout.distanceMeters / 1609.34).toFixed(2) : null
+                const workoutDate = new Date(workout.startTime)
+                const isToday = workoutDate.toDateString() === new Date().toDateString()
+                const dateLabel = isToday
+                  ? "Today"
+                  : workoutDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+
+                return (
+                  <div key={workout.id} className="bg-white rounded-lg p-4 border border-neutral-200 hover:border-neutral-300 transition-colors">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-neutral-900 text-sm mb-1">
+                          {workout.workoutType}
+                        </h3>
+                        <p className="text-xs text-neutral-500">{dateLabel}</p>
+                      </div>
+                      {isToday && (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded">
+                          Today
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-neutral-500">Duration</span>
+                        <span className="font-medium text-neutral-900">{duration} min</span>
+                      </div>
+                      {workout.caloriesActive !== null && (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-neutral-500">Calories</span>
+                          <span className="font-medium text-neutral-900">{workout.caloriesActive} kcal</span>
+                        </div>
+                      )}
+                      {distance && (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-neutral-500">Distance</span>
+                          <span className="font-medium text-neutral-900">{distance} mi</span>
+                        </div>
+                      )}
+                      {workout.avgHeartRate && (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-neutral-500">Avg HR</span>
+                          <span className="font-medium text-neutral-900">{workout.avgHeartRate} bpm</span>
+                        </div>
+                      )}
+                    </div>
+                    {workout.sourceDevice && (
+                      <div className="mt-3 pt-3 border-t border-neutral-100">
+                        <p className="text-xs text-neutral-400 truncate" title={workout.sourceDevice}>
+                          {workout.sourceDevice}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

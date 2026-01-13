@@ -10,8 +10,9 @@ import { fetchWithRetry } from "@/lib/fetch-with-retry"
 interface Cohort {
   id: string
   name: string
+  activeClients: number
+  pendingInvites: number
   createdAt: string
-  clientCount: number
 }
 
 export default function CohortsPage() {
@@ -20,6 +21,7 @@ export default function CohortsPage() {
   const [cohorts, setCohorts] = useState<Cohort[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -93,6 +95,13 @@ export default function CohortsPage() {
     )
   }
 
+  // Filter cohorts based on search query
+  const filteredCohorts = cohorts.filter((cohort) => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    return cohort.name.toLowerCase().includes(query)
+  })
+
   return (
     <CoachLayout>
       <div className="max-w-7xl mx-auto">
@@ -103,55 +112,87 @@ export default function CohortsPage() {
           </p>
         </div>
 
-        {cohorts.length === 0 ? (
-          <div className="bg-white border border-neutral-200 rounded-lg p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">📁</span>
-            </div>
-            <h3 className="font-medium text-neutral-900 mb-1">No cohorts yet</h3>
-            <p className="text-sm text-neutral-500 mb-6">
-              Create a cohort to organize your clients.
-            </p>
-            <Link
-              href="/coach-dashboard"
-              className="inline-block bg-neutral-900 text-white px-6 py-2 rounded-md hover:bg-neutral-800 transition-colors text-sm font-medium"
-            >
-              Go to Dashboard
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {cohorts.map((cohort) => (
+        <div className="bg-white border border-neutral-200 rounded-lg">
+          {cohorts.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">📁</span>
+              </div>
+              <h3 className="font-medium text-neutral-900 mb-1">No cohorts yet</h3>
+              <p className="text-sm text-neutral-500 mb-6">
+                Create a cohort to organize your clients.
+              </p>
               <Link
-                key={cohort.id}
-                href={`/cohorts/${cohort.id}`}
-                className="bg-white border border-neutral-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                href="/coach-dashboard?showForm=true"
+                className="inline-block bg-neutral-900 text-white px-6 py-2 rounded-md hover:bg-neutral-800 transition-colors text-sm font-medium"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-neutral-900">{cohort.name}</h3>
-                  <span className="text-2xl">📁</span>
-                </div>
-                <div className="space-y-2 text-sm text-neutral-600">
-                  <div className="flex justify-between">
-                    <span>Clients:</span>
-                    <span className="font-medium text-neutral-900">{cohort.clientCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Created:</span>
-                    <span className="font-medium text-neutral-900">
-                      {new Date(cohort.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 border-t border-neutral-100">
-                  <span className="text-sm text-neutral-600 hover:text-neutral-900">
-                    View Details →
-                  </span>
-                </div>
+                Create Your First Cohort
               </Link>
-            ))}
-          </div>
-        )}
+            </div>
+          ) : (
+            <>
+              {/* Search Bar */}
+              <div className="p-4 border-b border-neutral-200">
+                <input
+                  type="text"
+                  placeholder="Search cohorts by name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500"
+                />
+              </div>
+
+              {filteredCohorts.length === 0 ? (
+                <div className="p-8 text-center text-neutral-500">
+                  No cohorts found matching "{searchQuery}"
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-neutral-50">
+                        <th className="text-left p-3 font-semibold text-neutral-900">Cohort Name</th>
+                        <th className="text-left p-3 font-semibold text-neutral-900">Active Clients</th>
+                        <th className="text-left p-3 font-semibold text-neutral-900">Pending Invites</th>
+                        <th className="text-left p-3 font-semibold text-neutral-900">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredCohorts.map((cohort) => (
+                        <tr key={cohort.id} className="border-b hover:bg-neutral-50">
+                          <td className="p-3">
+                            <Link
+                              href={`/cohorts/${cohort.id}`}
+                              className="font-semibold text-neutral-900 hover:underline"
+                            >
+                              {cohort.name}
+                            </Link>
+                          </td>
+                          <td className="p-3">{cohort.activeClients}</td>
+                          <td className="p-3">{cohort.pendingInvites}</td>
+                          <td className="p-3">
+                            <Link
+                              href={`/cohorts/${cohort.id}`}
+                              className="text-neutral-900 hover:underline text-sm mr-3"
+                            >
+                              View
+                            </Link>
+                            <Link
+                              href={`/cohorts/${cohort.id}/analytics`}
+                              className="text-neutral-900 hover:underline text-sm"
+                            >
+                              Analytics
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </CoachLayout>
   )

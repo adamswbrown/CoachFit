@@ -855,59 +855,6 @@ function CoachDashboardContent() {
               </div>
             )}
 
-            {/* Cohorts */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-6 mb-8">
-              <h2 className="text-xl font-semibold mb-4">Cohorts</h2>
-              {data.cohorts.length === 0 ? (
-                <p className="text-neutral-500 py-4">
-                  No cohorts yet. Create a cohort to organize your clients.
-                </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3 font-semibold">Cohort Name</th>
-                        <th className="text-left p-3 font-semibold">Active Clients</th>
-                        <th className="text-left p-3 font-semibold">Pending Invites</th>
-                        <th className="text-left p-3 font-semibold">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.cohorts.map((cohort) => (
-                        <tr key={cohort.id} className="border-b hover:bg-neutral-50">
-                          <td className="p-3">
-                            <Link
-                              href={`/cohorts/${cohort.id}`}
-                              className="font-semibold text-neutral-900 hover:underline"
-                            >
-                              {cohort.name}
-                            </Link>
-                          </td>
-                          <td className="p-3">{cohort.activeClients}</td>
-                          <td className="p-3">{cohort.pendingInvites}</td>
-                          <td className="p-3">
-                            <Link
-                              href={`/cohorts/${cohort.id}`}
-                              className="text-neutral-900 hover:underline text-sm mr-3"
-                            >
-                              View
-                            </Link>
-                            <Link
-                              href={`/cohorts/${cohort.id}/analytics`}
-                              className="text-neutral-900 hover:underline text-sm"
-                            >
-                              Analytics
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
             {/* Pending Invites - Only show if filter is all, pending, or invited */}
             {(currentFilter === "all" || currentFilter === "pending" || currentFilter === "invited") && invitedClients.length > 0 && (
               <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
