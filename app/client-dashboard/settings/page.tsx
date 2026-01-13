@@ -11,7 +11,7 @@ interface UserSettings {
   id: string
   name: string | null
   email: string
-  accounts: Array<{
+  Account: Array<{
     provider: string
     providerAccountId: string
   }>
@@ -162,8 +162,8 @@ export default function ClientSettingsPage() {
     )
   }
 
-  const hasGoogleAccount = settings.accounts.some(acc => acc.provider === "google")
-  const hasAppleAccount = settings.accounts.some(acc => acc.provider === "apple")
+  const hasGoogleAccount = settings.Account.some(acc => acc.provider === "google")
+  const hasAppleAccount = settings.Account.some(acc => acc.provider === "apple")
 
   return (
     <ClientLayout>

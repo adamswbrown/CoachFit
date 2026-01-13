@@ -43,7 +43,7 @@ export async function GET(
         id: true,
         name: true,
         email: true,
-        cohortMemberships: {
+        CohortMembership: {
           where: { cohortId },
           select: { cohortId: true },
         },
@@ -52,7 +52,7 @@ export async function GET(
 
     // Filter out clients already in this cohort
     const availableClients = allClients
-      .filter((client) => client.cohortMemberships.length === 0)
+      .filter((client) => client.CohortMembership.length === 0)
       .map((client) => ({
         id: client.id,
         name: client.name,

@@ -11,7 +11,7 @@ interface Client {
   id: string
   name: string | null
   email: string
-  accounts: Array<{
+  Account: Array<{
     provider: string
     providerAccountId: string
   }>
@@ -150,8 +150,8 @@ export default function ClientSettingsPage() {
     )
   }
 
-  const hasGoogleAccount = client.accounts.some(acc => acc.provider === "google")
-  const hasAppleAccount = client.accounts.some(acc => acc.provider === "apple")
+  const hasGoogleAccount = client.Account.some(acc => acc.provider === "google")
+  const hasAppleAccount = client.Account.some(acc => acc.provider === "apple")
 
   return (
     <CoachLayout>
