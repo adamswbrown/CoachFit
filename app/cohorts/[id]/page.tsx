@@ -39,11 +39,14 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
   const [cohort, setCohort] = useState<Cohort | null>(null)
   const [clients, setClients] = useState<Client[]>([])
   const [invites, setInvites] = useState<Invite[]>([])
+  const [availableClients, setAvailableClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [assigningClientId, setAssigningClientId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({ email: "" })
+  const [selectedClientId, setSelectedClientId] = useState<string>("")
   
   // Check-in config state
   const [showConfigForm, setShowConfigForm] = useState(false)
@@ -78,7 +81,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
       const loadData = async () => {
         setLoading(true)
         try {
-          await Promise.all([fetchCohort(), fetchClients(), fetchCheckInConfig()])
+          await Promise.all([fetchCohort(), fetchClients(), fetchCheckInConfig(), fetchAvailableClients()])
         } finally {
           setLoading(false)
         }
@@ -145,6 +148,78 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
     } catch (err) {
       console.error("Error fetching check-in config:", err)
       // Use defaults if fetch fails
+    }
+  }
+
+  const fetchAvailableClients = async () => {
+    try {
+      const res = await fetch(`/api/cohorts/${cohortId}/available-clients`)
+      if (res.ok) {
+        const data = await res.json()
+        setAvailableClients(data.availableClients || [])
+      } else {
+        console.error("Error fetching available clients")
+        setAvailableClients([])
+      }
+    } catch (err) {
+      console.error("Error fetching available clients:", err)
+      setAvailableClients([])
+    }
+  }
+
+  const handleAssignExistingClient = async () => {
+    if (!selectedClientId) {
+      setError("Please select a client")
+      return
+    }
+
+    setAssigningClientId(selectedClientId)
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/clients/${selectedClientId}/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cohortId }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        setSelectedClientId("")
+        setError(null)
+        // Refresh clients and available clients
+        await Promise.all([fetchClients(), fetchAvailableClients()])
+      } else {
+        setError(data.error || "Failed to assign client to cohort")
+      }
+    } catch (err) {
+      setError("Unable to assign client. Please try again.")
+    } finally {
+      setAssigningClientId(null)
+    }
+  }
+
+  const handleRemoveClient = async (clientId: string, clientName: string) => {
+    if (!confirm(`Remove ${clientName} from this cohort?`)) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/cohorts/${cohortId}/clients/${clientId}`, {
+        method: "DELETE",
+      })
+
+      if (res.ok) {
+        setError(null)
+        // Refresh clients and available clients
+        await Promise.all([fetchClients(), fetchAvailableClients()])
+      } else {
+        const data = await res.json()
+        setError(data.error || "Failed to remove client from cohort")
+      }
+    } catch (err) {
+      setError("Unable to remove client. Please try again.")
     }
   }
 
@@ -562,41 +637,80 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
           </div>
 
           {showForm && (
-            <div className="mb-4 p-4 bg-neutral-50 rounded">
-              <p className="text-sm text-neutral-600 mb-4">
-                Invite clients by email. They'll be added automatically when they sign in.
-              </p>
+            <div className="mb-4 p-4 bg-neutral-50 rounded space-y-6">
               {error && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-800 rounded-md text-sm">
+                <div className="p-3 bg-red-100 border border-red-300 text-red-800 rounded-md text-sm">
                   {error}
                 </div>
               )}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Client Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => {
-                      setFormData({ ...formData, email: e.target.value })
-                      // Clear error when user starts typing
-                      if (error) setError(null)
-                    }}
-                    className="w-full px-3 py-2 border rounded-md"
-                    placeholder="client@example.com"
-                  />
+
+              {/* Add Existing Client Section */}
+              {availableClients.length > 0 && (
+                <div className="pb-6 border-b border-neutral-200">
+                  <h3 className="text-sm font-semibold mb-2">Add Existing Client</h3>
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Select a client from your roster to add to this cohort.
+                  </p>
+                  <div className="flex gap-2">
+                    <select
+                      value={selectedClientId}
+                      onChange={(e) => {
+                        setSelectedClientId(e.target.value)
+                        if (error) setError(null)
+                      }}
+                      className="flex-1 px-3 py-2 border rounded-md"
+                    >
+                      <option value="">Select a client...</option>
+                      {availableClients.map((client) => (
+                        <option key={client.id} value={client.id}>
+                          {client.name || client.email}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={handleAssignExistingClient}
+                      disabled={!selectedClientId || assigningClientId !== null}
+                      className="bg-neutral-900 text-white px-6 py-2 rounded-md hover:bg-neutral-800 disabled:opacity-50 text-sm font-medium"
+                    >
+                      {assigningClientId ? "Adding..." : "Add"}
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-neutral-800 disabled:opacity-50"
-                >
-                  {submitting ? "Adding..." : "Add Client"}
-                </button>
-              </form>
+              )}
+
+              {/* Invite by Email Section */}
+              <div>
+                <h3 className="text-sm font-semibold mb-2">Invite New Client</h3>
+                <p className="text-sm text-neutral-600 mb-4">
+                  Invite clients by email. They'll be added automatically when they sign in.
+                </p>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Client Email
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => {
+                        setFormData({ ...formData, email: e.target.value })
+                        // Clear error when user starts typing
+                        if (error) setError(null)
+                      }}
+                      className="w-full px-3 py-2 border rounded-md"
+                      placeholder="client@example.com"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-neutral-800 disabled:opacity-50"
+                  >
+                    {submitting ? "Sending Invite..." : "Send Invite"}
+                  </button>
+                </form>
+              </div>
             </div>
           )}
 
@@ -612,30 +726,42 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
             ) : (
               <div className="space-y-2">
                 {clients.map((client, index) => (
-                  <Link
+                  <div
                     key={client.id || client.email || `client-${index}`}
-                    href={client.id ? `/clients/${client.id}/entries` : "#"}
-                    className={`block p-4 border rounded-lg hover:bg-neutral-50 ${!client.id ? "opacity-50 cursor-not-allowed" : ""}`}
-                    onClick={(e) => {
-                      if (!client.id) {
-                        e.preventDefault()
-                      }
-                    }}
+                    className="p-4 border rounded-lg hover:bg-neutral-50"
                   >
                     <div className="flex justify-between items-center">
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-semibold">
                           {client.name || "No name"}
                         </h3>
                         <p className="text-sm text-neutral-500">{client.email}</p>
                       </div>
-                      {client.id ? (
-                        <span className="text-neutral-900">View Entries →</span>
-                      ) : (
-                        <span className="text-sm text-neutral-400">No ID available</span>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {client.id ? (
+                          <Link
+                            href={`/clients/${client.id}/entries`}
+                            className="text-neutral-900 hover:underline text-sm"
+                          >
+                            View Entries →
+                          </Link>
+                        ) : (
+                          <span className="text-sm text-neutral-400">No ID available</span>
+                        )}
+                        {client.id && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRemoveClient(client.id!, client.name || client.email)
+                            }}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
