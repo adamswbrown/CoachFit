@@ -234,9 +234,12 @@ export default function ClientOverviewPage() {
             <span className="px-1 py-3 text-sm font-medium text-neutral-400 -mb-px whitespace-nowrap">
               Metrics
             </span>
-            <span className="px-1 py-3 text-sm font-medium text-neutral-400 -mb-px whitespace-nowrap">
+            <Link
+              href={`/clients/${clientId}/settings`}
+              className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap"
+            >
               Settings
-            </span>
+            </Link>
           </nav>
         </div>
 
