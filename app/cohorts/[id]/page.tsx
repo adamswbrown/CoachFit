@@ -159,14 +159,13 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
         setAvailableClients(data.availableClients || [])
       } else {
         const errorData = await res.json().catch(() => ({}))
-        console.error("Error fetching available clients:", errorData)
-        // Don't show error to user - just means no available clients or API issue
-        // The UI will show "No available clients" message instead
+        console.error("Error fetching available clients:", res.status, errorData)
+        // Don't show error to user - the UI will show "No available clients" message
         setAvailableClients([])
       }
     } catch (err) {
       console.error("Error fetching available clients:", err)
-      // Don't show error to user - just means no available clients or API issue
+      // Don't show error to user - the UI will show "No available clients" message
       setAvailableClients([])
     }
   }
