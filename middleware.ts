@@ -20,8 +20,36 @@ function parseJWT(token: string): any {
   }
 }
 
+/**
+ * Add CORS headers for iOS HealthKit ingestion endpoints.
+ * These endpoints need to be accessible from the iOS app.
+ */
+function addCorsHeaders(response: NextResponse): NextResponse {
+  response.headers.set('Access-Control-Allow-Origin', '*')
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  response.headers.set('Access-Control-Max-Age', '86400') // 24 hours
+  return response
+}
+
+/**
+ * Check if this is a HealthKit ingestion endpoint that needs CORS
+ */
+function isHealthKitEndpoint(pathname: string): boolean {
+  return pathname.startsWith('/api/ingest') || pathname.startsWith('/api/pair')
+}
+
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
+
+  // Handle CORS preflight for HealthKit endpoints
+  if (isHealthKitEndpoint(pathname)) {
+    if (req.method === 'OPTIONS') {
+      // Handle preflight request
+      const response = new NextResponse(null, { status: 200 })
+      return addCorsHeaders(response)
+    }
+  }
 
   // Public routes - allow access (no auth check needed)
   if (
@@ -39,6 +67,12 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/api/onboarding")
   ) {
     return NextResponse.next()
+  }
+
+  // HealthKit ingestion endpoints - allow access with CORS (auth handled in route handlers)
+  if (isHealthKitEndpoint(pathname)) {
+    const response = NextResponse.next()
+    return addCorsHeaders(response)
   }
 
   // For API routes, if we can't parse the JWT properly, let NextAuth handle it

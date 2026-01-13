@@ -67,6 +67,7 @@ export default function AdminPage() {
   const [resetPassword, setResetPassword] = useState("")
   const [resettingPassword, setResettingPassword] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [cohortSearchQuery, setCohortSearchQuery] = useState("")
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -248,6 +249,17 @@ export default function AdminPage() {
       user.email.toLowerCase().includes(query) ||
       user.name?.toLowerCase().includes(query) ||
       user.roles.some((role) => role.toLowerCase().includes(query))
+    )
+  })
+
+  // Filter cohorts based on search query
+  const filteredCohorts = cohorts.filter((cohort) => {
+    if (!cohortSearchQuery) return true
+    const query = cohortSearchQuery.toLowerCase()
+    return (
+      cohort.name.toLowerCase().includes(query) ||
+      cohort.coach.name?.toLowerCase().includes(query) ||
+      cohort.coach.email.toLowerCase().includes(query)
     )
   })
 
@@ -552,8 +564,21 @@ export default function AdminPage() {
         {/* Cohorts Tab */}
         {activeTab === "cohorts" && (
           <div className="bg-white border border-neutral-200 rounded-lg">
-            {cohorts.length === 0 ? (
-              <div className="p-8 text-center text-neutral-500">No cohorts found.</div>
+            {/* Search Bar */}
+            <div className="p-4 border-b border-neutral-200">
+              <input
+                type="text"
+                placeholder="Search cohorts by name or coach..."
+                value={cohortSearchQuery}
+                onChange={(e) => setCohortSearchQuery(e.target.value)}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500"
+              />
+            </div>
+
+            {filteredCohorts.length === 0 ? (
+              <div className="p-8 text-center text-neutral-500">
+                {cohortSearchQuery ? "No cohorts found matching your search." : "No cohorts found."}
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -567,7 +592,7 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {cohorts.map((cohort) => (
+                    {filteredCohorts.map((cohort) => (
                       <tr key={cohort.id} className="border-b border-neutral-100 hover:bg-neutral-50">
                         <td className="p-2.5">
                           <Link

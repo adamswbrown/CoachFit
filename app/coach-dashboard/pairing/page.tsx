@@ -1,0 +1,255 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { isAdminOrCoach } from "@/lib/permissions"
+import { CoachLayout } from "@/components/layouts/CoachLayout"
+
+interface PairingCode {
+  code: string
+  expires_at: string
+  created_at: string
+}
+
+export default function PairingPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const [activeCodes, setActiveCodes] = useState<PairingCode[]>([])
+  const [loading, setLoading] = useState(true)
+  const [generating, setGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login")
+    } else if (session?.user && !isAdminOrCoach(session.user)) {
+      router.push("/client-dashboard")
+    }
+  }, [status, session, router])
+
+  useEffect(() => {
+    if (session) {
+      fetchActiveCodes()
+    }
+  }, [session])
+
+  const fetchActiveCodes = async () => {
+    try {
+      const res = await fetch("/api/pairing-codes/generate")
+      if (res.ok) {
+        const data = await res.json()
+        setActiveCodes(data.codes || [])
+      }
+    } catch (err) {
+      console.error("Error fetching pairing codes:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGenerateCode = async () => {
+    setGenerating(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const res = await fetch("/api/pairing-codes/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        setSuccess(`Generated pairing code: ${data.code}`)
+        fetchActiveCodes()
+      } else {
+        setError(data.error || "Failed to generate pairing code")
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.")
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const handleCopyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopiedCode(code)
+      setTimeout(() => setCopiedCode(null), 2000)
+    } catch (err) {
+      console.error("Failed to copy code:", err)
+    }
+  }
+
+  const formatExpirationTime = (expiresAt: string) => {
+    const expiration = new Date(expiresAt)
+    const now = new Date()
+    const diff = expiration.getTime() - now.getTime()
+
+    if (diff <= 0) return "Expired"
+
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m remaining`
+    }
+    return `${minutes}m remaining`
+  }
+
+  if (status === "loading" || loading) {
+    return (
+      <CoachLayout>
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="w-8 h-8 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-neutral-600">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </CoachLayout>
+    )
+  }
+
+  if (!session) {
+    return null
+  }
+
+  return (
+    <CoachLayout>
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 text-sm text-neutral-500 mb-2">
+            <Link href="/coach-dashboard" className="hover:text-neutral-700">
+              Dashboard
+            </Link>
+            <span>/</span>
+            <span className="text-neutral-900">iOS App Pairing</span>
+          </div>
+          <h1 className="text-2xl font-semibold text-neutral-900">iOS App Pairing</h1>
+          <p className="text-neutral-600 text-sm mt-1">
+            Generate pairing codes for clients to connect their iOS app with HealthKit data sync.
+          </p>
+        </div>
+
+        {/* Alerts */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-md text-sm">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded-md text-sm">
+            {success}
+          </div>
+        )}
+
+        {/* Info Card */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+          <h2 className="text-lg font-semibold text-blue-900 mb-2">How Pairing Works</h2>
+          <ol className="list-decimal list-inside space-y-2 text-blue-800 text-sm">
+            <li>Generate a 6-character pairing code below</li>
+            <li>Share the code with your client</li>
+            <li>Client enters the code in the iOS app (GymDashSync)</li>
+            <li>Once paired, HealthKit data will automatically sync to their CoachFit account</li>
+          </ol>
+          <div className="mt-4 p-3 bg-blue-100 rounded-md">
+            <p className="text-blue-900 text-sm">
+              <strong>Note:</strong> Pairing codes expire after 24 hours and can only be used once.
+            </p>
+          </div>
+        </div>
+
+        {/* Generate Button */}
+        <div className="bg-white border border-neutral-200 rounded-lg p-6 mb-8">
+          <h2 className="text-lg font-semibold text-neutral-900 mb-4">Generate New Pairing Code</h2>
+          <button
+            onClick={handleGenerateCode}
+            disabled={generating}
+            className="bg-neutral-900 text-white px-6 py-3 rounded-md hover:bg-neutral-800 disabled:opacity-50 font-medium"
+          >
+            {generating ? "Generating..." : "Generate Pairing Code"}
+          </button>
+        </div>
+
+        {/* Active Codes */}
+        <div className="bg-white border border-neutral-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-neutral-900 mb-4">Active Pairing Codes</h2>
+
+          {activeCodes.length === 0 ? (
+            <p className="text-neutral-500 py-4">
+              No active pairing codes. Generate one above to get started.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {activeCodes.map((code) => (
+                <div
+                  key={code.code}
+                  className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg border border-neutral-200"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="font-mono text-2xl font-bold text-neutral-900 tracking-wider">
+                      {code.code}
+                    </div>
+                    <div className="text-sm text-neutral-600">
+                      {formatExpirationTime(code.expires_at)}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleCopyCode(code.code)}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      copiedCode === code.code
+                        ? "bg-green-100 text-green-700"
+                        : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300"
+                    }`}
+                  >
+                    {copiedCode === code.code ? "Copied!" : "Copy Code"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* What Gets Synced */}
+        <div className="bg-white border border-neutral-200 rounded-lg p-6 mt-8">
+          <h2 className="text-lg font-semibold text-neutral-900 mb-4">What Data Gets Synced</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-neutral-50 rounded-lg">
+              <h3 className="font-medium text-neutral-900 mb-2">Workouts</h3>
+              <p className="text-sm text-neutral-600">
+                All workout types, duration, calories, heart rate, and distance
+              </p>
+            </div>
+            <div className="p-4 bg-neutral-50 rounded-lg">
+              <h3 className="font-medium text-neutral-900 mb-2">Body Metrics</h3>
+              <p className="text-sm text-neutral-600">
+                Weight, height, and body composition measurements
+              </p>
+            </div>
+            <div className="p-4 bg-neutral-50 rounded-lg">
+              <h3 className="font-medium text-neutral-900 mb-2">Steps</h3>
+              <p className="text-sm text-neutral-600">
+                Daily step counts from iPhone and Apple Watch
+              </p>
+            </div>
+            <div className="p-4 bg-neutral-50 rounded-lg">
+              <h3 className="font-medium text-neutral-900 mb-2">Sleep</h3>
+              <p className="text-sm text-neutral-600">
+                Sleep duration, stages (REM, deep, core), and quality
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </CoachLayout>
+  )
+}

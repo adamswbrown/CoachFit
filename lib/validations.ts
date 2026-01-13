@@ -1,5 +1,8 @@
 import { z } from "zod"
 
+// Re-export HealthKit validation schemas
+export * from "./validations/healthkit"
+
 export const upsertEntrySchema = z.object({
   weightLbs: z.number().positive("Weight must be greater than 0").max(1000, "Weight must be 1000 lbs or less").optional(),
   steps: z.number().int("Steps must be an integer").nonnegative("Steps cannot be negative").max(100000, "Steps must be 100,000 or less").optional(),

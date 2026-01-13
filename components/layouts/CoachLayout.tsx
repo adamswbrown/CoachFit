@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useState, useEffect, useRef, Suspense } from "react"
 import { isAdmin } from "@/lib/permissions"
-import { ClientsIcon, CohortsIcon } from "@/components/icons"
+import { ClientsIcon, CohortsIcon, MobileIcon } from "@/components/icons"
 
 interface CoachLayoutProps {
   children: React.ReactNode
@@ -69,10 +69,12 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   }
 
   const isCohortsActive = pathname === "/cohorts" || pathname?.startsWith("/cohorts/")
-  
+  const isPairingActive = pathname === "/coach-dashboard/pairing"
+
   const navigation = [
     { name: "Clients", href: "/coach-dashboard", icon: ClientsIcon, hasDropdown: true, dropdownKey: "clients" },
     { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" },
+    { name: "iOS Pairing", href: "/coach-dashboard/pairing", icon: MobileIcon, hasDropdown: false, dropdownKey: "pairing" },
   ]
 
   return (
