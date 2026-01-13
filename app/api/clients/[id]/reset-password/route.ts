@@ -37,12 +37,11 @@ export async function POST(
       )
     }
 
-    // Verify the client exists and belongs to this coach (or is admin)
+    // Verify the client exists
     const client = await db.user.findUnique({
       where: { id: clientId },
       select: {
         id: true,
-        invitedByCoachId: true,
       },
     })
 
@@ -50,9 +49,18 @@ export async function POST(
       return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }
 
-    // Check coach relationship (unless admin)
+    // Check if client is in any of the coach's cohorts (unless admin)
     if (!session.user.roles.includes("ADMIN")) {
-      if (client.invitedByCoachId !== session.user.id) {
+      const cohortMembership = await db.cohortMembership.findFirst({
+        where: {
+          userId: clientId,
+          Cohort: {
+            coachId: session.user.id,
+          },
+        },
+      })
+
+      if (!cohortMembership) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
     }

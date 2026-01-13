@@ -41,14 +41,17 @@ export async function GET(
 
     // Verify the client belongs to this coach (or is admin)
     if (!session.user.roles.includes("ADMIN")) {
-      const clientCoachRelation = await db.user.findFirst({
+      // Check if client is in any of the coach's cohorts
+      const cohortMembership = await db.cohortMembership.findFirst({
         where: {
-          id: clientId,
-          invitedByCoachId: session.user.id,
+          userId: clientId,
+          Cohort: {
+            coachId: session.user.id,
+          },
         },
       })
 
-      if (!clientCoachRelation) {
+      if (!cohortMembership) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
     }
