@@ -76,6 +76,7 @@ function CoachDashboardContent() {
   const [assigningClient, setAssigningClient] = useState<string | null>(null)
   const [selectedCohortForAssign, setSelectedCohortForAssign] = useState<Record<string, string>>({})
   const [retryCount, setRetryCount] = useState(0)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const currentFilter = (searchParams.get("filter") as ClientFilter) || "all"
 
@@ -368,7 +369,15 @@ function CoachDashboardContent() {
     }
   }
 
-  const filteredClients = getFilteredClients()
+  // Apply status filter first, then text search
+  const filteredClients = getFilteredClients().filter((client) => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      client.email.toLowerCase().includes(query) ||
+      client.name?.toLowerCase().includes(query)
+    )
+  })
 
   return (
     <CoachLayout>
@@ -709,6 +718,18 @@ function CoachDashboardContent() {
                     </p>
                   </div>
                 </div>
+
+                {/* Search Bar */}
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    placeholder="Search clients by name or email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500"
+                  />
+                </div>
+
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
