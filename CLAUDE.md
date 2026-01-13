@@ -315,12 +315,50 @@ if (!parsed.success) {
 ### Frontend Architecture
 
 **App Router Structure** (app/):
-- `app/client-dashboard/` - Client views (entry logging, history)
-- `app/coach-dashboard/` - Coach views (cohort management, analytics)
-- `app/admin/` - Admin views (user management, system overview)
-- `app/cohorts/[id]/` - Cohort details and analytics
-- `app/clients/[id]/` - Individual client views (coach perspective)
-- `app/api/` - API routes organized by resource
+```
+app/
+├── client-dashboard/       # Client views (entry logging, history)
+├── coach-dashboard/        # Coach views (cohort management, analytics)
+├── admin/                  # Admin views (user management, system overview)
+├── cohorts/[id]/          # Cohort details and analytics
+├── clients/[id]/          # Individual client views (coach perspective)
+├── api/                   # API routes organized by resource
+│   ├── admin/            # Admin API endpoints
+│   ├── auth/             # Authentication routes
+│   ├── client/           # Client-specific APIs
+│   ├── clients/          # Client management APIs (coach perspective)
+│   ├── coach-dashboard/  # Coach dashboard APIs
+│   ├── cohorts/          # Cohort management APIs
+│   ├── entries/          # Entry logging APIs
+│   └── invites/          # Invitation APIs
+├── login/                 # Login page
+├── signup/                # Signup page
+├── dashboard/             # Root dashboard redirect
+└── onboarding/            # Onboarding flow
+```
+
+**Backend Structure**:
+```
+lib/
+├── auth.ts               # NextAuth configuration
+├── db.ts                 # Prisma client instance
+├── email.ts              # Email service (Resend)
+├── permissions.ts        # Role-based permissions
+├── types.ts              # TypeScript types
+├── utils.ts              # Helper functions
+└── validations.ts        # Zod validation schemas
+
+prisma/
+├── schema.prisma         # Prisma schema definition
+├── migrations/           # Database migrations
+└── seed.ts               # Seed script for test users
+
+scripts/
+├── generate-test-data.ts
+├── set-admin.ts
+├── set-password.ts
+└── setup-email-templates.ts
+```
 
 **Server vs Client Components**:
 - Default to Server Components for data fetching
@@ -335,6 +373,12 @@ if (!parsed.success) {
   - ADMIN → `/admin`
   - COACH → `/coach-dashboard`
   - CLIENT → `/client-dashboard`
+
+**Related files are always created together:**
+- Adding a feature = frontend component + API route + data model + tests
+- Never create frontend without backend
+- Never create API without validation schema
+- Never create model without migration
 
 ### Important Behaviors
 
@@ -419,6 +463,8 @@ const entry = await db.entry.upsert({
 
 ### Database Schema Changes
 
+**Schema changes are part of the feature batch, not an afterthought.**
+
 When modifying the database schema:
 
 1. Update `prisma/schema.prisma`
@@ -426,8 +472,163 @@ When modifying the database schema:
 3. Run `npm run db:generate` to update Prisma Client types
 4. Update TypeScript types if needed (lib/types.ts)
 5. Update Zod validation schemas if needed (lib/validations.ts)
+6. Update affected API routes and frontend components
+7. Write tests for the new schema behavior
 
 **Important**: Always run migrations in order. Don't skip migrations or modify existing migrations.
+
+**Batch requirement**: Schema change + migration + types + validation + API + frontend + tests = one complete batch.
+
+---
+
+## 🧪 TESTING CONTRACT
+
+**Testing runs in parallel with development, not after.**
+
+### Minimum per feature:
+- Frontend component or hook test (if applicable)
+- Backend route or service test
+- Database integrity verification
+
+### Preferred:
+- Integration test per critical path
+- E2E only when value > effort
+
+### CoachSync Test Setup:
+```bash
+# Unit tests for utilities and services
+# Integration tests for API routes
+# E2E tests for critical flows (login, entry submission, cohort creation)
+
+npm run test              # Run all tests (when implemented)
+npm run test:watch        # Watch mode for TDD (when implemented)
+```
+
+### Test Data for Development:
+```bash
+npm run db:seed           # Basic test users
+npm run test:generate     # Full test dataset with entries
+```
+
+**Untested critical paths = unfinished work.**
+
+**Location patterns:**
+```
+app/api/[resource]/route.test.ts     # API route tests
+lib/[module].test.ts                 # Utility/service tests
+components/[component].test.tsx      # Component tests
+```
+
+---
+
+## 🔒 SECURITY BASELINE (ALWAYS ON)
+
+Even for personal projects, every feature includes:
+
+### Input Validation:
+- All API inputs validated with Zod schemas (lib/validations.ts)
+- Type-safe database queries with Prisma
+- SQL injection protection (via Prisma)
+- XSS protection (via React automatic escaping)
+
+### Authentication & Authorization:
+- Session validation on all protected routes
+- Role-based access control (lib/permissions.ts)
+- JWT token with 1-hour expiration
+- Password hashing with bcrypt (10 rounds)
+
+### Secrets Management:
+- Never hard-code secrets
+- Use environment variables (.env.local)
+- Vercel environment variables for production
+- API keys validated before use
+
+### Rate Limiting (where relevant):
+- Email sending (via Resend)
+- API endpoints (implement as needed)
+- Login attempts (implement as needed)
+
+### Data Protection:
+- Test user email suppression (isTestUser flag)
+- Cascade deletes properly configured in Prisma schema
+- Unique constraints on sensitive relationships
+
+**Security debt compounds faster than code debt.**
+
+**Security checklist for every API route:**
+- [ ] Authentication check (`await auth()`)
+- [ ] Authorization check (role/ownership validation)
+- [ ] Input validation (Zod schema)
+- [ ] Error messages don't leak sensitive info
+- [ ] Database queries use parameterized queries (Prisma handles this)
+
+---
+
+## ⏱️ TIME-AWARE EXECUTION (SOLO REALITY)
+
+Assumptions baked in:
+- Evenings / weekends work
+- Fragmented focus time
+- Limited energy reserves
+
+Therefore:
+- **Prefer small vertical slices** (one feature end-to-end)
+- **Avoid speculative abstraction** (solve the problem at hand)
+- **Bias to visible progress** (working UI > perfect architecture)
+- **Stop early if ROI drops** (MVP first, refinement later)
+
+### Time Management Patterns:
+
+**1-Hour Sessions** (evening work):
+- Pick one small feature slice
+- Implement frontend + backend + tests
+- Commit and deploy
+
+**4-Hour Sessions** (weekend morning):
+- Pick one medium feature
+- Full batch implementation
+- Write docs, test thoroughly
+- Deploy and monitor
+
+**When stuck:**
+- Reduce scope, not quality
+- Ship the 80% solution
+- Document the 20% for later
+- Move forward
+
+**Momentum > perfection.**
+
+---
+
+## 🎯 MVP DELIVERY RHYTHM (GUIDE)
+
+### Week 1: Core value + data
+- Essential database models
+- Basic auth flow
+- Minimum viable API routes
+- Seed data for testing
+
+### Week 2: Usable UI + flows
+- Core user journeys (login, main action)
+- Basic styling (Tailwind utilities)
+- Client-side validation
+- Error handling
+
+### Week 3: Tests, bugs, performance
+- Write missing tests
+- Fix obvious bugs
+- Add loading states
+- Basic error boundaries
+
+### Week 4: Deploy, observe, document
+- Production deployment
+- Monitor for errors
+- Update documentation
+- Plan next iteration
+
+**Adjust as needed — never abandon batching.**
+
+---
 
 ### Environment Variables
 
@@ -469,14 +670,236 @@ When modifying the database schema:
    npm run test:cleanup  # Removes all test data
    ```
 
-### Deployment Notes
+## 🔀 PULL REQUEST WORKFLOW
 
-**Vercel Deployment**:
-- Environment variables must be configured in Vercel Dashboard (not from .env.local)
-- Update Google OAuth redirect URI: `https://your-domain.vercel.app/api/auth/callback/google`
+**Claude has authority to create and merge pull requests for batch deliveries.**
+
+### Standard PR Flow:
+
+1. **Branch Creation**: Create feature branch from main
+2. **Batch Implementation**: Implement full feature slice (frontend + backend + data + tests + docs)
+3. **PR Creation**: Create pull request with complete batch
+4. **User Notification**: Notify user of PR with summary
+5. **Merge**: Merge PR after user acknowledgment (or immediately if urgent)
+
+### PR Naming Convention:
+```
+Feature: [User-facing feature name]
+Batch: [Technical scope description]
+```
+
+Examples:
+- `Feature: Client Password Reset | Batch: Settings page + API + validation`
+- `Feature: Coach Weekly Notes | Batch: UI + API + schema migration`
+- `Fix: Entry submission validation | Batch: Frontend validation + error handling`
+
+### PR Description Template:
+```markdown
+## Batch Summary
+[One-line description of what ships]
+
+## Changes
+- Frontend: [what was built]
+- Backend: [what was built]
+- Data: [schema changes, if any]
+- Tests: [what was tested]
+- Security: [auth/validation added]
+
+## Deployment Notes
+- [ ] Environment variables needed: [yes/no]
+- [ ] Database migration required: [yes/no]
+- [ ] Breaking changes: [yes/no]
+
+## Testing Done
+- [ ] Tested with seed data
+- [ ] Build passes locally
+- [ ] Verified all user roles (CLIENT/COACH/ADMIN as applicable)
+
+## Rollback Plan
+[How to undo this if needed]
+```
+
+### Branch Naming:
+```
+feature/[feature-name]
+fix/[bug-description]
+refactor/[area-being-refactored]
+```
+
+Examples:
+- `feature/client-password-reset`
+- `fix/entry-validation-error`
+- `refactor/auth-middleware`
+
+---
+
+## 🚀 DEPLOYMENT & RELEASE
+
+**Deployment is part of development, not a phase.**
+
+Each batch must answer:
+- How this deploys
+- What breaks if it fails
+- How to roll back
+- What to monitor
+
+### CoachSync Deployment (Vercel + Railway)
+
+**Vercel Setup**:
+1. Environment variables must be configured in Vercel Dashboard (not from .env.local)
+2. Update Google OAuth redirect URI: `https://your-domain.vercel.app/api/auth/callback/google`
+3. Automatic deployments on push to main
+4. Preview deployments for PRs
+
+**Database (Railway PostgreSQL)**:
 - Database migrations must be run manually or via Railway CLI
-- Railway PostgreSQL recommended for production database
+- Always test migrations on staging/preview before production
+- Keep migration scripts in version control
+- Plan rollback strategy for schema changes
+
+**Deployment Checklist** (per batch/PR):
+- [ ] Environment variables updated (if needed)
+- [ ] Database migration tested
+- [ ] OAuth redirect URIs updated (if needed)
+- [ ] Build passes locally (`npm run build`)
+- [ ] Tests pass (when implemented)
+- [ ] Feature branch created from main
+- [ ] PR created with complete batch description
+- [ ] User notified of PR
+- [ ] PR merged to main
+- [ ] Vercel auto-deploys from main
+- [ ] Monitor for errors in Vercel logs
+- [ ] Test critical paths in production
 
 **Edge Function Limitations**:
 - Middleware is kept lightweight (manual JWT parsing) to stay under 1MB limit
 - NextAuth imports in middleware cause bundle size issues - avoid them
+
+**Solo-friendly defaults:**
+- Boring infrastructure (Vercel, Railway)
+- Free tiers where possible
+- Scripted deploys (automatic via Vercel)
+- Basic monitoring (Vercel logs)
+
+**Rollback strategy:**
+- Vercel: Instant rollback to previous deployment via dashboard
+- Database: Keep reversible migration scripts
+- Feature flags: Use environment variables for new features (can disable instantly)
+
+---
+
+## 📚 CONTINUOUS LEARNING (INTEGRATED, NOT SEPARATE)
+
+Learning is captured inside the work, not as a side quest.
+
+### For CoachSync:
+Each feature may log (in comments or this doc):
+- **Decisions made**: Why this approach over alternatives
+- **Patterns learned**: Reusable patterns that worked well
+- **Mistakes to avoid**: What didn't work and why
+
+### Example Decision Log:
+```typescript
+// lib/auth.ts
+// Decision: Manual JWT parsing in middleware.ts to avoid Edge Function size limits
+// Pattern: NextAuth callbacks.signIn processes invites automatically on login
+// Mistake avoided: Don't import NextAuth in middleware - causes bundle bloat
+```
+
+**No essays. Just future leverage.**
+
+**Key learnings for this project:**
+- Lightweight middleware = manual JWT parsing
+- Invitation flow = auto-process on sign-in via callbacks
+- Test users = suppress emails with isTestUser flag
+- Role collapse = ADMIN doesn't replace COACH, users can have multiple roles
+- Entry upsert = one entry per user per day via unique constraint
+
+---
+
+## 🧠 FINAL RULE (THE ONE THAT MATTERS)
+
+**If it isn't thought through end-to-end, it isn't done.**
+
+**If it can't ship, it doesn't count.**
+
+### What "done" means for CoachSync:
+- ✅ Feature works for all relevant user roles (CLIENT, COACH, ADMIN)
+- ✅ Database schema updated with migration
+- ✅ API route with authentication + authorization + validation
+- ✅ Frontend component with proper state management
+- ✅ Tests written (minimum: API route test)
+- ✅ Documentation updated in CLAUDE.md (if architectural change)
+- ✅ Deployed and tested in production
+
+### Batch completion checklist:
+```
+[Batch – Example Feature: Client Password Reset]
+
+✅ Product decision: Clients can reset their own password
+✅ Frontend: Settings page with password reset form
+✅ Backend: POST /api/client/change-password with auth check
+✅ Data: No schema change needed (uses existing passwordHash)
+✅ Validation: Zod schema for old/new password
+✅ Tests: API route test for password change flow
+✅ Security: Verify old password, hash new password, require auth
+✅ Deployment: No env changes, works with existing auth setup
+✅ Docs: Updated CLAUDE.md with new API route pattern
+```
+
+**This is the default operating mode.**
+
+---
+
+## 🎯 QUICK REFERENCE
+
+### Starting a new feature:
+1. Define the batch scope (what's the minimum shippable slice?)
+2. Create feature branch: `git checkout -b feature/[name]`
+3. Design data model changes (if needed)
+4. Implement in parallel:
+   - Update Prisma schema + create migration
+   - Create API route with auth/validation
+   - Build frontend component
+   - Write tests alongside
+5. Test locally with seed data
+6. Create PR with complete batch description
+7. Notify user and merge (or merge immediately if appropriate)
+8. Verify deployment
+9. Update docs (in PR or follow-up)
+
+### Daily workflow:
+```bash
+npm run dev                    # Start dev server
+npm run db:studio              # View database
+npm run test:generate          # Generate test data
+npm run password:set [email] [password]  # Set test user password
+
+# Make changes (frontend + backend + data + tests in one batch)
+
+npm run build                  # Verify build works
+
+# PR-based workflow (preferred)
+git checkout -b feature/[feature-name]
+git add .
+git commit -m "Feature: [batch description]"
+git push -u origin feature/[feature-name]
+gh pr create --title "Feature: [name]" --body "[PR description]"
+# After user acknowledgment or immediately:
+gh pr merge --squash
+
+# OR direct push (for small fixes)
+git add . && git commit -m "Fix: [description]"
+git push                       # Auto-deploy via Vercel
+```
+
+### When stuck:
+1. Reduce scope (smaller vertical slice)
+2. Check existing patterns (this doc + codebase examples)
+3. Test with seed data (npm run test:generate)
+4. Ship the 80% solution
+5. Move forward
+
+**Momentum > perfection.**
+
+---
