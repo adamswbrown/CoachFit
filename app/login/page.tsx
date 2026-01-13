@@ -116,6 +116,30 @@ function LoginPageContent() {
     signIn("google", { callbackUrl: "/dashboard" })
   }, [])
 
+  const handleDemoLogin = async (email: string, password: string, role: string) => {
+    setSubmitting(true)
+    setError(null)
+
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        callbackUrl: "/dashboard",
+        redirect: false,
+      })
+
+      if (result?.error) {
+        setError(`Failed to login as ${role}. Please check credentials.`)
+      } else if (result?.ok) {
+        router.push("/dashboard")
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -243,6 +267,36 @@ function LoginPageContent() {
             Sign up
           </Link>
         </p>
+
+        {/* Demo Environment Quick Login */}
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <p className="text-xs text-gray-500 text-center mb-3 font-medium uppercase tracking-wide">
+            Demo Environment
+          </p>
+          <div className="space-y-2">
+            <button
+              onClick={() => handleDemoLogin("admin@test.local", "TestPassword123!", "Admin")}
+              disabled={submitting}
+              className="w-full bg-purple-600 text-white px-3 py-2 rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+            >
+              Login as Admin
+            </button>
+            <button
+              onClick={() => handleDemoLogin("coach@test.local", "TestPassword123!", "Coach")}
+              disabled={submitting}
+              className="w-full bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+            >
+              Login as Coach
+            </button>
+            <button
+              onClick={() => handleDemoLogin("client@test.local", "TestPassword123!", "Client")}
+              disabled={submitting}
+              className="w-full bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+            >
+              Login as Client
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
