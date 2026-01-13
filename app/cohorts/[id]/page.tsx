@@ -158,11 +158,15 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
         const data = await res.json()
         setAvailableClients(data.availableClients || [])
       } else {
-        console.error("Error fetching available clients")
+        const errorData = await res.json().catch(() => ({}))
+        console.error("Error fetching available clients:", errorData)
+        // Don't show error to user - just means no available clients or API issue
+        // The UI will show "No available clients" message instead
         setAvailableClients([])
       }
     } catch (err) {
       console.error("Error fetching available clients:", err)
+      // Don't show error to user - just means no available clients or API issue
       setAvailableClients([])
     }
   }
@@ -645,12 +649,12 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
               )}
 
               {/* Add Existing Client Section */}
-              {availableClients.length > 0 && (
-                <div className="pb-6 border-b border-neutral-200">
-                  <h3 className="text-sm font-semibold mb-2">Add Existing Client</h3>
-                  <p className="text-sm text-neutral-600 mb-4">
-                    Select a client from your roster to add to this cohort.
-                  </p>
+              <div className="pb-6 border-b border-neutral-200">
+                <h3 className="text-sm font-semibold mb-2">Add Existing Client</h3>
+                <p className="text-sm text-neutral-600 mb-4">
+                  Select a client from your roster to add to this cohort.
+                </p>
+                {availableClients.length > 0 ? (
                   <div className="flex gap-2">
                     <select
                       value={selectedClientId}
@@ -675,8 +679,12 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                       {assigningClientId ? "Adding..." : "Add"}
                     </button>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p className="text-sm text-neutral-500 italic">
+                    No available clients. All your clients are already in this cohort, or you need to invite new clients first.
+                  </p>
+                )}
+              </div>
 
               {/* Invite by Email Section */}
               <div>
