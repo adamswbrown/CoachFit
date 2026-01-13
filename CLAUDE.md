@@ -99,6 +99,35 @@ Every meaningful feature ships as one batch:
 
 ---
 
+## 📚 Documentation
+
+### User Documentation
+
+Complete user guides are available in [docs/user-guide/](./docs/user-guide/):
+
+- **[Complete User Guide](./docs/user-guide/README.md)** - All-in-one user documentation
+- **[Getting Started](./docs/user-guide/getting-started.md)** - First-time user guide
+- **[Client Guide](./docs/user-guide/clients.md)** - For clients tracking fitness
+- **[Coach Guide](./docs/user-guide/coaches.md)** - For coaches managing clients
+- **[Admin Guide](./docs/user-guide/admins.md)** - For platform administrators
+- **[Troubleshooting](./docs/user-guide/troubleshooting.md)** - Common issues
+
+### Developer Documentation
+
+Developer guides are available in [docs/development/](./docs/development/):
+
+- **[Developer Guide](./docs/development/README.md)** - Complete developer guide
+- **[Getting Started](./docs/development/getting-started.md)** - Local development setup
+- **[Architecture](./docs/development/architecture.md)** - System architecture and patterns
+- **[API Reference](./docs/development/api-reference.md)** - Complete API documentation
+- **[Deployment](./docs/development/deployment.md)** - Production deployment guide
+
+### Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to contribute to CoachFit.
+
+---
+
 ## Common Commands
 
 ### Development

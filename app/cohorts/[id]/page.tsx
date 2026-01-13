@@ -392,7 +392,12 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
           <div>
             <h1 className="text-3xl font-bold">{cohort.name}</h1>
             <p className="text-neutral-500">
-              Created {new Date(cohort.createdAt).toLocaleDateString()}
+              Created {new Date(cohort.createdAt).toLocaleDateString("en-US", {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                timeZone: 'UTC'
+              })}
             </p>
           </div>
           <div className="flex gap-2">

@@ -31,6 +31,28 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 
 ---
 
+## 📚 Documentation
+
+### For Users
+
+- **[Complete User Guide](./docs/user-guide/README.md)** - Comprehensive guide for clients, coaches, and admins
+- **[Getting Started](./docs/user-guide/getting-started.md)** - First time using CoachFit? Start here!
+- **[Client Guide](./docs/user-guide/clients.md)** - Daily check-ins and working with your coach
+- **[Coach Guide](./docs/user-guide/coaches.md)** - Managing cohorts and tracking client progress
+- **[Admin Guide](./docs/user-guide/admins.md)** - User management and system administration
+- **[Troubleshooting](./docs/user-guide/troubleshooting.md)** - Common issues and solutions
+
+### For Developers
+
+- **[Developer Guide](./docs/development/README.md)** - Complete guide for contributing
+- **[Getting Started](./docs/development/getting-started.md)** - Set up your local development environment
+- **[Architecture Overview](./docs/development/architecture.md)** - System design and patterns
+- **[API Reference](./docs/development/api-reference.md)** - Complete API endpoint documentation
+- **[Deployment Guide](./docs/development/deployment.md)** - Deploy to production (Vercel + Railway)
+- **[Contributing Guide](./CONTRIBUTING.md)** - How to contribute to CoachFit
+
+---
+
 ## 📍 Current State (v1.0)
 
 ### What's Built
@@ -300,11 +322,12 @@ See [CLAUDE.md](./CLAUDE.md) for the complete development workflow and operating
 
 ---
 
-## 📖 Documentation
+## 📖 Additional Resources
 
-- **[CLAUDE.md](./CLAUDE.md)** - Complete operating contract and architecture guide
+- **[Documentation Hub](./docs/README.md)** - Central documentation index
+- **[CLAUDE.md](./CLAUDE.md)** - AI-assisted development operating contract
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - How to contribute to CoachFit
 - **[Database Schema](./prisma/schema.prisma)** - Full Prisma schema with relationships
-- **[API Routes](#)** - See CLAUDE.md for complete API documentation
 
 ---
 
