@@ -68,9 +68,9 @@ The Users tab shows all users in the system with:
 
 ### Search and Filter
 
-- Use the search bar to find users by email or name
-- Filter by role (CLIENT, COACH, ADMIN)
-- Sort by date created, last login, etc.
+- Use the search bar to find users by **email, name, or role**
+- Results update in real-time as you type
+- Search is case-insensitive and matches partial strings
 
 ### Managing Roles
 
@@ -147,6 +147,13 @@ The Cohorts tab shows all cohorts in the system with:
 - **Pending Invites** - Number of pending invitations
 - **Created Date** - When the cohort was created
 - **Last Activity** - Most recent client entry
+
+### Search and Filter Cohorts
+
+- Use the search bar to find cohorts by **cohort name, coach name, or coach email**
+- Results update in real-time as you type
+- Search is case-insensitive and matches partial strings
+- Useful for quickly finding specific cohorts in large systems
 
 ### Viewing Cohort Details
 

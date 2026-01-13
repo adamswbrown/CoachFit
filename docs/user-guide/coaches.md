@@ -72,6 +72,13 @@ Filter your client list by:
 - **Invited** - Clients who have been invited
 - **Needs Attention** - Clients who may need your help
 
+### Search Clients
+
+- Use the search bar to find clients by **name or email**
+- Results update in real-time as you type
+- Search works together with status filters (e.g., search for "john" in "Active" clients)
+- Search is case-insensitive and matches partial strings
+
 ### Quick Actions
 
 From your dashboard, you can:
@@ -117,6 +124,15 @@ Each cohort can have custom check-in configurations:
 - Navigate to the "Cohorts" section from the sidebar
 - See all your cohorts with client counts
 - Click on a cohort to view details and analytics
+
+When viewing a cohort's detail page, you can:
+
+- **Search Active Clients** - Use the search bar to find clients by name or email within the cohort
+- View all clients in the cohort
+- See pending invitations
+- Configure check-in prompts
+- Add or remove clients
+- View cohort analytics
 
 ### Cohort Organization Tips
 

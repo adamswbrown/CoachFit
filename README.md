@@ -67,6 +67,7 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 - ✅ **Cohort Management**: Create and manage multiple client cohorts
 - ✅ **Two-Tier Invitations**: Global coach invites + cohort-specific invites
 - ✅ **Client Assignment**: Assign existing clients to cohorts
+- ✅ **Real-Time Search**: Search clients by name or email across dashboard and cohorts
 - ✅ **Analytics Dashboard**: Cohort summaries with sparklines and trends
 - ✅ **Individual Client View**: Detailed analytics per client with entry history
 - ✅ **Weekly Notes**: Coach notes system for client progress tracking
@@ -74,6 +75,7 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 
 #### For Admins
 - ✅ **User Management**: View all users, assign roles, reset passwords
+- ✅ **Real-Time Search**: Search users by name, email, or role; search cohorts by name or coach
 - ✅ **Coach Management**: Invite new coaches, assign coaches to cohorts
 - ✅ **Attention Dashboard**: Auto-generated insights and attention scores
 - ✅ **System Overview**: Platform-wide metrics and health monitoring
