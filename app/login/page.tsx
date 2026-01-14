@@ -158,7 +158,7 @@ function LoginPageContent() {
         {/* Logo */}
         <div className="mb-8 flex justify-center">
           <Image
-            src="/logos/CoachFit_Brand_Assets/coachfit_logo_primary.svg"
+            src="/CoachFit/logos/vectorized-logo.svg"
             alt="CoachFit Logo"
             width={200}
             height={60}
