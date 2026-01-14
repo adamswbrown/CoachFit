@@ -31,27 +31,14 @@ export default function AttentionQueuePage() {
   const [filter, setFilter] = useState<"all" | "red" | "amber" | "green">("all")
 
   useEffect(() => {
-    console.log("[Admin Attention] Auth check:", {
-      status,
-      userEmail: session?.user?.email,
-      roles: session?.user?.roles,
-      isAdmin: session?.user ? isAdmin(session.user) : false
-    })
-
     if (status === "unauthenticated") {
-      console.log("[Admin Attention] Redirecting to /login - unauthenticated")
       router.push("/login")
     } else if (session?.user && !isAdmin(session.user)) {
-      console.log("[Admin Attention] Redirecting - user lacks ADMIN role")
       if (session.user.roles.includes("COACH")) {
-        console.log("[Admin Attention] Redirecting to /coach-dashboard")
         router.push("/coach-dashboard")
       } else {
-        console.log("[Admin Attention] Redirecting to /client-dashboard")
         router.push("/client-dashboard")
       }
-    } else {
-      console.log("[Admin Attention] Access granted - user has ADMIN role")
     }
   }, [status, session, router])
 
