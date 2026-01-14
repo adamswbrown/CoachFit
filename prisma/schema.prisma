@@ -307,6 +307,30 @@ model AdminAction {
   @@index([insightId])
 }
 
+// System Configuration Settings (customer-facing thresholds & limits)
+model SystemSettings {
+  id        String   @id @default(uuid())
+  // Coach capacity settings
+  maxClientsPerCoach Int @default(50) // Max recommended clients before "overloaded"
+  minClientsPerCoach Int @default(10) // Min recommended clients before "underutilized"
+  
+  // Engagement thresholds
+  recentActivityDays Int @default(14) // Days to consider for "recent activity"
+  lowEngagementEntries Int @default(7) // Entries threshold for low engagement alert
+  noActivityDays Int @default(14) // Days without entries = needs attention
+  criticalNoActivityDays Int @default(30) // Days without entries = critical alert
+  
+  // Analytics windows
+  shortTermWindowDays Int @default(7) // Days for 7-day averages
+  longTermWindowDays Int @default(30) // Days for 30-day averages
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}
+
 enum Role {
   CLIENT
   COACH
