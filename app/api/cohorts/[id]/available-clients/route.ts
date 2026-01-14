@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
+import { Role } from "@/lib/types"
 
 export async function GET(
   req: NextRequest,
@@ -37,12 +38,12 @@ export async function GET(
     // Get unassigned clients (no cohort memberships)
     const clientWhere = isAdminUser
       ? {
-          roles: { has: "CLIENT" },
+          roles: { has: Role.CLIENT },
           CohortMembership: { none: {} },
         }
       : {
           invitedByCoachId: session.user.id,
-          roles: { has: "CLIENT" },
+          roles: { has: Role.CLIENT },
           CohortMembership: { none: {} },
         }
 

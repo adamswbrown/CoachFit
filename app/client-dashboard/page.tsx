@@ -7,6 +7,7 @@ import Link from "next/link"
 import { isAdmin, isCoach, isClient } from "@/lib/permissions"
 import { ClientLayout } from "@/components/layouts/ClientLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
+import { DataSourceBadge } from "@/components/DataSourceBadge"
 
 interface Entry {
   id: string
@@ -18,6 +19,7 @@ interface Entry {
   sleepQuality: number | null
   perceivedEffort: number | null
   notes: string | null
+  dataSources: string[] | null
   createdAt: string
   updatedAt: string
 }
@@ -261,6 +263,7 @@ export default function ClientDashboard() {
             sleepQuality: data.sleepQuality || null,
             perceivedEffort: data.perceivedEffort || null,
             notes: data.notes || null,
+            dataSources: data.dataSources || null,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
           }
@@ -369,15 +372,33 @@ export default function ClientDashboard() {
         )}
 
         {/* Greeting Section */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-neutral-900 mb-1">
-            {getGreeting()}, {firstName}
-          </h1>
-          <p className="text-sm text-neutral-600">
-            {hasCoach === false 
-              ? "Your coach will add you to their program soon."
-              : "Track your progress and stay on top of your goals."}
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div className="flex-1">
+            <h1 className="text-2xl font-semibold text-neutral-900 mb-1">
+              {getGreeting()}, {firstName}
+            </h1>
+            <p className="text-sm text-neutral-600">
+              {hasCoach === false 
+                ? "Your coach will add you to their program soon."
+                : "Track your progress and stay on top of your goals."}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Link
+              href="/client-dashboard/pairing"
+              className="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors"
+              title="Connect your iOS device for automatic HealthKit syncing"
+            >
+              📱 Pairing
+            </Link>
+            <Link
+              href="/client-dashboard/settings"
+              className="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors"
+              title="Account settings"
+            >
+              ⚙️ Settings
+            </Link>
+          </div>
         </div>
 
         {/* No Coach Warning */}
@@ -822,6 +843,11 @@ export default function ClientDashboard() {
                             </span>
                           )}
                         </div>
+                        {entry.dataSources && entry.dataSources.length > 0 && (
+                          <div className="mb-2">
+                            <DataSourceBadge dataSources={entry.dataSources} size="sm" showLabel={true} />
+                          </div>
+                        )}
                         <div className="space-y-1">
                           {entry.weightLbs !== null && (
                             <div className="flex justify-between text-xs">

@@ -273,14 +273,10 @@ function LoginPageContent() {
           <p className="text-xs text-gray-500 text-center mb-3 font-medium uppercase tracking-wide">
             Demo Environment
           </p>
+          <p className="text-xs text-gray-500 text-center mb-4">
+            Coaches have admin access in this environment.
+          </p>
           <div className="space-y-2">
-            <button
-              onClick={() => handleDemoLogin("admin@test.local", "TestPassword123!", "Admin")}
-              disabled={submitting}
-              className="w-full bg-purple-600 text-white px-3 py-2 rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
-            >
-              Login as Admin
-            </button>
             <button
               onClick={() => handleDemoLogin("alex.thompson@test.local", "TestPassword123!", "Coach")}
               disabled={submitting}
