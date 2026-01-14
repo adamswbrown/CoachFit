@@ -2,7 +2,8 @@
 ALTER TABLE "CoachNote" ALTER COLUMN "noteDate" DROP DEFAULT;
 
 -- AlterTable
-ALTER TABLE "Entry" ADD COLUMN     "dataSources" JSONB DEFAULT '[]';
+-- dataSources column was already added in a partial migration, so commenting out to avoid duplication
+-- ALTER TABLE "Entry" ADD COLUMN     "dataSources" JSONB DEFAULT '[]';
 
 -- CreateTable
 CREATE TABLE "Workout" (
