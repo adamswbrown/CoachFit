@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, Suspense } from "react"
 import { isAdmin } from "@/lib/permissions"
 import { ClientsIcon, CohortsIcon, MobileIcon } from "@/components/icons"
 import { HealthKitIcon } from "@/components/icons/HealthKitIcon"
+import { RoleSwitcher } from "@/components/RoleSwitcher"
 
 interface CoachLayoutProps {
   children: React.ReactNode
@@ -109,6 +110,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
             </Link>
           </div>
           <div className="flex items-center gap-3">
+            <RoleSwitcher />
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
               className="px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"

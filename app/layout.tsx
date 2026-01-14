@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import Script from "next/script"
 import "./globals.css"
 import { SessionProvider } from "@/components/SessionProvider"
+import { RoleProvider } from "@/contexts/RoleContext"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -87,7 +88,9 @@ export default function RootLayout({
             `,
           }}
         />
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <RoleProvider>{children}</RoleProvider>
+        </SessionProvider>
       </body>
     </html>
   )
