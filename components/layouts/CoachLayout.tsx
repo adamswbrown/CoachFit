@@ -8,6 +8,8 @@ import { isAdmin } from "@/lib/permissions"
 import { ClientsIcon, CohortsIcon, MobileIcon } from "@/components/icons"
 import { HealthKitIcon } from "@/components/icons/HealthKitIcon"
 import { RoleSwitcher } from "@/components/RoleSwitcher"
+import { useRole } from "@/contexts/RoleContext"
+import { Role } from "@/lib/types"
 
 interface CoachLayoutProps {
   children: React.ReactNode
@@ -17,6 +19,7 @@ type ClientFilter = "all" | "active" | "connected" | "pending" | "offline" | "un
 
 function CoachLayoutContent({ children }: CoachLayoutProps) {
   const { data: session } = useSession()
+  const { activeRole } = useRole()
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -73,16 +76,25 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   const isCohortsActive = pathname === "/cohorts" || pathname?.startsWith("/cohorts/")
   const isPairingActive = pathname === "/coach-dashboard/pairing"
 
-  // Build navigation array - add admin items if user has ADMIN role
-  const navigation = [
-    { name: "Clients", href: "/coach-dashboard", icon: ClientsIcon, hasDropdown: true, dropdownKey: "clients" },
-    { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" },
-    { name: "HealthKit Data", href: "/coach-dashboard/healthkit-data", icon: HealthKitIcon, hasDropdown: false, dropdownKey: "healthkit" },
-    { name: "iOS Pairing", href: "/coach-dashboard/pairing", icon: MobileIcon, hasDropdown: false, dropdownKey: "pairing" },
-  ]
+  // Build navigation array based on active role
+  const navigation = []
 
-  // Add admin navigation items if user has ADMIN role
-  if (session?.user && isAdmin(session.user)) {
+  // Determine which navigation items to show
+  const showCoachNav = activeRole === Role.COACH || (activeRole === null && session?.user?.roles.includes(Role.COACH))
+  const showAdminNav = activeRole === Role.ADMIN || (activeRole === null && session?.user?.roles.includes(Role.ADMIN) && !session?.user?.roles.includes(Role.COACH))
+
+  // Show coach navigation items
+  if (showCoachNav) {
+    navigation.push(
+      { name: "Clients", href: "/coach-dashboard", icon: ClientsIcon, hasDropdown: true, dropdownKey: "clients" },
+      { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" },
+      { name: "HealthKit Data", href: "/coach-dashboard/healthkit-data", icon: HealthKitIcon, hasDropdown: false, dropdownKey: "healthkit" },
+      { name: "iOS Pairing", href: "/coach-dashboard/pairing", icon: MobileIcon, hasDropdown: false, dropdownKey: "pairing" }
+    )
+  }
+
+  // Add admin navigation items
+  if (showAdminNav) {
     navigation.push(
       { name: "Users", href: "/admin", icon: () => <span>👤</span>, hasDropdown: false, dropdownKey: "admin-users" },
       { name: "Overview", href: "/admin/overview", icon: () => <span>📈</span>, hasDropdown: false, dropdownKey: "admin-overview" },
