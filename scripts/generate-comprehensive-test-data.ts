@@ -183,8 +183,14 @@ async function main() {
   console.log("Creating coaches...")
   const coaches = []
   for (const coachInfo of coachNames) {
-    const coach = await prisma.user.create({
-      data: {
+    const coach = await prisma.user.upsert({
+      where: { email: coachInfo.email },
+      update: {
+        roles: [Role.COACH],
+        isTestUser: true,
+        passwordHash,
+      },
+      create: {
         id: randomUUID(),
         email: coachInfo.email,
         name: coachInfo.name,
@@ -200,8 +206,15 @@ async function main() {
 
   // Create additional admin user
   console.log("Creating additional admin user...")
-  const admin = await prisma.user.create({
-    data: {
+  const admin = await prisma.user.upsert({
+    where: { email: "admin2@test.local" },
+    update: {
+      name: "Test Admin 2",
+      roles: [Role.ADMIN],
+      isTestUser: true,
+      passwordHash,
+    },
+    create: {
       id: randomUUID(),
       email: "admin2@test.local",
       name: "Test Admin 2",
@@ -254,8 +267,15 @@ async function main() {
     }
     const profile = activityProfiles[profileIndex]
 
-    const client = await prisma.user.create({
-      data: {
+    const client = await prisma.user.upsert({
+      where: { email: clientData.email },
+      update: {
+        name: clientData.name,
+        roles: [Role.CLIENT],
+        isTestUser: true,
+        passwordHash,
+      },
+      create: {
         id: randomUUID(),
         email: clientData.email,
         name: clientData.name,
@@ -334,8 +354,22 @@ async function main() {
       const dayOffset = Math.floor((today.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24))
       const entryData = generateEntryData(profile, dayOffset, client.gender)
 
-      await prisma.entry.create({
-        data: {
+      await prisma.entry.upsert({
+        where: {
+          userId_date: {
+            userId: client.id,
+            date: entryDate,
+          },
+        },
+        update: {
+          weightLbs: entryData.weight,
+          steps: entryData.steps,
+          calories: entryData.calories,
+          heightInches: entryData.heightInches,
+          sleepQuality: entryData.sleepQuality,
+          perceivedEffort: entryData.perceivedEffort,
+        },
+        create: {
           userId: client.id,
           date: entryDate,
           weightLbs: entryData.weight,
