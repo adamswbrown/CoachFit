@@ -85,6 +85,14 @@ export async function PATCH(
           { status: 400 }
         )
       }
+
+      if (role === "COACH" && user.roles.includes(Role.ADMIN)) {
+        return NextResponse.json(
+          { error: "Cannot remove COACH role from an admin. Remove ADMIN role first." },
+          { status: 400 }
+        )
+      }
+
       newRoles = user.roles.filter((r: string) => r !== role)
 
       // Ensure user always has at least CLIENT role

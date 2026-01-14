@@ -478,9 +478,9 @@ export default function AdminPage() {
                               {hasCoach && (
                                 <button
                                   onClick={() => handleRoleChange(user.id, "COACH", "remove")}
-                                  disabled={updatingRoles[user.id]}
+                                  disabled={updatingRoles[user.id] || hasAdmin}
                                   className="px-2 py-1 text-xs bg-neutral-100 text-neutral-700 rounded hover:bg-neutral-200 disabled:opacity-50"
-                                  title="Remove Coach role"
+                                  title={hasAdmin ? "Remove Admin role first" : "Remove Coach role"}
                                 >
                                   {updatingRoles[user.id] ? "..." : "−Coach"}
                                 </button>

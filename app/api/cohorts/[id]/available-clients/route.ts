@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { isAdminOrCoach } from "@/lib/permissions"
+import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
 
 export async function GET(
   req: NextRequest,
@@ -19,7 +19,7 @@ export async function GET(
 
     const { id: cohortId } = await params
 
-    // Verify the coach owns this cohort
+    // Verify the cohort exists (and ownership for coaches)
     const cohort = await db.cohort.findUnique({
       where: { id: cohortId },
       select: { coachId: true },
@@ -29,35 +29,37 @@ export async function GET(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
     }
 
-    if (cohort.coachId !== session.user.id) {
+    const isAdminUser = isAdmin(session.user)
+    if (!isAdminUser && cohort.coachId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    // Get all clients belonging to this coach
+    // Get unassigned clients (no cohort memberships)
+    const clientWhere = isAdminUser
+      ? {
+          roles: { has: "CLIENT" },
+          CohortMembership: { none: {} },
+        }
+      : {
+          invitedByCoachId: session.user.id,
+          roles: { has: "CLIENT" },
+          CohortMembership: { none: {} },
+        }
+
     const allClients = await db.user.findMany({
-      where: {
-        invitedByCoachId: session.user.id,
-        roles: { has: "CLIENT" },
-      },
+      where: clientWhere,
       select: {
         id: true,
         name: true,
         email: true,
-        CohortMembership: {
-          where: { cohortId },
-          select: { cohortId: true },
-        },
       },
     })
 
-    // Filter out clients already in this cohort
-    const availableClients = allClients
-      .filter((client) => client.CohortMembership.length === 0)
-      .map((client) => ({
-        id: client.id,
-        name: client.name,
-        email: client.email,
-      }))
+    const availableClients = allClients.map((client) => ({
+      id: client.id,
+      name: client.name,
+      email: client.email,
+    }))
 
     return NextResponse.json({ availableClients })
   } catch (error) {
