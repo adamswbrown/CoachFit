@@ -96,10 +96,10 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   // Add admin navigation items
   if (showAdminNav) {
     navigation.push(
-      { name: "Users", href: "/admin", icon: () => <span>👤</span>, hasDropdown: false, dropdownKey: "admin-users" },
-      { name: "Overview", href: "/admin/overview", icon: () => <span>📈</span>, hasDropdown: false, dropdownKey: "admin-overview" },
-      { name: "Attention", href: "/admin/attention", icon: () => <span>🔔</span>, hasDropdown: false, dropdownKey: "admin-attention" },
-      { name: "System", href: "/admin/system", icon: () => <span>⚙️</span>, hasDropdown: false, dropdownKey: "admin-system" }
+      { name: "Users", href: "/admin", icon: (props: any) => <span className="text-xl">👤</span>, hasDropdown: false, dropdownKey: "admin-users" },
+      { name: "Overview", href: "/admin/overview", icon: (props: any) => <span className="text-xl">📈</span>, hasDropdown: false, dropdownKey: "admin-overview" },
+      { name: "Attention", href: "/admin/attention", icon: (props: any) => <span className="text-xl">🔔</span>, hasDropdown: false, dropdownKey: "admin-attention" },
+      { name: "System", href: "/admin/system", icon: (props: any) => <span className="text-xl">⚙️</span>, hasDropdown: false, dropdownKey: "admin-system" }
     )
   }
 
