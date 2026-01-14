@@ -80,6 +80,16 @@ function CoachDashboardContent() {
 
   const currentFilter = (searchParams.get("filter") as ClientFilter) || "all"
 
+  const handleFilterChange = (filter: ClientFilter) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (filter === "all") {
+      params.delete("filter")
+    } else {
+      params.set("filter", filter)
+    }
+    router.push(`/coach-dashboard?${params.toString()}`)
+  }
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
@@ -830,6 +840,30 @@ function CoachDashboardContent() {
                     </p>
                   </div>
                 </div>
+
+                {(currentFilter === "all" || currentFilter === "pending" || currentFilter === "unassigned") && (
+                  <div className="mb-4">
+                    <div className="inline-flex rounded-md border border-neutral-200 bg-neutral-50 p-1">
+                      {[
+                        { value: "all", label: "All" },
+                        { value: "pending", label: "Pending" },
+                        { value: "unassigned", label: "Unassigned" },
+                      ].map((tab) => (
+                        <button
+                          key={tab.value}
+                          onClick={() => handleFilterChange(tab.value as ClientFilter)}
+                          className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                            currentFilter === tab.value
+                              ? "bg-white text-neutral-900 shadow-sm"
+                              : "text-neutral-600 hover:text-neutral-900"
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Search Bar */}
                 <div className="mb-4">

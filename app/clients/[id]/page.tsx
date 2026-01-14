@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter, useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
+import { isAdmin } from "@/lib/permissions"
+import type { AttentionQueueItem } from "@/lib/admin/attention"
 
 interface Client {
   id: string
@@ -48,6 +50,7 @@ export default function ClientOverviewPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const clientId = params.id as string
 
   const [client, setClient] = useState<Client | null>(null)
@@ -56,6 +59,7 @@ export default function ClientOverviewPage() {
   const [coachNotes, setCoachNotes] = useState<CoachNote[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [attentionItem, setAttentionItem] = useState<AttentionQueueItem | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -70,6 +74,33 @@ export default function ClientOverviewPage() {
       loadData()
     }
   }, [session, clientId])
+
+  useEffect(() => {
+    const shouldLoadAttention = searchParams.get("attention") === "1"
+    if (!shouldLoadAttention || !session?.user || !isAdmin(session.user)) {
+      setAttentionItem(null)
+      return
+    }
+
+    const loadAttention = async () => {
+      try {
+        const queue = await fetchWithRetry<{
+          red: AttentionQueueItem[]
+          amber: AttentionQueueItem[]
+          green: AttentionQueueItem[]
+        }>("/api/admin/attention")
+        const allItems = [...queue.red, ...queue.amber, ...queue.green]
+        const match = allItems.find(
+          (item) => item.entityType === "user" && item.entityId === clientId
+        )
+        setAttentionItem(match || null)
+      } catch (err) {
+        setAttentionItem(null)
+      }
+    }
+
+    loadAttention()
+  }, [clientId, searchParams, session])
 
   const loadData = async () => {
     setLoading(true)
@@ -203,6 +234,47 @@ export default function ClientOverviewPage() {
             {client.name && <span className="text-neutral-500 font-normal"> - {client.email}</span>}
           </h1>
         </div>
+
+        {attentionItem && (
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                Attention
+              </span>
+              <span className="text-xs font-medium text-amber-800">
+                Priority: {attentionItem.priority}
+              </span>
+              <span className="text-xs font-medium text-amber-800">
+                Score: {attentionItem.score}
+              </span>
+            </div>
+            {attentionItem.reasons.length > 0 && (
+              <div className="mb-2">
+                <p className="text-sm font-medium text-amber-900 mb-1">Reasons</p>
+                <ul className="list-disc list-inside text-sm text-amber-900">
+                  {attentionItem.reasons.map((reason, idx) => (
+                    <li key={idx}>{reason}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {attentionItem.suggestedActions.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-amber-900 mb-1">Suggested actions</p>
+                <div className="flex flex-wrap gap-2">
+                  {attentionItem.suggestedActions.map((action, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs px-2 py-1 rounded-md bg-white border border-amber-200 text-amber-800"
+                    >
+                      {action}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Navigation Tabs */}
         <div className="border-b border-neutral-200 mb-6">

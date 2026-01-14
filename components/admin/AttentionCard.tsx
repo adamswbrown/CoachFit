@@ -30,7 +30,7 @@ export function AttentionCard({ item, onAction }: AttentionCardProps) {
   const getEntityUrl = () => {
     switch (item.entityType) {
       case "user":
-        return `/admin/users/${item.entityId}`
+        return `/clients/${item.entityId}?attention=1`
       case "coach":
         // Coaches are users, so route to user detail page
         return `/admin/users/${item.entityId}`

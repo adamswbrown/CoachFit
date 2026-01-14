@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
+import { isAdmin } from "@/lib/permissions"
 
 export async function GET(
   req: NextRequest,
@@ -15,8 +16,11 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Defensive check: verify role is COACH
-    if (!session.user.roles.includes(Role.COACH)) {
+    const isCoach = session.user.roles.includes(Role.COACH)
+    const isAdminUser = isAdmin(session.user)
+
+    // Must be COACH or ADMIN
+    if (!isCoach && !isAdminUser) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -34,21 +38,23 @@ export async function GET(
       return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }
 
-    // Authorization: Verify coach has access to this client (client is in at least one cohort owned by coach)
-    const membership = await db.cohortMembership.findFirst({
-      where: {
-        userId: id,
-        Cohort: {
-          coachId: session.user.id,
+    // Authorization: If COACH, verify client is in at least one cohort owned by coach
+    if (isCoach && !isAdminUser) {
+      const membership = await db.cohortMembership.findFirst({
+        where: {
+          userId: id,
+          Cohort: {
+            coachId: session.user.id,
+          },
         },
-      },
-    })
+      })
 
-    if (!membership) {
-      return NextResponse.json(
-        { error: "Forbidden: Client not in your cohorts" },
-        { status: 403 }
-      )
+      if (!membership) {
+        return NextResponse.json(
+          { error: "Forbidden: Client not in your cohorts" },
+          { status: 403 }
+        )
+      }
     }
 
     return NextResponse.json(client, { status: 200 })
