@@ -11,13 +11,18 @@ Complete guide for contributing to CoachFit development.
 3. [Architecture](./architecture.md)
 4. [API Reference](./api-reference.md)
 5. [Deployment](./deployment.md)
-6. [Contributing](../../CONTRIBUTING.md)
+6. [Contributing](../misc/CONTRIBUTING.md)
 
 ---
 
 ## Overview
 
 CoachFit is built with modern web technologies and follows a full-stack parallel execution operating contract. This guide will help you understand the codebase and contribute effectively.
+
+### Current Status
+
+- HealthKit ingestion APIs and coach-facing views are in development and may change.
+- iOS app integration is planned but not yet shipped; see `../misc/IOS_APP_INTEGRATION_PLAN.md`.
 
 ### Tech Stack
 
@@ -48,7 +53,7 @@ CoachFit is built with modern web technologies and follows a full-stack parallel
 1. **[Getting Started](./getting-started.md)** - Set up your local development environment
 2. **[Architecture Overview](./architecture.md)** - Understand the system design
 3. **[API Reference](./api-reference.md)** - Learn about the API endpoints
-4. **[Contributing Guide](../../CONTRIBUTING.md)** - How to contribute code
+4. **[Contributing Guide](../misc/CONTRIBUTING.md)** - How to contribute code
 
 ### Key Documentation
 
@@ -219,7 +224,7 @@ See [CLAUDE.md](../../CLAUDE.md) for complete security baseline.
 2. **[Learn the architecture](./architecture.md)**
 3. **[Review the API](./api-reference.md)**
 4. **[Read the operating contract](../../CLAUDE.md)**
-5. **[Start contributing](../../CONTRIBUTING.md)**
+5. **[Start contributing](../misc/CONTRIBUTING.md)**
 
 ---
 

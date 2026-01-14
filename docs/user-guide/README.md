@@ -34,6 +34,7 @@ CoachFit enables:
 - ✅ Cohort management for coaches
 - ✅ Comprehensive analytics and reporting
 - ✅ Beautiful, responsive UI
+- 🧪 iOS app + HealthKit sync is planned but not yet available
 
 ---
 

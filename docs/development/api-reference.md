@@ -815,7 +815,7 @@ Currently not implemented. Future consideration for:
 
 - **[Review Architecture](./architecture.md)**
 - **[Deploy to Production](./deployment.md)**
-- **[Start Contributing](../../CONTRIBUTING.md)**
+- **[Start Contributing](../misc/CONTRIBUTING.md)**
 
 ---
 

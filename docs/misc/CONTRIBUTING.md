@@ -89,7 +89,7 @@ See [Developer Guide](./docs/development/getting-started.md) for detailed setup 
 
 ## Development Workflow
 
-CoachFit follows a **full-stack parallel execution workflow**. Read [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
+CoachFit follows a **full-stack parallel execution workflow**. Read [CLAUDE.md](../../CLAUDE.md) for the complete operating contract.
 
 ### Small/Medium Features (Direct PR)
 

@@ -345,7 +345,7 @@ npm run build
 - **[Learn the architecture](./architecture.md)**
 - **[Review API reference](./api-reference.md)**
 - **[Read operating contract](../../CLAUDE.md)**
-- **[Start contributing](../../CONTRIBUTING.md)**
+- **[Start contributing](../misc/CONTRIBUTING.md)**
 
 ---
 

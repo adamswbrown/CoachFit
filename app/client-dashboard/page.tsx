@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { isAdmin } from "@/lib/permissions"
+import { isAdmin, isCoach, isClient } from "@/lib/permissions"
 import { ClientLayout } from "@/components/layouts/ClientLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 
@@ -67,13 +67,22 @@ export default function ClientDashboard() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user && "roles" in session.user && Array.isArray(session.user.roles) && session.user.roles.includes("COACH")) {
-      router.push("/coach-dashboard")
+      return
+    }
+
+    if (session?.user) {
+      if (isAdmin(session.user)) {
+        router.push("/admin/overview")
+        return
+      }
+      if (isCoach(session.user)) {
+        router.push("/coach-dashboard")
+      }
     }
   }, [status, session, router])
 
   useEffect(() => {
-    if (session) {
+    if (session?.user && isClient(session.user)) {
       checkCohortMembership()
       fetchEntries()
       fetchCheckInConfig()

@@ -35,11 +35,16 @@ Complete guide for contributing to CoachFit development.
 
 - **[CLAUDE.md](../CLAUDE.md)** - Full-stack parallel execution operating contract for AI-assisted development
 
+### In Development
+
+- HealthKit ingestion pipeline and coach-facing explorer are in active development.
+- iOS app integration is planned but not yet shipped; mobile app behavior is described in `./misc/IOS_APP_INTEGRATION_PLAN.md`.
+
 ---
 
 ## 🤝 Contributing
 
-Interested in contributing to CoachFit? Check out our [Contributing Guide](../CONTRIBUTING.md).
+Interested in contributing to CoachFit? Check out our [Contributing Guide](./misc/CONTRIBUTING.md).
 
 ---
 
