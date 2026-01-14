@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState, useCallback, Suspense } from "react"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
-import { CoachFitLogo } from "@/components/CoachFitLogo"
+import Image from "next/image"
 
 function LoginPageContent() {
   const router = useRouter()
@@ -157,7 +157,14 @@ function LoginPageContent() {
       <div className="bg-white rounded-lg p-8 max-w-md w-full border border-gray-200">
         {/* Logo */}
         <div className="mb-8 flex justify-center">
-          <CoachFitLogo size="xl" showText={true} />
+          <Image
+            src="/logos/coachfit_logo_login.png"
+            alt="CoachFit Logo"
+            width={240}
+            height={72}
+            priority
+            unoptimized
+          />
         </div>
 
         {/* Headline and Subtext */}
