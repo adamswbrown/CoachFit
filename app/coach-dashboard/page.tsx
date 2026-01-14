@@ -101,10 +101,16 @@ function CoachDashboardContent() {
       setLoading(true)
       fetchOverview()
 
-      // Check if showForm query param is present
+      // Check query params for form actions
       const showFormParam = searchParams.get("showForm")
-      if (showFormParam === "true") {
+      const actionParam = searchParams.get("action")
+      if (showFormParam === "true" || actionParam === "create-cohort") {
         setShowForm(true)
+        setShowInviteForm(false)
+      }
+      if (actionParam === "invite-client") {
+        setShowInviteForm(true)
+        setShowForm(false)
       }
     } else {
       setData(null)
@@ -700,13 +706,119 @@ function CoachDashboardContent() {
               </div>
             </div>
 
+            {/* Pending Invites - Only show if filter is all, pending, or invited */}
+            {(currentFilter === "all" || currentFilter === "pending" || currentFilter === "invited") && invitedClients.length > 0 && (
+              <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
+                <h2 className="text-xl font-semibold mb-2">Pending Invites</h2>
+                <p className="text-sm text-neutral-600 mb-4">
+                  These clients have been invited but haven't signed up yet.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-3 font-semibold">Email</th>
+                        <th className="text-left p-3 font-semibold">Cohort (if any)</th>
+                        <th className="text-left p-3 font-semibold">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invitedClients.map((client) => {
+                        // Find if this is a global invite (no cohorts)
+                        const globalInvite = data.globalInvites.find(i => i.email === client.email)
+                        return (
+                          <tr key={client.email} className="border-b bg-neutral-50 italic">
+                            <td className="p-3">{client.email}</td>
+                            <td className="p-3 text-sm text-neutral-500">
+                              {client.cohorts.length > 0 ? client.cohorts.join(", ") : "Not assigned yet"}
+                            </td>
+                            <td className="p-3">
+                              {globalInvite && (
+                                <button
+                                  onClick={() => handleCancelInvite(globalInvite.id)}
+                                  className="text-neutral-700 hover:underline text-sm"
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Unassigned Clients Section - Only show if filter is all or unassigned */}
+            {(currentFilter === "all" || currentFilter === "unassigned") && unassignedClients.length > 0 && (
+              <div className="bg-orange-50 rounded-lg border border-neutral-200 p-6 mb-8 border border-orange-200">
+                <h2 className="text-xl font-semibold mb-2 text-orange-800">Unassigned Clients</h2>
+                <p className="text-sm text-orange-700 mb-4">
+                  These clients have signed up but aren't in any cohort yet. Assign them to a cohort to get started.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-amber-200">
+                        <th className="text-left p-3 font-semibold">Name</th>
+                        <th className="text-left p-3 font-semibold">Email</th>
+                        <th className="text-left p-3 font-semibold">Assign to Cohort</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {unassignedClients.map((client) => (
+                        <tr key={client.email} className="border-b border-amber-100">
+                          <td className="p-3">{client.name || "No name"}</td>
+                          <td className="p-3">{client.email}</td>
+                          <td className="p-3">
+                            {data.cohorts.length > 0 ? (
+                              <div className="flex gap-2 items-center">
+                                <select
+                                  value={selectedCohortForAssign[client.id!] || ""}
+                                  onChange={(e) =>
+                                    setSelectedCohortForAssign({
+                                      ...selectedCohortForAssign,
+                                      [client.id!]: e.target.value,
+                                    })
+                                  }
+                                  className="px-2 py-1 border rounded-md text-sm"
+                                >
+                                  <option value="">Select cohort...</option>
+                                  {data.cohorts.map((cohort) => (
+                                    <option key={cohort.id} value={cohort.id}>
+                                      {cohort.name}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  onClick={() => handleAssignClient(client.id!)}
+                                  disabled={assigningClient === client.id || !selectedCohortForAssign[client.id!]}
+                                  className="bg-neutral-900 text-white px-3 py-1 rounded-md hover:bg-neutral-800 disabled:opacity-50 text-sm"
+                                >
+                                  {assigningClient === client.id ? "..." : "Assign"}
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-amber-600 text-sm">Create a cohort first</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             {/* Clients List - Show based on filter */}
             {filteredClients.length > 0 && (
               <div className="bg-white border border-neutral-200 rounded-lg p-6 mb-8">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="text-xl font-semibold text-neutral-900">
-                      {currentFilter === "all" ? "All Clients" : 
+                      {currentFilter === "all" ? "All Clients" :
                        currentFilter === "active" || currentFilter === "connected" ? "Connected Clients" :
                        currentFilter === "pending" || currentFilter === "invited" ? "Pending Invites" :
                        currentFilter === "unassigned" ? "Unassigned Clients" :
@@ -849,112 +961,6 @@ function CoachDashboardContent() {
                           </tr>
                         )
                       })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Pending Invites - Only show if filter is all, pending, or invited */}
-            {(currentFilter === "all" || currentFilter === "pending" || currentFilter === "invited") && invitedClients.length > 0 && (
-              <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
-                <h2 className="text-xl font-semibold mb-2">Pending Invites</h2>
-                <p className="text-sm text-neutral-600 mb-4">
-                  These clients have been invited but haven't signed up yet.
-                </p>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3 font-semibold">Email</th>
-                        <th className="text-left p-3 font-semibold">Cohort (if any)</th>
-                        <th className="text-left p-3 font-semibold">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invitedClients.map((client) => {
-                        // Find if this is a global invite (no cohorts)
-                        const globalInvite = data.globalInvites.find(i => i.email === client.email)
-                        return (
-                          <tr key={client.email} className="border-b bg-neutral-50 italic">
-                            <td className="p-3">{client.email}</td>
-                            <td className="p-3 text-sm text-neutral-500">
-                              {client.cohorts.length > 0 ? client.cohorts.join(", ") : "Not assigned yet"}
-                            </td>
-                            <td className="p-3">
-                              {globalInvite && (
-                                <button
-                                  onClick={() => handleCancelInvite(globalInvite.id)}
-                                  className="text-neutral-700 hover:underline text-sm"
-                                >
-                                  Cancel
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Unassigned Clients Section - Only show if filter is all or unassigned */}
-            {(currentFilter === "all" || currentFilter === "unassigned") && unassignedClients.length > 0 && (
-              <div className="bg-orange-50 rounded-lg border border-neutral-200 p-6 mb-8 border border-orange-200">
-                <h2 className="text-xl font-semibold mb-2 text-orange-800">Unassigned Clients</h2>
-                <p className="text-sm text-orange-700 mb-4">
-                  These clients have signed up but aren't in any cohort yet. Assign them to a cohort to get started.
-                </p>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-amber-200">
-                        <th className="text-left p-3 font-semibold">Name</th>
-                        <th className="text-left p-3 font-semibold">Email</th>
-                        <th className="text-left p-3 font-semibold">Assign to Cohort</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {unassignedClients.map((client) => (
-                        <tr key={client.email} className="border-b border-amber-100">
-                          <td className="p-3">{client.name || "No name"}</td>
-                          <td className="p-3">{client.email}</td>
-                          <td className="p-3">
-                            {data.cohorts.length > 0 ? (
-                              <div className="flex gap-2 items-center">
-                                <select
-                                  value={selectedCohortForAssign[client.id!] || ""}
-                                  onChange={(e) =>
-                                    setSelectedCohortForAssign({
-                                      ...selectedCohortForAssign,
-                                      [client.id!]: e.target.value,
-                                    })
-                                  }
-                                  className="px-2 py-1 border rounded-md text-sm"
-                                >
-                                  <option value="">Select cohort...</option>
-                                  {data.cohorts.map((cohort) => (
-                                    <option key={cohort.id} value={cohort.id}>
-                                      {cohort.name}
-                                    </option>
-                                  ))}
-                                </select>
-                                <button
-                                  onClick={() => handleAssignClient(client.id!)}
-                                  disabled={assigningClient === client.id || !selectedCohortForAssign[client.id!]}
-                                  className="bg-neutral-900 text-white px-3 py-1 rounded-md hover:bg-neutral-800 disabled:opacity-50 text-sm"
-                                >
-                                  {assigningClient === client.id ? "..." : "Assign"}
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="text-amber-600 text-sm">Create a cohort first</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
                     </tbody>
                   </table>
                 </div>
