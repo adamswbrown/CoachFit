@@ -83,6 +83,13 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   const showCoachNav = activeRole === Role.COACH || (activeRole === null && session?.user?.roles.includes(Role.COACH))
   const showAdminNav = activeRole === Role.ADMIN || (activeRole === null && session?.user?.roles.includes(Role.ADMIN) && !session?.user?.roles.includes(Role.COACH))
 
+  console.log("[CoachLayout] Navigation state:", {
+    activeRole,
+    sessionRoles: session?.user?.roles,
+    showCoachNav,
+    showAdminNav
+  })
+
   // Show coach navigation items
   if (showCoachNav) {
     navigation.push(
@@ -266,6 +273,13 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
                 <Link
                   key={item.name}
                   href={item.href}
+                  onClick={() => {
+                    console.log("[CoachLayout] Navigation clicked:", {
+                      name: item.name,
+                      href: item.href,
+                      hasDropdown: item.hasDropdown
+                    })
+                  }}
                   className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive
                       ? "bg-neutral-100 text-neutral-900"
