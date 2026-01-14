@@ -4,7 +4,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-const AUDIENCE_NAME = "CoachSync Users"
+const AUDIENCE_NAME = "CoachFit Users"
 
 async function setupBroadcastAudience() {
   if (!process.env.RESEND_API_KEY) {
@@ -12,7 +12,7 @@ async function setupBroadcastAudience() {
     process.exit(1)
   }
 
-  console.log("🚀 Setting up CoachSync broadcast audience...\n")
+  console.log("🚀 Setting up CoachFit broadcast audience...\n")
 
   // ─────────────────────────────────────────────────────────
   // Check if audience already exists

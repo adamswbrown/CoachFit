@@ -114,12 +114,12 @@ export const authOptions: NextAuthConfig = {
 
           await sendTransactionalEmail({
             to: user.email,
-            subject: "Welcome to CoachSync",
+            subject: \"Welcome to CoachFit\",
             html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #1f2937;">Welcome to CoachSync!</h2>
-                <p>Hi${user.name ? ` ${user.name}` : ""},</p>
-                <p>Welcome to CoachSync! We're excited to have you on board.</p>
+              <div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">
+                <h2 style=\"color: #1f2937;\">Welcome to CoachFit!</h2>
+                <p>Hi${user.name ? ` ${user.name}` : \"\"},</p>
+                <p>Welcome to CoachFit! We're excited to have you on board.</p>
                 <p>You're all set — your coach will guide you next.</p>
                 <p style="margin-top: 24px;">
                   <a href="${loginUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
@@ -131,7 +131,7 @@ export const authOptions: NextAuthConfig = {
                 </p>
               </div>
             `,
-            text: `Welcome to CoachSync!\n\nHi${user.name ? ` ${user.name}` : ""},\n\nWelcome to CoachSync! We're excited to have you on board.\n\nYou're all set — your coach will guide you next.\n\nSign in to your dashboard: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
+            text: `Welcome to CoachFit!\n\nHi${user.name ? ` ${user.name}` : \"\"},\n\nWelcome to CoachFit! We're excited to have you on board.\n\nYou're all set — your coach will guide you next.\n\nSign in to your dashboard: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
             isTestUser: dbUser?.isTestUser ?? false,
           })
         } catch (emailError) {

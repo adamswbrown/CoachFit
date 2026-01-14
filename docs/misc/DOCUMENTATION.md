@@ -1,6 +1,6 @@
-# CoachSync User Documentation
+# CoachFit User Documentation
 
-Welcome to CoachSync - a comprehensive fitness tracking platform designed for coaches and clients to work together on fitness goals.
+Welcome to CoachFit - a comprehensive fitness tracking platform designed for coaches and clients to work together on fitness goals.
 
 ---
 
@@ -17,7 +17,7 @@ Welcome to CoachSync - a comprehensive fitness tracking platform designed for co
 
 ## Overview
 
-CoachSync enables:
+CoachFit enables:
 - **Coaches** to create cohorts, invite clients, and monitor client progress
 - **Clients** to log daily fitness entries (weight, steps, calories, sleep quality)
 - **Analytics** for coaches to track cohort performance and individual client trends

@@ -46,7 +46,7 @@ export async function sendTransactionalEmail(
     }
 
     const result = await client.emails.send({
-      from: "CoachSync <onboarding@resend.dev>", // Default Resend domain, should be updated to custom domain
+      from: "CoachFit <onboarding@resend.dev>", // Default Resend domain, should be updated to custom domain
       to,
       subject,
       html,

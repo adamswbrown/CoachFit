@@ -10,7 +10,7 @@ async function setupEmailTemplates() {
     process.exit(1)
   }
 
-  console.log("🚀 Setting up CoachSync email templates...\n")
+  console.log("🚀 Setting up CoachFit email templates...\n")
 
   // ─────────────────────────────────────────────────────────
   // Template 1: Welcome Email
@@ -20,10 +20,10 @@ async function setupEmailTemplates() {
   const welcomeTemplate = await resend.templates.create({
     name: "welcome-user",
     html: `<p>Hi {{{NAME}}},</p>
-<p>Welcome to CoachSync.</p>
+<p>Welcome to CoachFit.</p>
 <p>You can now log in and start tracking your progress.</p>
 <p>If you were invited by a coach, you'll automatically be connected when you sign in.</p>
-<p>— CoachSync</p>`,
+<p>— CoachFit</p>`,
     variables: [
       {
         key: "NAME",
@@ -66,7 +66,7 @@ async function setupEmailTemplates() {
   const cohortInviteTemplate = await resend.templates.create({
     name: "cohort-invite",
     html: `<p>Hi,</p>
-<p>You've been invited to CoachSync by your coach.</p>
+<p>You've been invited to CoachFit by your coach.</p>
 <p>Create an account using this email address and you'll automatically be connected.</p>
 <p><a href="{{{SIGNUP_URL}}}">Create your account</a></p>
 <p>— CoachSync</p>`,
@@ -111,8 +111,8 @@ async function setupEmailTemplates() {
   console.log(`  welcome-user:   ${welcomeTemplate.data?.id}`)
   console.log(`  cohort-invite:  ${cohortInviteTemplate.data?.id}`)
   console.log("\nSubjects to use when sending (store in app):")
-  console.log('  welcome-user:   "Welcome to CoachSync"')
-  console.log('  cohort-invite:  "You\'ve been invited to CoachSync"')
+  console.log('  welcome-user:   "Welcome to CoachFit"')
+  console.log('  cohort-invite:  "You\'ve been invited to CoachFit"')
 }
 
 setupEmailTemplates().catch((error) => {

@@ -1,4 +1,4 @@
-# CoachSync
+# CoachFit
 
 > **Built with AI** — This project is developed in partnership with Claude (Anthropic), following a full-stack parallel execution operating contract. Every feature ships as a complete batch: frontend + backend + data + tests + docs.
 

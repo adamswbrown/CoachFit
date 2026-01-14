@@ -10,7 +10,7 @@ async function verifyResendSetup() {
     process.exit(1)
   }
 
-  console.log("🔍 Verifying Resend setup for CoachSync...\n")
+  console.log("🔍 Verifying Resend setup for CoachFit...\n")
 
   // ─────────────────────────────────────────────────────────
   // 1. Verify API Key works by listing domains

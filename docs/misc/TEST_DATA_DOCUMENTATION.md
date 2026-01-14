@@ -1,6 +1,6 @@
 # Test Data Documentation
 
-This document describes the comprehensive test data generated for the CoachSync application.
+This document describes the comprehensive test data generated for the CoachFit application.
 
 ## Overview
 
