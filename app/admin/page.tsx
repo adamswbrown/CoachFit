@@ -252,6 +252,25 @@ export default function AdminPage() {
     )
   })
 
+  const coachClientMap = coaches.reduce((acc, coach) => {
+    const coachCohortIds = new Set(
+      cohorts.filter((cohort) => cohort.coach.id === coach.id).map((cohort) => cohort.id)
+    )
+    acc[coach.id] = users.filter(
+      (user) =>
+        user.roles.includes("CLIENT") &&
+        user.cohortsMemberOf.some((cohort) => coachCohortIds.has(cohort.id))
+    )
+    return acc
+  }, {} as Record<string, User[]>)
+
+  const coachCohortsMap = coaches.reduce((acc, coach) => {
+    acc[coach.id] = cohorts.filter((cohort) => cohort.coach.id === coach.id)
+    return acc
+  }, {} as Record<string, Cohort[]>)
+
+  const adminUsers = users.filter((user) => user.roles.includes("ADMIN"))
+
   // Filter cohorts based on search query
   const filteredCohorts = cohorts.filter((cohort) => {
     if (!cohortSearchQuery) return true
@@ -349,6 +368,26 @@ export default function AdminPage() {
               }`}
             >
               Cohorts ({cohorts.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("coaches")}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === "coaches"
+                  ? "text-neutral-900 border-b-2 border-neutral-900"
+                  : "text-neutral-500 hover:text-neutral-700"
+              }`}
+            >
+              Coaches ({coaches.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("admins")}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === "admins"
+                  ? "text-neutral-900 border-b-2 border-neutral-900"
+                  : "text-neutral-500 hover:text-neutral-700"
+              }`}
+            >
+              Admins ({adminUsers.length})
             </button>
           </div>
         </div>
@@ -552,6 +591,209 @@ export default function AdminPage() {
                             </div>
                           </td>
                         </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Coaches Tab */}
+        {activeTab === "coaches" && (
+          <div className="bg-white border border-neutral-200 rounded-lg">
+            {coaches.length === 0 ? (
+              <div className="p-8 text-center text-neutral-500">No coaches found.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-neutral-50">
+                      <th className="text-left p-2.5 text-xs font-semibold text-neutral-600 uppercase">Coach</th>
+                      <th className="text-left p-2.5 text-xs font-semibold text-neutral-600 uppercase">Cohorts</th>
+                      <th className="text-left p-2.5 text-xs font-semibold text-neutral-600 uppercase">Clients</th>
+                      <th className="text-left p-2.5 text-xs font-semibold text-neutral-600 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coaches.map((coach) => {
+                      const coachClients = coachClientMap[coach.id] || []
+                      const coachCohorts = coachCohortsMap[coach.id] || []
+                      return (
+                        <tr key={coach.id} className="border-b border-neutral-100 hover:bg-neutral-50">
+                          <td className="p-2.5">
+                            <div className="font-medium text-sm">{coach.name || "—"}</div>
+                            <div className="text-xs text-neutral-500">{coach.email}</div>
+                          </td>
+                          <td className="p-2.5">
+                            {coachCohorts.length === 0 ? (
+                              <span className="text-xs text-neutral-400">No cohorts</span>
+                            ) : (
+                              <div className="flex gap-1 flex-wrap">
+                                {coachCohorts.slice(0, 4).map((cohort) => (
+                                  <span
+                                    key={cohort.id}
+                                    className="px-1.5 py-0.5 text-xs rounded bg-neutral-100 text-neutral-800"
+                                  >
+                                    {cohort.name} ({cohort.activeClients})
+                                  </span>
+                                ))}
+                                {coachCohorts.length > 4 && (
+                                  <span className="text-xs text-neutral-400">
+                                    +{coachCohorts.length - 4} more
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-2.5">
+                            {coachClients.length === 0 ? (
+                              <span className="text-xs text-neutral-400">No clients</span>
+                            ) : (
+                              <div className="flex gap-1 flex-wrap">
+                                {coachClients.slice(0, 6).map((client) => (
+                                  <span
+                                    key={client.id}
+                                    className="px-1.5 py-0.5 text-xs rounded bg-neutral-100 text-neutral-800"
+                                  >
+                                    {client.name || client.email}
+                                  </span>
+                                ))}
+                                {coachClients.length > 6 && (
+                                  <span className="text-xs text-neutral-400">
+                                    +{coachClients.length - 6} more
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-2.5">
+                            {resetPasswordUserId === coach.id ? (
+                              <div className="flex gap-1 items-center">
+                                <input
+                                  type="password"
+                                  value={resetPassword}
+                                  onChange={(e) => setResetPassword(e.target.value)}
+                                  className="px-2 py-1 text-xs border border-neutral-300 rounded"
+                                  placeholder="New password"
+                                />
+                                <button
+                                  onClick={() => handleResetPassword(coach.id)}
+                                  disabled={resettingPassword || !resetPassword}
+                                  className="px-2 py-1 text-xs bg-neutral-900 text-white rounded hover:bg-neutral-800 disabled:opacity-50"
+                                >
+                                  {resettingPassword ? "..." : "Save"}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setResetPasswordUserId(null)
+                                    setResetPassword("")
+                                  }}
+                                  className="px-2 py-1 text-xs bg-neutral-100 text-neutral-700 rounded hover:bg-neutral-200"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setResetPasswordUserId(coach.id)}
+                                className="px-2 py-1 text-xs bg-neutral-100 text-neutral-700 rounded hover:bg-neutral-200"
+                              >
+                                🔑
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Admins Tab */}
+        {activeTab === "admins" && (
+          <div className="bg-white border border-neutral-200 rounded-lg">
+            {adminUsers.length === 0 ? (
+              <div className="p-8 text-center text-neutral-500">No admins found.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-neutral-50">
+                      <th className="text-left p-2.5 text-xs font-semibold text-neutral-600 uppercase">Admin</th>
+                      <th className="text-left p-2.5 text-xs font-semibold text-neutral-600 uppercase">Roles</th>
+                      <th className="text-left p-2.5 text-xs font-semibold text-neutral-600 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adminUsers.map((admin) => {
+                      const isCurrentUser = admin.id === session.user.id
+                      return (
+                      <tr key={admin.id} className="border-b border-neutral-100 hover:bg-neutral-50">
+                        <td className="p-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium text-sm">{admin.name || "—"}</span>
+                            {admin.isTestUser && (
+                              <span className="text-xs text-amber-600">(test)</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-neutral-500">{admin.email}</div>
+                        </td>
+                        <td className="p-2.5">
+                          <div className="flex gap-1 flex-wrap">
+                            {admin.roles.map((role) => (
+                              <span
+                                key={role}
+                                className="px-1.5 py-0.5 text-xs rounded bg-neutral-100 text-neutral-800"
+                              >
+                                {role}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="p-2.5">
+                          {isCurrentUser ? (
+                            <span className="text-xs text-neutral-400">Current user</span>
+                          ) : resetPasswordUserId === admin.id ? (
+                            <div className="flex gap-1 items-center">
+                              <input
+                                type="password"
+                                value={resetPassword}
+                                onChange={(e) => setResetPassword(e.target.value)}
+                                className="px-2 py-1 text-xs border border-neutral-300 rounded"
+                                placeholder="New password"
+                              />
+                              <button
+                                onClick={() => handleResetPassword(admin.id)}
+                                disabled={resettingPassword || !resetPassword}
+                                className="px-2 py-1 text-xs bg-neutral-900 text-white rounded hover:bg-neutral-800 disabled:opacity-50"
+                              >
+                                {resettingPassword ? "..." : "Save"}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setResetPasswordUserId(null)
+                                  setResetPassword("")
+                                }}
+                                className="px-2 py-1 text-xs bg-neutral-100 text-neutral-700 rounded hover:bg-neutral-200"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setResetPasswordUserId(admin.id)}
+                              className="px-2 py-1 text-xs bg-neutral-100 text-neutral-700 rounded hover:bg-neutral-200"
+                            >
+                              Reset Password
+                            </button>
+                          )}
+                        </td>
+                      </tr>
                       )
                     })}
                   </tbody>
