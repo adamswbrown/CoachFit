@@ -2,7 +2,14 @@
  * POST /api/ingest/steps
  *
  * Endpoint for iOS app to send HealthKit step count data.
- * HealthKit data overwrites manual entries (uses dataSources field).
+ * 
+ * Data Priority:
+ * - If Entry already exists with "manual" in dataSources, preserve manual value
+ * - Only update steps if no manual data exists for that date
+ * - Set dataSources to ["manual", "healthkit"] if manual exists, ["healthkit"] if only HealthKit
+ * 
+ * This ensures manual entries (coach prompts, user corrections) take precedence
+ * over automatically collected HealthKit data.
  */
 
 import { NextRequest, NextResponse } from "next/server"
@@ -40,8 +47,46 @@ export async function POST(req: NextRequest) {
         const date = new Date(stepRecord.date)
         date.setHours(0, 0, 0, 0)
 
+        // Check if entry exists for this date
+        const existingEntry = await db.entry.findUnique({
+          where: {
+            userId_date: {
+              userId: validated.client_id,
+              date: date,
+            },
+          },
+          select: { steps: true, dataSources: true },
+        })
+
+        let updateData: any
+
+        if (existingEntry) {
+          // Entry exists - check if it has manual data
+          const dataSources = Array.isArray(existingEntry.dataSources) ? existingEntry.dataSources : []
+          const hasManualData = dataSources.includes("manual")
+
+          if (hasManualData) {
+            // Manual data exists - preserve it, but mark that we have both manual and healthkit
+            updateData = {
+              dataSources: Array.from(new Set([...dataSources, "healthkit"])),
+              // Don't update steps - keep the manual value
+            }
+          } else {
+            // No manual data - update with HealthKit value
+            updateData = {
+              steps: stepRecord.total_steps,
+              dataSources: ["healthkit"],
+            }
+          }
+        } else {
+          // No existing entry - create new one with HealthKit data
+          updateData = {
+            steps: stepRecord.total_steps,
+            dataSources: ["healthkit"],
+          }
+        }
+
         // Upsert entry for this date
-        // HealthKit overwrites manual data, sets dataSources to ["healthkit"]
         await db.entry.upsert({
           where: {
             userId_date: {
@@ -49,10 +94,7 @@ export async function POST(req: NextRequest) {
               date: date,
             },
           },
-          update: {
-            steps: stepRecord.total_steps,
-            dataSources: ["healthkit"],
-          },
+          update: updateData,
           create: {
             userId: validated.client_id,
             date: date,

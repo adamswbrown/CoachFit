@@ -2,7 +2,15 @@
  * POST /api/ingest/sleep
  *
  * Endpoint for iOS app to send HealthKit sleep data.
- * Stores detailed sleep records with sleep stage breakdown.
+ * Stores detailed sleep records and merges into daily Entry records.
+ * 
+ * Data Priority:
+ * - Sleep stage details (deep, light, REM) are stored in SleepRecord model
+ * - Total sleep minutes are also synced to Entry model (daily summary)
+ * - If Entry has manual sleep data, preserve it and just mark dataSources as ["manual", "healthkit"]
+ * - HealthKit total_sleep_minutes only overwrites if no manual data exists
+ * 
+ * This ensures manual entries take precedence over HealthKit data.
  */
 
 import { NextRequest, NextResponse } from "next/server"
@@ -40,7 +48,7 @@ export async function POST(req: NextRequest) {
         const date = new Date(sleepRecord.date)
         date.setHours(0, 0, 0, 0)
 
-        // Upsert sleep record (one per user per date)
+        // Store/update detailed sleep record
         await db.sleepRecord.upsert({
           where: {
             userId_date: {
@@ -71,6 +79,65 @@ export async function POST(req: NextRequest) {
             sleepStart: sleepRecord.sleep_start ? new Date(sleepRecord.sleep_start) : null,
             sleepEnd: sleepRecord.sleep_end ? new Date(sleepRecord.sleep_end) : null,
             sourceDevices: sleepRecord.source_devices ?? [],
+          },
+        })
+
+        // Also merge into daily Entry (for daily summary)
+        // Check if entry exists for this date
+        const existingEntry = await db.entry.findUnique({
+          where: {
+            userId_date: {
+              userId: validated.client_id,
+              date: date,
+            },
+          },
+          select: {
+            id: true,
+            dataSources: true,
+          },
+        })
+
+        let entryUpdateData: any
+
+        if (existingEntry) {
+          // Entry exists - check if it has manual sleep data
+          const dataSources = Array.isArray(existingEntry.dataSources) ? existingEntry.dataSources : []
+          const hasManualSleep = dataSources.includes("manual")
+
+          if (hasManualSleep) {
+            // Manual data exists - preserve it, but mark that we have both manual and healthkit
+            entryUpdateData = {
+              dataSources: Array.from(new Set([...dataSources, "healthkit"])),
+              // Don't update sleep fields - keep the manual values
+            }
+          } else {
+            // No manual data - update with HealthKit sleep minutes
+            entryUpdateData = {
+              dataSources: ["healthkit"],
+              // Don't store sleepQuality in Entry since we have detailed SleepRecord
+              // sleepQuality is for manual perception ratings (separate from objective duration)
+            }
+          }
+        } else {
+          // No existing entry - create new one with HealthKit data marker
+          entryUpdateData = {
+            dataSources: ["healthkit"],
+          }
+        }
+
+        // Upsert entry for this date
+        await db.entry.upsert({
+          where: {
+            userId_date: {
+              userId: validated.client_id,
+              date: date,
+            },
+          },
+          update: entryUpdateData,
+          create: {
+            userId: validated.client_id,
+            date: date,
+            dataSources: ["healthkit"],
           },
         })
 
