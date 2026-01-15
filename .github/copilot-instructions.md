@@ -10,6 +10,7 @@
 - Big features must be PR'd from the issue and reference the issue in the PR.
 - For smaller features or fixes, plan directly in a pull request with a complete PR description (no separate issue needed).
 - All PRs must include full-stack, test-covered, and documented changes as described below.
+- Use a fresh branch + PR per issue/feature; never commit to `ci/remove-claude-workflow`.
 
 ## Project Overview
 CoachFit is a full-stack fitness coaching platform built with Next.js 16 (App Router), TypeScript, Prisma ORM, PostgreSQL, and NextAuth.js v5. The system connects coaches and clients for real-time health tracking, cohort management, and progress analytics.
