@@ -4,10 +4,12 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { isAdmin, isCoach, isClient } from "@/lib/permissions"
+import { isClient } from "@/lib/permissions"
 import { ClientLayout } from "@/components/layouts/ClientLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import { DataSourceBadge } from "@/components/DataSourceBadge"
+import { useRole } from "@/contexts/RoleContext"
+import { Role } from "@/lib/types"
 
 interface Entry {
   id: string
@@ -41,6 +43,7 @@ interface Workout {
 export default function ClientDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { activeRole } = useRole()
   const [entries, setEntries] = useState<Entry[]>([])
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
@@ -72,25 +75,25 @@ export default function ClientDashboard() {
       return
     }
 
-    if (session?.user) {
-      if (isAdmin(session.user)) {
+    if (session?.user && activeRole !== null) {
+      if (activeRole === Role.ADMIN) {
         router.push("/admin/overview")
         return
       }
-      if (isCoach(session.user)) {
+      if (activeRole === Role.COACH) {
         router.push("/coach-dashboard")
       }
     }
-  }, [status, session, router])
+  }, [status, session, router, activeRole])
 
   useEffect(() => {
-    if (session?.user && isClient(session.user)) {
+    if (session?.user && activeRole === Role.CLIENT && isClient(session.user)) {
       checkCohortMembership()
       fetchEntries()
       fetchCheckInConfig()
       fetchWorkouts()
     }
-  }, [session])
+  }, [session, activeRole])
 
   const fetchCheckInConfig = async () => {
     try {
@@ -314,7 +317,7 @@ export default function ClientDashboard() {
     return "Good evening"
   }
 
-  if (status === "loading" || loading) {
+  if (status === "loading" || loading || activeRole === null) {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center py-12">
