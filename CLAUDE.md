@@ -44,6 +44,13 @@ This contract optimizes for:
 
 ---
 
+## Branch & PR Workflow
+
+- Use a fresh branch + PR per issue/feature.
+- Do not commit to `ci/remove-claude-workflow`.
+
+---
+
 ## 🧩 ROLE COLLAPSE (MENTAL LANES)
 
 Every task implicitly executes these lanes together:
