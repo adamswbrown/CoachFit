@@ -42,6 +42,14 @@ function isHealthKitEndpoint(pathname: string): boolean {
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
+  // Allow all public assets (images, etc.) to bypass middleware
+  if (
+    pathname.startsWith('/public/') ||
+    pathname.match(/^\/.+\.(png|jpg|jpeg|svg|gif|ico|webp|avif|bmp)$/)
+  ) {
+    return NextResponse.next()
+  }
+
   // Handle CORS preflight for HealthKit endpoints
   if (isHealthKitEndpoint(pathname)) {
     if (req.method === 'OPTIONS') {
@@ -126,6 +134,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|public/|.*\\.(png|jpg|jpeg|svg|gif|ico|webp|avif|bmp)).*)",
   ],
 }
