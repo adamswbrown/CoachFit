@@ -1,4 +1,5 @@
 import NextAuth, { type NextAuthConfig } from "next-auth"
+import { randomUUID } from "crypto"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import GoogleProvider from "next-auth/providers/google"
 import AppleProvider from "next-auth/providers/apple"
@@ -201,17 +202,18 @@ If you have any questions, please contact your coach.`,
             if (!existingAccount) {
               await db.account.create({
                 data: {
-                  userId: existingUser.id,
+                  id: randomUUID(),
+                  user: { connect: { id: existingUser.id } },
                   provider: account.provider,
-                  type: account.type,
-                  providerAccountId: account.providerAccountId,
-                  refresh_token: account.refresh_token,
-                  access_token: account.access_token,
-                  expires_at: account.expires_at,
-                  token_type: account.token_type,
-                  scope: account.scope,
-                  id_token: account.id_token,
-                  session_state: (account as { session_state?: string }).session_state,
+                  type: account.type as unknown as string,
+                  providerAccountId: account.providerAccountId!,
+                  refresh_token: (account as any)?.refresh_token ?? null,
+                  access_token: (account as any)?.access_token ?? null,
+                  expires_at: (account as any)?.expires_at ?? null,
+                  token_type: (account as any)?.token_type ?? null,
+                  scope: (account as any)?.scope ?? null,
+                  id_token: (account as any)?.id_token ?? null,
+                  session_state: (account as { session_state?: string })?.session_state ?? null,
                 },
               })
             }
@@ -301,8 +303,9 @@ If you have any questions, please contact your coach.`,
         const email = user.email || token.email
         if (email && typeof email === 'string') {
           const hasAdminOverride = await checkAdminOverride(email)
-          if (hasAdminOverride && !token.roles.includes(Role.ADMIN)) {
-            token.roles = [...token.roles, Role.ADMIN]
+          const currentRoles = (token.roles as Role[]) ?? []
+          if (hasAdminOverride && !currentRoles.includes(Role.ADMIN)) {
+            token.roles = [...currentRoles, Role.ADMIN]
           }
         }
       }
