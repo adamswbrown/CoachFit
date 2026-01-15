@@ -36,14 +36,29 @@ model CoachInvite {
 }
 
 model Cohort {
-  id            String               @id @default(uuid())
-  name          String
-  coachId       String
-  createdAt     DateTime             @default(now())
-  User          User                 @relation(fields: [coachId], references: [id], onDelete: Cascade)
-  invites       CohortInvite[]
-  memberships   CohortMembership[]
-  CheckInConfig CohortCheckInConfig?
+  id              String                 @id @default(uuid())
+  name            String
+  coachId         String // Primary owner
+  createdAt       DateTime               @default(now())
+  User            User                   @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  invites         CohortInvite[]
+  memberships     CohortMembership[]
+  coachMemberships CoachCohortMembership[] // Additional co-coaches
+  CheckInConfig   CohortCheckInConfig?
+
+  @@unique([coachId, name]) // Unique names per coach
+}
+
+model CoachCohortMembership {
+  coachId  String
+  cohortId String
+  addedAt  DateTime @default(now())
+  Cohort   Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  User     User     @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@id([coachId, cohortId])
+  @@index([coachId])
+  @@index([cohortId])
 }
 
 model CohortInvite {
@@ -178,33 +193,34 @@ model Session {
 }
 
 model User {
-  id                 String             @id @default(uuid())
-  email              String             @unique
-  name               String?
-  image              String?
-  passwordHash       String?
-  roles              Role[]             @default([CLIENT])
-  isTestUser         Boolean            @default(false)
-  emailVerified      DateTime?
-  createdAt          DateTime           @default(now())
-  invitedByCoachId   String?
-  onboardingComplete Boolean            @default(false)
-  Account            Account[]
-  CoachInvite        CoachInvite[]
-  Cohort             Cohort[]
-  CohortMembership   CohortMembership[]
-  Entry              Entry[]
-  Session            Session[]
-  CoachNotes         CoachNote[]        @relation("CoachNotes")
-  ClientNotes        CoachNote[]        @relation("ClientNotes")
-  AdminActions       AdminAction[]      @relation("AdminActions")
-  User               User?              @relation("UserToUser", fields: [invitedByCoachId], references: [id])
-  other_User         User[]             @relation("UserToUser")
+  id                    String                  @id @default(uuid())
+  email                 String                  @unique
+  name                  String?
+  image                 String?
+  passwordHash          String?
+  roles                 Role[]                  @default([CLIENT])
+  isTestUser            Boolean                 @default(false)
+  emailVerified         DateTime?
+  createdAt             DateTime                @default(now())
+  invitedByCoachId      String?
+  onboardingComplete    Boolean                 @default(false)
+  Account               Account[]
+  CoachInvite           CoachInvite[]
+  Cohort                Cohort[]
+  CohortMembership      CohortMembership[]
+  CoachCohortMembership CoachCohortMembership[] // Co-coach relationships
+  Entry                 Entry[]
+  Session               Session[]
+  CoachNotes            CoachNote[]             @relation("CoachNotes")
+  ClientNotes           CoachNote[]             @relation("ClientNotes")
+  AdminActions          AdminAction[]           @relation("AdminActions")
+  User                  User?                   @relation("UserToUser", fields: [invitedByCoachId], references: [id])
+  other_User            User[]                  @relation("UserToUser")
   // HealthKit relations
-  Workouts           Workout[]
-  SleepRecords       SleepRecord[]
-  CoachPairingCodes  PairingCode[]      @relation("CoachPairingCodes")
-  ClientPairingCodes PairingCode[]      @relation("ClientPairingCodes")
+  Workouts              Workout[]
+  SleepRecords          SleepRecord[]
+  CoachPairingCodes     PairingCode[]           @relation("CoachPairingCodes")
+  ClientPairingCodes    PairingCode[]           @relation("ClientPairingCodes")
 }
 
 model VerificationToken {
