@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
+import { isAdmin } from "@/lib/permissions"
 
 export async function GET(
   req: NextRequest,
@@ -15,8 +16,10 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Defensive check: verify role is COACH
-    if (!session.user.roles.includes(Role.COACH)) {
+    const isAdminUser = isAdmin(session.user)
+
+    // Must be COACH or ADMIN
+    if (!session.user.roles.includes(Role.COACH) && !isAdminUser) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -41,8 +44,8 @@ export async function GET(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
     }
 
-    // Ownership check: verify coach owns this cohort
-    if (cohort.coachId !== session.user.id) {
+    // Ownership check: verify coach owns this cohort (skip for admins)
+    if (!isAdminUser && cohort.coachId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -68,8 +71,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Defensive check: verify role is COACH
-    if (!session.user.roles.includes(Role.COACH)) {
+    const isAdminUser = isAdmin(session.user)
+
+    // Must be COACH or ADMIN
+    if (!session.user.roles.includes(Role.COACH) && !isAdminUser) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -84,8 +89,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
     }
 
-    // Ownership check: verify coach owns this cohort
-    if (cohort.coachId !== session.user.id) {
+    // Ownership check: verify coach owns this cohort (skip for admins)
+    if (!isAdminUser && cohort.coachId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
