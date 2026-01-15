@@ -49,12 +49,13 @@ export function isValidCodeFormat(code: string): boolean {
 
 /**
  * Create a new pairing code in the database for a specific client
- * @param coachId The coach creating the code
+ * @param userId The user (coach or admin) creating the code
  * @param clientId The client this code is for
+ * @param isAdmin Whether the user is an admin (bypasses association check)
  * @returns The created pairing code record
  */
-export async function createPairingCode(coachId: string, clientId: string) {
-  // Verify client exists and is associated with this coach
+export async function createPairingCode(userId: string, clientId: string, isAdmin = false) {
+  // Verify client exists and is associated with this coach (or user is admin)
   // Check both direct invitation and cohort membership
   const client = await db.user.findUnique({
     where: { id: clientId },
@@ -73,12 +74,25 @@ export async function createPairingCode(coachId: string, clientId: string) {
     throw new Error("Client not found")
   }
 
-  // Check if client is associated with this coach via invitedByCoachId or cohort membership
-  const isAssociated = client.invitedByCoachId === coachId || 
-    client.CohortMembership.some(m => m.Cohort.coachId === coachId)
+  // Admins can generate codes for any client
+  if (!isAdmin) {
+    // Check if client is associated with this coach via invitedByCoachId or cohort membership
+    const isAssociated = client.invitedByCoachId === userId || 
+      client.CohortMembership.some(m => m.Cohort.coachId === userId)
 
-  if (!isAssociated) {
-    throw new Error("Client not associated with this coach")
+    if (!isAssociated) {
+      throw new Error("Client not associated with this coach")
+    }
+  }
+
+  // Determine the actual coach ID for the pairing code
+  // For admins, use the client's actual coach (invitedByCoachId or first cohort coach)
+  // For coaches, use their own ID
+  let actualCoachId = userId
+  if (isAdmin) {
+    actualCoachId = client.invitedByCoachId || 
+      client.CohortMembership[0]?.Cohort.coachId || 
+      userId
   }
 
   // Generate a unique code (retry if collision)
@@ -102,7 +116,7 @@ export async function createPairingCode(coachId: string, clientId: string) {
   return db.pairingCode.create({
     data: {
       code,
-      coachId,
+      coachId: actualCoachId,
       clientId,
       expiresAt,
     },
@@ -112,15 +126,15 @@ export async function createPairingCode(coachId: string, clientId: string) {
 /**
  * Regenerate a pairing code for a client (invalidates previous codes)
  * Useful when client gets a new phone or loses access
- * @param coachId The coach regenerating the code
+ * @param userId The user (coach or admin) regenerating the code
  * @param clientId The client this code is for
+ * @param isAdmin Whether the user is an admin (bypasses association check)
  * @returns The new pairing code record
  */
-export async function regeneratePairingCode(coachId: string, clientId: string) {
+export async function regeneratePairingCode(userId: string, clientId: string, isAdmin = false) {
   // Invalidate any existing unused codes for this client
   await db.pairingCode.updateMany({
     where: {
-      coachId,
       clientId,
       usedAt: null,
     },
@@ -131,7 +145,7 @@ export async function regeneratePairingCode(coachId: string, clientId: string) {
   })
 
   // Create new code
-  return createPairingCode(coachId, clientId)
+  return createPairingCode(userId, clientId, isAdmin)
 }
 
 /**

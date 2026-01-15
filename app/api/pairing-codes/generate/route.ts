@@ -33,10 +33,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const validated = generatePairingCodeSchema.parse(body)
 
+    const isAdminUser = isAdmin(session.user)
+
     // Generate or regenerate pairing code for the specified client
     const pairingCode = validated.regenerate
-      ? await regeneratePairingCode(session.user.id, validated.client_id)
-      : await createPairingCode(session.user.id, validated.client_id)
+      ? await regeneratePairingCode(session.user.id, validated.client_id, isAdminUser)
+      : await createPairingCode(session.user.id, validated.client_id, isAdminUser)
 
     return NextResponse.json({
       success: true,
