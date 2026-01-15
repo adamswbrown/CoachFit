@@ -32,7 +32,7 @@ export async function GET(
         name: true,
         email: true,
         invitedByCoachId: true,
-        InvitedByCoach: {
+        User: {
           select: {
             id: true,
             name: true,

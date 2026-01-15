@@ -14,7 +14,7 @@ interface Client {
   name: string | null
   email: string
   invitedByCoachId: string | null
-  InvitedByCoach: {
+  User: {
     id: string
     name: string | null
     email: string
@@ -517,11 +517,11 @@ export default function ClientOverviewPage() {
                 </div>
                 
                 {/* Coach Information */}
-                {client.InvitedByCoach && (
+                {client.User && (
                   <div>
                     <div className="text-neutral-500">Invited By</div>
                     <div className="text-neutral-900 font-medium">
-                      {client.InvitedByCoach.name || client.InvitedByCoach.email}
+                      {client.User.name || client.User.email}
                     </div>
                   </div>
                 )}
