@@ -123,15 +123,8 @@ export async function POST(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
     }
 
-    // Ownership check: only cohort owner can add members (not even admins should bypass this for data integrity)
+    // Ownership check: allow admins or cohort owners to add members
     if (cohort.coachId !== session.user.id && !isAdminUser) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-      return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
-    }
-
-    // Ownership check: verify coach owns this cohort
-    if (cohort.coachId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
