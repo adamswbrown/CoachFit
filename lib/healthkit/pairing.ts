@@ -212,14 +212,46 @@ export async function validateAndUsePairingCode(
 }
 
 /**
- * Get all active (unused, unexpired) pairing codes for a coach
- * @param coachId The coach ID
- * @returns Array of active pairing codes
+ * Get all active (unused, unexpired) pairing codes for clients a coach/admin has access to
+ * @param userId The coach or admin ID
+ * @param isAdmin Whether the user is an admin
+ * @returns Array of active pairing codes for accessible clients
  */
-export async function getActiveCodesForCoach(coachId: string) {
+export async function getActiveCodesForCoach(userId: string, isAdmin = false) {
+  if (isAdmin) {
+    // Admins can see all active codes
+    return db.pairingCode.findMany({
+      where: {
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: "desc" },
+    })
+  }
+
+  // For coaches, find codes for clients they have access to
+  // This includes clients directly invited by them or in their cohorts
+  const accessibleClients = await db.user.findMany({
+    where: {
+      OR: [
+        { invitedByCoachId: userId },
+        { 
+          CohortMembership: {
+            some: {
+              Cohort: { coachId: userId }
+            }
+          }
+        }
+      ]
+    },
+    select: { id: true }
+  })
+
+  const clientIds = accessibleClients.map(c => c.id)
+
   return db.pairingCode.findMany({
     where: {
-      coachId,
+      clientId: { in: clientIds },
       usedAt: null,
       expiresAt: { gt: new Date() },
     },

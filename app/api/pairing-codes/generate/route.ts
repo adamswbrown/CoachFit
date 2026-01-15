@@ -92,13 +92,15 @@ export async function GET(req: NextRequest) {
       )
     }
 
+    const isAdminUser = isAdmin(session.user)
+
     // Check if client_id query parameter is provided
     const url = new URL(req.url)
     const clientId = url.searchParams.get("client_id")
 
     if (clientId) {
       // Get specific client's active pairing code
-      const activeCodes = await getActiveCodesForCoach(session.user.id)
+      const activeCodes = await getActiveCodesForCoach(session.user.id, isAdminUser)
       const clientCode = activeCodes.find(code => code.clientId === clientId)
 
       if (clientCode) {
@@ -115,7 +117,7 @@ export async function GET(req: NextRequest) {
     }
 
     // List all active codes for coach
-    const activeCodes = await getActiveCodesForCoach(session.user.id)
+    const activeCodes = await getActiveCodesForCoach(session.user.id, isAdminUser)
 
     return NextResponse.json({
       codes: activeCodes.map(code => ({
