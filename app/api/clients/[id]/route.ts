@@ -46,7 +46,7 @@ export async function GET(
                 id: true,
                 name: true,
                 coachId: true,
-                Coach: {
+                User: {
                   select: {
                     id: true,
                     name: true,

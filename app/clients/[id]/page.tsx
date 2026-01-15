@@ -24,7 +24,7 @@ interface Client {
       id: string
       name: string
       coachId: string
-      Coach: {
+      User: {
         id: string
         name: string | null
         email: string
@@ -542,7 +542,7 @@ export default function ClientOverviewPage() {
                             {membership.Cohort.name}
                           </Link>
                           <span className="text-xs text-neutral-500 ml-2">
-                            (Coach: {membership.Cohort.Coach.name || membership.Cohort.Coach.email})
+                            (Coach: {membership.Cohort.User.name || membership.Cohort.User.email})
                           </span>
                         </div>
                       ))}
