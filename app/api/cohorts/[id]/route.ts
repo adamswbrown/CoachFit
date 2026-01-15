@@ -44,9 +44,28 @@ export async function GET(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
     }
 
-    // Ownership check: verify coach owns this cohort (skip for admins)
-    if (!isAdminUser && cohort.coachId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    // Authorization check for coaches (admins can view any cohort)
+    if (!isAdminUser) {
+      const ownsThisCohort = cohort.coachId === session.user.id
+      
+      // If coach doesn't own this cohort, check if they have access to any members
+      if (!ownsThisCohort) {
+        const memberIds = cohort.memberships.map(m => m.userId)
+        
+        // Check if coach has access to any of these members via their cohorts
+        const hasAccessToMembers = await db.cohortMembership.findFirst({
+          where: {
+            userId: { in: memberIds },
+            Cohort: {
+              coachId: session.user.id
+            }
+          }
+        })
+        
+        if (!hasAccessToMembers) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
+      }
     }
 
     return NextResponse.json(cohort, { status: 200 })
