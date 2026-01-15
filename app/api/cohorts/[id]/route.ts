@@ -46,10 +46,20 @@ export async function GET(
 
     // Authorization check for coaches (admins can view any cohort)
     if (!isAdminUser) {
-      const ownsThisCohort = cohort.coachId === session.user.id
+      const isOwner = cohort.coachId === session.user.id
       
-      // If coach doesn't own this cohort, check if they have access to any members
-      if (!ownsThisCohort) {
+      // Check if user is a co-coach on this cohort
+      const isCoCoach = await db.coachCohortMembership.findUnique({
+        where: {
+          coachId_cohortId: {
+            coachId: session.user.id,
+            cohortId: id
+          }
+        }
+      })
+      
+      // If not owner and not co-coach, check if they have access to any members
+      if (!isOwner && !isCoCoach) {
         const memberIds = cohort.memberships.map(m => m.userId)
         
         // Check if coach has access to any of these members via their cohorts
@@ -57,7 +67,23 @@ export async function GET(
           where: {
             userId: { in: memberIds },
             Cohort: {
-              coachId: session.user.id
+              OR: [
+                { coachId: session.user.id },
+                { 
+                  coachMemberships: {
+                    some: { coachId: session.user.id }
+                  }
+                }
+              ]
+            }
+          }
+        })
+        
+        if (!hasAccessToMembers) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
+      }
+    }
             }
           }
         })
@@ -108,9 +134,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
     }
 
-    // Ownership check: verify coach owns this cohort (skip for admins)
+    // Ownership check: only owner can delete cohort (admins can also delete)
     if (!isAdminUser && cohort.coachId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return NextResponse.json({ error: "Forbidden - Only the cohort owner can delete it" }, { status: 403 })
     }
 
     // Delete cohort and memberships in a transaction

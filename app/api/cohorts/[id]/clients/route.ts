@@ -35,24 +35,43 @@ export async function GET(
 
     // Authorization check for coaches (admins can view any cohort)
     if (!isAdminUser && cohort.coachId !== session.user.id) {
-      // Check if coach has access to any members in this cohort
-      const memberships = await db.cohortMembership.findMany({
-        where: { cohortId: id },
-      })
-      
-      const memberIds = memberships.map(m => m.userId)
-      
-      const hasAccessToMembers = await db.cohortMembership.findFirst({
+      // Check if coach is a co-coach on this cohort
+      const isCoCoach = await db.coachCohortMembership.findUnique({
         where: {
-          userId: { in: memberIds },
-          Cohort: {
-            coachId: session.user.id
+          coachId_cohortId: {
+            coachId: session.user.id,
+            cohortId: id
           }
         }
       })
       
-      if (!hasAccessToMembers) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      if (!isCoCoach) {
+        // Check if coach has access to any members in this cohort
+        const memberships = await db.cohortMembership.findMany({
+          where: { cohortId: id },
+        })
+        
+        const memberIds = memberships.map(m => m.userId)
+        
+        const hasAccessToMembers = await db.cohortMembership.findFirst({
+          where: {
+            userId: { in: memberIds },
+            Cohort: {
+              OR: [
+                { coachId: session.user.id },
+                {
+                  coachMemberships: {
+                    some: { coachId: session.user.id }
+                  }
+                }
+              ]
+            }
+          }
+        })
+        
+        if (!hasAccessToMembers) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
       }
     }
 
@@ -66,10 +85,16 @@ export async function GET(
             id: true,
             name: true,
             email: true,
+            roles: true, // Include roles to filter clients
           },
         },
       },
     })
+
+    // Filter to only include users with CLIENT role
+    const clientMemberships = memberships.filter(m => 
+      m.user.roles.includes(Role.CLIENT)
+    )
 
     const invites = await db.cohortInvite.findMany({
       where: {
@@ -81,7 +106,12 @@ export async function GET(
       },
     })
 
-    const members = memberships.map((membership: { user: { id: string; name: string | null; email: string } }) => membership.user)
+    // Return only client members (exclude coaches)
+    const members = clientMemberships.map((membership) => ({
+      id: membership.user.id,
+      name: membership.user.name,
+      email: membership.user.email
+    }))
 
     return NextResponse.json(
       { members, invites },
@@ -123,9 +153,19 @@ export async function POST(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
     }
 
-    // Ownership check: allow admins or cohort owners to add members
-    if (cohort.coachId !== session.user.id && !isAdminUser) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    // Authorization: allow admins, owners, or co-coaches to add members
+    const isOwner = cohort.coachId === session.user.id
+    const isCoCoach = !isOwner && !isAdminUser ? await db.coachCohortMembership.findUnique({
+      where: {
+        coachId_cohortId: {
+          coachId: session.user.id,
+          cohortId: id
+        }
+      }
+    }) : null
+
+    if (!isAdminUser && !isOwner && !isCoCoach) {
+      return NextResponse.json({ error: "Forbidden - Only cohort owner or co-coaches can add members" }, { status: 403 })
     }
 
     const body = await req.json()

@@ -56,14 +56,19 @@ export function isValidCodeFormat(code: string): boolean {
  */
 export async function createPairingCode(userId: string, clientId: string, isAdmin = false) {
   // Verify client exists and is associated with this coach (or user is admin)
-  // Check both direct invitation and cohort membership
+  // Check direct invitation, cohort ownership, and co-coach membership
   const client = await db.user.findUnique({
     where: { id: clientId },
     include: {
       CohortMembership: {
         include: {
           Cohort: {
-            select: { coachId: true }
+            select: { 
+              coachId: true,
+              coachMemberships: {
+                select: { coachId: true }
+              }
+            }
           }
         }
       }
@@ -76,9 +81,15 @@ export async function createPairingCode(userId: string, clientId: string, isAdmi
 
   // Admins can generate codes for any client
   if (!isAdmin) {
-    // Check if client is associated with this coach via invitedByCoachId or cohort membership
+    // Check if client is associated with this coach via:
+    // 1. Direct invitation (invitedByCoachId)
+    // 2. Cohort owned by this coach
+    // 3. Cohort where this coach is a co-coach
     const isAssociated = client.invitedByCoachId === userId || 
-      client.CohortMembership.some(m => m.Cohort.coachId === userId)
+      client.CohortMembership.some(m => 
+        m.Cohort.coachId === userId || 
+        m.Cohort.coachMemberships?.some(cm => cm.coachId === userId)
+      )
 
     if (!isAssociated) {
       throw new Error("Client not associated with this coach")
