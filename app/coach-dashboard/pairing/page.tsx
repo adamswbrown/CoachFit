@@ -22,6 +22,25 @@ export default function PairingPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [featureEnabled, setFeatureEnabled] = useState<boolean>(true)
+  const [checkingFeature, setCheckingFeature] = useState(true)
+
+  useEffect(() => {
+    const checkFeature = async () => {
+      try {
+        const res = await fetch("/api/admin/settings")
+        if (res.ok) {
+          const data = await res.json()
+          setFeatureEnabled(data.data.iosIntegrationEnabled ?? true)
+        }
+      } catch (err) {
+        console.error("Error checking iOS integration feature flag:", err)
+      } finally {
+        setCheckingFeature(false)
+      }
+    }
+    checkFeature()
+  }, [])
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -112,6 +131,38 @@ export default function PairingPage() {
               <div className="w-8 h-8 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
               <p className="text-neutral-600">Loading...</p>
             </div>
+          </div>
+        </div>
+      </CoachLayout>
+    )
+  }
+
+  // Feature flag check
+  if (checkingFeature) {
+    return (
+      <CoachLayout>
+        <div className="max-w-4xl mx-auto text-center py-12">
+          <p className="text-neutral-600">Loading...</p>
+        </div>
+      </CoachLayout>
+    )
+  }
+
+  if (!featureEnabled) {
+    return (
+      <CoachLayout>
+        <div className="max-w-4xl mx-auto text-center py-12">
+          <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-8 max-w-2xl mx-auto">
+            <h2 className="text-2xl font-semibold text-neutral-900 mb-4">Feature Not Available</h2>
+            <p className="text-neutral-600 mb-4">
+              iOS integration features are currently disabled. Contact your administrator to enable this feature.
+            </p>
+            <Link 
+              href="/coach-dashboard"
+              className="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Return to Dashboard
+            </Link>
           </div>
         </div>
       </CoachLayout>

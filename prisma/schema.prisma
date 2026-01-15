@@ -324,6 +324,13 @@ model SystemSettings {
   shortTermWindowDays Int @default(7) // Days for 7-day averages
   longTermWindowDays Int @default(30) // Days for 30-day averages
   
+  // Admin override (backdoor/emergency access)
+  adminOverrideEmail String? // Email address that gets automatic admin access
+  
+  // Feature flags
+  healthkitEnabled Boolean @default(true) // Enable/disable HealthKit data collection UI
+  iosIntegrationEnabled Boolean @default(true) // Enable/disable iOS pairing and sync features
+  
   // Metadata
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

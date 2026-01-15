@@ -28,8 +28,27 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   const [cohortsDropdownOpen, setCohortsDropdownOpen] = useState(false)
   const clientsDropdownRef = useRef<HTMLDivElement>(null)
   const cohortsDropdownRef = useRef<HTMLDivElement>(null)
+  const [healthkitEnabled, setHealthkitEnabled] = useState<boolean>(true)
+  const [iosIntegrationEnabled, setIosIntegrationEnabled] = useState<boolean>(true)
 
   const currentFilter = (searchParams.get("filter") as ClientFilter) || "all"
+
+  // Fetch feature flags
+  useEffect(() => {
+    const fetchFeatureFlags = async () => {
+      try {
+        const res = await fetch("/api/admin/settings")
+        if (res.ok) {
+          const data = await res.json()
+          setHealthkitEnabled(data.data.healthkitEnabled ?? true)
+          setIosIntegrationEnabled(data.data.iosIntegrationEnabled ?? true)
+        }
+      } catch (err) {
+        console.error("Error fetching feature flags:", err)
+      }
+    }
+    fetchFeatureFlags()
+  }, [])
 
   if (!session) return null
 
@@ -87,10 +106,22 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   if (showCoachNav) {
     navigation.push(
       { name: "Clients", href: "/coach-dashboard", icon: ClientsIcon, hasDropdown: true, dropdownKey: "clients" },
-      { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" },
-      { name: "HealthKit Data", href: "/coach-dashboard/healthkit-data", icon: HealthKitIcon, hasDropdown: false, dropdownKey: "healthkit" },
-      { name: "iOS Pairing", href: "/coach-dashboard/pairing", icon: MobileIcon, hasDropdown: false, dropdownKey: "pairing" }
+      { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" }
     )
+    
+    // Conditionally add HealthKit navigation item
+    if (healthkitEnabled) {
+      navigation.push(
+        { name: "HealthKit Data", href: "/coach-dashboard/healthkit-data", icon: HealthKitIcon, hasDropdown: false, dropdownKey: "healthkit" }
+      )
+    }
+    
+    // Conditionally add iOS Pairing navigation item
+    if (iosIntegrationEnabled) {
+      navigation.push(
+        { name: "iOS Pairing", href: "/coach-dashboard/pairing", icon: MobileIcon, hasDropdown: false, dropdownKey: "pairing" }
+      )
+    }
   }
 
   // Add admin navigation items

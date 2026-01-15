@@ -14,6 +14,9 @@ const settingsSchema = z.object({
   criticalNoActivityDays: z.number().int().min(10).max(365).optional(),
   shortTermWindowDays: z.number().int().min(1).max(30).optional(),
   longTermWindowDays: z.number().int().min(7).max(365).optional(),
+  adminOverrideEmail: z.string().email().nullable().optional(),
+  healthkitEnabled: z.boolean().optional(),
+  iosIntegrationEnabled: z.boolean().optional(),
 })
 
 /**
@@ -45,6 +48,9 @@ export async function GET(req: NextRequest) {
           criticalNoActivityDays: 30,
           shortTermWindowDays: 7,
           longTermWindowDays: 30,
+          adminOverrideEmail: null,
+          healthkitEnabled: true,
+          iosIntegrationEnabled: true,
         },
       })
     }
@@ -113,6 +119,9 @@ export async function PUT(req: NextRequest) {
           criticalNoActivityDays: validationResult.data.criticalNoActivityDays ?? 30,
           shortTermWindowDays: validationResult.data.shortTermWindowDays ?? 7,
           longTermWindowDays: validationResult.data.longTermWindowDays ?? 30,
+          adminOverrideEmail: validationResult.data.adminOverrideEmail ?? null,
+          healthkitEnabled: validationResult.data.healthkitEnabled ?? true,
+          iosIntegrationEnabled: validationResult.data.iosIntegrationEnabled ?? true,
         },
       })
     } else {

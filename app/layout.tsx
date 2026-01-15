@@ -8,7 +8,7 @@ import { RoleProvider } from "@/contexts/RoleContext"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "CoachSync",
+  title: "CoachFit",
   description: "Fitness data tracking for coaches and clients",
 }
 

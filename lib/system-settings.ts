@@ -14,6 +14,9 @@ export interface SystemSettings {
   criticalNoActivityDays: number
   shortTermWindowDays: number
   longTermWindowDays: number
+  adminOverrideEmail: string | null
+  healthkitEnabled: boolean
+  iosIntegrationEnabled: boolean
 }
 
 // Default values (fallback if database settings not found)
@@ -26,6 +29,9 @@ const DEFAULT_SETTINGS: SystemSettings = {
   criticalNoActivityDays: 30,
   shortTermWindowDays: 7,
   longTermWindowDays: 30,
+  adminOverrideEmail: null,
+  healthkitEnabled: true,
+  iosIntegrationEnabled: true,
 }
 
 /**
@@ -55,4 +61,22 @@ export async function getSystemSetting<K extends keyof SystemSettings>(
 ): Promise<SystemSettings[K]> {
   const settings = await getSystemSettings()
   return settings[key]
+}
+
+/**
+ * Feature flag helpers
+ */
+
+/**
+ * Check if HealthKit features are enabled
+ */
+export async function isHealthKitEnabled(): Promise<boolean> {
+  return await getSystemSetting("healthkitEnabled")
+}
+
+/**
+ * Check if iOS integration features are enabled
+ */
+export async function isIOSIntegrationEnabled(): Promise<boolean> {
+  return await getSystemSetting("iosIntegrationEnabled")
 }

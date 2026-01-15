@@ -13,6 +13,9 @@ interface SystemSettings {
   criticalNoActivityDays: number
   shortTermWindowDays: number
   longTermWindowDays: number
+  adminOverrideEmail: string | null
+  healthkitEnabled: boolean
+  iosIntegrationEnabled: boolean
 }
 
 interface TechnicalConstant {
@@ -364,6 +367,76 @@ export default function AdminSettingsPage() {
                       className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <p className="text-xs text-neutral-500 mt-1">Used for calculating long-term averages</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Admin Override */}
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Admin Override (Emergency Access)</h3>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    Admin Override Email
+                  </label>
+                  <input
+                    type="email"
+                    name="adminOverrideEmail"
+                    value={formData.adminOverrideEmail || ""}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, adminOverrideEmail: e.target.value || null }))}
+                    placeholder="email@example.com (leave empty to disable)"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-amber-600 mt-1">
+                    ⚠️ Backdoor access: User with this email gets automatic admin rights (use for emergency access only)
+                  </p>
+                  <p className="text-xs text-neutral-600 mt-2">
+                    💡 Alternative: Set <code className="bg-neutral-100 px-1 py-0.5 rounded text-xs">ADMIN_OVERRIDE_EMAIL</code> environment variable in your deployment config for emergency access when database is inaccessible.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature Flags */}
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Feature Flags</h3>
+                <div className="space-y-4">
+                  <div className="flex items-start">
+                    <div className="flex items-center h-5">
+                      <input
+                        type="checkbox"
+                        name="healthkitEnabled"
+                        checked={formData.healthkitEnabled ?? true}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, healthkitEnabled: e.target.checked }))}
+                        className="w-4 h-4 border border-neutral-300 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="ml-3">
+                      <label className="block text-sm font-medium text-neutral-700">
+                        Enable HealthKit Data Features
+                      </label>
+                      <p className="text-xs text-neutral-500 mt-1">
+                        Show/hide HealthKit data explorer and related UI elements for coaches
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start">
+                    <div className="flex items-center h-5">
+                      <input
+                        type="checkbox"
+                        name="iosIntegrationEnabled"
+                        checked={formData.iosIntegrationEnabled ?? true}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, iosIntegrationEnabled: e.target.checked }))}
+                        className="w-4 h-4 border border-neutral-300 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="ml-3">
+                      <label className="block text-sm font-medium text-neutral-700">
+                        Enable iOS Integration Features
+                      </label>
+                      <p className="text-xs text-neutral-500 mt-1">
+                        Show/hide pairing code generation and iOS device sync features
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
