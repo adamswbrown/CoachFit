@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { addClientToCohortSchema } from "@/lib/validations"
 import { Role } from "@/lib/types"
 import { sendTransactionalEmail } from "@/lib/email"
+import { isAdmin } from "@/lib/permissions"
 
 export async function GET(
   req: NextRequest,
@@ -17,8 +18,10 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Defensive check: verify role is COACH
-    if (!session.user.roles.includes(Role.COACH)) {
+    const isAdminUser = isAdmin(session.user)
+
+    // Must be COACH or ADMIN
+    if (!session.user.roles.includes(Role.COACH) && !isAdminUser) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -30,9 +33,27 @@ export async function GET(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
     }
 
-    // Ownership check: verify coach owns this cohort
-    if (cohort.coachId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    // Authorization check for coaches (admins can view any cohort)
+    if (!isAdminUser && cohort.coachId !== session.user.id) {
+      // Check if coach has access to any members in this cohort
+      const memberships = await db.cohortMembership.findMany({
+        where: { cohortId: id },
+      })
+      
+      const memberIds = memberships.map(m => m.userId)
+      
+      const hasAccessToMembers = await db.cohortMembership.findFirst({
+        where: {
+          userId: { in: memberIds },
+          Cohort: {
+            coachId: session.user.id
+          }
+        }
+      })
+      
+      if (!hasAccessToMembers) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
     }
 
     const memberships = await db.cohortMembership.findMany({
@@ -87,8 +108,10 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Defensive check: verify role is COACH
-    if (!session.user.roles.includes(Role.COACH)) {
+    const isAdminUser = isAdmin(session.user)
+
+    // Must be COACH or ADMIN
+    if (!session.user.roles.includes(Role.COACH) && !isAdminUser) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -97,6 +120,13 @@ export async function POST(
     })
 
     if (!cohort) {
+      return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
+    }
+
+    // Ownership check: only cohort owner can add members (not even admins should bypass this for data integrity)
+    if (cohort.coachId !== session.user.id && !isAdminUser) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
     }
 
