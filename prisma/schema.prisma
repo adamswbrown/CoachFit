@@ -189,6 +189,12 @@ model User {
   createdAt          DateTime           @default(now())
   invitedByCoachId   String?
   onboardingComplete Boolean            @default(false)
+  
+  // GDPR: Soft delete support
+  deletedAt          DateTime?
+  deletionReason     String?            @db.Text
+  deletionType       String?            // "hard" | "soft"
+  
   Account            Account[]
   CoachInvite        CoachInvite[]
   Cohort             Cohort[]

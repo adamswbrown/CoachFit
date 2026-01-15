@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { isAdmin, isCoach, isClient } from "@/lib/permissions"
+import { useRole } from "@/contexts/RoleContext"
+import { Role } from "@/lib/types"
 import { ClientLayout } from "@/components/layouts/ClientLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import { DataSourceBadge } from "@/components/DataSourceBadge"
@@ -40,6 +41,7 @@ interface Workout {
 
 export default function ClientDashboard() {
   const { data: session, status } = useSession()
+  const { activeRole } = useRole()
   const router = useRouter()
   const [entries, setEntries] = useState<Entry[]>([])
   const [workouts, setWorkouts] = useState<Workout[]>([])
@@ -73,22 +75,33 @@ export default function ClientDashboard() {
     }
 
     if (session?.user) {
-      if (isAdmin(session.user)) {
-        router.push("/admin/overview")
+      // Only redirect if user doesn't have CLIENT role at all
+      const userRoles = session.user.roles || []
+      
+      if (!userRoles.includes(Role.CLIENT)) {
+        // No CLIENT role - redirect to appropriate dashboard
+        if (userRoles.includes(Role.COACH)) {
+          router.push("/coach-dashboard")
+        } else if (userRoles.includes(Role.ADMIN)) {
+          router.push("/admin")
+        }
         return
       }
-      if (isCoach(session.user)) {
-        router.push("/coach-dashboard")
-      }
+      // If they have CLIENT role, let them stay on this page
+      // The role switcher will handle switching between roles
     }
   }, [status, session, router])
 
   useEffect(() => {
-    if (session?.user && isClient(session.user)) {
-      checkCohortMembership()
-      fetchEntries()
-      fetchCheckInConfig()
-      fetchWorkouts()
+    if (session?.user) {
+      const userRoles = session.user.roles || []
+      // Load data if user has CLIENT role
+      if (userRoles.includes(Role.CLIENT)) {
+        checkCohortMembership()
+        fetchEntries()
+        fetchCheckInConfig()
+        fetchWorkouts()
+      }
     }
   }, [session])
 

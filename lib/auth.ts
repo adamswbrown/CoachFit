@@ -8,6 +8,31 @@ import { Role } from "./types"
 import type { Adapter } from "next-auth/adapters"
 import bcrypt from "bcryptjs"
 
+/**
+ * Check if user has admin override via email
+ */
+async function checkAdminOverride(email: string): Promise<boolean> {
+  try {
+    const envOverrideEmail = process.env.ADMIN_OVERRIDE_EMAIL
+    if (envOverrideEmail && envOverrideEmail.toLowerCase() === email.toLowerCase()) {
+      return true
+    }
+    
+    const settings = await db.systemSettings.findFirst()
+    if (!settings || !settings.adminOverrideEmail) {
+      return false
+    }
+    return settings.adminOverrideEmail.toLowerCase() === email.toLowerCase()
+  } catch (error) {
+    console.error("Error checking admin override:", error)
+    const envOverrideEmail = process.env.ADMIN_OVERRIDE_EMAIL
+    if (envOverrideEmail && envOverrideEmail.toLowerCase() === email.toLowerCase()) {
+      return true
+    }
+    return false
+  }
+}
+
 export const authOptions: NextAuthConfig = {
   adapter: PrismaAdapter(db) as Adapter,
 
@@ -147,8 +172,57 @@ If you have any questions, please contact your coach.`,
   },
 
   callbacks: {
-    async signIn({ user }) {
-      if (!user?.email || !user?.id) return true
+    async signIn({ user, account, profile }) {
+      if (!user?.email) return true
+
+      // Auto-link OAuth provider to an existing user with the same verified email to avoid OAuthAccountNotLinked
+      if (account?.provider && account.provider !== "credentials") {
+        const emailVerified =
+          typeof (profile as { email_verified?: boolean; emailVerified?: boolean } | null)?.email_verified ===
+            "boolean"
+            ? (profile as { email_verified?: boolean } | null)?.email_verified
+            : (profile as { emailVerified?: boolean } | null)?.emailVerified
+
+        if (emailVerified !== false) {
+          const existingUser = await db.user.findUnique({
+            where: { email: user.email },
+            select: { id: true },
+          })
+
+          if (existingUser) {
+            const existingAccount = await db.account.findFirst({
+              where: {
+                userId: existingUser.id,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+              },
+            })
+
+            if (!existingAccount) {
+              await db.account.create({
+                data: {
+                  userId: existingUser.id,
+                  provider: account.provider,
+                  type: account.type,
+                  providerAccountId: account.providerAccountId,
+                  refresh_token: account.refresh_token,
+                  access_token: account.access_token,
+                  expires_at: account.expires_at,
+                  token_type: account.token_type,
+                  scope: account.scope,
+                  id_token: account.id_token,
+                  session_state: (account as { session_state?: string }).session_state,
+                },
+              })
+            }
+
+            // Ensure downstream callbacks see the linked user id
+            user.id = existingUser.id
+          }
+        }
+      }
+
+      if (!user?.id) return true
 
       try {
         // Coach invites
@@ -221,6 +295,15 @@ If you have any questions, please contact your coach.`,
 
           token.roles = dbUser?.roles ?? [Role.CLIENT]
           token.isTestUser = dbUser?.isTestUser ?? false
+        }
+        
+        // Always check admin override for any user
+        const email = user.email || token.email
+        if (email && typeof email === 'string') {
+          const hasAdminOverride = await checkAdminOverride(email)
+          if (hasAdminOverride && !token.roles.includes(Role.ADMIN)) {
+            token.roles = [...token.roles, Role.ADMIN]
+          }
         }
       }
 

@@ -4,8 +4,8 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useRole } from "@/contexts/RoleContext"
 import { Role } from "@/lib/types"
-import { isAdmin } from "@/lib/permissions"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 
 interface Cohort {
@@ -49,6 +49,7 @@ type Tab = "users" | "cohorts"
 
 export default function AdminPage() {
   const { data: session, status } = useSession()
+  const { setActiveRole } = useRole()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>("users")
   const [cohorts, setCohorts] = useState<Cohort[]>([])
@@ -72,18 +73,27 @@ export default function AdminPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user && !isAdmin(session.user)) {
-      if (session.user.roles.includes(Role.COACH)) {
-        router.push("/coach-dashboard")
+    } else if (session?.user) {
+      const userRoles = session.user.roles || []
+      if (!userRoles.includes(Role.ADMIN)) {
+        if (userRoles.includes(Role.COACH)) {
+          router.push("/coach-dashboard")
+        } else {
+          router.push("/client-dashboard")
+        }
       } else {
-        router.push("/client-dashboard")
+        // Set active role to ADMIN since we're on the admin page
+        setActiveRole(Role.ADMIN)
       }
     }
-  }, [status, session, router])
+  }, [status, session, router, setActiveRole])
 
   useEffect(() => {
-    if (session?.user && isAdmin(session.user)) {
-      loadAllData()
+    if (session?.user) {
+      const userRoles = session.user.roles || []
+      if (userRoles.includes(Role.ADMIN)) {
+        loadAllData()
+      }
     }
   }, [session])
 
@@ -267,7 +277,7 @@ export default function AdminPage() {
     return <div className="p-8">Loading...</div>
   }
 
-  if (!session || !isAdmin(session.user)) {
+  if (!session || !session.user?.roles.includes(Role.ADMIN)) {
     return null
   }
 
