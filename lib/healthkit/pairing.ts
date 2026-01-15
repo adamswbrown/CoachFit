@@ -54,16 +54,31 @@ export function isValidCodeFormat(code: string): boolean {
  * @returns The created pairing code record
  */
 export async function createPairingCode(coachId: string, clientId: string) {
-  // Verify client exists and belongs to this coach
-  const client = await db.user.findFirst({
-    where: {
-      id: clientId,
-      invitedByCoachId: coachId,
-    },
+  // Verify client exists and is associated with this coach
+  // Check both direct invitation and cohort membership
+  const client = await db.user.findUnique({
+    where: { id: clientId },
+    include: {
+      CohortMembership: {
+        include: {
+          Cohort: {
+            select: { coachId: true }
+          }
+        }
+      }
+    }
   })
 
   if (!client) {
-    throw new Error("Client not found or not associated with this coach")
+    throw new Error("Client not found")
+  }
+
+  // Check if client is associated with this coach via invitedByCoachId or cohort membership
+  const isAssociated = client.invitedByCoachId === coachId || 
+    client.CohortMembership.some(m => m.Cohort.coachId === coachId)
+
+  if (!isAssociated) {
+    throw new Error("Client not associated with this coach")
   }
 
   // Generate a unique code (retry if collision)

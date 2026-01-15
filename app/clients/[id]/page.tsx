@@ -13,6 +13,24 @@ interface Client {
   id: string
   name: string | null
   email: string
+  invitedByCoachId: string | null
+  InvitedByCoach: {
+    id: string
+    name: string | null
+    email: string
+  } | null
+  CohortMembership: Array<{
+    Cohort: {
+      id: string
+      name: string
+      coachId: string
+      Coach: {
+        id: string
+        name: string | null
+        email: string
+      }
+    }
+  }>
 }
 
 interface AnalyticsData {
@@ -497,6 +515,41 @@ export default function ClientOverviewPage() {
                   <div className="text-neutral-500">Email</div>
                   <div className="text-neutral-900 font-medium">{client.email}</div>
                 </div>
+                
+                {/* Coach Information */}
+                {client.InvitedByCoach && (
+                  <div>
+                    <div className="text-neutral-500">Invited By</div>
+                    <div className="text-neutral-900 font-medium">
+                      {client.InvitedByCoach.name || client.InvitedByCoach.email}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Cohort Information */}
+                {client.CohortMembership && client.CohortMembership.length > 0 && (
+                  <div>
+                    <div className="text-neutral-500">
+                      {client.CohortMembership.length === 1 ? "Cohort" : "Cohorts"}
+                    </div>
+                    <div className="space-y-1">
+                      {client.CohortMembership.map((membership) => (
+                        <div key={membership.Cohort.id} className="text-neutral-900 font-medium">
+                          <Link 
+                            href={`/cohorts/${membership.Cohort.id}`}
+                            className="text-blue-600 hover:text-blue-700 hover:underline"
+                          >
+                            {membership.Cohort.name}
+                          </Link>
+                          <span className="text-xs text-neutral-500 ml-2">
+                            (Coach: {membership.Cohort.Coach.name || membership.Cohort.Coach.email})
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <div>
                   <div className="text-neutral-500">Local Time</div>
                   <div className="text-neutral-900 font-medium">

@@ -31,6 +31,32 @@ export async function GET(
         id: true,
         name: true,
         email: true,
+        invitedByCoachId: true,
+        InvitedByCoach: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        CohortMembership: {
+          include: {
+            Cohort: {
+              select: {
+                id: true,
+                name: true,
+                coachId: true,
+                Coach: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     })
 
