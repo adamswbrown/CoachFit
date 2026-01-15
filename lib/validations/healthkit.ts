@@ -99,14 +99,13 @@ export const pairingCodeSchema = z.object({
     .string()
     .length(6, "Pairing code must be 6 characters")
     .regex(/^[A-Z0-9]+$/i, "Pairing code must be alphanumeric"),
-  client_id: uuidSchema,
 })
 
 export type PairingCodeInput = z.infer<typeof pairingCodeSchema>
 
 export const generatePairingCodeSchema = z.object({
-  // Coach ID will come from session, but we can allow explicit for admin override
-  coach_id: uuidSchema.optional(),
+  client_id: uuidSchema,
+  regenerate: z.boolean().optional().default(false),
 })
 
 export type GeneratePairingCodeInput = z.infer<typeof generatePairingCodeSchema>

@@ -1,14 +1,15 @@
 /**
  * POST /api/pairing-codes/generate
  *
- * Endpoint for coaches to generate pairing codes for iOS app integration.
+ * Endpoint for coaches to generate pairing codes for specific clients.
  * Requires authentication and COACH role.
  */
 
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { createPairingCode, getActiveCodesForCoach } from "@/lib/healthkit/pairing"
+import { createPairingCode, regeneratePairingCode, getActiveCodesForCoach } from "@/lib/healthkit/pairing"
 import { isCoach, isAdmin } from "@/lib/permissions"
+import { generatePairingCodeSchema } from "@/lib/validations/healthkit"
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,18 +30,39 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Generate a new pairing code for this coach
-    const pairingCode = await createPairingCode(session.user.id)
+    const body = await req.json()
+    const validated = generatePairingCodeSchema.parse(body)
+
+    // Generate or regenerate pairing code for the specified client
+    const pairingCode = validated.regenerate
+      ? await regeneratePairingCode(session.user.id, validated.client_id)
+      : await createPairingCode(session.user.id, validated.client_id)
 
     return NextResponse.json({
       success: true,
       code: pairingCode.code,
+      client_id: pairingCode.clientId,
       expires_at: pairingCode.expiresAt.toISOString(),
       created_at: pairingCode.createdAt.toISOString(),
+      regenerated: validated.regenerate || false,
     }, { status: 201 })
 
   } catch (error: any) {
     console.error("Error in /api/pairing-codes/generate:", error)
+
+    if (error.message?.includes("not found") || error.message?.includes("not associated")) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 404 }
+      )
+    }
+
+    if (error.name === "ZodError") {
+      return NextResponse.json(
+        { error: "Validation error", details: error.errors },
+        { status: 400 }
+      )
+    }
 
     return NextResponse.json(
       { error: "Internal server error" },
@@ -49,7 +71,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET - List active pairing codes for current coach
+// GET - List active pairing codes for current coach, or get specific client's code
 export async function GET(req: NextRequest) {
   try {
     const session = await auth()
@@ -68,6 +90,29 @@ export async function GET(req: NextRequest) {
       )
     }
 
+    // Check if client_id query parameter is provided
+    const url = new URL(req.url)
+    const clientId = url.searchParams.get("client_id")
+
+    if (clientId) {
+      // Get specific client's active pairing code
+      const activeCodes = await getActiveCodesForCoach(session.user.id)
+      const clientCode = activeCodes.find(code => code.clientId === clientId)
+
+      if (clientCode) {
+        return NextResponse.json({
+          code: clientCode.code,
+          expiresAt: clientCode.expiresAt.toISOString(),
+          createdAt: clientCode.createdAt.toISOString(),
+        }, { status: 200 })
+      }
+
+      return NextResponse.json({
+        code: null
+      }, { status: 200 })
+    }
+
+    // List all active codes for coach
     const activeCodes = await getActiveCodesForCoach(session.user.id)
 
     return NextResponse.json({

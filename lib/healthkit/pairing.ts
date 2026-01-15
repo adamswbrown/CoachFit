@@ -48,11 +48,24 @@ export function isValidCodeFormat(code: string): boolean {
 }
 
 /**
- * Create a new pairing code in the database
+ * Create a new pairing code in the database for a specific client
  * @param coachId The coach creating the code
+ * @param clientId The client this code is for
  * @returns The created pairing code record
  */
-export async function createPairingCode(coachId: string) {
+export async function createPairingCode(coachId: string, clientId: string) {
+  // Verify client exists and belongs to this coach
+  const client = await db.user.findFirst({
+    where: {
+      id: clientId,
+      invitedByCoachId: coachId,
+    },
+  })
+
+  if (!client) {
+    throw new Error("Client not found or not associated with this coach")
+  }
+
   // Generate a unique code (retry if collision)
   let code: string
   let attempts = 0
@@ -75,21 +88,45 @@ export async function createPairingCode(coachId: string) {
     data: {
       code,
       coachId,
+      clientId,
       expiresAt,
     },
   })
 }
 
 /**
+ * Regenerate a pairing code for a client (invalidates previous codes)
+ * Useful when client gets a new phone or loses access
+ * @param coachId The coach regenerating the code
+ * @param clientId The client this code is for
+ * @returns The new pairing code record
+ */
+export async function regeneratePairingCode(coachId: string, clientId: string) {
+  // Invalidate any existing unused codes for this client
+  await db.pairingCode.updateMany({
+    where: {
+      coachId,
+      clientId,
+      usedAt: null,
+    },
+    data: {
+      // Mark as expired to prevent use
+      expiresAt: new Date(0),
+    },
+  })
+
+  // Create new code
+  return createPairingCode(coachId, clientId)
+}
+
+/**
  * Validate and use a pairing code
  * @param code The pairing code to validate
- * @param clientId The client attempting to use the code
- * @returns The pairing code record if valid, or null with error message
+ * @returns The pairing code record with client info if valid, or error message
  */
 export async function validateAndUsePairingCode(
-  code: string,
-  clientId: string
-): Promise<{ success: true; pairingCode: any; coachId: string } | { success: false; error: string }> {
+  code: string
+): Promise<{ success: true; pairingCode: any; coachId: string; clientId: string } | { success: false; error: string }> {
   // Format validation
   if (!isValidCodeFormat(code)) {
     return { success: false, error: "Invalid code format" }
@@ -100,7 +137,10 @@ export async function validateAndUsePairingCode(
   // Find the pairing code
   const pairingCode = await db.pairingCode.findUnique({
     where: { code: normalizedCode },
-    include: { Coach: { select: { id: true, name: true, email: true } } },
+    include: { 
+      Coach: { select: { id: true, name: true, email: true } },
+      Client: { select: { id: true, name: true, email: true } }
+    },
   })
 
   if (!pairingCode) {
@@ -117,20 +157,28 @@ export async function validateAndUsePairingCode(
     return { success: false, error: "Pairing code has expired" }
   }
 
+  // Verify code has a client assigned (should always be true with new model)
+  if (!pairingCode.clientId) {
+    return { success: false, error: "Invalid pairing code - no client assigned" }
+  }
+
   // Mark as used
   const updatedCode = await db.pairingCode.update({
     where: { id: pairingCode.id },
     data: {
-      clientId,
       usedAt: new Date(),
     },
-    include: { Coach: { select: { id: true, name: true, email: true } } },
+    include: { 
+      Coach: { select: { id: true, name: true, email: true } },
+      Client: { select: { id: true, name: true, email: true } }
+    },
   })
 
   return {
     success: true,
     pairingCode: updatedCode,
     coachId: pairingCode.coachId,
+    clientId: pairingCode.clientId,
   }
 }
 

@@ -35,6 +35,12 @@ export default function ClientSettingsPage() {
   const [resettingPassword, setResettingPassword] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
 
+  // Pairing code state
+  const [pairingCode, setPairingCode] = useState<string | null>(null)
+  const [pairingExpiry, setPairingExpiry] = useState<Date | null>(null)
+  const [generatingCode, setGeneratingCode] = useState(false)
+  const [pairingError, setPairingError] = useState<string | null>(null)
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
@@ -46,8 +52,24 @@ export default function ClientSettingsPage() {
   useEffect(() => {
     if (session && clientId) {
       loadData()
+      loadPairingCode()
     }
   }, [session, clientId])
+
+  const loadPairingCode = async () => {
+    try {
+      const res = await fetch(`/api/pairing-codes/generate?client_id=${clientId}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.code) {
+          setPairingCode(data.code)
+          setPairingExpiry(new Date(data.expiresAt))
+        }
+      }
+    } catch (err) {
+      console.error("Error loading pairing code:", err)
+    }
+  }
 
   const loadData = async () => {
     setLoading(true)
@@ -104,6 +126,37 @@ export default function ClientSettingsPage() {
       setPasswordError("Unable to reset password. Please try again.")
     } finally {
       setResettingPassword(false)
+    }
+  }
+
+  const handleGeneratePairingCode = async (regenerate: boolean = false) => {
+    setPairingError(null)
+    setGeneratingCode(true)
+
+    try {
+      const res = await fetch("/api/pairing-codes/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          client_id: clientId,
+          regenerate 
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        setPairingCode(data.code)
+        setPairingExpiry(new Date(data.expiresAt))
+        setSuccess(regenerate ? "New pairing code generated" : "Pairing code generated")
+        setTimeout(() => setSuccess(null), 5000)
+      } else {
+        setPairingError(data.error || "Failed to generate pairing code")
+      }
+    } catch (err) {
+      setPairingError("Unable to generate pairing code. Please try again.")
+    } finally {
+      setGeneratingCode(false)
     }
   }
 
@@ -368,6 +421,74 @@ export default function ClientSettingsPage() {
                   </button>
                 </div>
               </form>
+            )}
+          </div>
+
+          {/* Mobile App Pairing */}
+          <div className="bg-white border border-neutral-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Mobile App Pairing</h2>
+
+            {pairingError && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-800 rounded-md text-sm">
+                {pairingError}
+              </div>
+            )}
+
+            {pairingCode ? (
+              <div>
+                <p className="text-sm text-neutral-600 mb-3">
+                  Share this code with your client to pair their iOS device:
+                </p>
+                
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-mono font-bold text-blue-900 tracking-wider mb-2">
+                      {pairingCode}
+                    </div>
+                    <div className="text-xs text-blue-700">
+                      Expires: {pairingExpiry?.toLocaleDateString()} at {pairingExpiry?.toLocaleTimeString()}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(pairingCode)
+                      setSuccess("Code copied to clipboard")
+                      setTimeout(() => setSuccess(null), 3000)
+                    }}
+                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
+                  >
+                    Copy Code
+                  </button>
+                  
+                  <button
+                    onClick={() => handleGeneratePairingCode(true)}
+                    disabled={generatingCode}
+                    className="w-full bg-neutral-100 text-neutral-700 px-4 py-2 rounded-md hover:bg-neutral-200 disabled:opacity-50 text-sm font-medium"
+                  >
+                    {generatingCode ? "Generating..." : "Regenerate Code (New Device)"}
+                  </button>
+                  
+                  <p className="text-xs text-neutral-500 pt-2">
+                    💡 Regenerate when your client gets a new phone or needs to re-pair
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-neutral-600 mb-4">
+                  Generate a pairing code for your client to connect their iOS device to the GymDashSync app.
+                </p>
+                <button
+                  onClick={() => handleGeneratePairingCode(false)}
+                  disabled={generatingCode}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm font-medium"
+                >
+                  {generatingCode ? "Generating..." : "Generate Pairing Code"}
+                </button>
+              </div>
             )}
           </div>
         </div>
