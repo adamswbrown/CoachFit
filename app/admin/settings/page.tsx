@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
+import { isAdmin } from "@/lib/permissions"
+import { CoachLayout } from "@/components/layouts/CoachLayout"
 
 interface SystemSettings {
   id: string
@@ -119,6 +122,7 @@ const TECHNICAL_CONSTANTS: TechnicalConstant[] = [
 ]
 
 export default function AdminSettingsPage() {
+  const { data: session, status } = useSession()
   const router = useRouter()
   const [settings, setSettings] = useState<SystemSettings | null>(null)
   const [loading, setLoading] = useState(true)
@@ -127,8 +131,22 @@ export default function AdminSettingsPage() {
   const [formData, setFormData] = useState<Partial<SystemSettings>>({})
 
   useEffect(() => {
-    fetchSettings()
-  }, [])
+    if (status === "unauthenticated") {
+      router.push("/login")
+    } else if (session?.user && !isAdmin(session.user)) {
+      if (session.user.roles.includes("COACH")) {
+        router.push("/coach-dashboard")
+      } else {
+        router.push("/client-dashboard")
+      }
+    }
+  }, [status, session, router])
+
+  useEffect(() => {
+    if (session?.user && isAdmin(session.user)) {
+      fetchSettings()
+    }
+  }, [session])
 
   const fetchSettings = async () => {
     try {
@@ -198,12 +216,16 @@ export default function AdminSettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 p-8">
+      <CoachLayout>
         <div className="max-w-6xl mx-auto">
           <div className="text-center py-12">Loading settings...</div>
         </div>
-      </div>
+      </CoachLayout>
     )
+  }
+
+  if (!session || !isAdmin(session.user)) {
+    return null
   }
 
   // Group technical constants by category
@@ -219,7 +241,7 @@ export default function AdminSettingsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-8">
+    <CoachLayout>
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-neutral-900 mb-8">System Settings</h1>
 
@@ -499,6 +521,6 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </CoachLayout>
   )
 }
