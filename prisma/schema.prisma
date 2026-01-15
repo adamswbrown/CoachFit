@@ -36,15 +36,15 @@ model CoachInvite {
 }
 
 model Cohort {
-  id              String                 @id @default(uuid())
-  name            String
-  coachId         String // Primary owner
-  createdAt       DateTime               @default(now())
-  User            User                   @relation(fields: [coachId], references: [id], onDelete: Cascade)
-  invites         CohortInvite[]
-  memberships     CohortMembership[]
+  id               String                  @id @default(uuid())
+  name             String
+  coachId          String // Primary owner
+  createdAt        DateTime                @default(now())
+  User             User                    @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  invites          CohortInvite[]
+  memberships      CohortMembership[]
   coachMemberships CoachCohortMembership[] // Additional co-coaches
-  CheckInConfig   CohortCheckInConfig?
+  CheckInConfig    CohortCheckInConfig?
 
   @@unique([coachId, name]) // Unique names per coach
 }
@@ -119,20 +119,20 @@ model Entry {
 
 // HealthKit Workout records from iOS app
 model Workout {
-  id            String   @id @default(uuid())
-  userId        String
-  workoutType   String   // "Running", "Walking", "Cycling", "Strength Training", etc.
-  startTime     DateTime
-  endTime       DateTime
-  durationSecs  Int      // Duration in seconds
-  caloriesActive Int?    // Active calories burned
-  distanceMeters Float?  // Distance in meters (for cardio workouts)
-  avgHeartRate  Int?     // Average heart rate
-  maxHeartRate  Int?     // Max heart rate
-  sourceDevice  String?  // "Apple Watch", "iPhone", etc.
-  metadata      Json?    // Additional workout-specific data (pace, elevation, etc.)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String   @id @default(uuid())
+  userId         String
+  workoutType    String // "Running", "Walking", "Cycling", "Strength Training", etc.
+  startTime      DateTime
+  endTime        DateTime
+  durationSecs   Int // Duration in seconds
+  caloriesActive Int? // Active calories burned
+  distanceMeters Float? // Distance in meters (for cardio workouts)
+  avgHeartRate   Int? // Average heart rate
+  maxHeartRate   Int? // Max heart rate
+  sourceDevice   String? // "Apple Watch", "iPhone", etc.
+  metadata       Json? // Additional workout-specific data (pace, elevation, etc.)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   User User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -143,20 +143,20 @@ model Workout {
 
 // HealthKit Sleep records from iOS app
 model SleepRecord {
-  id                  String   @id @default(uuid())
-  userId              String
-  date                DateTime @db.Date // Date of sleep (sleep start date)
-  totalSleepMins      Int      // Total time asleep
-  inBedMins           Int?     // Total time in bed
-  awakeMins           Int?     // Time awake during sleep
-  asleepCoreMins      Int?     // Core/light sleep minutes
-  asleepDeepMins      Int?     // Deep sleep minutes
-  asleepREMMins       Int?     // REM sleep minutes
-  sleepStart          DateTime? // When sleep started
-  sleepEnd            DateTime? // When sleep ended
-  sourceDevices       Json?    @default("[]") // ["Apple Watch", "iPhone"]
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id             String    @id @default(uuid())
+  userId         String
+  date           DateTime  @db.Date // Date of sleep (sleep start date)
+  totalSleepMins Int // Total time asleep
+  inBedMins      Int? // Total time in bed
+  awakeMins      Int? // Time awake during sleep
+  asleepCoreMins Int? // Core/light sleep minutes
+  asleepDeepMins Int? // Deep sleep minutes
+  asleepREMMins  Int? // REM sleep minutes
+  sleepStart     DateTime? // When sleep started
+  sleepEnd       DateTime? // When sleep ended
+  sourceDevices  Json?     @default("[]") // ["Apple Watch", "iPhone"]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   User User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -168,13 +168,13 @@ model SleepRecord {
 
 // Pairing codes for iOS app to link with coach accounts
 model PairingCode {
-  id        String   @id @default(uuid())
-  code      String   @unique // 6-character alphanumeric code
-  coachId   String   // Coach who generated the code
-  clientId  String?  // Client who used the code (null until paired)
+  id        String    @id @default(uuid())
+  code      String    @unique // 6-character alphanumeric code
+  coachId   String // Coach who generated the code
+  clientId  String? // Client who used the code (null until paired)
   expiresAt DateTime // Code expiration time (e.g., 24 hours)
   usedAt    DateTime? // When the code was used
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   Coach  User  @relation("CoachPairingCodes", fields: [coachId], references: [id], onDelete: Cascade)
   Client User? @relation("ClientPairingCodes", fields: [clientId], references: [id], onDelete: SetNull)
@@ -325,28 +325,28 @@ model AdminAction {
 
 // System Configuration Settings (customer-facing thresholds & limits)
 model SystemSettings {
-  id        String   @id @default(uuid())
+  id                 String @id @default(uuid())
   // Coach capacity settings
-  maxClientsPerCoach Int @default(50) // Max recommended clients before "overloaded"
-  minClientsPerCoach Int @default(10) // Min recommended clients before "underutilized"
-  
+  maxClientsPerCoach Int    @default(50) // Max recommended clients before "overloaded"
+  minClientsPerCoach Int    @default(10) // Min recommended clients before "underutilized"
+
   // Engagement thresholds
-  recentActivityDays Int @default(14) // Days to consider for "recent activity"
-  lowEngagementEntries Int @default(7) // Entries threshold for low engagement alert
-  noActivityDays Int @default(14) // Days without entries = needs attention
+  recentActivityDays     Int @default(14) // Days to consider for "recent activity"
+  lowEngagementEntries   Int @default(7) // Entries threshold for low engagement alert
+  noActivityDays         Int @default(14) // Days without entries = needs attention
   criticalNoActivityDays Int @default(30) // Days without entries = critical alert
-  
+
   // Analytics windows
   shortTermWindowDays Int @default(7) // Days for 7-day averages
-  longTermWindowDays Int @default(30) // Days for 30-day averages
-  
+  longTermWindowDays  Int @default(30) // Days for 30-day averages
+
   // Admin override (backdoor/emergency access)
   adminOverrideEmail String? // Email address that gets automatic admin access
-  
+
   // Feature flags
-  healthkitEnabled Boolean @default(true) // Enable/disable HealthKit data collection UI
+  healthkitEnabled      Boolean @default(true) // Enable/disable HealthKit data collection UI
   iosIntegrationEnabled Boolean @default(true) // Enable/disable iOS pairing and sync features
-  
+
   // Metadata
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

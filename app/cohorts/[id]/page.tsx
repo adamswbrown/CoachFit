@@ -10,6 +10,7 @@ interface Cohort {
   id: string
   name: string
   createdAt: string
+  coachId: string
   memberships: Array<{
     user: {
       id: string
@@ -17,6 +18,13 @@ interface Cohort {
       email: string
     }
   }>
+}
+
+interface Coach {
+  id: string
+  name: string | null
+  email: string
+  addedAt?: string
 }
 
 interface Client {
@@ -40,6 +48,15 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
   const [clients, setClients] = useState<Client[]>([])
   const [invites, setInvites] = useState<Invite[]>([])
   const [availableClients, setAvailableClients] = useState<Client[]>([])
+  
+  // Coach management state
+  const [owner, setOwner] = useState<Coach | null>(null)
+  const [coCoaches, setCoCoaches] = useState<Coach[]>([])
+  const [showCoachForm, setShowCoachForm] = useState(false)
+  const [coachFormData, setCoachFormData] = useState({ email: "" })
+  const [coachFormSubmitting, setCoachFormSubmitting] = useState(false)
+  const [coachError, setCoachError] = useState<string | null>(null)
+  
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -82,7 +99,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
       const loadData = async () => {
         setLoading(true)
         try {
-          await Promise.all([fetchCohort(), fetchClients(), fetchCheckInConfig(), fetchAvailableClients()])
+          await Promise.all([fetchCohort(), fetchClients(), fetchCheckInConfig(), fetchAvailableClients(), fetchCoaches()])
         } finally {
           setLoading(false)
         }
@@ -168,6 +185,67 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
       console.error("Error fetching available clients:", err)
       // Don't show error to user - the UI will show "No available clients" message
       setAvailableClients([])
+    }
+  }
+
+  const fetchCoaches = async () => {
+    try {
+      const res = await fetch(`/api/cohorts/${cohortId}/coaches`)
+      if (res.ok) {
+        const data = await res.json()
+        setOwner(data.owner || null)
+        setCoCoaches(data.coCoaches || [])
+      }
+    } catch (err) {
+      console.error("Error fetching coaches:", err)
+    }
+  }
+
+  const handleAddCoach = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setCoachFormSubmitting(true)
+    setCoachError(null)
+
+    try {
+      const res = await fetch(`/api/cohorts/${cohortId}/coaches`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(coachFormData),
+      })
+
+      if (res.ok) {
+        await fetchCoaches()
+        setShowCoachForm(false)
+        setCoachFormData({ email: "" })
+      } else {
+        const data = await res.json()
+        setCoachError(data.error || "Failed to add co-coach")
+      }
+    } catch (err) {
+      setCoachError("Failed to add co-coach")
+    } finally {
+      setCoachFormSubmitting(false)
+    }
+  }
+
+  const handleRemoveCoach = async (coachId: string, coachName: string | null) => {
+    if (!confirm(`Remove ${coachName || "this coach"} as co-coach?`)) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/cohorts/${cohortId}/coaches?coachId=${coachId}`, {
+        method: "DELETE",
+      })
+
+      if (res.ok) {
+        await fetchCoaches()
+      } else {
+        const data = await res.json()
+        alert(data.error || "Failed to remove co-coach")
+      }
+    } catch (err) {
+      alert("Failed to remove co-coach")
     }
   }
 
@@ -428,6 +506,104 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
             {configSuccess}
           </div>
         )}
+
+        {/* Coach Management Section */}
+        <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Coaches</h2>
+            {cohort.coachId === session.user.id && (
+              <button
+                onClick={() => {
+                  setShowCoachForm(!showCoachForm)
+                  setCoachError(null)
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                {showCoachForm ? "Cancel" : "Add Co-Coach"}
+              </button>
+            )}
+          </div>
+
+          {showCoachForm && (
+            <div className="mb-4 p-4 bg-neutral-50 rounded">
+              {coachError && (
+                <div className="mb-3 p-3 bg-red-100 border border-red-300 text-red-800 rounded-md text-sm">
+                  {coachError}
+                </div>
+              )}
+              <form onSubmit={handleAddCoach} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Coach Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={coachFormData.email}
+                    onChange={(e) => {
+                      setCoachFormData({ email: e.target.value })
+                      if (coachError) setCoachError(null)
+                    }}
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="coach@example.com"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={coachFormSubmitting}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {coachFormSubmitting ? "Adding..." : "Add Co-Coach"}
+                </button>
+              </form>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {owner && (
+              <div className="p-4 border rounded-lg bg-blue-50">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold">{owner.name || "No name"}</p>
+                    <p className="text-sm text-neutral-600">{owner.email}</p>
+                  </div>
+                  <span className="px-3 py-1 bg-blue-600 text-white text-sm rounded-full">Owner</span>
+                </div>
+              </div>
+            )}
+            
+            {coCoaches.length > 0 && (
+              <>
+                <h3 className="text-sm font-semibold text-neutral-600 mt-4">Co-Coaches</h3>
+                {coCoaches.map((coach) => (
+                  <div key={coach.id} className="p-4 border rounded-lg hover:bg-neutral-50">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-semibold">{coach.name || "No name"}</p>
+                        <p className="text-sm text-neutral-600">{coach.email}</p>
+                        {coach.addedAt && (
+                          <p className="text-xs text-neutral-500 mt-1">
+                            Added {new Date(coach.addedAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                      {cohort.coachId === session.user.id && (
+                        <button
+                          onClick={() => handleRemoveCoach(coach.id, coach.name)}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {!owner && coCoaches.length === 0 && (
+              <p className="text-neutral-500 text-sm">No coaches found</p>
+            )}
+          </div>
+        </div>
 
         {/* Check-in Configuration Section */}
         <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
