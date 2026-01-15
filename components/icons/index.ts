@@ -1,8 +1,0 @@
-export { ShieldLogo } from './ShieldLogo'
-export { CheckmarkIcon } from './CheckmarkIcon'
-export { UsersIcon } from './UsersIcon'
-export { OverviewIcon } from './OverviewIcon'
-export { AttentionIcon } from './AttentionIcon'
-export { SystemIcon } from './SystemIcon'
-export { ClientsIcon } from './ClientsIcon'
-export { CohortsIcon } from './CohortsIcon'
