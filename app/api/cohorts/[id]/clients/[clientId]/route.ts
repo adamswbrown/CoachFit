@@ -1,0 +1,63 @@
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { isAdminOrCoach } from "@/lib/permissions"
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string; clientId: string }> }
+) {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    if (!isAdminOrCoach(session.user)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    const { id: cohortId, clientId } = await params
+
+    // Verify the coach owns this cohort
+    const cohort = await db.cohort.findUnique({
+      where: { id: cohortId },
+      select: { coachId: true },
+    })
+
+    if (!cohort) {
+      return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
+    }
+
+    if (cohort.coachId !== session.user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    // Remove the client from the cohort
+    await db.cohortMembership.delete({
+      where: {
+        userId_cohortId: {
+          userId: clientId,
+          cohortId,
+        },
+      },
+    })
+
+    return NextResponse.json({ message: "Client removed from cohort successfully" })
+  } catch (error) {
+    console.error("Error removing client from cohort:", error)
+
+    // Handle case where membership doesn't exist
+    if ((error as any).code === "P2025") {
+      return NextResponse.json(
+        { error: "Client is not a member of this cohort" },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
