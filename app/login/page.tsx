@@ -157,12 +157,13 @@ function LoginPageContent() {
       <div className="bg-white rounded-lg p-8 max-w-md w-full border border-gray-200">
         {/* Logo */}
         <div className="mb-8 flex justify-center">
-          <Image
-            src="/logos/vectorized-logo.svg"
+          <img
+            src="/coachfit-logo-login.png"
             alt="CoachFit Logo"
-            width={200}
-            height={60}
-            priority
+            style={{ maxWidth: "100%", height: "auto", width: 320 }}
+            width={400}
+            height={130}
+            loading="eager"
           />
         </div>
 
