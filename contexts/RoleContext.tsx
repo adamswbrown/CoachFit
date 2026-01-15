@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
 import { useSession } from "next-auth/react"
+import { usePathname } from "next/navigation"
 import { Role } from "@/lib/types"
 
 interface RoleContextType {
@@ -15,6 +16,7 @@ const RoleContext = createContext<RoleContextType | undefined>(undefined)
 
 export function RoleProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession()
+  const pathname = usePathname()
   const [activeRole, setActiveRoleState] = useState<Role | null>(null)
 
   // Get available roles from session
@@ -38,6 +40,24 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       setActiveRoleState(defaultRole || session.user.roles[0])
     }
   }, [session])
+
+  useEffect(() => {
+    if (!session?.user?.roles || !pathname) return
+
+    let inferredRole: Role | null = null
+    if (pathname.startsWith("/admin")) {
+      inferredRole = Role.ADMIN
+    } else if (pathname.startsWith("/coach-dashboard") || pathname.startsWith("/clients") || pathname.startsWith("/cohorts")) {
+      inferredRole = Role.COACH
+    } else if (pathname.startsWith("/client-dashboard")) {
+      inferredRole = Role.CLIENT
+    }
+
+    if (inferredRole && session.user.roles.includes(inferredRole) && activeRole !== inferredRole) {
+      setActiveRoleState(inferredRole)
+      localStorage.setItem("activeRole", inferredRole)
+    }
+  }, [pathname, session, activeRole])
 
   const setActiveRole = (role: Role) => {
     if (availableRoles.includes(role)) {
