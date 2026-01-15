@@ -1,4 +1,0 @@
-module HealthDataSync {
-header "HealthDataSync-Swift.h"
-export *
-}

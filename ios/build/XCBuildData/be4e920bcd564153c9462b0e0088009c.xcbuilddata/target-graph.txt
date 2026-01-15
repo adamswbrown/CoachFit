@@ -1,6 +1,0 @@
-Target dependency graph (3 targets)
-Target 'GymDashSync' in project 'GymDashSync'
-➜ Explicit dependency on target 'HealthDataSync' in project 'HealthDataSync'
-Target 'HealthDataSync' in project 'HealthDataSync'
-➜ Explicit dependency on target 'HealthDataSync' in project 'HealthDataSync'
-Target 'HealthDataSync' in project 'HealthDataSync' (no dependencies)
