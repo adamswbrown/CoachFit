@@ -19,7 +19,7 @@ type ClientFilter = "all" | "active" | "connected" | "pending" | "offline" | "un
 
 function CoachLayoutContent({ children }: CoachLayoutProps) {
   const { data: session } = useSession()
-  const { activeRole, setActiveRole } = useRole()
+  const { activeRole } = useRole()
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -49,13 +49,6 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     }
     fetchFeatureFlags()
   }, [])
-
-  useEffect(() => {
-    if (!session?.user) return
-    if (pathname?.startsWith("/admin") && session.user.roles.includes(Role.ADMIN) && activeRole !== Role.ADMIN) {
-      setActiveRole(Role.ADMIN)
-    }
-  }, [pathname, session, activeRole, setActiveRole])
 
   if (!session) return null
 
