@@ -22,42 +22,36 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   // Get available roles from session
   const availableRoles = session?.user?.roles || []
 
-  // Initialize active role from localStorage or default
+  const inferRoleFromPath = (path: string | null) => {
+    if (!path) return null
+    if (path.startsWith("/admin")) return Role.ADMIN
+    if (path.startsWith("/coach-dashboard") || path.startsWith("/clients") || path.startsWith("/cohorts")) {
+      return Role.COACH
+    }
+    if (path.startsWith("/client-dashboard")) return Role.CLIENT
+    return null
+  }
+
+  // Initialize active role from path/localStorage/default
   useEffect(() => {
     if (!session?.user?.roles || session.user.roles.length === 0) {
       setActiveRoleState(null)
       return
     }
 
-    // Try to restore from localStorage
+    const inferredRole = inferRoleFromPath(pathname)
     const stored = localStorage.getItem("activeRole")
-    if (stored && session.user.roles.includes(stored as Role)) {
-      setActiveRoleState(stored as Role)
-    } else {
-      // Default to first role (CLIENT -> COACH -> ADMIN priority)
-      const priority = [Role.CLIENT, Role.COACH, Role.ADMIN]
-      const defaultRole = priority.find((role) => session.user.roles.includes(role))
-      setActiveRoleState(defaultRole || session.user.roles[0])
-    }
-  }, [session])
+    const storedRole = stored && session.user.roles.includes(stored as Role) ? (stored as Role) : null
 
-  useEffect(() => {
-    if (!session?.user?.roles || !pathname) return
+    const priority = [Role.CLIENT, Role.COACH, Role.ADMIN]
+    const defaultRole = priority.find((role) => session.user.roles.includes(role)) || session.user.roles[0]
+    const nextRole = (inferredRole && session.user.roles.includes(inferredRole)) ? inferredRole : (storedRole || defaultRole)
 
-    let inferredRole: Role | null = null
-    if (pathname.startsWith("/admin")) {
-      inferredRole = Role.ADMIN
-    } else if (pathname.startsWith("/coach-dashboard") || pathname.startsWith("/clients") || pathname.startsWith("/cohorts")) {
-      inferredRole = Role.COACH
-    } else if (pathname.startsWith("/client-dashboard")) {
-      inferredRole = Role.CLIENT
+    if (activeRole !== nextRole) {
+      setActiveRoleState(nextRole)
+      localStorage.setItem("activeRole", nextRole)
     }
-
-    if (inferredRole && session.user.roles.includes(inferredRole) && activeRole !== inferredRole) {
-      setActiveRoleState(inferredRole)
-      localStorage.setItem("activeRole", inferredRole)
-    }
-  }, [pathname, session, activeRole])
+  }, [session, pathname, activeRole])
 
   const setActiveRole = (role: Role) => {
     if (availableRoles.includes(role)) {
