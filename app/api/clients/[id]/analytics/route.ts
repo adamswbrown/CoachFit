@@ -114,17 +114,18 @@ export async function GET(
     const firstWeight = entriesWithWeight.length > 0 ? entriesWithWeight[0].weightLbs : null
     const weightChange = latestWeight && firstWeight ? latestWeight - firstWeight : null
 
-    // Calculate BMI for first and latest entries with weight data
-    const latestWeightEntry = entriesWithWeightDesc.length > 0 ? entriesWithWeightDesc[0] : null
-    const firstWeightEntry = entriesWithWeight.length > 0 ? entriesWithWeight[0] : null
+    // Get most recent height from ANY entry (height is typically constant or updated infrequently)
+    const entriesWithHeightDesc = [...entries].reverse().filter(e => e.heightInches !== null)
+    const mostRecentHeight = entriesWithHeightDesc.length > 0 ? entriesWithHeightDesc[0].heightInches : null
     
-    const latestHeight = latestWeightEntry?.heightInches
-    const firstHeight = firstWeightEntry?.heightInches
-    const latestBMI = calculateBMI(latestWeight, latestHeight)
-    const firstBMI = calculateBMI(firstWeight, firstHeight)
+    // Calculate BMI using most recent height for both latest and first weight
+    // This handles the case where height is synced once but weight is updated frequently
+    const latestBMI = calculateBMI(latestWeight, mostRecentHeight)
+    const firstBMI = calculateBMI(firstWeight, mostRecentHeight)
     const bmiChange = latestBMI && firstBMI ? latestBMI - firstBMI : null
     
     console.log(`[Analytics] Latest weight: ${latestWeight}, First weight: ${firstWeight}, Change: ${weightChange}`)
+    console.log(`[Analytics] Most recent height: ${mostRecentHeight}, Latest BMI: ${latestBMI}, First BMI: ${firstBMI}`)
 
     // Calculate date ranges
     const now = new Date()
@@ -179,7 +180,8 @@ export async function GET(
           avgCalories30d: avgCalories30d ? Math.round(avgCalories30d) : null,
         },
         entries: entries.map((entry: Entry) => {
-          const bmi = calculateBMI(entry.weightLbs, entry.heightInches)
+          // Use most recent height for all BMI calculations (height is constant/infrequent)
+          const bmi = calculateBMI(entry.weightLbs, mostRecentHeight)
           return {
             date: entry.date.toISOString().split("T")[0],
             weightLbs: entry.weightLbs,
@@ -187,7 +189,7 @@ export async function GET(
             calories: entry.calories,
             sleepQuality: entry.sleepQuality,
             perceivedEffort: entry.perceivedEffort,
-            bmi: bmi, // COACH ONLY - only included if weight + height present
+            bmi: bmi, // COACH ONLY - uses most recent height for all entries
           }
         }),
       },
