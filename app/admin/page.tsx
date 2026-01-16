@@ -45,7 +45,7 @@ interface User {
   cohortsCoaching: CohortInfo[]
 }
 
-type Tab = "users" | "cohorts"
+type Tab = "users" | "cohorts" | "coaches" | "admins"
 
 export default function AdminPage() {
   const { data: session, status } = useSession()
