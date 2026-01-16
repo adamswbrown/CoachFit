@@ -1,12 +1,10 @@
+import { NextResponse } from "next/server"
+import { z } from "zod"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isClient } from "@/lib/permissions"
-import { NextResponse } from "next/server"
-import { z } from "zod"
-
-const pairDeviceSchema = z.object({
-  pairingCode: z.string().length(6).regex(/^\d+$/, "Code must be 6 digits"),
-})
+import { validateAndUsePairingCode } from "@/lib/healthkit/pairing"
+import { pairingCodeSchema } from "@/lib/validations/healthkit"
 
 export async function POST(request: Request) {
   try {
@@ -27,7 +25,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const parsed = pairDeviceSchema.safeParse(body)
+    const parsed = pairingCodeSchema.safeParse({ code: body.pairingCode })
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -36,48 +34,39 @@ export async function POST(request: Request) {
       )
     }
 
-    const { pairingCode } = parsed.data
+    // Delegate to the shared validator so codes remain single-use and client-specific
+    const result = await validateAndUsePairingCode(parsed.data.code)
 
-    // Find the pairing code
-    const code = await db.pairingCode.findUnique({
-      where: { code: pairingCode },
-    })
-
-    if (!code) {
+    if (!result.success) {
+      const message = "error" in result ? result.error : "Invalid pairing code"
       return NextResponse.json(
-        { error: "Invalid or expired pairing code" },
-        { status: 404 }
+        { error: message },
+        { status: 400 }
       )
     }
 
-    // Check if code is already paired to a different user
-    if (code.usedAt && code.clientId !== session.user.id) {
+    const { clientId, coachId, pairingCode } = result
+
+    // Ensure the pairing is for this authenticated client
+    if (clientId !== session.user.id) {
       return NextResponse.json(
-        { error: "Pairing code is already in use" },
-        { status: 409 }
+        { error: "Pairing code is not assigned to this client" },
+        { status: 403 }
       )
     }
 
-    // Check if code has expired
-    if (new Date() > code.expiresAt) {
-      return NextResponse.json(
-        { error: "Pairing code has expired" },
-        { status: 410 }
-      )
-    }
-
-    // Pair the code to the current user
-    await db.pairingCode.update({
-      where: { code: pairingCode },
-      data: {
-        clientId: session.user.id,
-        usedAt: new Date(),
-      },
+    // Preserve the invitedByCoachId for downstream permissions
+    await db.user.update({
+      where: { id: clientId },
+      data: { invitedByCoachId: coachId },
     })
 
     return NextResponse.json({
       success: true,
       message: "Device paired successfully",
+      paired_at: pairingCode.usedAt,
+      coach: pairingCode.Coach,
+      client: pairingCode.Client,
     })
   } catch (error) {
     console.error("Error pairing device:", error)
