@@ -97,27 +97,40 @@ export async function POST(req: NextRequest) {
     // Return results
     const statusCode = results.errors.length > 0 ? 207 : 200 // 207 Multi-Status if partial success
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: results.processed > 0,
       processed: results.processed,
       total: validated.workouts.length,
       errors: results.errors.length > 0 ? results.errors : undefined,
     }, { status: statusCode })
+    
+    response.headers.set('Access-Control-Allow-Origin', '*')
+    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
+    return response
 
   } catch (error: any) {
     console.error("Error in /api/ingest/workouts:", error)
 
     if (error.name === "ZodError") {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Validation error", details: error.errors },
         { status: 400 }
       )
+      response.headers.set('Access-Control-Allow-Origin', '*')
+      response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
+      return response
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     )
+    response.headers.set('Access-Control-Allow-Origin', '*')
+    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
+    return response
   }
 }
 

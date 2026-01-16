@@ -30,10 +30,14 @@ export async function POST(req: NextRequest) {
     const result = await validateAndUsePairingCode(validated.code)
 
     if (!result.success) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: (result as { success: false; error: string }).error },
         { status: 400 }
       )
+      response.headers.set("Access-Control-Allow-Origin", "*")
+      response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS")
+      response.headers.set("Access-Control-Allow-Headers", "Content-Type")
+      return response
     }
 
     const { clientId, coachId, pairingCode } = result
@@ -64,16 +68,24 @@ export async function POST(req: NextRequest) {
     console.error("Error in /api/pair:", error)
 
     if (error.name === "ZodError") {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Validation error", details: error.errors },
         { status: 400 }
       )
+      response.headers.set("Access-Control-Allow-Origin", "*")
+      response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS")
+      response.headers.set("Access-Control-Allow-Headers", "Content-Type")
+      return response
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     )
+    response.headers.set("Access-Control-Allow-Origin", "*")
+    response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS")
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type")
+    return response
   }
 }
 
