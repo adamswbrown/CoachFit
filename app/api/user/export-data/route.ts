@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const format = request.nextUrl.searchParams.get("format") || "json"
 
     // Fetch all user data
-    const user = await db.user.findUnique({
+    const user = await (db.user.findUnique as any)({
       where: { id: session.user.id },
       include: {
         Account: true,

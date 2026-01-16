@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
 
     // Create or update user consent
     const now = new Date()
-    const consent = await db.userConsent.upsert({
+    const dbClient = db as any
+    const consent = await dbClient.userConsent.upsert({
       where: { userId: session.user.id },
       update: {
         termsAccepted: now,
@@ -108,7 +109,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const consent = await db.userConsent.findUnique({
+    const dbClient = db as any
+    const consent = await dbClient.userConsent.findUnique({
       where: { userId: session.user.id },
       select: {
         id: true,

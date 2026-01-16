@@ -58,15 +58,6 @@ export async function PATCH(
         )
       }
 
-      // Prevent adding COACH role to pure clients (must be staff/admin first)
-      // Business rule: Clients are public users, coaches are business staff - they register separately
-      if (role === "COACH" && !user.roles.includes(Role.ADMIN) && !user.roles.includes(Role.COACH)) {
-        return NextResponse.json(
-          { error: "Cannot promote a client to coach. Coaches must register separately." },
-          { status: 400 }
-        )
-      }
-
       // Prevent adding ADMIN role to non-coaches
       // Business rule: Only coaches (staff) can become admins, not clients
       if (role === "ADMIN" && !user.roles.includes(Role.COACH)) {

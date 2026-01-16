@@ -524,7 +524,7 @@ export default function AdminPage() {
                                   {updatingRoles[user.id] ? "..." : "−Coach"}
                                 </button>
                               )}
-                              {!hasCoach && hasAdmin && (
+                              {!hasCoach && (
                                 <button
                                   onClick={() => handleRoleChange(user.id, "COACH", "add")}
                                   disabled={updatingRoles[user.id]}
