@@ -173,10 +173,18 @@ export async function GET(
         ? weightsWithValues.reduce((sum: number, w: number) => sum + w, 0) /
           weightsWithValues.length
         : null
-    const weightTrend =
-      weekStartWeight !== null && weekEndWeight !== null
-        ? weekEndWeight - weekStartWeight
-        : null
+    
+    // Weight trend: compare first vs last available weight in the week
+    let weightTrend: number | null = null
+    if (weightsWithValues.length >= 2) {
+      // If we have at least 2 weight readings, calculate trend from first to last
+      const firstWeight = weightsWithValues[0]
+      const lastWeight = weightsWithValues[weightsWithValues.length - 1]
+      weightTrend = lastWeight - firstWeight
+    } else if (weekStartWeight !== null && weekEndWeight !== null) {
+      // Otherwise try start to end of week
+      weightTrend = weekEndWeight - weekStartWeight
+    }
 
     // Steps stats
     const stepsWithValues = weekEntries
