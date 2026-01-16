@@ -55,6 +55,7 @@ export async function GET(
     }
 
     // Fetch all entries ordered by date (ascending for proper chart display)
+    // Include dataSources to track whether data came from HealthKit or manual entry
     const entries = await db.entry.findMany({
       where: {
         userId: id,
@@ -70,10 +71,12 @@ export async function GET(
         heightInches: true,
         sleepQuality: true,
         perceivedEffort: true,
+        dataSources: true,
       },
     })
 
     if (entries.length === 0) {
+      console.log(`[Analytics] No entries found for user ${id}`)
       return NextResponse.json(
         {
           summary: {
@@ -94,17 +97,34 @@ export async function GET(
       )
     }
 
+    console.log(`[Analytics] Found ${entries.length} entries for user ${id}`)
+    // Log sample of data sources to verify HealthKit data is being stored
+    const entriesWithWeight = entries.filter(e => e.weightLbs !== null)
+    console.log(`[Analytics] Entries with weight data: ${entriesWithWeight.length}`)
+    if (entriesWithWeight.length > 0) {
+      console.log(`[Analytics] Sample weight entries: ${JSON.stringify(entriesWithWeight.slice(-3).map(e => ({ date: e.date, weight: e.weightLbs, sources: e.dataSources })))}`)
+    }
+
     // Calculate summary stats (handle null values)
-    const latestWeight = entries[entries.length - 1].weightLbs
-    const firstWeight = entries[0].weightLbs
+    // Find latest entry with weight (could be from HealthKit or manual)
+    const entriesWithWeightDesc = [...entries].reverse().filter(e => e.weightLbs !== null)
+    const latestWeight = entriesWithWeightDesc.length > 0 ? entriesWithWeightDesc[0].weightLbs : null
+    
+    // Find first entry with weight
+    const firstWeight = entriesWithWeight.length > 0 ? entriesWithWeight[0].weightLbs : null
     const weightChange = latestWeight && firstWeight ? latestWeight - firstWeight : null
 
-    // Calculate BMI for first and latest entries (COACH ONLY)
-    const latestHeight = entries[entries.length - 1].heightInches
-    const firstHeight = entries[0].heightInches
+    // Calculate BMI for first and latest entries with weight data
+    const latestWeightEntry = entriesWithWeightDesc.length > 0 ? entriesWithWeightDesc[0] : null
+    const firstWeightEntry = entriesWithWeight.length > 0 ? entriesWithWeight[0] : null
+    
+    const latestHeight = latestWeightEntry?.heightInches
+    const firstHeight = firstWeightEntry?.heightInches
     const latestBMI = calculateBMI(latestWeight, latestHeight)
     const firstBMI = calculateBMI(firstWeight, firstHeight)
     const bmiChange = latestBMI && firstBMI ? latestBMI - firstBMI : null
+    
+    console.log(`[Analytics] Latest weight: ${latestWeight}, First weight: ${firstWeight}, Change: ${weightChange}`)
 
     // Calculate date ranges
     const now = new Date()
