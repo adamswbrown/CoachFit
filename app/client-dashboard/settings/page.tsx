@@ -44,6 +44,15 @@ export default function ClientSettingsPage() {
   const [changingPassword, setChangingPassword] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
 
+  // GDPR Data export/delete state
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletePassword, setDeletePassword] = useState("")
+  const [deletionType, setDeletionType] = useState<"soft" | "hard">("soft")
+  const [deletionReason, setDeletionReason] = useState("")
+  const [exportLoading, setExportLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
@@ -137,6 +146,85 @@ export default function ClientSettingsPage() {
       setPasswordError("Unable to change password. Please try again.")
     } finally {
       setChangingPassword(false)
+    }
+  }
+
+  const handleExportData = async (format: "json" | "csv") => {
+    setExportLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/user/export-data?format=${format}`)
+      if (res.ok) {
+        const blob = await res.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = `coachfit-data-export.${format}`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        setSuccess(`Data exported as ${format.toUpperCase()}`)
+        setTimeout(() => setSuccess(null), 5000)
+      } else {
+        const data = await res.json()
+        setError(data.error || "Failed to export data")
+      }
+    } catch (err) {
+      setError("Failed to export data. Please try again.")
+      console.error("Export error:", err)
+    } finally {
+      setExportLoading(false)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      setDeleteError("Password is required to delete account")
+      return
+    }
+
+    if (
+      !window.confirm(
+        deletionType === "hard"
+          ? "Are you sure you want to PERMANENTLY delete your account? This action cannot be undone."
+          : "Are you sure you want to delete your account? You will have 30 days to restore it."
+      )
+    ) {
+      return
+    }
+
+    setDeleteLoading(true)
+    setDeleteError(null)
+
+    try {
+      const res = await fetch("/api/user/delete-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          password: deletePassword,
+          deletionType,
+          reason: deletionReason || undefined,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        setSuccess(data.message)
+        setShowDeleteModal(false)
+        // Redirect after 3 seconds
+        setTimeout(() => {
+          window.location.href = "/api/auth/signout"
+        }, 3000)
+      } else {
+        setDeleteError(data.error || "Failed to delete account")
+      }
+    } catch (err) {
+      setDeleteError("Failed to delete account. Please try again.")
+      console.error("Deletion error:", err)
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -437,6 +525,138 @@ export default function ClientSettingsPage() {
                 >
                   Generate Pairing Code
                 </Link>
+              </div>
+            )}
+          </div>
+
+          {/* GDPR Data Export */}
+          <div className="bg-white border border-neutral-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Download Your Data</h2>
+            <p className="text-sm text-neutral-600 mb-6">
+              Export all your personal data in a portable format (GDPR compliance).
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleExportData("json")}
+                disabled={exportLoading}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm font-medium transition-colors"
+              >
+                {exportLoading ? "Exporting..." : "Download as JSON"}
+              </button>
+              <button
+                onClick={() => handleExportData("csv")}
+                disabled={exportLoading}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm font-medium transition-colors"
+              >
+                {exportLoading ? "Exporting..." : "Download as CSV"}
+              </button>
+            </div>
+          </div>
+
+          {/* GDPR Account Deletion */}
+          <div className="bg-white border border-neutral-200 rounded-lg p-6 border-red-200 bg-red-50">
+            <h2 className="text-lg font-semibold text-red-900 mb-4">Delete Your Account</h2>
+            <p className="text-sm text-red-800 mb-6">
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm font-medium transition-colors"
+            >
+              Delete Account
+            </button>
+
+            {/* Delete Modal */}
+            {showDeleteModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+                  <h3 className="text-lg font-semibold text-neutral-900 mb-4">Delete Account</h3>
+
+                  {deleteError && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-800 rounded-md text-sm">
+                      {deleteError}
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        Deletion Type
+                      </label>
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            checked={deletionType === "soft"}
+                            onChange={() => setDeletionType("soft")}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-neutral-700">
+                            Soft Delete (30-day grace period to restore)
+                          </span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            checked={deletionType === "hard"}
+                            onChange={() => setDeletionType("hard")}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-neutral-700">
+                            Hard Delete (permanent, immediate)
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                        Password (required)
+                      </label>
+                      <input
+                        type="password"
+                        value={deletePassword}
+                        onChange={(e) => setDeletePassword(e.target.value)}
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+                        placeholder="Enter your password"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                        Reason (optional)
+                      </label>
+                      <textarea
+                        value={deletionReason}
+                        onChange={(e) => setDeletionReason(e.target.value)}
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+                        placeholder="Why are you deleting your account?"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="flex gap-2 pt-4">
+                      <button
+                        onClick={handleDeleteAccount}
+                        disabled={deleteLoading}
+                        className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
+                      >
+                        {deleteLoading ? "Deleting..." : "Delete"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowDeleteModal(false)
+                          setDeletePassword("")
+                          setDeletionReason("")
+                          setDeleteError(null)
+                        }}
+                        className="flex-1 bg-neutral-100 text-neutral-700 px-4 py-2 rounded-md hover:bg-neutral-200 text-sm font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>

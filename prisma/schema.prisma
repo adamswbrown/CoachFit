@@ -221,6 +221,7 @@ model User {
   SleepRecords          SleepRecord[]
   CoachPairingCodes     PairingCode[]           @relation("CoachPairingCodes")
   ClientPairingCodes    PairingCode[]           @relation("ClientPairingCodes")
+  UserConsent           UserConsent?
 }
 
 model VerificationToken {
@@ -351,6 +352,26 @@ model SystemSettings {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([createdAt])
+}
+
+// User consent tracking for GDPR compliance
+model UserConsent {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  termsAccepted    DateTime
+  privacyAccepted  DateTime
+  dataProcessing   DateTime // HealthKit/data collection consent
+  marketing        DateTime? // Optional marketing consent
+  version          String // Policy version (e.g., "1.0")
+  ipAddress        String? // IP address for legal audit trail
+  userAgent        String? // User agent for audit
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
   @@index([createdAt])
 }
 
