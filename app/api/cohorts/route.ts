@@ -27,15 +27,10 @@ export async function GET(req: NextRequest) {
     const cohorts = await db.cohort.findMany({
       where: whereClause,
       include: {
-        memberships: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
+        _count: {
+          select: {
+            memberships: true,
+            invites: true,
           },
         },
       },
@@ -44,14 +39,15 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    const cohortsWithCount = cohorts.map((cohort) => ({
+    const cohortsWithCounts = cohorts.map((cohort) => ({
       id: cohort.id,
       name: cohort.name,
       createdAt: cohort.createdAt,
-      clientCount: cohort.memberships.length,
+      activeClients: cohort._count.memberships,
+      pendingInvites: cohort._count.invites,
     }))
 
-    return NextResponse.json(cohortsWithCount, { status: 200 })
+    return NextResponse.json(cohortsWithCounts, { status: 200 })
   } catch (error) {
     console.error("Error fetching cohorts:", error)
     return NextResponse.json(
