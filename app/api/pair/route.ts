@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       data: { invitedByCoachId: coachId },
     })
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: "Successfully paired with coach",
       client_id: clientId,
@@ -52,6 +52,13 @@ export async function POST(req: NextRequest) {
       client: pairingCode.Client,
       paired_at: pairingCode.usedAt,
     }, { status: 200 })
+
+    // Add CORS headers
+    response.headers.set("Access-Control-Allow-Origin", "*")
+    response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS")
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type")
+
+    return response
 
   } catch (error: any) {
     console.error("Error in /api/pair:", error)
@@ -72,5 +79,9 @@ export async function POST(req: NextRequest) {
 
 // Handle OPTIONS for CORS preflight
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 200 })
+  const response = new NextResponse(null, { status: 200 })
+  response.headers.set("Access-Control-Allow-Origin", "*")
+  response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS")
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type")
+  return response
 }
