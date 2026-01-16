@@ -74,12 +74,12 @@ export type StepsItem = z.infer<typeof stepsItemSchema>
 
 const sleepRecordSchema = z.object({
   date: dateOnlySchema,
-  total_sleep_minutes: z.number().int().nonnegative().max(1440, "Total sleep cannot exceed 24 hours"),
-  in_bed_minutes: z.number().int().nonnegative().max(1440).optional(),
-  awake_minutes: z.number().int().nonnegative().max(1440).optional(),
-  asleep_core_minutes: z.number().int().nonnegative().max(1440).optional(),
-  asleep_deep_minutes: z.number().int().nonnegative().max(1440).optional(),
-  asleep_rem_minutes: z.number().int().nonnegative().max(1440).optional(),
+  total_sleep_minutes: z.number().int().nonnegative().max(43200, "Total sleep cannot exceed 30 days (for multi-night aggregations)"),
+  in_bed_minutes: z.number().int().nonnegative().max(43200).optional(),
+  awake_minutes: z.number().int().nonnegative().max(43200).optional(),
+  asleep_core_minutes: z.number().int().nonnegative().max(43200).optional(),
+  asleep_deep_minutes: z.number().int().nonnegative().max(43200).optional(),
+  asleep_rem_minutes: z.number().int().nonnegative().max(43200).optional(),
   sleep_start: isoDateTimeSchema.optional(),
   sleep_end: isoDateTimeSchema.optional(),
   source_devices: z.array(z.string().max(100)).optional(),
@@ -87,7 +87,7 @@ const sleepRecordSchema = z.object({
 
 export const ingestSleepSchema = z.object({
   client_id: uuidSchema,
-  sleep_records: z.array(sleepRecordSchema).min(1, "At least one sleep record is required").max(100, "Maximum 100 sleep records per request"),
+  sleep_records: z.array(sleepRecordSchema).min(1, "At least one sleep record is required").max(400, "Maximum 400 sleep records per request"),
 })
 
 export type IngestSleepInput = z.infer<typeof ingestSleepSchema>
