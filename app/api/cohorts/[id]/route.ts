@@ -78,16 +78,7 @@ export async function GET(
             }
           }
         })
-        
-        if (!hasAccessToMembers) {
-          return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-        }
-      }
-    }
-            }
-          }
-        })
-        
+
         if (!hasAccessToMembers) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
