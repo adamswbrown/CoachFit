@@ -53,7 +53,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Coach not found" }, { status: 404 })
     }
 
-    if (!isCoach(coach)) {
+    if (!isCoach({ roles: coach.roles as Role[] })) {
       return NextResponse.json(
         { error: "User does not have COACH role" },
         { status: 400 }
