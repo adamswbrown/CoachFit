@@ -44,7 +44,20 @@ async function main() {
     ])
 
     console.log(`  ✓ Deleted ${workoutDeleted.count} workouts`)
-    console.log(`  ✓ Deleted ${sleepDeleted.count} sleep records\n`)
+    console.log(`  ✓ Deleted ${sleepDeleted.count} sleep records`)
+
+    // Update all entries to mark as manual instead of healthkit
+    const entriesUpdated = await db.entry.updateMany({
+      where: {
+        userId: { in: userIds },
+        dataSources: { array_contains: 'healthkit' }
+      },
+      data: {
+        dataSources: ['manual']
+      }
+    })
+
+    console.log(`  ✓ Updated ${entriesUpdated.count} entries from healthkit to manual\n`)
 
     // Mark pairing codes as unused (in case they had HealthKit synced)
     const pairingCodesReset = await db.pairingCode.updateMany({

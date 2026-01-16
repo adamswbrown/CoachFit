@@ -130,7 +130,7 @@ export async function GET(
       })),
       recentEntries: user.Entry,
       invitedByCoachId: user.invitedByCoachId,
-        healthKitPairing: user.ClientPairingCodes.length > 0 ? {
+        healthKitPairing: user.ClientPairingCodes.length > 0 && user.ClientPairingCodes[0].usedAt ? {
           paired: true,
           pairingCode: user.ClientPairingCodes[0].code,
           pairedAt: user.ClientPairingCodes[0].usedAt,

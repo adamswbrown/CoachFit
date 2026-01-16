@@ -184,7 +184,7 @@ export default function HealthKitDataExplorer() {
     } finally {
       setDataLoading(false)
     }
-  }}
+  }
 
   const fetchWorkouts = async () => {
     const params = new URLSearchParams({ clientId: selectedClientId })
