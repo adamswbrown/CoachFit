@@ -25,8 +25,7 @@ CoachFit is a full-stack fitness coaching platform built with Next.js 16 (App Ro
   - `public/` — Static assets (images, logos)
   - `scripts/` — Admin/test utilities (run with `npx tsx`)
   - `docs/` — User and developer documentation
-- **Authentication:** NextAuth.js v5 with JWT sessions. Roles (CLIENT, COACH, ADMIN) are stored in JWT and DB. See `lib/auth.ts`, `lib/permissions.ts`, and `middleware.ts` for role logic.
-- **Middleware:** `middleware.ts` parses JWT manually for edge performance and enforces role-based access. Public assets and routes are explicitly allowed.
+- **Authentication:** NextAuth.js v5 with JWT sessions. Roles (CLIENT, COACH, ADMIN) are stored in JWT and DB. See `lib/auth.ts` and `lib/permissions.ts` for role logic and authorization helpers.
 - **Database:** Prisma models in `prisma/schema.prisma`. Users can have multiple roles. Cohorts, entries, and invites are core models.
 - **Testing:** Use Playwright for E2E (`tests/`), and scripts in `scripts/` for data setup/cleanup.
 - **Docs:** All features must update docs in `docs/` and/or `README.md` as part of the batch.
@@ -42,13 +41,80 @@ CoachFit is a full-stack fitness coaching platform built with Next.js 16 (App Ro
 
 ## Project Conventions
 - **No sequential/incremental delivery:** Always ship full-stack, test-covered, and documented feature slices.
-- **Role logic:** Use helpers in `lib/permissions.ts` and JWT parsing in `middleware.ts`.
+- **Role logic:** Use helpers in `lib/permissions.ts` for role-based authorization checks.
 - **Public assets:** Place in `public/` and reference with root-relative paths (e.g., `/logo.png`).
 - **Environment:** All secrets/configs must be in `.env.local` (see `.env.example`).
 - **Deployment:** Vercel (Next.js), Railway (Postgres). See `docs/development/deployment.md`.
 
+## Code Quality Standards
+- **TypeScript:** Use strict typing; avoid `any` types. Leverage Prisma-generated types for database models.
+- **Validation:** All API inputs must be validated with Zod schemas (see `lib/validations/`).
+- **Error Handling:** API routes return structured errors: `{ error: "message" }` with appropriate HTTP status codes.
+- **Server vs Client Components:** Default to Server Components; use `"use client"` only when needed (forms, interactivity, browser APIs).
+- **Imports:** Use `@/` path alias for imports (e.g., `import { db } from "@/lib/db"`).
+
+## Security Best Practices
+- **Authentication:** Every protected API route must call `await auth()` and validate `session?.user?.id`.
+- **Authorization:** Use `isAdmin()`, `isCoach()`, `isClient()` from `lib/permissions.ts` for role checks.
+- **Ownership:** Verify users own resources before allowing access (e.g., coach owns cohort).
+- **Input Validation:** Never trust client input; always validate with Zod schemas.
+- **Password Hashing:** Use bcrypt (10 rounds) via `lib/auth.ts` patterns.
+- **SQL Injection:** Protected by Prisma ORM parameterized queries.
+- **XSS Protection:** React automatic escaping handles this; avoid `dangerouslySetInnerHTML`.
+
 ## Examples
 - To add a new feature: create React components, API routes, DB models/migrations, tests, and docs in one PR.
-- To add a new role: update Prisma schema, `lib/permissions.ts`, `middleware.ts`, and docs.
+- To add a new role: update Prisma schema, `lib/permissions.ts`, and docs.
+
+## Common Patterns
+
+### API Route Structure
+```typescript
+// app/api/resource/route.ts
+import { NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { isCoach } from "@/lib/permissions"
+import { db } from "@/lib/db"
+
+export async function GET(request: Request) {
+  // 1. Authenticate
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  // 2. Authorize (if needed)
+  if (!isCoach(session.user)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  // 3. Business logic with Prisma
+  const data = await db.model.findMany({ where: { userId: session.user.id } })
+
+  // 4. Return structured response
+  return NextResponse.json({ data })
+}
+```
+
+### Database Queries
+- Use Prisma Client from `@/lib/db` (singleton instance)
+- Include related data with `include` option
+- Filter with `where` clause
+- Sort with `orderBy`
+
+### Component Patterns
+- Server Components for data fetching (no "use client")
+- Client Components for forms and interactivity ("use client" at top)
+- Use `SessionProvider` wrapper for client components needing auth
+- Tailwind CSS for all styling (no inline styles)
+
+## Anti-Patterns to Avoid
+- ❌ Don't implement backend without frontend (or vice versa)
+- ❌ Don't skip input validation on API routes
+- ❌ Don't hard-code secrets or credentials
+- ❌ Don't use `any` type in TypeScript
+- ❌ Don't commit test data, build artifacts, or dependencies
+- ❌ Don't forget to run migrations after schema changes
+- ❌ Don't mix authentication providers without proper user merge logic
 
 For more, see `README.md`, `CLAUDE.md`, and `docs/`.
