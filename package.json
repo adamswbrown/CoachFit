@@ -16,6 +16,7 @@
     "db:seed": "npx tsx prisma/seed.ts",
     "test:generate": "npx tsx scripts/generate-test-data.ts",
     "test:cleanup": "npx tsx scripts/cleanup-test-data.ts",
+    "test:cleanup-healthkit": "npx tsx scripts/cleanup-healthkit-demo-data.ts",
     "test:generate-comprehensive": "npx tsx scripts/generate-comprehensive-test-data.ts",
     "admin:set": "npx tsx scripts/set-admin.ts",
     "grant:role": "npx tsx scripts/grant-role.ts",

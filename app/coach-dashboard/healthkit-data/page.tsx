@@ -62,6 +62,7 @@ export default function HealthKitDataExplorer() {
   const [loading, setLoading] = useState(true)
   const [dataLoading, setDataLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [clientHasPaired, setClientHasPaired] = useState<boolean | null>(null)
 
   // Date filters
   const [startDate, setStartDate] = useState<string>("")
@@ -145,11 +146,31 @@ export default function HealthKitDataExplorer() {
     }
   }
 
+  const checkClientPairingStatus = async () => {
+    if (!selectedClientId) return
+
+    try {
+      const res = await fetch(`/api/coach/client-pairing-status?clientId=${selectedClientId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setClientHasPaired(data.paired === true)
+      } else {
+        setClientHasPaired(false)
+      }
+    } catch (err) {
+      console.error("Error checking pairing status:", err)
+      setClientHasPaired(false)
+    }
+  }
+
   const fetchData = async () => {
     if (!selectedClientId) return
 
     setDataLoading(true)
     setError(null)
+
+    // First check if client has paired their device
+    await checkClientPairingStatus()
 
     try {
       if (activeTab === "workouts") {
@@ -163,7 +184,7 @@ export default function HealthKitDataExplorer() {
     } finally {
       setDataLoading(false)
     }
-  }
+  }}
 
   const fetchWorkouts = async () => {
     const params = new URLSearchParams({ clientId: selectedClientId })
@@ -489,6 +510,22 @@ export default function HealthKitDataExplorer() {
               </nav>
             </div>
 
+            {/* Pairing Required Message */}
+            {!dataLoading && clientHasPaired === false && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-8 text-center">
+                <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">📱</span>
+                </div>
+                <h3 className="font-semibold text-amber-900 mb-2">Device Not Paired</h3>
+                <p className="text-sm text-amber-800 mb-4">
+                  This client has not yet synced their iOS device with HealthKit data.
+                </p>
+                <p className="text-xs text-amber-700">
+                  HealthKit data will appear here once the client pairs their device through the mobile app.
+                </p>
+              </div>
+            )}
+
             {/* Loading State */}
             {dataLoading && (
               <div className="flex items-center justify-center py-12">
@@ -500,7 +537,7 @@ export default function HealthKitDataExplorer() {
             )}
 
             {/* Workouts Tab */}
-            {!dataLoading && activeTab === "workouts" && (
+            {!dataLoading && clientHasPaired && activeTab === "workouts" && (
               <div className="space-y-4">
                 {workouts.length === 0 ? (
                   <div className="bg-white border border-neutral-200 rounded-lg p-12 text-center">
@@ -583,7 +620,7 @@ export default function HealthKitDataExplorer() {
             )}
 
             {/* Sleep Tab */}
-            {!dataLoading && activeTab === "sleep" && (
+            {!dataLoading && clientHasPaired && activeTab === "sleep" && (
               <div className="space-y-6">
                 {/* Sleep Averages */}
                 {sleepAverages && (

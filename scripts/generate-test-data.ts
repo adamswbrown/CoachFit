@@ -207,13 +207,16 @@ async function main() {
             date: entryDate,
           },
         },
-        update: {},
+        update: {
+          dataSources: ["manual"],
+        },
         create: {
           userId: client.id,
           date: entryDate,
           weightLbs: weight,
           steps: steps,
           calories: calories,
+          dataSources: ["manual"],
         },
       })
       totalEntries++

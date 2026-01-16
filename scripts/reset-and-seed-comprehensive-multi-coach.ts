@@ -366,6 +366,7 @@ async function main() {
           heightInches: entryData.heightInches,
           sleepQuality: entryData.sleepQuality,
           perceivedEffort: entryData.perceivedEffort,
+          dataSources: ["manual"],
         },
         create: {
           userId: client.id,
@@ -376,6 +377,7 @@ async function main() {
           heightInches: entryData.heightInches,
           sleepQuality: entryData.sleepQuality,
           perceivedEffort: entryData.perceivedEffort,
+          dataSources: ["manual"],
         },
       })
       entriesCreated++
