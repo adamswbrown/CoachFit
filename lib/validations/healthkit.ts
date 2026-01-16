@@ -64,7 +64,7 @@ const stepsItemSchema = z.object({
 
 export const ingestStepsSchema = z.object({
   client_id: uuidSchema,
-  steps: z.array(stepsItemSchema).min(1, "At least one step record is required").max(100, "Maximum 100 step records per request"),
+  steps: z.array(stepsItemSchema).min(1, "At least one step record is required").max(400, "Maximum 400 step records per request"),
 })
 
 export type IngestStepsInput = z.infer<typeof ingestStepsSchema>
