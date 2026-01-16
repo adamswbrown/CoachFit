@@ -109,6 +109,7 @@ export default function WeeklyReviewPage() {
   const [savingNote, setSavingNote] = useState(false)
   const [allNotes, setAllNotes] = useState<CoachNote[]>([])
   const [showAllNotes, setShowAllNotes] = useState(false)
+  const [recalculating, setRecalculating] = useState(false)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -237,6 +238,16 @@ export default function WeeklyReviewPage() {
     setSelectedWeekStart(formatDate(getMonday(currentDate)))
   }
 
+  const handleRecalculate = async () => {
+    setRecalculating(true)
+    try {
+      // Force refresh the weekly summary data
+      await fetchWeeklySummary()
+    } finally {
+      setRecalculating(false)
+    }
+  }
+
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-neutral-50 p-8 flex items-center justify-center">
@@ -333,14 +344,14 @@ export default function WeeklyReviewPage() {
         </div>
 
         {/* Week Selector */}
-        <div className="bg-white rounded-lg border border-neutral-200 p-4 mb-6 flex items-center justify-between">
+        <div className="bg-white rounded-lg border border-neutral-200 p-4 mb-6 flex items-center justify-between gap-4">
           <button
             onClick={() => handleWeekChange("prev")}
             className="px-4 py-2 text-sm font-medium text-neutral-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
           >
             ← Previous Week
           </button>
-          <div className="text-center">
+          <div className="text-center flex-1">
             <input
               type="week"
               value={`${selectedWeekStart.split("-")[0]}-W${Math.ceil(
@@ -369,6 +380,22 @@ export default function WeeklyReviewPage() {
             className="px-4 py-2 text-sm font-medium text-neutral-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next Week →
+          </button>
+          <button
+            onClick={handleRecalculate}
+            disabled={recalculating}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {recalculating ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Recalculating...
+              </>
+            ) : (
+              <>
+                ⟳ Recalculate
+              </>
+            )}
           </button>
         </div>
 

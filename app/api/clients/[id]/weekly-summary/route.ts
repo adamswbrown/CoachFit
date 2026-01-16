@@ -112,7 +112,15 @@ export async function GET(
         heightInches: true,
         sleepQuality: true,
         perceivedEffort: true,
+        dataSources: true,
       },
+    })
+
+    // Log data sources for debugging
+    console.log(`[WeeklySummary] Client: ${id}, Week: ${formatDate(weekStart)} to ${formatDate(weekEnd)}`)
+    console.log(`[WeeklySummary] Total entries found: ${entries.length}`)
+    entries.forEach((entry: any) => {
+      console.log(`[WeeklySummary] ${formatDate(new Date(entry.date))}: weight=${entry.weightLbs}, steps=${entry.steps}, dataSources=${JSON.stringify(entry.dataSources)}`)
     })
 
     // Build day-by-day array for the week (7 days: Monday-Sunday)
@@ -262,6 +270,7 @@ export async function GET(
         heightInches: true,
         sleepQuality: true,
         perceivedEffort: true,
+        dataSources: true,
       },
     })
 

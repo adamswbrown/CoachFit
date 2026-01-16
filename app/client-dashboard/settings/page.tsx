@@ -17,6 +17,15 @@ interface UserSettings {
   }>
 }
 
+interface PairingStatus {
+  paired: boolean
+  pairingCode: string | null
+  pairedAt: string | null
+  deviceName: string | null
+  lastSyncAt: string | null
+  syncsCount: number
+}
+
 export default function ClientSettingsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
