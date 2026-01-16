@@ -13,8 +13,16 @@ export default function SignupPage() {
     confirmPassword: "",
     name: "",
   })
+  const [consent, setConsent] = useState({
+    terms: false,
+    privacy: false,
+    dataProcessing: false,
+    marketing: false,
+  })
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [showTermsModal, setShowTermsModal] = useState(false)
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false)
 
   const validateForm = (): string | null => {
     if (!formData.email) {
@@ -31,6 +39,15 @@ export default function SignupPage() {
     }
     if (formData.password !== formData.confirmPassword) {
       return "Passwords do not match"
+    }
+    if (!consent.terms) {
+      return "You must accept the Terms of Service"
+    }
+    if (!consent.privacy) {
+      return "You must accept the Privacy Policy"
+    }
+    if (!consent.dataProcessing) {
+      return "You must accept data processing terms"
     }
     return null
   }
@@ -79,6 +96,26 @@ export default function SignupPage() {
       if (result?.error) {
         setError("Account created but login failed. Please try logging in.")
         return
+      }
+
+      // Record consent
+      try {
+        const consentRes = await fetch("/api/consent/accept", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            termsAccepted: true,
+            privacyAccepted: true,
+            dataProcessing: true,
+            marketing: consent.marketing,
+          }),
+        })
+
+        if (!consentRes.ok) {
+          console.error("Failed to record consent:", await consentRes.json())
+        }
+      } catch (err) {
+        console.error("Error recording consent:", err)
       }
 
       // Redirect to dashboard
@@ -156,7 +193,87 @@ export default function SignupPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <button
+          
+          {/* GDPR Consent Section */}
+          <div className="border-t pt-4 mt-6">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Terms & Agreements</h3>
+            
+            <div className="space-y-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consent.terms}
+                  onChange={(e) => setConsent({ ...consent, terms: e.target.checked })}
+                  className="mt-1 rounded"
+                  required
+                />
+                <span className="text-sm text-gray-700">
+                  I accept the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowTermsModal(true)}
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    Terms of Service
+                  </button>
+                  <span className="text-red-500">*</span>
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consent.privacy}
+                  onChange={(e) => setConsent({ ...consent, privacy: e.target.checked })}
+                  className="mt-1 rounded"
+                  required
+                />
+                <span className="text-sm text-gray-700">
+                  I accept the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowPrivacyModal(true)}
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    Privacy Policy
+                  </button>
+                  <span className="text-red-500">*</span>
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consent.dataProcessing}
+                  onChange={(e) => setConsent({ ...consent, dataProcessing: e.target.checked })}
+                  className="mt-1 rounded"
+                  required
+                />
+                <span className="text-sm text-gray-700">
+                  I consent to the processing of my health and fitness data (including HealthKit integration)
+                  <span className="text-red-500">*</span>
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consent.marketing}
+                  onChange={(e) => setConsent({ ...consent, marketing: e.target.checked })}
+                  className="mt-1 rounded"
+                />
+                <span className="text-sm text-gray-700">
+                  I want to receive updates and marketing emails (optional)
+                </span>
+              </label>
+
+              <p className="text-xs text-gray-500 mt-2">
+                <span className="text-red-500">*</span> Required fields
+              </p>
+            </div>
+          </div>
+
+          
             type="submit"
             disabled={submitting}
             className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -170,6 +287,129 @@ export default function SignupPage() {
             Sign in
           </Link>
         </p>
+
+        {/* Terms Modal */}
+        {showTermsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto p-6">
+              <h2 className="text-xl font-bold mb-4">Terms of Service</h2>
+              <div className="space-y-4 text-sm text-gray-700">
+                <section>
+                  <h3 className="font-semibold mb-2">1. Acceptance of Terms</h3>
+                  <p>
+                    By signing up for CoachFit, you agree to these Terms of Service. If you do not agree, please do not use our service.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="font-semibold mb-2">2. Use of Service</h3>
+                  <p>
+                    CoachFit is a fitness and health tracking platform. You agree to use the service only for lawful purposes and in a way that does not infringe upon the rights of others or restrict their use and enjoyment of the service.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="font-semibold mb-2">3. User Accounts</h3>
+                  <p>
+                    You are responsible for maintaining the confidentiality of your account information and password. You agree to accept responsibility for all activities that occur under your account.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="font-semibold mb-2">4. Health Data Disclaimer</h3>
+                  <p>
+                    CoachFit is not a medical service. Data provided through our platform is for fitness tracking purposes only. Always consult with a healthcare professional before making health-related decisions.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="font-semibold mb-2">5. Limitation of Liability</h3>
+                  <p>
+                    CoachFit is provided on an "as-is" basis. We make no warranties regarding the service and shall not be liable for any indirect, incidental, special, consequential, or punitive damages.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="font-semibold mb-2">6. Changes to Terms</h3>
+                  <p>
+                    We reserve the right to modify these terms at any time. Your continued use of the service constitutes acceptance of any changes.
+                  </p>
+                </section>
+              </div>
+              <button
+                onClick={() => setShowTermsModal(false)}
+                className="mt-6 w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Privacy Policy Modal */}
+        {showPrivacyModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto p-6">
+              <h2 className="text-xl font-bold mb-4">Privacy Policy</h2>
+              <div className="space-y-4 text-sm text-gray-700">
+                <section>
+                  <h3 className="font-semibold mb-2">1. Information Collection</h3>
+                  <p>
+                    We collect information you provide directly (email, name, fitness data) and information automatically collected through our service (usage data, device information).
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="font-semibold mb-2">2. HealthKit Data</h3>
+                  <p>
+                    When you connect HealthKit, we collect steps, workouts, sleep, and other health metrics. You can disconnect HealthKit integration at any time.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="font-semibold mb-2">3. Data Usage</h3>
+                  <p>
+                    We use your data to provide fitness tracking, coach feedback, analytics, and service improvements. We do not sell your personal data to third parties.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="font-semibold mb-2">4. Data Security</h3>
+                  <p>
+                    We implement industry-standard security measures including encryption, secure authentication, and regular security audits to protect your data.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="font-semibold mb-2">5. Your Rights (GDPR)</h3>
+                  <p>
+                    You have the right to access, export, and delete your data. You can exercise these rights through your account settings or by contacting us.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="font-semibold mb-2">6. Data Retention</h3>
+                  <p>
+                    We retain your data while you maintain an active account. Deleted accounts are permanently purged within 30 days of deletion request.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="font-semibold mb-2">7. Contact Us</h3>
+                  <p>
+                    If you have privacy concerns, please contact us at support@coachfit.app or through your account settings.
+                  </p>
+                </section>
+              </div>
+              <button
+                onClick={() => setShowPrivacyModal(false)}
+                className="mt-6 w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
