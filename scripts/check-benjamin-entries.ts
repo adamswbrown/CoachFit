@@ -44,7 +44,12 @@ async function main() {
   console.log('\nRecent entries:')
   entries.forEach(e => {
     const dateStr = e.date.toISOString().split('T')[0]
-    const sources = e.dataSources?.join(', ') || 'none'
+    let sources = 'none'
+    if (Array.isArray(e.dataSources)) {
+      sources = e.dataSources.every(item => typeof item === 'string')
+        ? e.dataSources.join(', ')
+        : JSON.stringify(e.dataSources)
+    }
     console.log(`  ${dateStr}: ${sources} - weight: ${e.weightLbs || '—'}, steps: ${e.steps || '—'}`)
   })
 }
