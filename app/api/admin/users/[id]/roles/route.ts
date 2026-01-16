@@ -47,11 +47,13 @@ export async function PATCH(
       )
     }
 
+    // Cast Prisma enum array to local Role enum for type-safe checks
+    const currentRoles = user.roles as Role[]
     let newRoles: Role[]
 
     if (action === "add") {
       // Add role if not already present
-      if (user.roles.includes(role as Role)) {
+      if (currentRoles.includes(role as Role)) {
         return NextResponse.json(
           { error: `User already has ${role} role` },
           { status: 400 }
@@ -60,31 +62,31 @@ export async function PATCH(
 
       // Prevent adding ADMIN role to non-coaches
       // Business rule: Only coaches (staff) can become admins, not clients
-      if (role === "ADMIN" && !user.roles.includes(Role.COACH)) {
+      if (role === "ADMIN" && !currentRoles.includes(Role.COACH)) {
         return NextResponse.json(
           { error: "Only coaches can be made admin. This user is not a coach." },
           { status: 400 }
         )
       }
 
-      newRoles = [...user.roles, role as Role]
+      newRoles = [...currentRoles, role as Role]
     } else {
       // Remove role
-      if (!user.roles.includes(role as Role)) {
+      if (!currentRoles.includes(role as Role)) {
         return NextResponse.json(
           { error: `User does not have ${role} role` },
           { status: 400 }
         )
       }
 
-      if (role === "COACH" && user.roles.includes(Role.ADMIN)) {
+      if (role === "COACH" && currentRoles.includes(Role.ADMIN)) {
         return NextResponse.json(
           { error: "Cannot remove COACH role from an admin. Remove ADMIN role first." },
           { status: 400 }
         )
       }
 
-      newRoles = user.roles.filter((r: string) => r !== role)
+      newRoles = currentRoles.filter((r: string) => r !== role) as Role[]
 
       // Ensure user always has at least CLIENT role
       if (newRoles.length === 0) {
