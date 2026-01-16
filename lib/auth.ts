@@ -5,6 +5,7 @@ import AppleProvider from "next-auth/providers/apple"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { db } from "./db"
 import { Role } from "./types"
+import { isAdminWithOverride } from "./permissions"
 import type { Adapter } from "next-auth/adapters"
 import bcrypt from "bcryptjs"
 
@@ -222,6 +223,21 @@ If you have any questions, please contact your coach.`,
           token.roles = dbUser?.roles ?? [Role.CLIENT]
           token.isTestUser = dbUser?.isTestUser ?? false
         }
+      }
+
+      if (token.adminOverride === undefined && token.email) {
+        const roles = (token.roles as Role[]) ?? [Role.CLIENT]
+        const hasOverrideAdmin = await isAdminWithOverride({
+          roles,
+          email: token.email as string,
+        })
+
+        token.adminOverride = hasOverrideAdmin
+        if (hasOverrideAdmin && !roles.includes(Role.ADMIN)) {
+          token.roles = [...roles, Role.ADMIN]
+        }
+      } else if (token.adminOverride && token.roles && !(token.roles as Role[]).includes(Role.ADMIN)) {
+        token.roles = [...(token.roles as Role[]), Role.ADMIN]
       }
 
       return token

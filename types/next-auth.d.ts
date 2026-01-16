@@ -24,5 +24,6 @@ declare module "next-auth/jwt" {
     id: string
     roles: Role[]
     isTestUser: boolean
+    adminOverride?: boolean
   }
 }
