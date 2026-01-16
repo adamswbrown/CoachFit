@@ -1,7 +1,7 @@
+import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isClient } from "@/lib/permissions"
-import { NextResponse } from "next/server"
 
 export async function POST() {
   try {
@@ -21,12 +21,13 @@ export async function POST() {
       )
     }
 
-    // Find and reset the paired code for this user
+    // Find the most recent paired code for this user
     const pairingCode = await db.pairingCode.findFirst({
       where: {
         clientId: session.user.id,
         usedAt: { not: null },
       },
+      orderBy: { usedAt: "desc" },
     })
 
     if (!pairingCode) {
@@ -36,12 +37,11 @@ export async function POST() {
       )
     }
 
-    // Reset the pairing
+    // Do not make the code reusable; simply expire it to prevent further ingestion with this token
     await db.pairingCode.update({
       where: { id: pairingCode.id },
       data: {
-        clientId: null,
-        usedAt: null,
+        expiresAt: new Date(),
       },
     })
 
