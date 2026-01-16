@@ -16,12 +16,13 @@ const workoutItemSchema = z.object({
   workout_type: z.string().min(1, "Workout type is required").max(100),
   start_time: isoDateTimeSchema,
   end_time: isoDateTimeSchema,
-  duration_seconds: z.number().int().positive("Duration must be positive"),
-  calories_active: z.number().int().nonnegative().optional(),
+  duration_seconds: z.number().positive("Duration must be positive"),
+  // Accept floats from HealthKit; backend can round if needed
+  calories_active: z.number().nonnegative().optional(),
   distance_meters: z.number().nonnegative().optional(),
-  avg_heart_rate: z.number().int().min(30).max(250).optional(),
-  max_heart_rate: z.number().int().min(30).max(250).optional(),
-  source_device: z.string().max(100).optional(),
+  avg_heart_rate: z.number().min(30).max(250).optional(),
+  max_heart_rate: z.number().min(30).max(250).optional(),
+  source_device: z.string().max(100).optional().nullable(),
   metadata: z.record(z.string(), z.any()).optional(),
 })
 
