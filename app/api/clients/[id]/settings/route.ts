@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdminOrCoach } from "@/lib/permissions"
+import { Role } from "@/lib/types"
 
 export async function GET(
   req: NextRequest,
@@ -40,7 +41,7 @@ export async function GET(
     }
 
     // Verify the client belongs to this coach (or is admin)
-    if (!session.user.roles.includes("ADMIN")) {
+    if (!session.user.roles.includes(Role.ADMIN)) {
       // Check if client is in any of the coach's cohorts
       const cohortMembership = await db.cohortMembership.findFirst({
         where: {
