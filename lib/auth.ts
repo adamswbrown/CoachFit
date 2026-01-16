@@ -5,7 +5,7 @@ import AppleProvider from "next-auth/providers/apple"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { db } from "./db"
 import { Role } from "./types"
-import { isAdminWithOverride } from "./permissions"
+import { isAdminWithOverride } from "./permissions-server"
 import type { Adapter } from "next-auth/adapters"
 import bcrypt from "bcryptjs"
 
