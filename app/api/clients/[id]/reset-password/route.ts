@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdminOrCoach } from "@/lib/permissions"
+import { Role } from "@/lib/types"
 import bcrypt from "bcryptjs"
 
 export async function POST(
@@ -50,7 +51,7 @@ export async function POST(
     }
 
     // Check if client is in any of the coach's cohorts (unless admin)
-    if (!session.user.roles.includes("ADMIN")) {
+    if (!session.user.roles.includes(Role.ADMIN)) {
       const cohortMembership = await db.cohortMembership.findFirst({
         where: {
           userId: clientId,
