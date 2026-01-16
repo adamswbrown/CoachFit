@@ -38,8 +38,9 @@ export async function POST(request: Request) {
     const result = await validateAndUsePairingCode(parsed.data.code)
 
     if (!result.success) {
+      const message = "error" in result ? result.error : "Invalid pairing code"
       return NextResponse.json(
-        { error: result.error },
+        { error: message },
         { status: 400 }
       )
     }
