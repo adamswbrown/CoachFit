@@ -105,11 +105,19 @@ export default function CohortsPage() {
   return (
     <CoachLayout>
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-neutral-900">Cohorts</h1>
-          <p className="text-neutral-600 text-sm mt-1">
-            Manage your client cohorts
-          </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-semibold text-neutral-900">Cohorts</h1>
+            <p className="text-neutral-600 text-sm mt-1">
+              Manage your client cohorts
+            </p>
+          </div>
+          <Link
+            href="/cohorts/create"
+            className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 transition-colors text-sm font-medium"
+          >
+            Create Cohort
+          </Link>
         </div>
 
         <div className="bg-white border border-neutral-200 rounded-lg">
@@ -123,7 +131,7 @@ export default function CohortsPage() {
                 Create a cohort to organize your clients.
               </p>
               <Link
-                href="/coach-dashboard?showForm=true"
+                href="/cohorts/create"
                 className="inline-block bg-neutral-900 text-white px-6 py-2 rounded-md hover:bg-neutral-800 transition-colors text-sm font-medium"
               >
                 Create Your First Cohort

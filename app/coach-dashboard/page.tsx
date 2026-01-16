@@ -58,20 +58,10 @@ function CoachDashboardContent() {
   const searchParams = useSearchParams()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
   const [showInviteForm, setShowInviteForm] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
   const [inviteSubmitting, setInviteSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [formData, setFormData] = useState({
-    name: "",
-    checkInConfig: {
-      enabledPrompts: ["weightLbs", "steps", "calories"] as string[], // Default mandatory prompts
-      customPrompt1: "",
-      customPrompt1Type: "" as "scale" | "text" | "number" | "",
-    },
-  })
   const [inviteEmail, setInviteEmail] = useState("")
   const [assigningClient, setAssigningClient] = useState<string | null>(null)
   const [selectedCohortForAssign, setSelectedCohortForAssign] = useState<Record<string, string>>({})
@@ -112,15 +102,9 @@ function CoachDashboardContent() {
       fetchOverview()
 
       // Check query params for form actions
-      const showFormParam = searchParams.get("showForm")
       const actionParam = searchParams.get("action")
-      if (showFormParam === "true" || actionParam === "create-cohort") {
-        setShowForm(true)
-        setShowInviteForm(false)
-      }
       if (actionParam === "invite-client") {
         setShowInviteForm(true)
-        setShowForm(false)
       }
     } else {
       setData(null)
@@ -151,70 +135,6 @@ function CoachDashboardContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitting(true)
-    setError(null)
-    setSuccess(null)
-
-    try {
-      // Prepare request body - only include checkInConfig if it has values
-      const requestBody: any = {
-        name: formData.name,
-      }
-
-      // Only include checkInConfig if there are enabled prompts or a custom prompt
-      if (
-        formData.checkInConfig.enabledPrompts.length > 0 ||
-        formData.checkInConfig.customPrompt1.trim() !== ""
-      ) {
-        requestBody.checkInConfig = {
-          enabledPrompts:
-            formData.checkInConfig.enabledPrompts.length > 0
-              ? formData.checkInConfig.enabledPrompts
-              : undefined,
-          customPrompt1:
-            formData.checkInConfig.customPrompt1.trim() !== ""
-              ? formData.checkInConfig.customPrompt1.trim()
-              : undefined,
-          customPrompt1Type:
-            formData.checkInConfig.customPrompt1.trim() !== "" && formData.checkInConfig.customPrompt1Type
-              ? formData.checkInConfig.customPrompt1Type
-              : undefined,
-        }
-        // Remove undefined values
-        Object.keys(requestBody.checkInConfig).forEach(
-          (key) => requestBody.checkInConfig[key] === undefined && delete requestBody.checkInConfig[key]
-        )
-      }
-
-      const res = await fetch("/api/cohorts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      })
-
-      const responseData = await res.json()
-
-      if (res.ok) {
-        setShowForm(false)
-        setFormData({
-          name: "",
-          checkInConfig: {
-            enabledPrompts: ["weightLbs", "steps", "calories"], // Reset to default mandatory prompts
-            customPrompt1: "",
-            customPrompt1Type: "",
-          },
-        })
-        setSuccess("Cohort created successfully")
-        setLoading(true)
-        await fetchOverview()
-      } else {
-        setError(responseData.error || "Failed to create cohort. Please try again.")
-      }
-    } catch (err) {
-      setError("An error occurred. Please try again.")
-    } finally {
-      setSubmitting(false)
-    }
   }
 
   // Global invite (not tied to cohort)
@@ -418,16 +338,10 @@ function CoachDashboardContent() {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => { setShowInviteForm(!showInviteForm); setShowForm(false) }}
+                onClick={() => setShowInviteForm(!showInviteForm)}
                 className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 text-sm"
               >
                 {showInviteForm ? "Cancel" : "Invite Client"}
-              </button>
-              <button
-                onClick={() => { setShowForm(!showForm); setShowInviteForm(false) }}
-                className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 text-sm"
-              >
-                {showForm ? "Cancel" : "Create Cohort"}
               </button>
             </div>
           </div>
@@ -502,194 +416,6 @@ function CoachDashboardContent() {
               >
                 {inviteSubmitting ? "Sending..." : "Send Invite"}
               </button>
-            </form>
-          </div>
-        )}
-
-        {/* Create Cohort Form */}
-        {showForm && (
-          <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
-            <h2 className="text-xl font-semibold mb-4">Create New Cohort</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium mb-1">Cohort Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md"
-                  maxLength={255}
-                  placeholder="e.g., Morning Fitness Group"
-                />
-              </div>
-
-              {/* Check-in Configuration */}
-              <div className="border-t pt-4">
-                <h3 className="text-sm font-semibold mb-3">Check-in Configuration</h3>
-                <p className="text-sm text-neutral-600 mb-4">
-                  Configure which prompts clients will see when logging entries. Mandatory prompts are always included.
-                </p>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Mandatory Prompts (Always Enabled)</label>
-                    <div className="space-y-2 bg-blue-50 p-3 rounded-md mb-4">
-                      <label className="flex items-center text-blue-900">
-                        <input
-                          type="checkbox"
-                          checked={true}
-                          disabled
-                          className="mr-2 cursor-not-allowed opacity-60"
-                        />
-                        <span className="text-sm font-medium">Weight (lbs) - Required</span>
-                      </label>
-                      <label className="flex items-center text-blue-900">
-                        <input
-                          type="checkbox"
-                          checked={true}
-                          disabled
-                          className="mr-2 cursor-not-allowed opacity-60"
-                        />
-                        <span className="text-sm font-medium">Steps - Required</span>
-                      </label>
-                      <label className="flex items-center text-blue-900">
-                        <input
-                          type="checkbox"
-                          checked={true}
-                          disabled
-                          className="mr-2 cursor-not-allowed opacity-60"
-                        />
-                        <span className="text-sm font-medium">Calories - Required</span>
-                      </label>
-                    </div>
-                    <label className="block text-sm font-medium mb-2 mt-4">Additional Prompts (Optional)</label>
-                    <div className="space-y-2">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.checkInConfig.enabledPrompts.includes("sleepQuality")}
-                          onChange={(e) => {
-                            const prompts = e.target.checked
-                              ? [...formData.checkInConfig.enabledPrompts, "sleepQuality"]
-                              : formData.checkInConfig.enabledPrompts.filter((p) => p !== "sleepQuality")
-                            setFormData({
-                              ...formData,
-                              checkInConfig: { ...formData.checkInConfig, enabledPrompts: prompts },
-                            })
-                          }}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">Sleep Quality (1-10 scale)</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.checkInConfig.enabledPrompts.includes("perceivedEffort")}
-                          onChange={(e) => {
-                            const prompts = e.target.checked
-                              ? [...formData.checkInConfig.enabledPrompts, "perceivedEffort"]
-                              : formData.checkInConfig.enabledPrompts.filter((p) => p !== "perceivedEffort")
-                            setFormData({
-                              ...formData,
-                              checkInConfig: { ...formData.checkInConfig, enabledPrompts: prompts },
-                            })
-                          }}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">Perceived Effort (1-10 scale)</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.checkInConfig.enabledPrompts.includes("notes")}
-                          onChange={(e) => {
-                            const prompts = e.target.checked
-                              ? [...formData.checkInConfig.enabledPrompts, "notes"]
-                              : formData.checkInConfig.enabledPrompts.filter((p) => p !== "notes")
-                            setFormData({
-                              ...formData,
-                              checkInConfig: { ...formData.checkInConfig, enabledPrompts: prompts },
-                            })
-                          }}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">Notes (free text)</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Custom Prompt (Optional)</label>
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={formData.checkInConfig.customPrompt1}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            checkInConfig: { ...formData.checkInConfig, customPrompt1: e.target.value },
-                          })
-                        }
-                        className="w-full px-3 py-2 border rounded-md"
-                        placeholder="e.g., How was your energy today?"
-                        maxLength={255}
-                      />
-                      <select
-                        value={formData.checkInConfig.customPrompt1Type}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            checkInConfig: {
-                              ...formData.checkInConfig,
-                              customPrompt1Type: e.target.value as "scale" | "text" | "number" | "",
-                            },
-                          })
-                        }
-                        className="w-full px-3 py-2 border rounded-md"
-                        disabled={!formData.checkInConfig.customPrompt1}
-                      >
-                        <option value="">Select prompt type</option>
-                        <option value="scale">Scale (1-10)</option>
-                        <option value="text">Text</option>
-                        <option value="number">Number</option>
-                      </select>
-                      <p className="text-xs text-neutral-500">
-                        {!formData.checkInConfig.customPrompt1
-                          ? "Enter a custom prompt label first"
-                          : "Choose how clients will respond to this prompt"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="bg-neutral-900 text-white px-6 py-2 rounded-md hover:bg-neutral-800 disabled:opacity-50"
-                >
-                  {submitting ? "Creating..." : "Create Cohort"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false)
-                    setFormData({
-                      name: "",
-                      checkInConfig: {
-                        enabledPrompts: [],
-                        customPrompt1: "",
-                        customPrompt1Type: "",
-                      },
-                    })
-                  }}
-                  className="bg-neutral-100 text-neutral-700 px-6 py-2 rounded-md hover:bg-neutral-200"
-                >
-                  Cancel
-                </button>
-              </div>
             </form>
           </div>
         )}

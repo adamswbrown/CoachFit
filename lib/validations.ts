@@ -35,8 +35,10 @@ export const createEntrySchema = upsertEntrySchema
 
 export const createCohortSchema = z.object({
   name: z.string().min(1, "Name is required").max(255, "Name must be 255 characters or less"),
-  // coachId is optional - for admins to assign to a specific coach, otherwise uses session user
-  coachId: z.string().uuid().optional(),
+  // ownerCoachId is for admins to assign a specific coach as owner
+  ownerCoachId: z.string().uuid().optional(),
+  // coCoaches is an array of coach emails to add as co-coaches
+  coCoaches: z.array(z.string().email()).optional(),
   // Check-in configuration (optional)
   checkInConfig: z.object({
     enabledPrompts: z.array(z.string()).optional(),
