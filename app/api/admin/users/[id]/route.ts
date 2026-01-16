@@ -75,6 +75,30 @@ export async function GET(
           },
           take: 10, // Get last 10 entries
         },
+          ClientPairingCodes: {
+            where: {
+              usedAt: { not: null },
+            },
+            select: {
+              code: true,
+              usedAt: true,
+              expiresAt: true,
+            },
+            orderBy: {
+              usedAt: "desc",
+            },
+            take: 1,
+          },
+          Workouts: {
+            select: {
+              id: true,
+            },
+          },
+          SleepRecords: {
+            select: {
+              id: true,
+            },
+          },
       },
     })
 
@@ -106,6 +130,14 @@ export async function GET(
       })),
       recentEntries: user.Entry,
       invitedByCoachId: user.invitedByCoachId,
+        healthKitPairing: user.ClientPairingCodes.length > 0 ? {
+          paired: true,
+          pairingCode: user.ClientPairingCodes[0].code,
+          pairedAt: user.ClientPairingCodes[0].usedAt,
+          deviceName: "iPhone",
+          workoutCount: user.Workouts.length,
+          sleepCount: user.SleepRecords.length,
+        } : null,
     }
 
     return NextResponse.json(formattedUser, { status: 200 })

@@ -38,6 +38,14 @@ interface UserDetails {
     createdAt: string
   }>
   invitedByCoachId: string | null
+    healthKitPairing: {
+      paired: boolean
+      pairingCode: string
+      pairedAt: string
+      deviceName: string
+      workoutCount: number
+      sleepCount: number
+    } | null
 }
 
 export default function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -198,9 +206,65 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                 <p className="text-sm text-neutral-500 mb-1">Test User</p>
                 <p className="text-sm font-medium text-amber-600">Yes</p>
               </div>
+              )}
+              {isClient && (
+                <div>
+                  <p className="text-sm text-neutral-500 mb-1">HealthKit Device</p>
+                  <div className="flex items-center gap-2">
+                    {user.healthKitPairing?.paired ? (
+                      <>
+                        <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded font-medium">
+                          ✓ Paired
+                        </span>
+                        <span className="text-xs text-neutral-500">
+                          ({user.healthKitPairing.workoutCount + user.healthKitPairing.sleepCount} records)
+                        </span>
+                      </>
+                    ) : (
+                      <span className="px-2 py-0.5 text-xs bg-neutral-100 text-neutral-500 rounded">
+                        Not Paired
+                      </span>
+                    )}
+                  </div>
+                </div>
             )}
           </div>
         </div>
+
+          {/* HealthKit Pairing Section */}
+          {isClient && user.healthKitPairing?.paired && (
+            <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-6">
+              <h2 className="text-lg font-semibold mb-4">HealthKit Device Pairing</h2>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-green-600 font-semibold">✓ Device Successfully Paired</span>
+                </div>
+                <p className="text-sm text-green-800">
+                  This user has connected their iOS device to automatically sync HealthKit data.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-neutral-500 mb-1">Device Name</p>
+                  <p className="text-sm font-medium">{user.healthKitPairing.deviceName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-500 mb-1">Paired On</p>
+                  <p className="text-sm font-medium">
+                    {new Date(user.healthKitPairing.pairedAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-500 mb-1">Workouts Synced</p>
+                  <p className="text-sm font-medium">{user.healthKitPairing.workoutCount.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-500 mb-1">Sleep Records Synced</p>
+                  <p className="text-sm font-medium">{user.healthKitPairing.sleepCount.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
         {/* Cohorts Section */}
         {isClient && user.cohortsMemberOf.length > 0 && (
