@@ -34,6 +34,7 @@ export default function ClientSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [pairingStatus, setPairingStatus] = useState<PairingStatus | null>(null)
 
   // Password change state
   const [showPasswordChange, setShowPasswordChange] = useState(false)
@@ -54,6 +55,7 @@ export default function ClientSettingsPage() {
   useEffect(() => {
     if (session) {
       loadSettings()
+      loadPairingStatus()
     }
   }, [session])
 
@@ -68,6 +70,18 @@ export default function ClientSettingsPage() {
       setError("Failed to load settings. Please try again.")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadPairingStatus = async () => {
+    try {
+      const res = await fetch("/api/client/pairing-status")
+      if (res.ok) {
+        const data = await res.json()
+        setPairingStatus(data)
+      }
+    } catch (err) {
+      console.error("Error loading pairing status:", err)
     }
   }
 
@@ -364,6 +378,66 @@ export default function ClientSettingsPage() {
                   </button>
                 </div>
               </form>
+            )}
+          </div>
+
+          {/* Mobile App Pairing */}
+          <div className="bg-white border border-neutral-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Mobile App Pairing</h2>
+            
+            {pairingStatus?.paired ? (
+              <div className="space-y-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600 font-semibold text-sm">✓ Device Successfully Paired</span>
+                  </div>
+                  <p className="text-sm text-green-800 mt-2">
+                    Your iOS device is connected and syncing HealthKit data automatically.
+                  </p>
+                </div>
+                
+                {pairingStatus.deviceName && (
+                  <div>
+                    <p className="text-xs text-neutral-500 uppercase tracking-wider font-medium mb-1">Device Name</p>
+                    <p className="text-sm font-medium text-neutral-900">{pairingStatus.deviceName}</p>
+                  </div>
+                )}
+                
+                {pairingStatus.pairedAt && (
+                  <div>
+                    <p className="text-xs text-neutral-500 uppercase tracking-wider font-medium mb-1">Paired On</p>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {new Date(pairingStatus.pairedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+                
+                {pairingStatus.syncsCount > 0 && (
+                  <div>
+                    <p className="text-xs text-neutral-500 uppercase tracking-wider font-medium mb-1">Data Synced</p>
+                    <p className="text-sm font-medium text-neutral-900">{pairingStatus.syncsCount} records</p>
+                  </div>
+                )}
+
+                <Link
+                  href="/client-dashboard/pairing"
+                  className="inline-block text-sm text-blue-600 hover:underline mt-2"
+                >
+                  Manage Pairing →
+                </Link>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-neutral-600 mb-4">
+                  Generate a pairing code for your client to connect their iOS device to the GymDashSync app.
+                </p>
+                <Link
+                  href="/client-dashboard/pairing"
+                  className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
+                >
+                  Generate Pairing Code
+                </Link>
+              </div>
             )}
           </div>
         </div>
