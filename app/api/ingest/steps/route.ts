@@ -3,6 +3,11 @@
  *
  * Endpoint for iOS app to send HealthKit step count data.
  * 
+ * CLIENT SYNC STRATEGY:
+ * - First sync: Pulls all step data from last 365 days
+ * - Subsequent syncs: Pulls only new data since last sync (client tracks via timestamp)
+ * - Aggregated daily (one record per day) from HealthKit statistics
+ * 
  * Data Priority:
  * - If Entry already exists with "manual" in dataSources, preserve manual value
  * - Only update steps if no manual data exists for that date

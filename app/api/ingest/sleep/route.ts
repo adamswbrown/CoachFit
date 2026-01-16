@@ -4,6 +4,11 @@
  * Endpoint for iOS app to send HealthKit sleep data.
  * Stores detailed sleep records and merges into daily Entry records.
  * 
+ * CLIENT SYNC STRATEGY:
+ * - First sync: Pulls all sleep data from last 365 days
+ * - Subsequent syncs: Pulls only new data since last sync (client tracks via timestamp)
+ * - Each sync can send up to 400 sleep records (supports 365-day batches)
+ * 
  * Data Priority:
  * - Sleep stage details (deep, light, REM) are stored in SleepRecord model
  * - Total sleep minutes are also synced to Entry model (daily summary)

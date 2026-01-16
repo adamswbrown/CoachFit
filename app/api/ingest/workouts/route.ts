@@ -3,6 +3,12 @@
  *
  * Endpoint for iOS app to send HealthKit workout data.
  * Stores workout records with full metadata from Apple Health.
+ *
+ * CLIENT SYNC STRATEGY:
+ * - First sync: Pulls all workouts from last 365 days
+ * - Subsequent syncs: Pulls only new/updated workouts since last sync (client tracks via timestamp)
+ * - This endpoint processes date-ordered batches and deduplicates by (userId, workoutType, startTime)
+ * - Server receives data continuously as long as client has permissions
  */
 
 import { NextRequest, NextResponse } from "next/server"
@@ -28,6 +34,15 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       )
     }
+
+    // Log sync batch details
+    const dateRange = validated.workouts.length > 0
+      ? {
+          earliest: new Date(Math.min(...validated.workouts.map(w => new Date(w.start_time).getTime()))).toISOString(),
+          latest: new Date(Math.max(...validated.workouts.map(w => new Date(w.start_time).getTime()))).toISOString(),
+        }
+      : null
+    console.log(`[/api/ingest/workouts] Processing ${validated.workouts.length} workouts for client ${validated.client_id}${dateRange ? ` (${dateRange.earliest} to ${dateRange.latest})` : ''}`)
 
     // Process each workout
     const results: { processed: number; errors: { index: number; message: string }[] } = {
