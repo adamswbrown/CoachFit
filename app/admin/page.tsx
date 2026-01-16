@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Role } from "@/lib/types"
 import { isAdmin } from "@/lib/permissions"
+import { Role } from "@/lib/types"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 
 interface Cohort {
@@ -424,8 +425,8 @@ export default function AdminPage() {
                   </thead>
                   <tbody>
                     {filteredUsers.map((user) => {
-                      const hasCoach = user.roles.includes("COACH")
-                      const hasAdmin = user.roles.includes("ADMIN")
+                      const hasCoach = user.roles.includes(Role.COACH)
+                      const hasAdmin = user.roles.includes(Role.ADMIN)
                       const isCurrentUser = user.id === session.user.id
 
                       return (

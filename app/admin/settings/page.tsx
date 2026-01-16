@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { isAdmin } from "@/lib/permissions"
+import { Role } from "@/lib/types"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 
 interface SystemSettings {
@@ -134,7 +135,7 @@ export default function AdminSettingsPage() {
     if (status === "unauthenticated") {
       router.push("/login")
     } else if (session?.user && !isAdmin(session.user)) {
-      if (session.user.roles.includes("COACH")) {
+      if (session.user.roles.includes(Role.COACH)) {
         router.push("/coach-dashboard")
       } else {
         router.push("/client-dashboard")

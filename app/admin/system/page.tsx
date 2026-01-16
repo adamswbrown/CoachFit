@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/permissions"
+import { Role } from "@/lib/types"
 import { MetricCard } from "@/components/admin/MetricCard"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 
@@ -18,7 +19,7 @@ export default function SystemHealthPage() {
     if (status === "unauthenticated") {
       router.push("/login")
     } else if (session?.user && !isAdmin(session.user)) {
-      if (session.user.roles.includes("COACH")) {
+      if (session.user.roles.includes(Role.COACH)) {
         router.push("/coach-dashboard")
       } else {
         router.push("/client-dashboard")
