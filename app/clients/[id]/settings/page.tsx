@@ -63,7 +63,8 @@ export default function ClientSettingsPage() {
         const data = await res.json()
         if (data.code) {
           setPairingCode(data.code)
-          setPairingExpiry(new Date(data.expiresAt))
+          const expires = data.expiresAt || data.expires_at
+          if (expires) setPairingExpiry(new Date(expires))
         }
       }
     } catch (err) {
@@ -147,7 +148,8 @@ export default function ClientSettingsPage() {
 
       if (res.ok) {
         setPairingCode(data.code)
-        setPairingExpiry(new Date(data.expiresAt))
+        const expires = data.expiresAt || data.expires_at
+        if (expires) setPairingExpiry(new Date(expires))
         setSuccess(regenerate ? "New pairing code generated" : "Pairing code generated")
         setTimeout(() => setSuccess(null), 5000)
       } else {
