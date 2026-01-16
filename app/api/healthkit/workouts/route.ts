@@ -69,6 +69,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Get total count for pagination
+    const total = await db.workout.count({ where })
+
     // Fetch workouts
     const workouts = await db.workout.findMany({
       where,
@@ -90,6 +93,10 @@ export async function GET(req: NextRequest) {
         sourceDevice: workout.sourceDevice,
         createdAt: workout.createdAt.toISOString(),
       })),
+      pagination: {
+        total,
+        hasMore: workouts.length >= 100,
+      },
     }, { status: 200 })
 
   } catch (error: any) {

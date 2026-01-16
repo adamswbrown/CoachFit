@@ -69,6 +69,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Get total count for pagination
+    const total = await db.sleepRecord.count({ where })
+
     // Fetch sleep records
     const sleepRecords = await db.sleepRecord.findMany({
       where,
@@ -91,6 +94,10 @@ export async function GET(req: NextRequest) {
         sourceDevices: record.sourceDevices as string[] | null,
         createdAt: record.createdAt.toISOString(),
       })),
+      pagination: {
+        total,
+        hasMore: sleepRecords.length >= 100,
+      },
     }, { status: 200 })
 
   } catch (error: any) {
