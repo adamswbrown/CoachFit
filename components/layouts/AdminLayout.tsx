@@ -17,6 +17,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   if (!session) return null
 
+  const firstName = session?.user?.name?.split(" ")[0] || session?.user?.email || "there"
+
   const navigation = [
     { name: "Users", href: "/admin", icon: "👤" },
     { name: "Overview", href: "/admin/overview", icon: "📈" },
@@ -43,6 +45,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </Link>
           </div>
           <div className="flex items-center gap-3">
+            <div className="text-sm text-neutral-600">
+              {firstName}
+            </div>
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
               className="px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"

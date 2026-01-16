@@ -52,6 +52,8 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
 
   if (!session) return null
 
+  const firstName = session?.user?.name?.split(" ")[0] || session?.user?.email || "there"
+
   const isClientsActive = pathname === "/coach-dashboard" || pathname?.startsWith("/clients/")
 
   const clientFilters: { value: ClientFilter; label: string }[] = [
@@ -155,6 +157,9 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
           </div>
           <div className="flex items-center gap-3">
             <RoleSwitcher />
+            <div className="text-sm text-neutral-600">
+              {firstName}
+            </div>
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
               className="px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
