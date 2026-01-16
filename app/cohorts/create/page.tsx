@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { isAdmin } from "@/lib/permissions"
+import { Role } from "@/lib/types"
 
 interface Coach {
   id: string
@@ -36,7 +37,7 @@ export default function CreateCohortPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user.roles.includes("CLIENT")) {
+    } else if (session?.user.roles.includes(Role.CLIENT)) {
       router.push("/client-dashboard")
     }
   }, [status, session, router])

@@ -7,6 +7,7 @@ import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import { isAdmin } from "@/lib/permissions"
+import { Role } from "@/lib/types"
 import type { AttentionQueueItem } from "@/lib/admin/attention"
 
 interface Client {
@@ -82,7 +83,7 @@ export default function ClientOverviewPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user.roles.includes("CLIENT")) {
+    } else if (session?.user.roles.includes(Role.CLIENT)) {
       router.push("/client-dashboard")
     }
   }, [status, session, router])

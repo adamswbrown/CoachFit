@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
+import { Role } from "@/lib/types"
 
 interface Cohort {
   id: string
@@ -84,7 +85,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user.roles.includes("CLIENT")) {
+    } else if (session?.user.roles.includes(Role.CLIENT)) {
       router.push("/client-dashboard")
     }
   }, [status, session, router])

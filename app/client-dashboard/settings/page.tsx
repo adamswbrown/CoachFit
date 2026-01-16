@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ClientLayout } from "@/components/layouts/ClientLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
+import { Role } from "@/lib/types"
 
 interface UserSettings {
   id: string
@@ -56,7 +57,12 @@ export default function ClientSettingsPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user && "roles" in session.user && Array.isArray(session.user.roles) && session.user.roles.includes("COACH")) {
+    } else if (
+      session?.user &&
+      "roles" in session.user &&
+      Array.isArray(session.user.roles) &&
+      session.user.roles.includes(Role.COACH)
+    ) {
       router.push("/coach-dashboard")
     }
   }, [status, session, router])

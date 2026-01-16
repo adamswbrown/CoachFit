@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { DataSourceBadge } from "@/components/DataSourceBadge"
+import { Role } from "@/lib/types"
 import {
   LineChart,
   Line,
@@ -73,7 +74,7 @@ export default function ClientEntriesPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user.roles.includes("CLIENT")) {
+    } else if (session?.user.roles.includes(Role.CLIENT)) {
       router.push("/client-dashboard")
     }
   }, [status, session, router])
