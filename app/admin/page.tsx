@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Role } from "@/lib/types"
 import { isAdmin } from "@/lib/permissions"
-import { Role } from "@/lib/types"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 
 interface Cohort {
