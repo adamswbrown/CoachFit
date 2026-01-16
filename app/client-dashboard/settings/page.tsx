@@ -54,6 +54,12 @@ export default function ClientSettingsPage() {
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
+  // Consent state
+  const [consent, setConsent] = useState<any>(null)
+  const [consentLoading, setConsentLoading] = useState(false)
+  const [consentError, setConsentError] = useState<string | null>(null)
+  const [updatingConsent, setUpdatingConsent] = useState(false)
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
@@ -71,6 +77,7 @@ export default function ClientSettingsPage() {
     if (session) {
       loadSettings()
       loadPairingStatus()
+      loadConsent()
     }
   }, [session])
 
@@ -98,6 +105,66 @@ export default function ClientSettingsPage() {
     } catch (err) {
       console.error("Error loading pairing status:", err)
     }
+  }
+
+  const loadConsent = async () => {
+    setConsentLoading(true)
+    setConsentError(null)
+    try {
+      const res = await fetch("/api/consent/accept")
+      if (res.ok) {
+        const data = await res.json()
+        setConsent(data.consent)
+      } else {
+        setConsentError("Failed to load consent preferences")
+      }
+    } catch (err) {
+      console.error("Error loading consent:", err)
+      setConsentError("Failed to load consent preferences")
+    } finally {
+      setConsentLoading(false)
+    }
+  }
+
+  const handleMarketingConsentToggle = async (newValue: boolean) => {
+    setUpdatingConsent(true)
+    try {
+      const res = await fetch("/api/consent/accept", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          termsAccepted: consent?.termsAccepted ? true : false,
+          privacyAccepted: consent?.privacyAccepted ? true : false,
+          dataProcessing: consent?.dataProcessing ? true : false,
+          marketing: newValue,
+        }),
+      })
+
+      if (res.ok) {
+        setSuccess("Marketing preference updated")
+        loadConsent()
+        setTimeout(() => setSuccess(null), 5000)
+      } else {
+        const data = await res.json()
+        setError(data.error || "Failed to update preference")
+      }
+    } catch (err) {
+      setError("Failed to update preference")
+      console.error("Error updating consent:", err)
+    } finally {
+      setUpdatingConsent(false)
+    }
+  }
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "Not accepted"
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
   }
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -531,6 +598,86 @@ export default function ClientSettingsPage() {
                 >
                   Generate Pairing Code
                 </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Consent & Privacy */}
+          <div className="bg-white border border-neutral-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Consent & Privacy</h2>
+            
+            {consentLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin"></div>
+              </div>
+            ) : consentError ? (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
+                {consentError}
+              </div>
+            ) : consent ? (
+              <div className="space-y-4">
+                {/* Terms of Service */}
+                <div className="flex items-start justify-between p-3 bg-neutral-50 rounded-md">
+                  <div className="flex-1">
+                    <div className="font-medium text-neutral-900">Terms of Service</div>
+                    <div className="text-xs text-neutral-500 mt-1">
+                      Accepted on {formatDate(consent.termsAccepted)}
+                    </div>
+                  </div>
+                  <div className="text-lg">✓</div>
+                </div>
+
+                {/* Privacy Policy */}
+                <div className="flex items-start justify-between p-3 bg-neutral-50 rounded-md">
+                  <div className="flex-1">
+                    <div className="font-medium text-neutral-900">Privacy Policy</div>
+                    <div className="text-xs text-neutral-500 mt-1">
+                      Accepted on {formatDate(consent.privacyAccepted)}
+                    </div>
+                  </div>
+                  <div className="text-lg">✓</div>
+                </div>
+
+                {/* Data Processing */}
+                <div className="flex items-start justify-between p-3 bg-neutral-50 rounded-md">
+                  <div className="flex-1">
+                    <div className="font-medium text-neutral-900">Data Processing (HealthKit)</div>
+                    <div className="text-xs text-neutral-500 mt-1">
+                      Accepted on {formatDate(consent.dataProcessing)}
+                    </div>
+                  </div>
+                  <div className="text-lg">✓</div>
+                </div>
+
+                {/* Marketing */}
+                <div className="flex items-start justify-between p-3 bg-neutral-50 rounded-md">
+                  <div className="flex-1">
+                    <div className="font-medium text-neutral-900">Marketing Emails</div>
+                    <div className="text-xs text-neutral-500 mt-1">
+                      {consent.marketing
+                        ? `Opted in on ${formatDate(consent.marketing)}`
+                        : "Not opted in (optional)"}
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!consent.marketing}
+                      onChange={(e) => handleMarketingConsentToggle(e.target.checked)}
+                      disabled={updatingConsent}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors" />
+                  </label>
+                </div>
+
+                <div className="text-xs text-neutral-500 pt-2">
+                  Version: {consent.version}
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
+                No consent record found. You'll need to accept our terms to proceed.
               </div>
             )}
           </div>
