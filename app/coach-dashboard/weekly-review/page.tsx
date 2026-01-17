@@ -7,6 +7,7 @@ import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { Role } from "@/lib/types"
 import { generateWeeklyEmailDraft } from "@/lib/utils/email-draft"
+import { isAdminOrCoach } from "@/lib/permissions"
 
 interface ClientSummary {
   clientId: string
@@ -70,8 +71,13 @@ export default function WeeklyReviewPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user && !session.user.roles.includes(Role.COACH)) {
-      router.push("/client-dashboard")
+    } else if (session?.user && !isAdminOrCoach(session.user)) {
+      // Only redirect clients who aren't coaches or admins
+      if (session.user.roles.includes(Role.CLIENT)) {
+        router.push("/client-dashboard")
+      } else {
+        router.push("/login")
+      }
     }
   }, [status, session, router])
 

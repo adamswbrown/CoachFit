@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { Role } from "@/lib/types"
+import { isAdminOrCoach } from "@/lib/permissions"
 
 interface WeeklyEntry {
   date: string
@@ -118,8 +119,13 @@ export default function WeeklyReviewPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user.roles.includes(Role.CLIENT)) {
-      router.push("/client-dashboard")
+    } else if (session?.user && !isAdminOrCoach(session.user)) {
+      // Only redirect clients who aren't coaches or admins
+      if (session.user.roles.includes(Role.CLIENT)) {
+        router.push("/client-dashboard")
+      } else {
+        router.push("/login")
+      }
     }
   }, [status, session, router])
 
