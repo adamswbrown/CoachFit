@@ -132,8 +132,11 @@ export default function WeeklyReviewPage() {
             fetchClient(),
             fetchWeeklySummary(),
             fetchCoachNote(),
-            fetchWeeklyResponse(),
           ])
+          // Fetch weekly response separately - don't block page load if it fails
+          fetchWeeklyResponse().catch((err) =>
+            console.error("Failed to fetch weekly response:", err)
+          )
         } finally {
           setLoading(false)
         }

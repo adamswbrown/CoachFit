@@ -66,33 +66,52 @@ export async function GET(req: NextRequest) {
     weekStart.setHours(0, 0, 0, 0)
     weekEnd.setHours(23, 59, 59, 999)
 
-    // Get all clients in coach's cohorts
-    const cohortMemberships = await db.cohortMembership.findMany({
-      where: {
-        Cohort: {
-          coachId: session.user.id,
-        },
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    // Get all clients - admins see all, coaches see their cohorts
+    let clients
+    if (isAdminUser) {
+      // Admins see all users with CLIENT role
+      const allUsers = await db.user.findMany({
+        where: {
+          roles: {
+            has: Role.CLIENT,
           },
         },
-      },
-    })
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      })
+      clients = allUsers
+    } else {
+      // Coaches see only clients in their cohorts
+      const cohortMemberships = await db.cohortMembership.findMany({
+        where: {
+          Cohort: {
+            coachId: session.user.id,
+          },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      })
 
-    // Extract unique clients
-    const clientsMap = new Map()
-    cohortMemberships.forEach((membership) => {
-      if (!clientsMap.has(membership.user.id)) {
-        clientsMap.set(membership.user.id, membership.user)
-      }
-    })
+      // Extract unique clients
+      const clientsMap = new Map()
+      cohortMemberships.forEach((membership) => {
+        if (!clientsMap.has(membership.user.id)) {
+          clientsMap.set(membership.user.id, membership.user)
+        }
+      })
 
-    const clients = Array.from(clientsMap.values())
+      clients = Array.from(clientsMap.values())
+    }
 
     // Fetch all entries for the week for all clients (batch query)
     const clientIds = clients.map((c) => c.id)
@@ -148,27 +167,31 @@ export async function GET(req: NextRequest) {
 
     // Calculate stats for each client
     const clientSummaries = clients.map((client) => {
-      const entries = entriesByClient.get(client.id) || []
+      const entries = (entriesByClient.get(client.id) || []).sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      )
       const sleepRecords = sleepByClient.get(client.id) || []
 
       const checkInCount = entries.length
       const checkInRate = checkInCount / 7
 
-      // Weight stats
-      const weightsWithValues = entries
+      // Weight stats - filter entries with weight and sort by date
+      const entriesWithWeight = entries
         .filter((e) => e.weightLbs !== null)
-        .map((e) => e.weightLbs!)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      
+      const weightsWithValues = entriesWithWeight.map((e) => e.weightLbs!)
       const avgWeight =
         weightsWithValues.length > 0
           ? weightsWithValues.reduce((sum, w) => sum + w, 0) /
             weightsWithValues.length
           : null
 
-      // Weight trend: compare first vs last available weight
+      // Weight trend: compare first vs last weight (chronologically sorted)
       let weightTrend: number | null = null
-      if (weightsWithValues.length >= 2) {
-        const firstWeight = weightsWithValues[0]
-        const lastWeight = weightsWithValues[weightsWithValues.length - 1]
+      if (entriesWithWeight.length >= 2) {
+        const firstWeight = entriesWithWeight[0].weightLbs!
+        const lastWeight = entriesWithWeight[entriesWithWeight.length - 1].weightLbs!
         weightTrend = lastWeight - firstWeight
       }
 
