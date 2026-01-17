@@ -111,6 +111,11 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
       { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" }
     )
     
+    // Add Weekly Review as a separate navigation item
+    navigation.push(
+      { name: "Weekly Review", href: "/coach-dashboard/weekly-review", icon: (props: any) => <span className="text-xl">📅</span>, hasDropdown: false, dropdownKey: "weekly-review" }
+    )
+    
     // Conditionally add HealthKit navigation item
     if (healthkitEnabled) {
       navigation.push(
@@ -218,18 +223,6 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
                           <item.icon size={16} className="text-neutral-400" />
                         </div>
                         <div className="py-2">
-                          <Link
-                            href="/coach-dashboard/weekly-review"
-                            onClick={() => setClientsDropdownOpen(false)}
-                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors block ${
-                              pathname === "/coach-dashboard/weekly-review"
-                                ? "bg-neutral-800 text-white"
-                                : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
-                            }`}
-                          >
-                            📅 Weekly Review
-                          </Link>
-                          <div className="border-t border-neutral-800 my-2"></div>
                           {clientFilters.map((filter) => (
                             <button
                               key={filter.value}
