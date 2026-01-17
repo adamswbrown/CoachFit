@@ -54,7 +54,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
 
   const firstName = session?.user?.name?.split(" ")[0] || session?.user?.email || "there"
 
-  const isClientsActive = pathname === "/coach-dashboard" || pathname?.startsWith("/clients/")
+  const isClientsActive = pathname === "/coach-dashboard" || pathname?.startsWith("/clients/") || pathname?.startsWith("/coach-dashboard/")
 
   const clientFilters: { value: ClientFilter; label: string }[] = [
     { value: "all", label: "All Clients" },
