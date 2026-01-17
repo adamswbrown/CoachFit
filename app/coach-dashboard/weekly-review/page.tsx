@@ -65,6 +65,7 @@ export default function WeeklyReviewPage() {
   const [notes, setNotes] = useState<Record<string, string>>({})
   const [savingClient, setSavingClient] = useState<string | null>(null)
   const [copiedClient, setCopiedClient] = useState<string | null>(null)
+  const [recalculating, setRecalculating] = useState(false)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -173,6 +174,16 @@ export default function WeeklyReviewPage() {
     setSelectedWeekStart(formatDate(getMonday(currentDate)))
   }
 
+  const handleRecalculate = async () => {
+    setRecalculating(true)
+    try {
+      // Force refresh the weekly summaries data
+      await fetchWeeklySummaries()
+    } finally {
+      setRecalculating(false)
+    }
+  }
+
   if (status === "loading" || loading) {
     return (
       <CoachLayout>
@@ -230,6 +241,22 @@ export default function WeeklyReviewPage() {
             className="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next Week →
+          </button>
+          <button
+            onClick={handleRecalculate}
+            disabled={recalculating}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {recalculating ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Recalculating...
+              </>
+            ) : (
+              <>
+                ⟳ Recalculate
+              </>
+            )}
           </button>
         </div>
 
