@@ -71,6 +71,7 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 - ✅ **Analytics Dashboard**: Cohort summaries with sparklines and trends
 - ✅ **Individual Client View**: Detailed analytics per client with entry history
 - ✅ **Weekly Notes**: Coach notes system for client progress tracking
+- ✅ **Weekly Review Queue**: Centralized dashboard for reviewing all clients' weekly progress with copyable email drafts and Loom video responses
 - ✅ **Custom Prompts**: Configure custom check-in questions per cohort
 
 #### For Admins
