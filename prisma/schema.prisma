@@ -174,34 +174,36 @@ model Session {
 }
 
 model User {
-  id                    String                  @id @default(uuid())
-  email                 String                  @unique
-  name                  String?
-  image                 String?
-  passwordHash          String?
-  roles                 Role[]                  @default([CLIENT])
-  isTestUser            Boolean                 @default(false)
-  emailVerified         DateTime?
-  createdAt             DateTime                @default(now())
-  invitedByCoachId      String?
-  onboardingComplete    Boolean                 @default(false)
-  Account               Account[]
-  AdminActions          AdminAction[]           @relation("AdminActions")
-  CoachCohortMembership CoachCohortMembership[]
-  CoachInvite           CoachInvite[]
-  ClientNotes           CoachNote[]             @relation("ClientNotes")
-  CoachNotes            CoachNote[]             @relation("CoachNotes")
-  Cohort                Cohort[]
-  CohortMembership      CohortMembership[]
-  Entry                 Entry[]
-  ClientPairingCodes    PairingCode[]           @relation("ClientPairingCodes")
-  CoachPairingCodes     PairingCode[]           @relation("CoachPairingCodes")
-  Session               Session[]
-  SleepRecords          SleepRecord[]
-  User                  User?                   @relation("UserToUser", fields: [invitedByCoachId], references: [id])
-  other_User            User[]                  @relation("UserToUser")
-  UserConsent           UserConsent?
-  Workouts              Workout[]
+  id                     String                  @id @default(uuid())
+  email                  String                  @unique
+  name                   String?
+  image                  String?
+  passwordHash           String?
+  roles                  Role[]                  @default([CLIENT])
+  isTestUser             Boolean                 @default(false)
+  emailVerified          DateTime?
+  createdAt              DateTime                @default(now())
+  invitedByCoachId       String?
+  onboardingComplete     Boolean                 @default(false)
+  Account                Account[]
+  AdminActions           AdminAction[]           @relation("AdminActions")
+  CoachCohortMembership  CoachCohortMembership[]
+  CoachInvite            CoachInvite[]
+  ClientNotes            CoachNote[]             @relation("ClientNotes")
+  CoachNotes             CoachNote[]             @relation("CoachNotes")
+  ClientWeeklyResponses  WeeklyCoachResponse[]   @relation("ClientWeeklyResponses")
+  CoachWeeklyResponses   WeeklyCoachResponse[]   @relation("CoachWeeklyResponses")
+  Cohort                 Cohort[]
+  CohortMembership       CohortMembership[]
+  Entry                  Entry[]
+  ClientPairingCodes     PairingCode[]           @relation("ClientPairingCodes")
+  CoachPairingCodes      PairingCode[]           @relation("CoachPairingCodes")
+  Session                Session[]
+  SleepRecords           SleepRecord[]
+  User                   User?                   @relation("UserToUser", fields: [invitedByCoachId], references: [id])
+  other_User             User[]                  @relation("UserToUser")
+  UserConsent            UserConsent?
+  Workouts               Workout[]
 }
 
 model VerificationToken {
@@ -227,6 +229,23 @@ model CoachNote {
   @@unique([coachId, clientId, weekStart])
   @@index([coachId, clientId])
   @@index([noteDate])
+}
+
+model WeeklyCoachResponse {
+  id        String   @id @default(uuid())
+  coachId   String
+  clientId  String
+  weekStart DateTime @db.Date
+  loomUrl   String?
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  client    User     @relation("ClientWeeklyResponses", fields: [clientId], references: [id], onDelete: Cascade)
+  coach     User     @relation("CoachWeeklyResponses", fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@unique([coachId, clientId, weekStart])
+  @@index([coachId, clientId])
+  @@index([weekStart])
 }
 
 model CohortCheckInConfig {
