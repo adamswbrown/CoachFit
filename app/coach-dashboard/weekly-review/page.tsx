@@ -97,9 +97,11 @@ export default function WeeklyReviewPage() {
         const responseData = await res.json()
         setData(responseData)
 
-        // Fetch existing responses for each client
+        // Fetch existing responses for each client (non-blocking)
         for (const client of responseData.clients) {
-          fetchWeeklyResponse(client.clientId)
+          fetchWeeklyResponse(client.clientId).catch((err) =>
+            console.error(`Error fetching weekly response for ${client.clientId}:`, err)
+          )
         }
       }
     } catch (err) {
