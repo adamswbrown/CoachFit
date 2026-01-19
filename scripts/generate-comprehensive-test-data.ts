@@ -60,11 +60,6 @@ const coachNames = [
   { name: "Taylor Chen", email: "taylor.chen@test.local" },
   { name: "Casey Williams", email: "casey.williams@test.local" },
   { name: "Morgan Davis", email: "morgan.davis@test.local" },
-  { name: "Riley Johnson", email: "riley.johnson@test.local" },
-  { name: "Avery Brown", email: "avery.brown@test.local" },
-  { name: "Quinn Anderson", email: "quinn.anderson@test.local" },
-  { name: "Sage Rodriguez", email: "sage.rodriguez@test.local" },
-  { name: "River Garcia", email: "river.garcia@test.local" },
 ]
 
 // Cohort names
@@ -170,23 +165,32 @@ function generateClientData(index: number): { name: string; email: string; gende
 
 async function main() {
   console.log("🌱 Generating comprehensive test data...\n")
-  console.log("   - 200 clients")
-  console.log("   - 10 coaches")
-  console.log("   - 1 additional admin")
+  console.log("   - 100 clients")
+  console.log("   - 5 coaches")
+  console.log("   - 1 admin+coach user")
+  console.log("   - 3 coaches with admin role")
   console.log("   - Varied health data (activity levels, genders)")
   console.log("   - All users with passwords set\n")
 
   const DEFAULT_PASSWORD = "TestPassword123!"
   const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10)
+  const adminCoachEmails = new Set([
+    "alex.thompson@test.local",
+    "jordan.martinez@test.local",
+    "taylor.chen@test.local",
+  ])
 
   // Create coaches
   console.log("Creating coaches...")
   const coaches = []
   for (const coachInfo of coachNames) {
+    const roles = adminCoachEmails.has(coachInfo.email)
+      ? [Role.COACH, Role.ADMIN]
+      : [Role.COACH]
     const coach = await prisma.user.upsert({
       where: { email: coachInfo.email },
       update: {
-        roles: [Role.COACH],
+        roles,
         isTestUser: true,
         passwordHash,
       },
@@ -194,7 +198,7 @@ async function main() {
         id: randomUUID(),
         email: coachInfo.email,
         name: coachInfo.name,
-        roles: [Role.COACH],
+        roles,
         isTestUser: true,
         passwordHash,
       },
@@ -204,21 +208,21 @@ async function main() {
   }
   console.log(`\n✅ Created ${coaches.length} coaches\n`)
 
-  // Create additional admin user
-  console.log("Creating additional admin user...")
+  // Create admin+coach user
+  console.log("Creating admin+coach user...")
   const admin = await prisma.user.upsert({
-    where: { email: "admin2@test.local" },
+    where: { email: "adamswbrown@gmail.com" },
     update: {
-      name: "Test Admin 2",
-      roles: [Role.ADMIN],
+      name: "Adam Brown",
+      roles: [Role.ADMIN, Role.COACH],
       isTestUser: true,
       passwordHash,
     },
     create: {
       id: randomUUID(),
-      email: "admin2@test.local",
-      name: "Test Admin 2",
-      roles: [Role.ADMIN],
+      email: "adamswbrown@gmail.com",
+      name: "Adam Brown",
+      roles: [Role.ADMIN, Role.COACH],
       isTestUser: true,
       passwordHash,
     },
@@ -228,16 +232,26 @@ async function main() {
   // Create cohorts (distributed across coaches)
   console.log("Creating cohorts...")
   const cohorts = []
-  const cohortsPerCoach = Math.ceil(cohortNames.length / coaches.length)
+  const targetClients = 100
+  const targetCohorts = Math.ceil(targetClients / 8)
+  const selectedCohortNames = cohortNames.slice(0, targetCohorts)
+  const cohortsPerCoach = Math.ceil(selectedCohortNames.length / coaches.length)
   
-  for (let i = 0; i < cohortNames.length; i++) {
+  for (let i = 0; i < selectedCohortNames.length; i++) {
     const coachIndex = Math.floor(i / cohortsPerCoach)
     const coach = coaches[coachIndex % coaches.length]
     
-    const cohort = await prisma.cohort.create({
-      data: {
+    const cohort = await prisma.cohort.upsert({
+      where: {
+        coachId_name: {
+          coachId: coach.id,
+          name: selectedCohortNames[i],
+        },
+      },
+      update: {},
+      create: {
         id: randomUUID(),
-        name: cohortNames[i],
+        name: selectedCohortNames[i],
         coachId: coach.id,
       },
     })
@@ -246,12 +260,12 @@ async function main() {
   }
   console.log(`\n✅ Created ${cohorts.length} cohorts\n`)
 
-  // Create 200 clients
-  console.log("Creating 200 clients...")
+  // Create 100 clients
+  console.log("Creating 100 clients...")
   const clients = []
   const activityDistribution = [0.2, 0.3, 0.3, 0.2] // 20% low, 30% moderate, 30% high, 20% very-high
 
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < targetClients; i++) {
     const clientData = generateClientData(i)
     
     // Assign activity profile based on distribution
@@ -287,7 +301,7 @@ async function main() {
     
     clients.push({ ...client, gender: clientData.gender, activityProfile: profile })
     
-    if ((i + 1) % 50 === 0) {
+    if ((i + 1) % 25 === 0) {
       console.log(`  ✓ Created ${i + 1} clients...`)
     }
   }
@@ -305,8 +319,15 @@ async function main() {
     const cohortClients = clients.slice(clientIndex, clientIndex + cohortSize)
 
     for (const client of cohortClients) {
-      await prisma.cohortMembership.create({
-        data: {
+      await prisma.cohortMembership.upsert({
+        where: {
+          userId_cohortId: {
+            userId: client.id,
+            cohortId: cohort.id,
+          },
+        },
+        update: {},
+        create: {
           userId: client.id,
           cohortId: cohort.id,
         },
@@ -319,7 +340,7 @@ async function main() {
   console.log(`\n✅ Distributed clients across cohorts\n`)
 
   // Generate entries for clients with varied activity levels
-  console.log("Generating entries for clients...")
+  console.log("Generating entries for clients (4 weeks)...")
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -334,8 +355,8 @@ async function main() {
   for (let clientIdx = 0; clientIdx < clients.length; clientIdx++) {
     const client = clients[clientIdx]
     const profile = client.activityProfile
-    const daysOfData = Math.floor(Math.random() * 60) + 30 // 30-90 days of data
-    
+    const daysOfData = 28
+
     const entryDates: Date[] = []
     
     // Generate dates based on consistency
@@ -350,41 +371,49 @@ async function main() {
     // Sort dates (oldest first)
     entryDates.sort((a, b) => a.getTime() - b.getTime())
 
+    const entriesToCreate: Array<{
+      userId: string
+      date: Date
+      weightLbs?: number
+      steps?: number
+      calories?: number
+      heightInches?: number
+      sleepQuality?: number
+      perceivedEffort?: number
+      dataSources: string[]
+    }> = []
+
     for (const entryDate of entryDates) {
       const dayOffset = Math.floor((today.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24))
       const entryData = generateEntryData(profile, dayOffset, client.gender)
 
-      await prisma.entry.upsert({
-        where: {
-          userId_date: {
-            userId: client.id,
-            date: entryDate,
-          },
-        },
-        update: {
-          weightLbs: entryData.weight,
-          steps: entryData.steps,
-          calories: entryData.calories,
-          heightInches: entryData.heightInches,
-          sleepQuality: entryData.sleepQuality,
-          perceivedEffort: entryData.perceivedEffort,
-          dataSources: ["manual"],
-        },
-        create: {
-          userId: client.id,
-          date: entryDate,
-          weightLbs: entryData.weight,
-          steps: entryData.steps,
-          calories: entryData.calories,
-          heightInches: entryData.heightInches,
-          sleepQuality: entryData.sleepQuality,
-          perceivedEffort: entryData.perceivedEffort,
-          dataSources: ["manual"],
-        },
+      entriesToCreate.push({
+        userId: client.id,
+        date: entryDate,
+        weightLbs: entryData.weight,
+        steps: entryData.steps,
+        calories: entryData.calories,
+        heightInches: entryData.heightInches,
+        sleepQuality: entryData.sleepQuality,
+        perceivedEffort: entryData.perceivedEffort,
+        dataSources: ["manual"],
       })
-      totalEntries++
-      entriesByActivityLevel[profile.level]++
     }
+
+    const batchSize = 250
+    for (let i = 0; i < entriesToCreate.length; i += batchSize) {
+      const batch = entriesToCreate.slice(i, i + batchSize)
+      if (batch.length === 0) {
+        continue
+      }
+      await prisma.entry.createMany({
+        data: batch,
+        skipDuplicates: true,
+      })
+    }
+
+    totalEntries += entriesToCreate.length
+    entriesByActivityLevel[profile.level] += entriesToCreate.length
 
     if (clientIdx > 0 && (clientIdx + 1) % 50 === 0) {
       console.log(`  ✓ Generated entries for ${clientIdx + 1} clients...`)
@@ -400,7 +429,7 @@ async function main() {
   // Summary
   console.log("📊 Test Data Summary:")
   console.log(`   Coaches: ${coaches.length}`)
-  console.log(`   Admins: 1 (admin@test.local) + 1 new (${admin.email})`)
+  console.log(`   Admins: 1 admin+coach (${admin.email}) + 3 coaches with admin role`)
   console.log(`   Clients: ${clients.length}`)
   console.log(`   Cohorts: ${cohorts.length}`)
   console.log(`   Total Entries: ${totalEntries}`)

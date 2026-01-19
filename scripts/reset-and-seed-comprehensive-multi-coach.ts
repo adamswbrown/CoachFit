@@ -57,14 +57,15 @@ const coachNames = [
   { name: "Alex Thompson", email: "alex.thompson@test.local" },
   { name: "Jordan Martinez", email: "jordan.martinez@test.local" },
   { name: "Taylor Chen", email: "taylor.chen@test.local" },
-  { name: "Riley Johnson", email: "riley.johnson@test.local" },
-  { name: "Cameron Lee", email: "cameron.lee@test.local" },
+  { name: "Casey Williams", email: "casey.williams@test.local" },
   { name: "Morgan Davis", email: "morgan.davis@test.local" },
-  { name: "Peyton Clark", email: "peyton.clark@test.local" },
-  { name: "Casey Brown", email: "casey.brown@test.local" },
-  { name: "Jamie Wilson", email: "jamie.wilson@test.local" },
-  { name: "Dakota Garcia", email: "dakota.garcia@test.local" },
 ]
+
+const adminCoachEmails = new Set([
+  "alex.thompson@test.local",
+  "jordan.martinez@test.local",
+  "taylor.chen@test.local",
+])
 
 const generateCohortNames = (): string[] => {
   const adjectives = [
@@ -147,23 +148,36 @@ async function main() {
   console.log("🌱 COMPREHENSIVE TEST DATA GENERATION (MULTI-COACH AWARE)")
   console.log("════════════════════════════════════════════════════════════════\n")
   console.log("📊 Generation Plan:")
-  console.log("   • 200 clients")
-  console.log("   • 10 coaches")
-  console.log("   • 25 cohorts (5-10 clients each)")
+  console.log("   • 100 clients")
+  console.log("   • 5 coaches")
+  console.log("   • ~13 cohorts (~8 clients each)")
   console.log("   • ~70% multi-coach, ~30% single-coach")
   console.log("   • Keeping admin: " + ADMIN_EMAIL + "\n")
 
   const startTime = Date.now()
   const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10)
 
-  // Verify admin
-  console.log("🔍 Step 1: Verifying admin user...")
-  const admin = await db.user.findUnique({ where: { email: ADMIN_EMAIL } })
-  if (!admin) {
-    console.error(`❌ Admin user ${ADMIN_EMAIL} not found!`)
-    process.exit(1)
-  }
-  console.log(`✅ Admin verified: ${admin.name}\n`)
+  // Ensure admin+coach user
+  console.log("🔍 Step 1: Ensuring admin user...")
+  const admin = await db.user.upsert({
+    where: { email: ADMIN_EMAIL },
+    update: {
+      name: "Adam Brown",
+      roles: [Role.ADMIN, Role.COACH],
+      isTestUser: true,
+      passwordHash,
+    },
+    create: {
+      id: randomUUID(),
+      email: ADMIN_EMAIL,
+      name: "Adam Brown",
+      roles: [Role.ADMIN, Role.COACH],
+      isTestUser: true,
+      passwordHash,
+      onboardingComplete: true,
+    },
+  })
+  console.log(`✅ Admin ready: ${admin.name}\n`)
 
   // Cleanup
   console.log("🧹 Step 2: Cleaning database...")
@@ -191,12 +205,15 @@ async function main() {
   const coaches = []
   for (let i = 0; i < coachNames.length; i++) {
     const coachInfo = coachNames[i]
+    const roles = adminCoachEmails.has(coachInfo.email)
+      ? [Role.COACH, Role.ADMIN]
+      : [Role.COACH]
     const coach = await db.user.create({
       data: {
         id: randomUUID(),
         email: coachInfo.email,
         name: coachInfo.name,
-        roles: [Role.COACH],
+        roles,
         isTestUser: true,
         passwordHash,
         onboardingComplete: true,
@@ -212,7 +229,11 @@ async function main() {
   const cohorts = []
   let multiCoachCount = 0
   let singleCoachCount = 0
-  for (let i = 0; i < cohortNames.length; i++) {
+  const targetClients = 100
+  const targetCohorts = Math.ceil(targetClients / 8)
+  const selectedCohortNames = cohortNames.slice(0, targetCohorts)
+
+  for (let i = 0; i < selectedCohortNames.length; i++) {
     const owner = coaches[i % coaches.length]
     const isMultiCoach = Math.random() < 0.7
     const coCoach = isMultiCoach ? coaches[(i + 1) % coaches.length] : null
@@ -220,7 +241,7 @@ async function main() {
     const cohort = await db.cohort.create({
       data: {
         id: randomUUID(),
-        name: cohortNames[i],
+        name: selectedCohortNames[i],
         coachId: owner.id,
       },
     })
@@ -250,19 +271,19 @@ async function main() {
 
     cohorts.push(cohort)
     
-    if ((i + 1) % 5 === 0 || i === cohortNames.length - 1) {
-      console.log(`   [${i + 1}/${cohortNames.length}] Created (multi: ${multiCoachCount}, single: ${singleCoachCount})`)
+    if ((i + 1) % 5 === 0 || i === selectedCohortNames.length - 1) {
+      console.log(`   [${i + 1}/${selectedCohortNames.length}] Created (multi: ${multiCoachCount}, single: ${singleCoachCount})`)
     }
   }
   console.log(`✅ Created ${cohorts.length} cohorts (${multiCoachCount} multi-coach, ${singleCoachCount} single-coach)\n`)
 
   // Create clients
-  console.log("👤 Step 5: Creating 200 clients...")
+  console.log("👤 Step 5: Creating 100 clients...")
   const clients: Array<{ id: string; gender: Gender; activityProfile: ActivityProfile }> = []
   const activityDistribution = [0.2, 0.3, 0.3, 0.2]
   const activityCounts = [0, 0, 0, 0]
 
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < targetClients; i++) {
     const clientInfo = generateClientData(i)
 
     const roll = Math.random()
@@ -292,8 +313,8 @@ async function main() {
 
     clients.push({ id: client.id, gender: clientInfo.gender, activityProfile: profile })
     
-    if ((i + 1) % 25 === 0 || i === 199) {
-      console.log(`   [${i + 1}/200] Low:${activityCounts[0]} Mod:${activityCounts[1]} High:${activityCounts[2]} VH:${activityCounts[3]}`)
+    if ((i + 1) % 25 === 0 || i === targetClients - 1) {
+      console.log(`   [${i + 1}/${targetClients}] Low:${activityCounts[0]} Mod:${activityCounts[1]} High:${activityCounts[2]} VH:${activityCounts[3]}`)
     }
   }
   console.log(`✅ Created ${clients.length} clients\n`)
@@ -389,9 +410,9 @@ async function main() {
       entryStats[levelIndex]++
     }
 
-    if ((i + 1) % 25 === 0 || i === 199) {
-      const percentComplete = Math.round(((i + 1) / 200) * 100)
-      console.log(`   [${i + 1}/200] ${entriesCreated} entries (${percentComplete}%)`)
+    if ((i + 1) % 25 === 0 || i === clients.length - 1) {
+      const percentComplete = Math.round(((i + 1) / clients.length) * 100)
+      console.log(`   [${i + 1}/${clients.length}] ${entriesCreated} entries (${percentComplete}%)`)
     }
   }
   console.log(`✅ Generated ${entriesCreated} entries from ${clientsWithEntries} clients\n`)
