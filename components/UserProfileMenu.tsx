@@ -167,7 +167,7 @@ export function UserProfileMenu({
                     : "text-neutral-700 hover:bg-neutral-50"
                 }`}
               >
-                <span className="text-lg">⚙️</span>
+                <span className="text-lg">🔧</span>
                 <span>Settings</span>
               </Link>
 
