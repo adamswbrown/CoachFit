@@ -4,6 +4,7 @@ import { isAdmin } from "@/lib/permissions"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
 import { AdminInsightEngine } from "@/lib/admin/insights"
+import { cache } from "@/lib/cache"
 
 export async function GET(req: NextRequest) {
   try {
@@ -135,52 +136,72 @@ export async function GET(req: NextRequest) {
     const overloadedCoaches = coachClientCounts.filter((c: CoachClientCount) => c.clientCount > 50).length
     const underutilizedCoaches = coachClientCounts.filter((c: CoachClientCount) => c.clientCount > 0 && c.clientCount < 10).length
 
-    // Generate insights asynchronously (don't block response)
-    const insightEngine = new AdminInsightEngine()
-    let anomalies: any[] = []
-    let opportunities: any[] = []
-    let userGrowthTrend: any[] = []
-    let entryCompletionTrend: any[] = []
+    // Try to get cached insights first (cache for 5 minutes)
+    const INSIGHTS_CACHE_KEY = "admin:overview:insights"
+    const INSIGHTS_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+    
+    interface InsightData {
+      anomalies: Array<{
+        id?: string
+        title: string
+        description: string
+        priority: string
+        impact?: string
+      }>
+      opportunities: Array<{
+        id?: string
+        title: string
+        description: string
+        impact?: string
+      }>
+      userGrowthTrend: Array<{
+        metric: string
+        direction: string
+        change?: number
+      }>
+      entryCompletionTrend: Array<{
+        metric: string
+        direction: string
+        change?: number
+      }>
+    }
+    
+    let cachedInsights = cache.get<InsightData>(INSIGHTS_CACHE_KEY)
 
-    // Run insights in parallel, but don't wait for them to complete
-    Promise.all([
-      insightEngine.detectAnomalies().catch((err) => {
-        console.error("Error detecting anomalies:", err)
-        return []
-      }),
-      insightEngine.findOpportunities().catch((err) => {
-        console.error("Error finding opportunities:", err)
-        return []
-      }),
-      insightEngine.generateTrends("user_growth", "30d").catch((err) => {
-        console.error("Error generating user growth trend:", err)
-        return []
-      }),
-      insightEngine.generateTrends("entry_completion", "30d").catch((err) => {
-        console.error("Error generating entry completion trend:", err)
-        return []
-      }),
-    ]).then(([anoms, opps, userTrend, entryTrend]) => {
-      anomalies = anoms
-      opportunities = opps
-      userGrowthTrend = userTrend
-      entryCompletionTrend = entryTrend
-    }).catch((err) => {
-      console.error("Error in insights generation:", err)
-    })
+    let anomalies: InsightData["anomalies"] = []
+    let opportunities: InsightData["opportunities"] = []
+    let userGrowthTrend: InsightData["userGrowthTrend"] = []
+    let entryCompletionTrend: InsightData["entryCompletionTrend"] = []
 
-    // For now, return basic insights (can be enhanced with caching later)
-    // In production, you might want to cache insights and return cached version immediately
-    try {
-      [anomalies, opportunities, userGrowthTrend, entryCompletionTrend] = await Promise.all([
-        insightEngine.detectAnomalies(),
-        insightEngine.findOpportunities(),
-        insightEngine.generateTrends("user_growth", "30d"),
-        insightEngine.generateTrends("entry_completion", "30d"),
-      ])
-    } catch (err: any) {
-      console.error("Error generating insights:", err)
-      // Continue with empty insights if generation fails
+    if (cachedInsights) {
+      // Use cached insights
+      anomalies = cachedInsights.anomalies
+      opportunities = cachedInsights.opportunities
+      userGrowthTrend = cachedInsights.userGrowthTrend
+      entryCompletionTrend = cachedInsights.entryCompletionTrend
+    } else {
+      // Generate insights and cache them
+      const insightEngine = new AdminInsightEngine()
+      
+      try {
+        [anomalies, opportunities, userGrowthTrend, entryCompletionTrend] = await Promise.all([
+          insightEngine.detectAnomalies(),
+          insightEngine.findOpportunities(),
+          insightEngine.generateTrends("user_growth", "30d"),
+          insightEngine.generateTrends("entry_completion", "30d"),
+        ])
+
+        // Cache the results
+        cache.set<InsightData>(INSIGHTS_CACHE_KEY, {
+          anomalies,
+          opportunities,
+          userGrowthTrend,
+          entryCompletionTrend,
+        }, INSIGHTS_CACHE_TTL)
+      } catch (err: any) {
+        console.error("Error generating insights:", err)
+        // Continue with empty insights if generation fails
+      }
     }
 
     const highPriority = anomalies.filter((a) => a.priority === "red")

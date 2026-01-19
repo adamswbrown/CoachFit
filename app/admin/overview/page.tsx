@@ -55,6 +55,8 @@ interface OverviewData {
   }
 }
 
+import { OverviewSkeleton } from "@/components/skeletons/LoadingSkeletons"
+
 export default function AdminOverviewPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -104,12 +106,7 @@ export default function AdminOverviewPage() {
   if (status === "loading" || loading) {
     return (
       <CoachLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-neutral-600">Loading overview...</p>
-          </div>
-        </div>
+        <OverviewSkeleton />
       </CoachLayout>
     )
   }
