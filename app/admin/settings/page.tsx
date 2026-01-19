@@ -147,6 +147,7 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [randomizing, setRandomizing] = useState(false)
+  const [randomizeProgress, setRandomizeProgress] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [formData, setFormData] = useState<Partial<SystemSettings>>(DEFAULT_SETTINGS)
 
@@ -242,9 +243,12 @@ export default function AdminSettingsPage() {
     }
 
     setRandomizing(true)
+    setRandomizeProgress("Starting randomization...")
     setMessage(null)
 
     try {
+      setRandomizeProgress("Fetching all clients...")
+      
       const response = await fetch("/api/admin/randomize-checkins", {
         method: "POST",
       })
@@ -254,12 +258,18 @@ export default function AdminSettingsPage() {
         throw new Error(data.error || "Failed to randomize check-ins")
       }
 
+      setRandomizeProgress("Processing data...")
       const data = await response.json()
+      
+      setRandomizeProgress("Complete!")
+      setTimeout(() => setRandomizeProgress(null), 2000)
+      
       setMessage({ 
         type: "success", 
         text: `✅ Randomized ${data.totalClients} clients: ${data.distribution.active} active, ${data.distribution.good} good, ${data.distribution.moderate} moderate, ${data.distribution.needsAttention} needs attention, ${data.distribution.offline} offline`
       })
     } catch (error) {
+      setRandomizeProgress(null)
       setMessage({
         type: "error",
         text: error instanceof Error ? error.message : "Failed to randomize check-ins",
@@ -590,6 +600,19 @@ export default function AdminSettingsPage() {
                 <p className="text-neutral-600 text-sm mb-4">
                   Generate realistic check-in patterns for all clients. Creates a distribution of active (35%), good (25%), moderate (20%), needs attention (15%), and offline (5%) clients with varied entry patterns over the past 2 weeks.
                 </p>
+                
+                {randomizeProgress && (
+                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      <span className="text-sm font-medium text-blue-900">{randomizeProgress}</span>
+                    </div>
+                    <div className="w-full bg-blue-200 rounded-full h-2 overflow-hidden">
+                      <div className="h-full bg-blue-600 rounded-full animate-pulse" style={{ width: randomizeProgress === "Complete!" ? "100%" : "70%" }}></div>
+                    </div>
+                  </div>
+                )}
+                
                 <button
                   onClick={handleRandomizeCheckins}
                   disabled={randomizing}
