@@ -330,6 +330,8 @@ model SystemSettings {
   adminOverrideEmail     String?
   healthkitEnabled       Boolean  @default(true)
   iosIntegrationEnabled  Boolean  @default(true)
+  adherenceGreenMinimum  Int      @default(6)
+  adherenceAmberMinimum  Int      @default(3)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 

@@ -4,6 +4,22 @@ import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/permissions"
 import { z } from "zod"
 
+const DEFAULT_SETTINGS = {
+  maxClientsPerCoach: 50,
+  minClientsPerCoach: 10,
+  recentActivityDays: 14,
+  lowEngagementEntries: 7,
+  noActivityDays: 14,
+  criticalNoActivityDays: 30,
+  shortTermWindowDays: 7,
+  longTermWindowDays: 30,
+  adminOverrideEmail: null,
+  healthkitEnabled: true,
+  iosIntegrationEnabled: true,
+  adherenceGreenMinimum: 6,
+  adherenceAmberMinimum: 3,
+}
+
 // Validation schema for settings updates
 const settingsSchema = z.object({
   maxClientsPerCoach: z.number().int().min(5).max(200).optional(),
@@ -17,6 +33,8 @@ const settingsSchema = z.object({
   adminOverrideEmail: z.string().email().nullable().optional(),
   healthkitEnabled: z.boolean().optional(),
   iosIntegrationEnabled: z.boolean().optional(),
+  adherenceGreenMinimum: z.number().int().min(1).max(7).optional(),
+  adherenceAmberMinimum: z.number().int().min(0).max(6).optional(),
 })
 
 /**
@@ -36,22 +54,10 @@ export async function GET(req: NextRequest) {
 
     // Get or create default settings
     let settings = await db.systemSettings.findFirst()
-    
+
     if (!settings) {
       settings = await db.systemSettings.create({
-        data: {
-          maxClientsPerCoach: 50,
-          minClientsPerCoach: 10,
-          recentActivityDays: 14,
-          lowEngagementEntries: 7,
-          noActivityDays: 14,
-          criticalNoActivityDays: 30,
-          shortTermWindowDays: 7,
-          longTermWindowDays: 30,
-          adminOverrideEmail: null,
-          healthkitEnabled: true,
-          iosIntegrationEnabled: true,
-        },
+        data: DEFAULT_SETTINGS,
       })
     }
 
@@ -92,7 +98,12 @@ export async function PUT(req: NextRequest) {
     }
 
     // Additional validation: min < max
-    const { maxClientsPerCoach, minClientsPerCoach } = validationResult.data
+    const {
+      maxClientsPerCoach,
+      minClientsPerCoach,
+      adherenceGreenMinimum,
+      adherenceAmberMinimum,
+    } = validationResult.data
     if (
       maxClientsPerCoach !== undefined &&
       minClientsPerCoach !== undefined &&
@@ -104,24 +115,39 @@ export async function PUT(req: NextRequest) {
       )
     }
 
+    if (
+      adherenceGreenMinimum !== undefined &&
+      adherenceAmberMinimum !== undefined &&
+      adherenceAmberMinimum >= adherenceGreenMinimum
+    ) {
+      return NextResponse.json(
+        { error: "adherenceAmberMinimum must be less than adherenceGreenMinimum" },
+        { status: 400 }
+      )
+    }
+
     // Get existing settings or create new
     let settings = await db.systemSettings.findFirst()
-    
+
     if (!settings) {
       settings = await db.systemSettings.create({
         data: {
+          ...DEFAULT_SETTINGS,
           ...validationResult.data,
-          maxClientsPerCoach: maxClientsPerCoach ?? 50,
-          minClientsPerCoach: minClientsPerCoach ?? 10,
-          recentActivityDays: validationResult.data.recentActivityDays ?? 14,
-          lowEngagementEntries: validationResult.data.lowEngagementEntries ?? 7,
-          noActivityDays: validationResult.data.noActivityDays ?? 14,
-          criticalNoActivityDays: validationResult.data.criticalNoActivityDays ?? 30,
-          shortTermWindowDays: validationResult.data.shortTermWindowDays ?? 7,
-          longTermWindowDays: validationResult.data.longTermWindowDays ?? 30,
-          adminOverrideEmail: validationResult.data.adminOverrideEmail ?? null,
-          healthkitEnabled: validationResult.data.healthkitEnabled ?? true,
-          iosIntegrationEnabled: validationResult.data.iosIntegrationEnabled ?? true,
+          maxClientsPerCoach: maxClientsPerCoach ?? DEFAULT_SETTINGS.maxClientsPerCoach,
+          minClientsPerCoach: minClientsPerCoach ?? DEFAULT_SETTINGS.minClientsPerCoach,
+          recentActivityDays: validationResult.data.recentActivityDays ?? DEFAULT_SETTINGS.recentActivityDays,
+          lowEngagementEntries: validationResult.data.lowEngagementEntries ?? DEFAULT_SETTINGS.lowEngagementEntries,
+          noActivityDays: validationResult.data.noActivityDays ?? DEFAULT_SETTINGS.noActivityDays,
+          criticalNoActivityDays:
+            validationResult.data.criticalNoActivityDays ?? DEFAULT_SETTINGS.criticalNoActivityDays,
+          shortTermWindowDays: validationResult.data.shortTermWindowDays ?? DEFAULT_SETTINGS.shortTermWindowDays,
+          longTermWindowDays: validationResult.data.longTermWindowDays ?? DEFAULT_SETTINGS.longTermWindowDays,
+          adminOverrideEmail: validationResult.data.adminOverrideEmail ?? DEFAULT_SETTINGS.adminOverrideEmail,
+          healthkitEnabled: validationResult.data.healthkitEnabled ?? DEFAULT_SETTINGS.healthkitEnabled,
+          iosIntegrationEnabled: validationResult.data.iosIntegrationEnabled ?? DEFAULT_SETTINGS.iosIntegrationEnabled,
+          adherenceGreenMinimum: validationResult.data.adherenceGreenMinimum ?? DEFAULT_SETTINGS.adherenceGreenMinimum,
+          adherenceAmberMinimum: validationResult.data.adherenceAmberMinimum ?? DEFAULT_SETTINGS.adherenceAmberMinimum,
         },
       })
     } else {

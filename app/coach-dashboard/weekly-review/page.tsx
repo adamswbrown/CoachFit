@@ -1,12 +1,43 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
-import { Role } from "@/lib/types"
 import { generateWeeklyEmailDraft } from "@/lib/utils/email-draft"
+
+type AdherenceThresholds = {
+  greenMinimum: number
+  amberMinimum: number
+}
+
+const DEFAULT_ADHERENCE: AdherenceThresholds = {
+  greenMinimum: 6,
+  amberMinimum: 3,
+}
+
+/**
+ * Determine priority based on attention score + adherence check
+ * This ensures clients who haven't checked in don't show as "on track"
+ */
+function getDisplayPriority(
+  attention: { score: number; priority: string } | null,
+  checkInCount: number,
+  thresholds: AdherenceThresholds
+): "red" | "amber" | "green" {
+  // If adherence is critically low, always red (overrides attention)
+  if (checkInCount < thresholds.amberMinimum) {
+    return "red"
+  }
+
+  // If no attention score, use adherence check
+  if (!attention) {
+    if (checkInCount >= thresholds.greenMinimum) return "green"
+    return "amber"
+  }
+
+  // Otherwise use attention priority
+  return attention.priority as "red" | "amber" | "green"
+}
 
 interface ClientSummary {
   clientId: string
@@ -35,9 +66,24 @@ interface WeeklyResponse {
   note?: string | null
 }
 
-/**
- * Get Monday of a given date (start of week)
- */
+interface ClientAttention {
+  clientId: string
+  name: string | null
+  email: string
+  attentionScore: {
+    score: number
+    priority: string // "red" | "amber" | "green"
+    reasons: string[]
+  } | null
+  topInsights: Array<{
+    id: string
+    title: string
+    description: string
+    priority: string
+    icon: string
+  }>
+}
+
 function getMonday(date: Date): Date {
   const d = new Date(date)
   const day = d.getDay()
@@ -53,74 +99,110 @@ function formatDate(date: Date): string {
 }
 
 export default function WeeklyReviewPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<WeeklySummariesResponse | null>(null)
-  const [selectedWeekStart, setSelectedWeekStart] = useState<string>(
-    formatDate(getMonday(new Date()))
-  )
+  const [attentionData, setAttentionData] = useState<ClientAttention[]>([])
+  const [adherence, setAdherence] = useState<AdherenceThresholds>(DEFAULT_ADHERENCE)
+  const [selectedWeekStart, setSelectedWeekStart] = useState<string>("")
   const [loomUrls, setLoomUrls] = useState<Record<string, string>>({})
   const [notes, setNotes] = useState<Record<string, string>>({})
   const [savingClient, setSavingClient] = useState<string | null>(null)
   const [copiedClient, setCopiedClient] = useState<string | null>(null)
   const [recalculating, setRecalculating] = useState(false)
+  const [expandedClient, setExpandedClient] = useState<string | null>(null)
 
+  // Initialize week on mount
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login")
-    } else if (session?.user && !session.user.roles.includes(Role.COACH)) {
-      router.push("/client-dashboard")
-    }
-  }, [status, session, router])
+    setSelectedWeekStart(formatDate(getMonday(new Date())))
+  }, [])
 
+  // Fetch adherence thresholds (coach-accessible)
   useEffect(() => {
-    if (session) {
-      fetchWeeklySummaries()
-    }
-  }, [session, selectedWeekStart])
+    const fetchAdherence = async () => {
+      try {
+        const res = await fetch("/api/coach-dashboard/adherence-settings")
+        if (!res.ok) return
+        const data = await res.json()
+        const green = data?.data?.adherenceGreenMinimum
+        const amber = data?.data?.adherenceAmberMinimum
 
-  const fetchWeeklySummaries = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch(
-        `/api/coach-dashboard/weekly-summaries?weekStart=${selectedWeekStart}`
-      )
-      if (res.ok) {
-        const responseData = await res.json()
+        if (typeof green === "number" && typeof amber === "number") {
+          setAdherence({
+            greenMinimum: green,
+            amberMinimum: amber,
+          })
+        }
+      } catch (err) {
+        console.error("Failed to fetch adherence settings", err)
+      }
+    }
+
+    fetchAdherence()
+  }, [])
+
+  // Fetch weekly summaries and attention data when week is selected
+  useEffect(() => {
+    if (!selectedWeekStart) return
+
+    const doFetch = async () => {
+      setLoading(true)
+      try {
+        // Fetch summaries
+        const res = await fetch(
+          `/api/coach-dashboard/weekly-summaries?weekStart=${selectedWeekStart}`
+        )
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+        const responseData: WeeklySummariesResponse = await res.json()
         setData(responseData)
 
-        // Fetch existing responses for each client
-        for (const client of responseData.clients) {
-          fetchWeeklyResponse(client.clientId)
+        // Fetch attention scores in parallel
+        const attentionRes = await fetch(
+          `/api/coach-dashboard/client-attention-scores`
+        )
+        let attention: ClientAttention[] = []
+        if (attentionRes.ok) {
+          const attentionResponse = await attentionRes.json()
+          attention = attentionResponse.data || []
         }
-      }
-    } catch (err) {
-      console.error("Error fetching weekly summaries:", err)
-    } finally {
-      setLoading(false)
-    }
-  }
+        setAttentionData(attention)
 
-  const fetchWeeklyResponse = async (clientId: string) => {
-    try {
-      const res = await fetch(
-        `/api/coach-dashboard/weekly-response?clientId=${clientId}&weekStart=${selectedWeekStart}`
-      )
-      if (res.ok) {
-        const response: WeeklyResponse = await res.json()
-        if (response.loomUrl) {
-          setLoomUrls((prev) => ({ ...prev, [clientId]: response.loomUrl || "" }))
+        // Fetch existing responses for each client
+        const newLoomUrls: Record<string, string> = {}
+        const newNotes: Record<string, string> = {}
+
+        for (const client of responseData.clients) {
+          try {
+            const responseRes = await fetch(
+              `/api/coach-dashboard/weekly-response?clientId=${client.clientId}&weekStart=${selectedWeekStart}`
+            )
+            if (responseRes.ok) {
+              const response: WeeklyResponse = await responseRes.json()
+              if (response.loomUrl) {
+                newLoomUrls[client.clientId] = response.loomUrl
+              }
+              if (response.note) {
+                newNotes[client.clientId] = response.note
+              }
+            }
+          } catch (err) {
+            console.error(`Error fetching response for client ${client.clientId}:`, err)
+          }
         }
-        if (response.note) {
-          setNotes((prev) => ({ ...prev, [clientId]: response.note || "" }))
-        }
+
+        setLoomUrls(newLoomUrls)
+        setNotes(newNotes)
+      } catch (err) {
+        console.error("Error fetching data:", err)
+        setData(null)
+        setAttentionData([])
+      } finally {
+        setLoading(false)
       }
-    } catch (err) {
-      console.error("Error fetching weekly response:", err)
     }
-  }
+
+    doFetch()
+  }, [selectedWeekStart])
 
   const handleSaveResponse = async (clientId: string) => {
     setSavingClient(clientId)
@@ -139,15 +221,11 @@ export default function WeeklyReviewPage() {
       })
 
       if (res.ok) {
-        // Show success feedback briefly
         setTimeout(() => setSavingClient(null), 1000)
       }
     } catch (err) {
       console.error("Error saving weekly response:", err)
-    } finally {
-      if (savingClient === clientId) {
-        setSavingClient(null)
-      }
+      setSavingClient(null)
     }
   }
 
@@ -177,28 +255,65 @@ export default function WeeklyReviewPage() {
   const handleRecalculate = async () => {
     setRecalculating(true)
     try {
-      // Force refresh the weekly summaries data
-      await fetchWeeklySummaries()
+      const res = await fetch(
+        `/api/coach-dashboard/weekly-summaries?weekStart=${selectedWeekStart}`
+      )
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+      const responseData: WeeklySummariesResponse = await res.json()
+      setData(responseData)
+
+      // Fetch attention scores
+      const attentionRes = await fetch(
+        `/api/coach-dashboard/client-attention-scores`
+      )
+      let attention: ClientAttention[] = []
+      if (attentionRes.ok) {
+        const attentionResponse = await attentionRes.json()
+        attention = attentionResponse.data || []
+      }
+      setAttentionData(attention)
+
+      // Fetch existing responses for each client
+      const newLoomUrls: Record<string, string> = {}
+      const newNotes: Record<string, string> = {}
+
+      for (const client of responseData.clients) {
+        try {
+          const responseRes = await fetch(
+            `/api/coach-dashboard/weekly-response?clientId=${client.clientId}&weekStart=${selectedWeekStart}`
+          )
+          if (responseRes.ok) {
+            const response: WeeklyResponse = await responseRes.json()
+            if (response.loomUrl) {
+              newLoomUrls[client.clientId] = response.loomUrl
+            }
+            if (response.note) {
+              newNotes[client.clientId] = response.note
+            }
+          }
+        } catch (err) {
+          console.error(`Error fetching response for client ${client.clientId}:`, err)
+        }
+      }
+
+      setLoomUrls(newLoomUrls)
+      setNotes(newNotes)
+    } catch (err) {
+      console.error("Error recalculating:", err)
     } finally {
       setRecalculating(false)
     }
   }
 
-  if (status === "loading" || loading) {
+  if (!selectedWeekStart) {
     return (
       <CoachLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-neutral-600">Loading weekly review queue...</p>
-          </div>
+        <div className="flex items-center justify-center py-12">
+          <p className="text-neutral-600">Loading...</p>
         </div>
       </CoachLayout>
     )
-  }
-
-  if (!session) {
-    return null
   }
 
   return (
@@ -211,6 +326,17 @@ export default function WeeklyReviewPage() {
           </h1>
           <p className="text-neutral-600 mt-2">
             Review your clients' weekly progress and send personalized updates
+          </p>
+        </div>
+
+        {/* Adherence Thresholds Info */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <p className="text-sm text-blue-900">
+            <span className="font-semibold">Adherence Thresholds:</span> Green ✅ ({adherence.greenMinimum}+ check-ins) • Amber 🟡 ({adherence.amberMinimum}-{Math.max(adherence.greenMinimum - 1, adherence.amberMinimum)} check-ins) • Red 🔴 (0-{Math.max(adherence.amberMinimum - 1, 0)} check-ins)
+            <br />
+            <span className="text-xs text-blue-700 mt-1 block">
+              These values are configured in Admin Settings
+            </span>
           </p>
         </div>
 
@@ -270,163 +396,226 @@ export default function WeeklyReviewPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {data?.clients.map((client) => {
-              const adherenceColor =
-                client.stats.checkInCount >= 6
-                  ? "green"
-                  : client.stats.checkInCount >= 4
-                  ? "yellow"
-                  : "red"
+            {data?.clients
+              .sort((a, b) => {
+                // Sort by attention priority
+                const aAttention = attentionData.find((att) => att.clientId === a.clientId)
+                const bAttention = attentionData.find((att) => att.clientId === b.clientId)
 
-              return (
-                <div
-                  key={client.clientId}
-                  className="bg-white rounded-lg border border-neutral-200 p-6"
-                >
-                  {/* Client Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-neutral-900">
-                        {client.name || client.email}
-                      </h3>
-                      {client.name && (
-                        <p className="text-sm text-neutral-600">{client.email}</p>
-                      )}
-                    </div>
-                    <Link
-                      href={`/clients/${client.clientId}/weekly-review?weekStart=${selectedWeekStart}`}
-                      className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                    >
-                      Open Review →
-                    </Link>
-                  </div>
+                const priorityOrder: Record<string, number> = {
+                  red: 0,
+                  amber: 1,
+                  green: 2,
+                }
 
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-                    <div>
-                      <div className="text-xs text-neutral-600 mb-1">Check-ins</div>
-                      <div
-                        className={`text-2xl font-bold ${
-                          adherenceColor === "green"
-                            ? "text-green-600"
-                            : adherenceColor === "yellow"
-                            ? "text-yellow-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {client.stats.checkInCount}/7
-                      </div>
-                      <div className="text-xs text-neutral-500">
-                        {Math.round(client.stats.checkInRate * 100)}%
-                      </div>
-                    </div>
+                // Use display priority which considers adherence
+                const aPriority = priorityOrder[
+                  getDisplayPriority(aAttention?.attentionScore || null, a.stats.checkInCount, adherence)
+                ]
+                const bPriority = priorityOrder[
+                  getDisplayPriority(bAttention?.attentionScore || null, b.stats.checkInCount, adherence)
+                ]
 
-                    <div>
-                      <div className="text-xs text-neutral-600 mb-1">Weight</div>
-                      <div className="text-2xl font-bold text-neutral-900">
-                        {client.stats.avgWeight !== null
-                          ? `${client.stats.avgWeight.toFixed(1)}`
-                          : "—"}
-                      </div>
-                      <div className="text-xs text-neutral-500">
-                        {client.stats.weightTrend !== null
-                          ? `${client.stats.weightTrend > 0 ? "+" : ""}${client.stats.weightTrend.toFixed(1)} lbs`
-                          : "No trend"}
-                      </div>
-                    </div>
+                if (aPriority !== bPriority) {
+                  return aPriority - bPriority
+                }
 
-                    <div>
-                      <div className="text-xs text-neutral-600 mb-1">Steps</div>
-                      <div className="text-2xl font-bold text-neutral-900">
-                        {client.stats.avgSteps !== null
-                          ? client.stats.avgSteps.toLocaleString()
-                          : "—"}
-                      </div>
-                      <div className="text-xs text-neutral-500">avg/day</div>
-                    </div>
+                // Then by attention score (higher first)
+                const aScore = aAttention?.attentionScore?.score || 0
+                const bScore = bAttention?.attentionScore?.score || 0
+                return bScore - aScore
+              })
+              .map((client) => {
+                const attention = attentionData.find(
+                  (att) => att.clientId === client.clientId
+                )
 
-                    <div>
-                      <div className="text-xs text-neutral-600 mb-1">Calories</div>
-                      <div className="text-2xl font-bold text-neutral-900">
-                        {client.stats.avgCalories !== null
-                          ? client.stats.avgCalories.toLocaleString()
-                          : "—"}
-                      </div>
-                      <div className="text-xs text-neutral-500">avg/day</div>
-                    </div>
+                // Use the display priority function for consistency
+                const priorityColor = getDisplayPriority(
+                  attention?.attentionScore || null,
+                  client.stats.checkInCount,
+                  adherence
+                )
 
-                    <div>
-                      <div className="text-xs text-neutral-600 mb-1">Sleep</div>
-                      <div className="text-2xl font-bold text-neutral-900">
-                        {client.stats.avgSleepMins !== null
-                          ? `${Math.floor(client.stats.avgSleepMins / 60)}h ${
-                              client.stats.avgSleepMins % 60
-                            }m`
-                          : "—"}
-                      </div>
-                      <div className="text-xs text-neutral-500">avg/night</div>
-                    </div>
-                  </div>
+                const isExpanded = expandedClient === client.clientId
 
-                  {/* Loom URL Input */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Loom Video URL
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="url"
-                        value={loomUrls[client.clientId] || ""}
-                        onChange={(e) =>
-                          setLoomUrls((prev) => ({
-                            ...prev,
-                            [client.clientId]: e.target.value,
-                          }))
-                        }
-                        placeholder="https://www.loom.com/share/..."
-                        className="flex-1 px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                      />
-                      <button
-                        onClick={() => handleSaveResponse(client.clientId)}
-                        disabled={savingClient === client.clientId}
-                        className="px-4 py-2 text-sm font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50"
-                      >
-                        {savingClient === client.clientId ? "Saving..." : "Save"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Notes */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Private Notes (optional)
-                    </label>
-                    <textarea
-                      value={notes[client.clientId] || ""}
-                      onChange={(e) =>
-                        setNotes((prev) => ({
-                          ...prev,
-                          [client.clientId]: e.target.value,
-                        }))
-                      }
-                      placeholder="Add private notes for this week..."
-                      rows={2}
-                      className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
-                    />
-                  </div>
-
-                  {/* Copy Email Button */}
-                  <button
-                    onClick={() => handleCopyEmail(client)}
-                    className="w-full px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                return (
+                  <div
+                    key={client.clientId}
+                    className={`bg-white rounded-lg border-2 transition-all ${
+                      priorityColor === "red"
+                        ? "border-red-300 bg-red-50"
+                        : priorityColor === "amber"
+                        ? "border-amber-300 bg-amber-50"
+                        : "border-neutral-200"
+                    }`}
                   >
-                    {copiedClient === client.clientId
-                      ? "✓ Copied to Clipboard!"
-                      : "📋 Copy Email Draft"}
-                  </button>
-                </div>
-              )
-            })}
+                    {/* Compact Header - Always Visible */}
+                    <div
+                      className="p-4 cursor-pointer"
+                      onClick={() =>
+                        setExpandedClient(isExpanded ? null : client.clientId)
+                      }
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          {/* Priority Badge + Name */}
+                          <div className="flex items-center gap-3 mb-2">
+                            <div
+                              className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ${
+                                priorityColor === "red"
+                                  ? "bg-red-200 text-red-900"
+                                  : priorityColor === "amber"
+                                  ? "bg-amber-200 text-amber-900"
+                                  : "bg-green-200 text-green-900"
+                              }`}
+                            >
+                              {priorityColor === "red"
+                                ? "🔴 PRIORITY"
+                                : priorityColor === "amber"
+                                ? "🟡 ATTENTION"
+                                : "✅ ON TRACK"}
+                            </div>
+                            <h3 className="text-lg font-semibold text-neutral-900">
+                              {client.name || client.email}
+                            </h3>
+                          </div>
+
+                          {/* Check-in Count Summary */}
+                          <div className="text-sm text-neutral-600 mb-2">
+                            Check-ins: {client.stats.checkInCount}/7 ({Math.round(client.stats.checkInRate * 100)}%)
+                          </div>
+
+                          {/* Key Insights Row */}
+                          <div className="flex items-start gap-2 mt-2 flex-wrap">
+                            {attention?.topInsights.slice(0, 2).map((insight) => (
+                              <div
+                                key={insight.id}
+                                className="text-xs bg-white px-2 py-1 rounded border border-neutral-200"
+                              >
+                                <span className="font-semibold">
+                                  {insight.icon} {insight.title}:
+                                </span>{" "}
+                                {insight.description.substring(0, 40)}
+                                {insight.description.length > 40 ? "..." : ""}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Quick Actions */}
+                        <div className="flex items-center gap-2 ml-4">
+                          <Link
+                            href={`/clients/${client.clientId}/weekly-review?weekStart=${selectedWeekStart}`}
+                            className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors whitespace-nowrap"
+                          >
+                            Full Review
+                          </Link>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setExpandedClient(isExpanded ? null : client.clientId)
+                            }}
+                            className="px-3 py-1 text-xs font-medium text-neutral-600 bg-neutral-100 rounded hover:bg-neutral-200 transition-colors"
+                          >
+                            {isExpanded ? "▼" : "▶"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expanded Content - Hidden by Default */}
+                    {isExpanded && (
+                      <div className="border-t-2 border-neutral-200 p-4 bg-white">
+                        {/* Check-in Status */}
+                        <div className="mb-4 pb-4 border-b border-neutral-200">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1">
+                              <div className="text-sm font-semibold text-neutral-900 mb-1">
+                                Check-ins: {client.stats.checkInCount}/7{" "}
+                                <span className="text-xs text-neutral-600">
+                                  ({Math.round(client.stats.checkInRate * 100)}%)
+                                </span>
+                              </div>
+                              <div className="w-full bg-neutral-200 rounded-full h-2">
+                                <div
+                                  className={`h-2 rounded-full ${
+                                    client.stats.checkInCount >= adherence.greenMinimum
+                                      ? "bg-green-500"
+                                      : client.stats.checkInCount >= adherence.amberMinimum
+                                      ? "bg-amber-500"
+                                      : "bg-red-500"
+                                  }`}
+                                  style={{
+                                    width: `${(client.stats.checkInRate * 100).toFixed(0)}%`,
+                                  }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Loom Video URL */}
+                        <div className="mb-4">
+                          <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            Loom Video URL
+                          </label>
+                          <input
+                            type="text"
+                            value={loomUrls[client.clientId] || ""}
+                            onChange={(e) =>
+                              setLoomUrls((prev) => ({
+                                ...prev,
+                                [client.clientId]: e.target.value,
+                              }))
+                            }
+                            placeholder="https://www.loom.com/share/..."
+                            className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                          />
+                        </div>
+
+                        {/* Notes */}
+                        <div className="mb-4">
+                          <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            Notes (optional)
+                          </label>
+                          <textarea
+                            value={notes[client.clientId] || ""}
+                            onChange={(e) =>
+                              setNotes((prev) => ({
+                                ...prev,
+                                [client.clientId]: e.target.value,
+                              }))
+                            }
+                            placeholder="Add private notes for this week..."
+                            rows={2}
+                            className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                          />
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleSaveResponse(client.clientId)}
+                            disabled={savingClient === client.clientId}
+                            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                          >
+                            {savingClient === client.clientId ? "Saving..." : "💾 Save"}
+                          </button>
+                          <button
+                            onClick={() => handleCopyEmail(client)}
+                            className="flex-1 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                          >
+                            {copiedClient === client.clientId
+                              ? "✓ Copied!"
+                              : "📋 Email Draft"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
           </div>
         )}
       </div>

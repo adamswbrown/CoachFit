@@ -17,6 +17,8 @@ export interface SystemSettings {
   adminOverrideEmail: string | null
   healthkitEnabled: boolean
   iosIntegrationEnabled: boolean
+  adherenceGreenMinimum: number
+  adherenceAmberMinimum: number
 }
 
 // Default values (fallback if database settings not found)
@@ -32,6 +34,8 @@ const DEFAULT_SETTINGS: SystemSettings = {
   adminOverrideEmail: null,
   healthkitEnabled: true,
   iosIntegrationEnabled: true,
+  adherenceGreenMinimum: 6,
+  adherenceAmberMinimum: 3,
 }
 
 /**
