@@ -1,9 +1,10 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { isAdmin } from "@/lib/permissions"
+import { UserProfileMenu } from "@/components/UserProfileMenu"
 
 interface ClientLayoutProps {
   children: React.ReactNode
@@ -26,34 +27,11 @@ export function ClientLayout({ children }: ClientLayoutProps) {
             CoachFit
           </Link>
           <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
-            <div className="hidden md:block text-sm text-neutral-600">
-              {firstName}
-            </div>
-            <Link
-              href="/client-dashboard/settings"
-              className={`px-2 sm:px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                pathname === "/client-dashboard/settings"
-                  ? "bg-neutral-100 text-neutral-900"
-                  : "text-neutral-700 hover:bg-neutral-100"
-              }`}
-            >
-              Settings
-            </Link>
-            {session?.user && isAdmin(session.user) && (
-              <Link
-                href="/admin"
-                className="hidden sm:inline-block px-2 sm:px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
-              >
-                Admin
-              </Link>
-            )}
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="px-2 sm:px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
-            >
-              <span className="hidden sm:inline">Sign out</span>
-              <span className="sm:hidden">Logout</span>
-            </button>
+            <UserProfileMenu 
+              userName={firstName}
+              showRoleSwitcher={false}
+              showAdminLink={session?.user && isAdmin(session.user)}
+            />
           </div>
         </div>
       </header>

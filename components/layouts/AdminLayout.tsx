@@ -1,9 +1,10 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
-import { usePathname, useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
+import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useState } from "react"
+import { UserProfileMenu } from "@/components/UserProfileMenu"
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -12,7 +13,6 @@ interface AdminLayoutProps {
 export function AdminLayout({ children }: AdminLayoutProps) {
   const { data: session } = useSession()
   const pathname = usePathname()
-  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false) // Sidebar starts closed for cleaner mobile UX, users can toggle if needed
 
   if (!session) return null
@@ -47,22 +47,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </Link>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
-            <div className="hidden md:block text-sm text-neutral-600">
-              {firstName}
-            </div>
-            <Link
-              href="/client-dashboard/settings"
-              className="hidden sm:inline-block px-2 sm:px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
-            >
-              Settings
-            </Link>
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="px-2 sm:px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
-            >
-              <span className="hidden sm:inline">Sign out</span>
-              <span className="sm:hidden">Logout</span>
-            </button>
+            <UserProfileMenu 
+              userName={firstName}
+              showRoleSwitcher={false}
+              showAdminLink={false}
+            />
           </div>
         </div>
       </header>

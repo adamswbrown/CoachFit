@@ -1,13 +1,13 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useState, useEffect, useRef, Suspense } from "react"
 import { isAdmin } from "@/lib/permissions"
 import { ClientsIcon, CohortsIcon, MobileIcon, CalendarIcon } from "@/components/icons"
 import { HealthKitIcon } from "@/components/icons/HealthKitIcon"
-import { RoleSwitcher } from "@/components/RoleSwitcher"
+import { UserProfileMenu } from "@/components/UserProfileMenu"
 import { useRole } from "@/contexts/RoleContext"
 import { Role } from "@/lib/types"
 
@@ -166,25 +166,11 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
             </Link>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
-            <div className="hidden lg:block">
-              <RoleSwitcher />
-            </div>
-            <div className="hidden md:block text-sm text-neutral-600">
-              {firstName}
-            </div>
-            <Link
-              href="/client-dashboard/settings"
-              className="hidden sm:inline-block px-2 sm:px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
-            >
-              Settings
-            </Link>
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="px-2 sm:px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
-            >
-              <span className="hidden sm:inline">Sign out</span>
-              <span className="sm:hidden">Logout</span>
-            </button>
+            <UserProfileMenu 
+              userName={firstName}
+              showRoleSwitcher={true}
+              showAdminLink={isAdmin(session.user)}
+            />
           </div>
         </div>
       </header>
