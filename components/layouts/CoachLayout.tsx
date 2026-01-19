@@ -100,12 +100,16 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   // Build navigation array based on active role
   const navigation = []
 
-  // Determine which navigation items to show - prioritize session roles
+  // Determine which navigation items to show
   const userHasCoachRole = session?.user?.roles.includes(Role.COACH)
   const userHasAdminRole = session?.user?.roles.includes(Role.ADMIN)
   
-  // Show coach nav if user has coach role (regardless of activeRole switching)
-  if (userHasCoachRole) {
+  // Show navigation based on activeRole (respects RoleSwitcher selection)
+  const showCoachNav = activeRole === Role.COACH || (activeRole === null && userHasCoachRole && !userHasAdminRole)
+  const showAdminNav = activeRole === Role.ADMIN || (activeRole === null && userHasAdminRole && !userHasCoachRole)
+  
+  // Show coach navigation
+  if (showCoachNav && userHasCoachRole) {
     navigation.push(
       { name: "Clients", href: "/coach-dashboard", icon: ClientsIcon, hasDropdown: true, dropdownKey: "clients" },
       { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" }
@@ -131,8 +135,8 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     }
   }
 
-  // Add admin navigation items (only if user has ADMIN role AND doesn't have COACH)
-  if (userHasAdminRole && !userHasCoachRole) {
+  // Show admin navigation
+  if (showAdminNav && userHasAdminRole) {
     navigation.push(
       { name: "Users", href: "/admin", icon: (props: any) => <span className="text-xl">👤</span>, hasDropdown: false, dropdownKey: "admin-users" },
       { name: "Overview", href: "/admin/overview", icon: (props: any) => <span className="text-xl">📈</span>, hasDropdown: false, dropdownKey: "admin-overview" },
