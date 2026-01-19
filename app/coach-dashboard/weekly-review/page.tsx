@@ -110,6 +110,7 @@ export default function WeeklyReviewPage() {
   const [copiedClient, setCopiedClient] = useState<string | null>(null)
   const [recalculating, setRecalculating] = useState(false)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
+  const [priorityFilter, setPriorityFilter] = useState<"all" | "red" | "amber" | "green">("all")
 
   // Initialize week on mount
   useEffect(() => {
@@ -304,6 +305,50 @@ export default function WeeklyReviewPage() {
     } finally {
       setRecalculating(false)
     }
+  }
+
+  // Derive a display priority for a client using attention (if available) and adherence thresholds
+  const getClientPriority = (client: ClientSummary): "red" | "amber" | "green" => {
+    const attention = attentionData.find((att) => att.clientId === client.clientId)
+    return getDisplayPriority(attention?.attentionScore || null, client.stats.checkInCount, adherence)
+  }
+
+  // Summaries for the priority cards
+  const getSummary = () => {
+    if (!data) return { red: 0, amber: 0, green: 0, total: 0 }
+
+    const counts = { red: 0, amber: 0, green: 0 }
+    for (const client of data.clients) {
+      const priority = getClientPriority(client)
+      counts[priority] += 1
+    }
+
+    return { ...counts, total: data.clients.length }
+  }
+
+  // Filter and sort clients based on the selected priority filter
+  const getFilteredClients = () => {
+    if (!data) return []
+
+    const clientsWithPriority = data.clients.map((client) => ({
+      ...client,
+      priority: getClientPriority(client),
+      attentionScore: attentionData.find((att) => att.clientId === client.clientId)?.attentionScore?.score || 0,
+    }))
+
+    const filtered =
+      priorityFilter === "all"
+        ? clientsWithPriority
+        : clientsWithPriority.filter((c) => c.priority === priorityFilter)
+
+    const priorityOrder = { red: 0, amber: 1, green: 2 }
+
+    return filtered.sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return priorityOrder[a.priority] - priorityOrder[b.priority]
+      }
+      return (b.attentionScore || 0) - (a.attentionScore || 0)
+    })
   }
 
   if (!selectedWeekStart) {

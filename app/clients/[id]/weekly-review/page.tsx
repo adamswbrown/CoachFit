@@ -7,7 +7,6 @@ import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { Role } from "@/lib/types"
 import { isAdminOrCoach } from "@/lib/permissions"
-import { isAdminOrCoach } from "@/lib/permissions"
 
 interface WeeklyEntry {
   date: string
