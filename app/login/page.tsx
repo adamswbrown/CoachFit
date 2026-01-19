@@ -153,10 +153,10 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full border border-gray-200">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
+      <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8 max-w-md w-full border border-gray-200">
         {/* Logo */}
-        <div className="mb-8 flex justify-center">
+        <div className="mb-6 sm:mb-8 flex justify-center">
           <img
             src="/coachfit-logo-login.png"
             alt="CoachFit Logo"
@@ -168,8 +168,8 @@ function LoginPageContent() {
         </div>
 
         {/* Headline and Subtext */}
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+        <div className="mb-6 sm:mb-8 text-center">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">
             Fitness, guided by coaches.
           </h1>
           <p className="text-gray-600 text-sm leading-relaxed">

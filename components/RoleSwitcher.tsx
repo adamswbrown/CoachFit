@@ -85,7 +85,7 @@ export function RoleSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white border border-neutral-200 rounded-lg shadow-lg z-50">
+        <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 mt-2 w-auto sm:w-64 bg-white border border-neutral-200 rounded-lg shadow-lg z-50 max-w-sm mx-auto sm:mx-0">
           <div className="p-2">
             <div className="px-3 py-2 text-xs font-semibold text-neutral-500 uppercase">
               Switch Role
