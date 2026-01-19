@@ -188,7 +188,7 @@ If you have any questions, please contact your coach.`,
                 token_type: account.token_type,
                 scope: account.scope,
                 id_token: account.id_token,
-                session_state: account.session_state,
+                session_state: account.session_state as string | null,
               },
             })
 
