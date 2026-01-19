@@ -23,7 +23,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [sidebarOpen, setSidebarOpen] = useState(false) // Default closed on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(false) // Sidebar starts closed for cleaner mobile UX, users can toggle if needed
   const [clientsDropdownOpen, setClientsDropdownOpen] = useState(false)
   const [cohortsDropdownOpen, setCohortsDropdownOpen] = useState(false)
   const clientsDropdownRef = useRef<HTMLDivElement>(null)

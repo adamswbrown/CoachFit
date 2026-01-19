@@ -13,7 +13,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { data: session } = useSession()
   const pathname = usePathname()
   const router = useRouter()
-  const [sidebarOpen, setSidebarOpen] = useState(false) // Default closed on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(false) // Sidebar starts closed for cleaner mobile UX, users can toggle if needed
 
   if (!session) return null
 

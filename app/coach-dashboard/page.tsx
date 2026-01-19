@@ -429,19 +429,19 @@ function CoachDashboardContent() {
           <>
             {/* Stats Bar */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-              <div className="bg-white rounded-lg border border-neutral-200 p-4 sm:p-6 border border-neutral-200">
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 sm:p-6">
                 <div className="text-sm text-neutral-600 mb-1">Active Clients</div>
                 <div className="text-2xl sm:text-3xl font-bold text-neutral-900">{data.stats.totalClients}</div>
               </div>
-              <div className="bg-white rounded-lg border border-neutral-200 p-4 sm:p-6 border border-neutral-200">
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 sm:p-6">
                 <div className="text-sm text-neutral-600 mb-1">Unassigned</div>
                 <div className="text-2xl sm:text-3xl font-bold text-neutral-900">{data.stats.unassignedCount}</div>
               </div>
-              <div className="bg-white rounded-lg border border-neutral-200 p-4 sm:p-6 border border-neutral-200">
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 sm:p-6">
                 <div className="text-sm text-neutral-600 mb-1">Pending Invites</div>
                 <div className="text-2xl sm:text-3xl font-bold text-neutral-900">{data.stats.pendingInvites}</div>
               </div>
-              <div className="bg-white rounded-lg border border-neutral-200 p-4 sm:p-6 border border-neutral-200">
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 sm:p-6">
                 <div className="text-sm text-neutral-600 mb-1">Cohorts</div>
                 <div className="text-2xl sm:text-3xl font-bold text-neutral-900">{data.stats.totalCohorts}</div>
               </div>
