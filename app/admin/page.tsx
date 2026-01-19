@@ -302,34 +302,34 @@ export default function AdminPage() {
 
         {/* Header with Stats */}
         <div className="mb-4">
-          <div className="flex justify-between items-start mb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <div>
-              <h1 className="text-2xl font-semibold text-neutral-900">Admin Dashboard</h1>
+              <h1 className="text-xl sm:text-2xl font-semibold text-neutral-900">Admin Dashboard</h1>
               <p className="text-neutral-600 text-sm mt-1">
                 Manage users, roles, and cohorts
               </p>
             </div>
             <button
               onClick={() => setShowCreateCoach(true)}
-              className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 text-sm whitespace-nowrap"
+              className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 text-sm whitespace-nowrap w-full sm:w-auto"
             >
               + Create Coach
             </button>
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4">
             <div className="bg-white border border-neutral-200 rounded-lg p-3">
               <div className="text-sm text-neutral-500">Total Users</div>
-              <div className="text-2xl font-semibold text-neutral-900">{users.length}</div>
+              <div className="text-xl sm:text-2xl font-semibold text-neutral-900">{users.length}</div>
             </div>
             <div className="bg-white border border-neutral-200 rounded-lg p-3">
               <div className="text-sm text-neutral-500">Coaches</div>
-              <div className="text-2xl font-semibold text-neutral-900">{coaches.length}</div>
+              <div className="text-xl sm:text-2xl font-semibold text-neutral-900">{coaches.length}</div>
             </div>
             <div className="bg-white border border-neutral-200 rounded-lg p-3">
               <div className="text-sm text-neutral-500">Cohorts</div>
-              <div className="text-2xl font-semibold text-neutral-900">{cohorts.length}</div>
+              <div className="text-xl sm:text-2xl font-semibold text-neutral-900">{cohorts.length}</div>
             </div>
           </div>
         </div>
@@ -348,10 +348,10 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="border-b border-neutral-200 mb-4">
-          <div className="flex gap-1">
+          <div className="flex gap-1 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               onClick={() => setActiveTab("users")}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === "users"
                   ? "text-neutral-900 border-b-2 border-neutral-900"
                   : "text-neutral-500 hover:text-neutral-700"
@@ -361,7 +361,7 @@ export default function AdminPage() {
             </button>
             <button
               onClick={() => setActiveTab("cohorts")}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === "cohorts"
                   ? "text-neutral-900 border-b-2 border-neutral-900"
                   : "text-neutral-500 hover:text-neutral-700"
@@ -371,7 +371,7 @@ export default function AdminPage() {
             </button>
             <button
               onClick={() => setActiveTab("coaches")}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === "coaches"
                   ? "text-neutral-900 border-b-2 border-neutral-900"
                   : "text-neutral-500 hover:text-neutral-700"
@@ -381,7 +381,7 @@ export default function AdminPage() {
             </button>
             <button
               onClick={() => setActiveTab("admins")}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === "admins"
                   ? "text-neutral-900 border-b-2 border-neutral-900"
                   : "text-neutral-500 hover:text-neutral-700"
