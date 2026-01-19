@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useState, useEffect, useRef, Suspense } from "react"
 import { isAdmin } from "@/lib/permissions"
-import { ClientsIcon, CohortsIcon, MobileIcon } from "@/components/icons"
+import { ClientsIcon, CohortsIcon, MobileIcon, CalendarIcon } from "@/components/icons"
 import { HealthKitIcon } from "@/components/icons/HealthKitIcon"
 import { RoleSwitcher } from "@/components/RoleSwitcher"
 import { useRole } from "@/contexts/RoleContext"
@@ -109,6 +109,11 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     navigation.push(
       { name: "Clients", href: "/coach-dashboard", icon: ClientsIcon, hasDropdown: true, dropdownKey: "clients" },
       { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" }
+    )
+    
+    // Add Weekly Review as a separate navigation item
+    navigation.push(
+      { name: "Weekly Review", href: "/coach-dashboard/weekly-review", icon: CalendarIcon, hasDropdown: false, dropdownKey: "weekly-review" }
     )
     
     // Conditionally add HealthKit navigation item
@@ -218,18 +223,6 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
                           <item.icon size={16} className="text-neutral-400" />
                         </div>
                         <div className="py-2">
-                          <Link
-                            href="/coach-dashboard/weekly-review"
-                            onClick={() => setClientsDropdownOpen(false)}
-                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors block ${
-                              pathname === "/coach-dashboard/weekly-review"
-                                ? "bg-neutral-800 text-white"
-                                : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
-                            }`}
-                          >
-                            📅 Weekly Review
-                          </Link>
-                          <div className="border-t border-neutral-800 my-2"></div>
                           {clientFilters.map((filter) => (
                             <button
                               key={filter.value}

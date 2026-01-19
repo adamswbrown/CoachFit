@@ -188,6 +188,16 @@ export async function POST(req: NextRequest) {
     const weekStart = getMonday(new Date(validated.weekStart))
     weekStart.setHours(0, 0, 0, 0)
 
+    // Check if the WeeklyCoachResponse model exists in the Prisma client
+    // This handles the case where the schema was updated but Prisma client hasn't been regenerated
+    if (!db.weeklyCoachResponse) {
+      console.warn("WeeklyCoachResponse model not found in Prisma client. Please run 'npx prisma generate'")
+      return NextResponse.json(
+        { error: "Feature not available. Please regenerate Prisma client." },
+        { status: 503 }
+      )
+    }
+
     // Upsert the response
     const weeklyCoachResponse = getWeeklyCoachResponseModel()
     let response: WeeklyCoachResponseRow | null = null
