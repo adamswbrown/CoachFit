@@ -140,17 +140,38 @@ export async function GET(req: NextRequest) {
     const INSIGHTS_CACHE_KEY = "admin:overview:insights"
     const INSIGHTS_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
     
-    let cachedInsights = cache.get<{
-      anomalies: any[]
-      opportunities: any[]
-      userGrowthTrend: any[]
-      entryCompletionTrend: any[]
-    }>(INSIGHTS_CACHE_KEY)
+    interface InsightData {
+      anomalies: Array<{
+        id?: string
+        title: string
+        description: string
+        priority: string
+        impact?: string
+      }>
+      opportunities: Array<{
+        id?: string
+        title: string
+        description: string
+        impact?: string
+      }>
+      userGrowthTrend: Array<{
+        metric: string
+        direction: string
+        change?: number
+      }>
+      entryCompletionTrend: Array<{
+        metric: string
+        direction: string
+        change?: number
+      }>
+    }
+    
+    let cachedInsights = cache.get<InsightData>(INSIGHTS_CACHE_KEY)
 
-    let anomalies: any[] = []
-    let opportunities: any[] = []
-    let userGrowthTrend: any[] = []
-    let entryCompletionTrend: any[] = []
+    let anomalies: InsightData["anomalies"] = []
+    let opportunities: InsightData["opportunities"] = []
+    let userGrowthTrend: InsightData["userGrowthTrend"] = []
+    let entryCompletionTrend: InsightData["entryCompletionTrend"] = []
 
     if (cachedInsights) {
       // Use cached insights
@@ -171,7 +192,7 @@ export async function GET(req: NextRequest) {
         ])
 
         // Cache the results
-        cache.set(INSIGHTS_CACHE_KEY, {
+        cache.set<InsightData>(INSIGHTS_CACHE_KEY, {
           anomalies,
           opportunities,
           userGrowthTrend,

@@ -1,6 +1,11 @@
 /**
  * Simple in-memory cache for server-side data
  * Useful for caching expensive computations like admin insights
+ * 
+ * NOTE: This cache is designed for single-instance or long-running servers.
+ * In serverless environments (like Vercel Functions), each function instance
+ * has its own cache that is reset when the instance terminates.
+ * For distributed caching in serverless, consider using Redis or similar.
  */
 
 interface CacheEntry<T> {
@@ -10,7 +15,7 @@ interface CacheEntry<T> {
 }
 
 class MemoryCache {
-  private cache = new Map<string, CacheEntry<any>>()
+  private cache = new Map<string, CacheEntry<unknown>>()
 
   /**
    * Get cached data if still valid
@@ -83,7 +88,8 @@ class MemoryCache {
 // Singleton instance
 export const cache = new MemoryCache()
 
-// Run cleanup every 10 minutes
+// Run cleanup every 10 minutes (only in long-running server environments)
+// In serverless, this may not run or may be unreliable
 if (typeof setInterval !== "undefined") {
   setInterval(() => {
     cache.cleanup()

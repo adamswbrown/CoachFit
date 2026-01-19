@@ -208,7 +208,7 @@ export async function GET(req: NextRequest) {
           // Find previous entry for weight trend (entry before latest)
           if (userEntries.length > 1) {
             const previousEntry = userEntries[1]
-            if (previousEntry?.weightLbs !== null && previousEntry?.weightLbs !== undefined) {
+            if (previousEntry?.weightLbs != null) {
               previousEntriesMap.set(userId, previousEntry.weightLbs)
             }
           }
