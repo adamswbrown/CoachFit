@@ -8,6 +8,7 @@ import { Role } from "./types"
 import { isAdminWithOverride } from "./permissions-server"
 import type { Adapter } from "next-auth/adapters"
 import bcrypt from "bcryptjs"
+import { randomUUID } from "crypto"
 
 export const authOptions: NextAuthConfig = {
   adapter: PrismaAdapter(db) as Adapter,
@@ -148,10 +149,54 @@ If you have any questions, please contact your coach.`,
   },
 
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account, profile }) {
       if (!user?.email || !user?.id) return true
 
       try {
+        // Handle account linking: if OAuth provider and email already exists, link instead of reject
+        if (account && account.provider !== "credentials") {
+          const existingUser = await db.user.findUnique({
+            where: { email: user.email },
+            select: { id: true },
+          })
+
+          if (existingUser && existingUser.id !== user.id) {
+            // Email exists but for a different user ID from OAuth provider
+            // This means we need to link the OAuth account to the existing user
+            
+            try {
+              // First, delete the temporary user that was just created by OAuth
+              await db.user.delete({
+                where: { id: user.id },
+              })
+            } catch (deleteError) {
+              // If deletion fails, that's okay - it might have been cleaned up already
+              console.log("Note: Could not delete temporary user during account linking")
+            }
+
+            // Then link the OAuth account to the existing user
+            await db.account.create({
+              data: {
+                id: randomUUID(),
+                userId: existingUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token,
+                refresh_token: account.refresh_token,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token,
+                session_state: account.session_state,
+              },
+            })
+
+            // Update the user object so JWT callback uses the correct ID
+            user.id = existingUser.id
+          }
+        }
+
         // Coach invites
         const coachInvites = await db.coachInvite.findMany({
           where: { email: user.email },

@@ -169,6 +169,12 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
             <div className="text-sm text-neutral-600">
               {firstName}
             </div>
+            <Link
+              href="/client-dashboard/settings"
+              className="px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
+            >
+              Settings
+            </Link>
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
               className="px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"

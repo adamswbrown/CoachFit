@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
+import { useSession, signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ClientLayout } from "@/components/layouts/ClientLayout"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import { Role } from "@/lib/types"
 
@@ -45,6 +46,18 @@ export default function ClientSettingsPage() {
   const [changingPassword, setChangingPassword] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
 
+  // OAuth connection/disconnection state
+  const [connectConfirmDialog, setConnectConfirmDialog] = useState<{
+    isOpen: boolean
+    provider: string
+  }>({ isOpen: false, provider: "" })
+  const [disconnectConfirmDialog, setDisconnectConfirmDialog] = useState<{
+    isOpen: boolean
+    provider: string
+  }>({ isOpen: false, provider: "" })
+  const [oauthLoading, setOauthLoading] = useState(false)
+  const [oauthError, setOauthError] = useState<string | null>(null)
+
   // GDPR Data export/delete state
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletePassword, setDeletePassword] = useState("")
@@ -63,15 +76,8 @@ export default function ClientSettingsPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (
-      session?.user &&
-      "roles" in session.user &&
-      Array.isArray(session.user.roles) &&
-      session.user.roles.includes(Role.COACH)
-    ) {
-      router.push("/coach-dashboard")
     }
-  }, [status, session, router])
+  }, [status, router])
 
   useEffect(() => {
     if (session) {
@@ -165,6 +171,50 @@ export default function ClientSettingsPage() {
       hour: "2-digit",
       minute: "2-digit",
     })
+  }
+
+  const handleConnectProvider = async (provider: string) => {
+    setConnectConfirmDialog({ isOpen: false, provider: "" })
+    setOauthError(null)
+    setOauthLoading(true)
+    try {
+      await signIn(provider)
+    } catch (error) {
+      setOauthError(`Failed to connect ${provider}. Please try again.`)
+      console.error("Error connecting provider:", error)
+    } finally {
+      setOauthLoading(false)
+    }
+  }
+
+  const handleDisconnectProvider = async (provider: string) => {
+    setDisconnectConfirmDialog({ isOpen: false, provider: "" })
+    setOauthError(null)
+    setOauthLoading(true)
+    try {
+      const response = await fetch("/api/user/disconnect-provider", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setOauthError(data.error || `Failed to disconnect ${provider}`)
+        return
+      }
+
+      setSuccess(`${provider} account disconnected successfully`)
+      // Reload settings to reflect the change
+      loadSettings()
+      setTimeout(() => setSuccess(null), 5000)
+    } catch (error) {
+      setOauthError(`Failed to disconnect ${provider}`)
+      console.error("Error disconnecting provider:", error)
+    } finally {
+      setOauthLoading(false)
+    }
   }
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -414,13 +464,21 @@ export default function ClientSettingsPage() {
                 </div>
                 <div>
                   {hasGoogleAccount ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Connected
-                    </span>
+                    <button
+                      onClick={() => setDisconnectConfirmDialog({ isOpen: true, provider: "google" })}
+                      disabled={oauthLoading}
+                      className="px-4 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 rounded-md transition-colors"
+                    >
+                      {oauthLoading && disconnectConfirmDialog.provider === "google" ? "Disconnecting..." : "Disconnect"}
+                    </button>
                   ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-600">
-                      Not Connected
-                    </span>
+                    <button
+                      onClick={() => signIn("google")}
+                      disabled={oauthLoading}
+                      className="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-md transition-colors"
+                    >
+                      Connect with Google
+                    </button>
                   )}
                 </div>
               </div>
@@ -439,13 +497,21 @@ export default function ClientSettingsPage() {
                 </div>
                 <div>
                   {hasAppleAccount ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Connected
-                    </span>
+                    <button
+                      onClick={() => setDisconnectConfirmDialog({ isOpen: true, provider: "apple" })}
+                      disabled={oauthLoading}
+                      className="px-4 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 rounded-md transition-colors"
+                    >
+                      {oauthLoading && disconnectConfirmDialog.provider === "apple" ? "Disconnecting..." : "Disconnect"}
+                    </button>
                   ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-600">
-                      Not Connected
-                    </span>
+                    <button
+                      onClick={() => signIn("apple")}
+                      disabled={oauthLoading}
+                      className="px-4 py-2 text-xs font-medium text-white bg-black hover:bg-gray-800 disabled:bg-gray-600 rounded-md transition-colors"
+                    >
+                      Connect with Apple
+                    </button>
                   )}
                 </div>
               </div>
@@ -814,6 +880,48 @@ export default function ClientSettingsPage() {
             )}
           </div>
         </div>
+
+        {/* Connect Confirmation Dialog */}
+        <ConfirmDialog
+          isOpen={connectConfirmDialog.isOpen}
+          title={`Connect ${connectConfirmDialog.provider === "google" ? "Google" : "Apple"} Account?`}
+          message={`Your ${connectConfirmDialog.provider === "google" ? "Google" : "Apple"} account will be linked to your CoachFit profile.`}
+          confirmText="Connect"
+          cancelText="Cancel"
+          onConfirm={() => {
+            handleConnectProvider(connectConfirmDialog.provider)
+            setConnectConfirmDialog({ isOpen: false, provider: "" })
+          }}
+          onCancel={() => setConnectConfirmDialog({ isOpen: false, provider: "" })}
+          isLoading={oauthLoading}
+          variant="default"
+        />
+
+        {/* Disconnect Confirmation Dialog */}
+        <ConfirmDialog
+          isOpen={disconnectConfirmDialog.isOpen}
+          title={`Disconnect ${disconnectConfirmDialog.provider === "google" ? "Google" : "Apple"} Account?`}
+          message={
+            oauthError
+              ? oauthError
+              : `You'll no longer be able to sign in with ${disconnectConfirmDialog.provider === "google" ? "Google" : "Apple"}.`
+          }
+          confirmText="Disconnect"
+          cancelText="Cancel"
+          onConfirm={() => {
+            handleDisconnectProvider(disconnectConfirmDialog.provider)
+            setDisconnectConfirmDialog({ isOpen: false, provider: "" })
+          }}
+          onCancel={() => {
+            setDisconnectConfirmDialog({ isOpen: false, provider: "" })
+            // Clear OAuth error when canceling
+            if (oauthError) {
+              // Keep error but it will show in next dialog
+            }
+          }}
+          isLoading={oauthLoading}
+          variant="danger"
+        />
       </div>
     </ClientLayout>
   )
