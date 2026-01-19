@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useState, useEffect, useRef, Suspense } from "react"
 import { isAdmin } from "@/lib/permissions"
-import { ClientsIcon, CohortsIcon, MobileIcon } from "@/components/icons"
+import { ClientsIcon, CohortsIcon, MobileIcon, CalendarIcon } from "@/components/icons"
 import { HealthKitIcon } from "@/components/icons/HealthKitIcon"
 import { RoleSwitcher } from "@/components/RoleSwitcher"
 import { useRole } from "@/contexts/RoleContext"
@@ -113,7 +113,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     
     // Add Weekly Review as a separate navigation item
     navigation.push(
-      { name: "Weekly Review", href: "/coach-dashboard/weekly-review", icon: (props: any) => <span className="text-xl">📅</span>, hasDropdown: false, dropdownKey: "weekly-review" }
+      { name: "Weekly Review", href: "/coach-dashboard/weekly-review", icon: CalendarIcon, hasDropdown: false, dropdownKey: "weekly-review" }
     )
     
     // Conditionally add HealthKit navigation item
