@@ -33,6 +33,8 @@ model CoachInvite {
   User      User     @relation(fields: [coachId], references: [id], onDelete: Cascade)
 
   @@unique([email, coachId])
+  @@index([coachId])
+  @@index([email])
 }
 
 model Cohort {
@@ -47,6 +49,8 @@ model Cohort {
   memberships      CohortMembership[]
 
   @@unique([coachId, name])
+  @@index([coachId])
+  @@index([createdAt])
 }
 
 model CoachCohortMembership {
@@ -69,6 +73,8 @@ model CohortInvite {
   Cohort    Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
 
   @@unique([email, cohortId])
+  @@index([cohortId])
+  @@index([email])
 }
 
 model CohortMembership {
@@ -204,6 +210,10 @@ model User {
   other_User             User[]                  @relation("UserToUser")
   UserConsent            UserConsent?
   Workouts               Workout[]
+
+  @@index([invitedByCoachId])
+  @@index([createdAt])
+  @@index([roles])
 }
 
 model VerificationToken {
