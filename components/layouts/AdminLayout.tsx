@@ -13,7 +13,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { data: session } = useSession()
   const pathname = usePathname()
   const router = useRouter()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false) // Default closed on mobile
 
   if (!session) return null
 
@@ -30,48 +30,57 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     <div className="min-h-screen bg-neutral-50">
       {/* Top header */}
       <header className="bg-white border-b border-neutral-200 sticky top-0 z-30">
-        <div className="px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="px-3 sm:px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-2 hover:bg-neutral-100 rounded-md transition-colors"
+              aria-label="Toggle sidebar"
             >
               <svg className="w-5 h-5 text-neutral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <Link href="/admin" className="text-lg font-semibold text-neutral-900">
-              CoachFit Admin
+            <Link href="/admin" className="text-base sm:text-lg font-semibold text-neutral-900">
+              <span className="hidden sm:inline">CoachFit Admin</span>
+              <span className="sm:hidden">Admin</span>
             </Link>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-sm text-neutral-600">
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
+            <div className="hidden md:block text-sm text-neutral-600">
               {firstName}
             </div>
             <Link
               href="/client-dashboard/settings"
-              className="px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
+              className="hidden sm:inline-block px-2 sm:px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
             >
               Settings
             </Link>
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
+              className="px-2 sm:px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
             >
-              Sign out
+              <span className="hidden sm:inline">Sign out</span>
+              <span className="sm:hidden">Logout</span>
             </button>
           </div>
         </div>
       </header>
 
       <div className="flex">
-        {/* Left sidebar */}
+        {/* Left sidebar - mobile overlay on small screens */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
         <aside
-          className={`bg-white border-r border-neutral-200 transition-all duration-200 ${
-            sidebarOpen ? "w-64" : "w-0 overflow-hidden"
+          className={`fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-neutral-200 transition-transform duration-200 lg:transition-all ${
+            sidebarOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0 lg:w-0 lg:overflow-hidden"
           }`}
         >
-          <nav className="p-4 space-y-1">
+          <nav className="p-4 space-y-1 overflow-y-auto h-full">
             {navigation.map((item) => {
               const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
               return (
@@ -93,8 +102,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1">
-          <div className="p-8">{children}</div>
+        <main className="flex-1 w-full lg:w-auto">
+          <div className="p-4 sm:p-6 md:p-8">{children}</div>
         </main>
       </div>
     </div>
