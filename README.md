@@ -60,39 +60,52 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 #### For Clients
 - ✅ **Daily Check-Ins**: Log weight, steps, calories, sleep quality, perceived effort, and notes
 - ✅ **Personal Dashboard**: Quick stats and entry history with visual tracking
+- ✅ **Data Source Tracking**: Automatic tracking of data sources (HealthKit, manual entry, etc.)
 - ✅ **Self-Service Settings**: Change password, view OAuth connections, manage account
-- ✅ **Seamless Onboarding**: Automatic coach assignment via email invitations
+- ✅ **Seamless Onboarding**: Automatic coach assignment via email invitations with role-based onboarding flows
+- ✅ **Terms & Consent**: Full consent management system with version tracking and IP/user-agent logging
 
 #### For Coaches
-- ✅ **Cohort Management**: Create and manage multiple client cohorts
+- ✅ **Cohort Management**: Create and manage multiple client cohorts with co-coach support
 - ✅ **Two-Tier Invitations**: Global coach invites + cohort-specific invites
 - ✅ **Client Assignment**: Assign existing clients to cohorts
 - ✅ **Real-Time Search**: Search clients by name or email across dashboard and cohorts
 - ✅ **Analytics Dashboard**: Cohort summaries with sparklines and trends
-- ✅ **Individual Client View**: Detailed analytics per client with entry history
+- ✅ **Individual Client View**: Detailed analytics per client with entry history and multi-week charts
 - ✅ **Weekly Notes**: Coach notes system for client progress tracking
 - ✅ **Weekly Review Queue**: Centralized dashboard for reviewing all clients' weekly progress with copyable email drafts and Loom video responses
 - ✅ **Custom Prompts**: Configure custom check-in questions per cohort
+- ✅ **HealthKit Data Explorer**: View and analyze HealthKit data (workouts, sleep records) synced from iOS devices
+- ✅ **Client Pairing**: Generate one-time pairing codes for secure iOS device connections
 
 #### For Admins
 - ✅ **User Management**: View all users, assign roles, reset passwords
 - ✅ **Real-Time Search**: Search users by name, email, or role; search cohorts by name or coach
-- ✅ **Coach Management**: Invite new coaches, assign coaches to cohorts
-- ✅ **Attention Dashboard**: Auto-generated insights and attention scores
+- ✅ **Coach Management**: Invite new coaches, assign coaches to cohorts via co-coach system
+- ✅ **Attention Dashboard**: Auto-generated insights and attention scores with priority-based filtering
 - ✅ **System Overview**: Platform-wide metrics and health monitoring
-- ✅ **Audit Trail**: Complete action history for compliance
+- ✅ **Audit Trail**: Complete action history for compliance and accountability
+- ✅ **Feature Flags**: Toggle HealthKit and iOS integration features via system settings
+- ✅ **Admin Override**: Emergency admin access via configurable email override
+- ✅ **Test Data Tools**: Randomize client check-in status for realistic testing
 
 #### System Features
 - ✅ **Multi-Provider Auth**: Google OAuth, Apple Sign-In, Email/Password
-- ✅ **Role-Based Access Control**: CLIENT, COACH, ADMIN roles with proper authorization
+- ✅ **Role-Based Access Control**: CLIENT, COACH, ADMIN roles with proper authorization and multi-role support
 - ✅ **Transactional Emails**: Automated invitations and welcome emails (via Resend)
 - ✅ **Test User Support**: Email suppression for development/testing
 - ✅ **Error Boundaries**: Graceful error handling throughout the app
 - ✅ **Responsive Design**: Mobile-first UI with Tailwind CSS
+- ✅ **Performance Optimization**: Database query caching, loading skeletons, and optimized batch queries
+- ✅ **Speed Insights**: Vercel Speed Insights integration for performance monitoring
 
-#### In Development
-- 🧪 **HealthKit ingestion pipeline**: API endpoints for workouts, steps, sleep, and body metrics; coach-facing HealthKit data explorer and pairing flow
-- 🧪 **iOS app integration**: Mobile app not shipped yet; current repo includes backend + UI scaffolding awaiting the iOS client
+#### HealthKit & iOS Integration
+- ✅ **Workout Ingestion**: API endpoints for syncing workout data from HealthKit (type, duration, calories, heart rate, distance)
+- ✅ **Sleep Tracking**: Detailed sleep data ingestion (total sleep, in-bed time, sleep stages: core/deep/REM)
+- ✅ **Pairing System**: Secure one-time pairing codes for connecting iOS devices to coach accounts
+- ✅ **Data Source Indicators**: Visual badges showing data origin (HealthKit vs manual)
+- ✅ **Coach Data Explorer**: Browse and analyze HealthKit workouts and sleep records by client
+- ✅ **Feature Flags**: Toggle HealthKit/iOS features on/off via system settings (disabled by default)
 
 ### Tech Stack
 
@@ -121,33 +134,37 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 
 ## 🎯 Where We're Going
 
-### Phase 2: Enhanced Health Tracking (Q1 2025)
+### Phase 2: Enhanced Health Tracking (Q1 2026 - In Progress)
 
-**Mobile App Integration**
-- 📱 iOS app that pairs with CoachFit and syncs HealthKit data (workouts, steps, sleep, weight, height)
-- 🔐 Secure pairing flow using one-time codes generated by coaches
-- 🧭 Data source indicators (HealthKit vs manual) with manual check-ins still supported
-- 📈 Expanded HealthKit coverage and richer workout metadata for analytics
+**Mobile App Integration** ✅ Backend Complete, iOS App In Progress
+- ✅ iOS device pairing system with one-time codes (backend complete)
+- ✅ HealthKit data ingestion APIs (workouts, sleep, body metrics)
+- ✅ Data source tracking and badges (HealthKit vs manual)
+- ✅ Coach-facing HealthKit data explorer
+- 🚧 iOS native app (currently in development)
+- 📋 Expanded HealthKit coverage planned (nutrition, heart rate variability, mindfulness)
 
-**Advanced Analytics**
-- 📉 Trend detection and anomaly alerts
+**Advanced Analytics** (Next Priority)
+- 📉 Trend detection and anomaly alerts (foundation built with attention scores)
 - 🎯 Goal setting and progress tracking
 - 📊 Comparative analytics across cohorts
-- 🤖 AI-generated insights for coaches
+- 🤖 AI-generated insights for coaches (attention dashboard provides foundation)
 
 **Coach Tools Enhancement**
-- 📝 Rich text coach notes with tagging
-- 📅 Workout plan templates
-- 💬 In-app messaging between coaches and clients
-- 📋 Client progress reports (PDF export)
+- ✅ Weekly review queue with email drafts (shipped)
+- ✅ Loom video integration for weekly responses (shipped)
+- 📝 Rich text coach notes with tagging (planned)
+- 📅 Workout plan templates (planned)
+- 💬 In-app messaging between coaches and clients (planned)
+- 📋 Client progress reports (PDF export) (planned)
 
-### Phase 3: Platform Scale (Q2 2025)
+### Phase 3: Platform Scale (Q2 2026)
 
 **Multi-Coach Organizations**
-- 👥 Organization accounts with multiple coaches
-- 🔐 Org-level admin controls
-- 💳 Subscription management and billing
-- 📊 Organization-wide analytics
+- ✅ Co-coach system (multiple coaches per cohort) - shipped
+- 🔐 Org-level admin controls (planned)
+- 💳 Subscription management and billing (planned)
+- 📊 Organization-wide analytics (planned)
 
 **Client Experience**
 - 🎨 Customizable dashboard layouts
@@ -161,19 +178,19 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 - 💳 Payment processing (Stripe)
 - 📱 Wearable device integrations (Fitbit, Garmin, Oura)
 
-### Phase 4: AI & Automation (Q3 2025)
+### Phase 4: AI & Automation (Q3 2026)
 
 **AI-Powered Coaching**
-- 🤖 Automated check-in responses with sentiment analysis
-- 💡 Personalized recommendations based on client data
-- ⚠️ Early warning system for client drop-off risk
-- 📝 Auto-generated progress summaries
+- 🤖 Automated check-in responses with sentiment analysis (planned)
+- 💡 Personalized recommendations based on client data (planned)
+- ✅ Early warning system for client drop-off risk (attention dashboard foundation shipped)
+- 📝 Auto-generated progress summaries (planned)
 
 **Coach Efficiency**
-- ⏱️ Time-saving automation for routine tasks
-- 📊 Predictive analytics for client success
-- 🎯 Smart cohort suggestions based on client profiles
-- 📈 Automated reporting and insights
+- ⏱️ Time-saving automation for routine tasks (planned)
+- ✅ Automated insights and attention scoring (shipped)
+- 🎯 Smart cohort suggestions based on client profiles (planned)
+- ✅ Automated weekly review drafts (shipped)
 
 ---
 
@@ -278,17 +295,28 @@ npm run email:verify             # Verify Resend API key
 ### Database Schema (Prisma)
 
 **Core Models**:
-- `User` - Central entity with roles array (CLIENT, COACH, ADMIN)
+- `User` - Central entity with roles array (CLIENT, COACH, ADMIN) and multi-role support
 - `Cohort` - Groups of clients managed by a coach
+- `CoachCohortMembership` - Co-coach system allowing multiple coaches per cohort
 - `CohortMembership` - Join table linking clients to cohorts
-- `Entry` - Daily fitness data (weight, steps, calories, sleep, effort, notes, custom responses)
+- `Entry` - Daily fitness data (weight, steps, calories, sleep, effort, notes, custom responses, data sources)
 - `CoachInvite` - Global coach invitations (links user to coach)
 - `CohortInvite` - Cohort-specific invitations (auto-assigns on signup)
 - `CoachNote` - Weekly coach notes for client progress
+- `WeeklyCoachResponse` - Weekly review responses with Loom URLs and notes
 - `CohortCheckInConfig` - Custom prompts per cohort
 - `AdminInsight` - Auto-generated insights for admin dashboard
 - `AttentionScore` - Calculated attention scores for prioritization
 - `AdminAction` - Audit trail for admin operations
+- `SystemSettings` - Configurable system parameters and feature flags
+
+**HealthKit & iOS Models**:
+- `Workout` - HealthKit workout data (type, duration, calories, heart rate, distance, metadata)
+- `SleepRecord` - HealthKit sleep data (total sleep, in-bed time, sleep stages, source devices)
+- `PairingCode` - One-time codes for secure iOS device pairing
+
+**Compliance Models**:
+- `UserConsent` - User consent tracking (terms, privacy, data processing, marketing) with version and audit trail
 
 ### Authentication Flow
 
@@ -353,12 +381,13 @@ See [CLAUDE.md](./CLAUDE.md) for the complete development workflow and operating
 
 ## 📊 Project Stats
 
-- **Lines of Code**: ~15,000+ (TypeScript + React + Prisma)
-- **API Endpoints**: 40+ RESTful routes
-- **Database Tables**: 11 core models
-- **User Roles**: 3 (CLIENT, COACH, ADMIN)
-- **Development Time**: ~3 months (with AI assistance)
+- **Lines of Code**: ~20,000+ (TypeScript + React + Prisma)
+- **API Endpoints**: 60+ RESTful routes
+- **Database Tables**: 18 models (11 core + 4 HealthKit + 3 admin/compliance)
+- **User Roles**: 3 (CLIENT, COACH, ADMIN) with multi-role support
+- **Development Time**: ~5 months (with AI assistance)
 - **Deployment**: Continuous (Vercel auto-deploy on merge to main)
+- **Performance**: Optimized with caching, batch queries, and loading skeletons
 
 ---
 
@@ -374,6 +403,13 @@ See [CLAUDE.md](./CLAUDE.md) for the complete development workflow and operating
 6. **Role Arrays**: Users can have multiple roles (COACH + ADMIN) for flexibility
 7. **Entry Upsert**: One entry per user per day via unique constraint
 8. **Test User Pattern**: `isTestUser` flag for email suppression in development
+9. **Co-Coach System**: `CoachCohortMembership` join table allows multiple coaches per cohort
+10. **Data Source Tracking**: JSON field tracks data origin (HealthKit, manual) for transparency
+11. **Feature Flags**: `SystemSettings` model enables runtime feature toggles without deployment
+12. **Performance First**: Database query caching, batch queries, and skeleton loaders throughout
+13. **Consent Management**: Full audit trail with version tracking, IP, and user-agent logging
+14. **Pairing Codes**: Time-limited one-time codes for secure iOS device pairing
+15. **Admin Override**: Email-based emergency admin access for critical operations
 
 ### AI Collaboration Insights
 
@@ -382,6 +418,9 @@ See [CLAUDE.md](./CLAUDE.md) for the complete development workflow and operating
 - **Documentation**: AI maintains comprehensive docs alongside code changes
 - **Security**: AI proactively implements security best practices
 - **Trade-offs**: AI clearly articulates architectural trade-offs for decision-making
+- **Performance**: AI suggests optimizations (caching, batch queries) proactively
+- **Compliance**: AI implements consent tracking and audit trails with proper legal considerations
+- **Feature Flags**: AI recommends runtime configuration over hard-coded feature switches
 
 ---
 
@@ -399,7 +438,10 @@ This project demonstrates what's possible when human product vision meets AI tec
 
 ---
 
-**Last Updated**: January 2026
+**Last Updated**: January 19, 2026
 **Version**: 1.0.0
 **Next.js**: 16.1.1
+**React**: 19.2.3
+**Prisma**: 6.19.1
+**Tailwind CSS**: 4.1.18
 **Development Partner**: Claude (Anthropic)

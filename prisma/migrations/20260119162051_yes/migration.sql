@@ -24,6 +24,24 @@ CREATE INDEX "CoachCohortMembership_coachId_idx" ON "CoachCohortMembership"("coa
 -- CreateIndex
 CREATE INDEX "CoachCohortMembership_cohortId_idx" ON "CoachCohortMembership"("cohortId");
 
+-- Deduplicate cohort names per coach before adding unique constraint
+WITH cohort_dupes AS (
+    SELECT
+        "id",
+        "coachId",
+        "name",
+        ROW_NUMBER() OVER (
+            PARTITION BY "coachId", "name"
+            ORDER BY "createdAt" NULLS LAST, "id"
+        ) AS rn
+    FROM "Cohort"
+)
+UPDATE "Cohort" c
+SET "name" = c."name" || ' (dup ' || cohort_dupes.rn || ')'
+FROM cohort_dupes
+WHERE c."id" = cohort_dupes."id"
+  AND cohort_dupes.rn > 1;
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Cohort_coachId_name_key" ON "Cohort"("coachId", "name");
 
