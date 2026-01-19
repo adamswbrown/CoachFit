@@ -15,6 +15,13 @@ function getMonday(date: Date): Date {
   return new Date(d.setDate(diff))
 }
 
+/**
+ * Format date as YYYY-MM-DD
+ */
+function formatDate(date: Date): string {
+  return date.toISOString().split("T")[0]
+}
+
 const weeklyResponseSchema = z.object({
   clientId: z.string().uuid(),
   weekStart: z.string(),
@@ -82,7 +89,6 @@ export async function GET(req: NextRequest) {
           },
         },
       })
-
       if (!membership) {
         return NextResponse.json(
           { error: "Client not in your cohorts" },
@@ -92,7 +98,8 @@ export async function GET(req: NextRequest) {
     }
 
     const weekStart = getMonday(new Date(weekStartParam))
-    weekStart.setHours(0, 0, 0, 0)
+    const weekStartStr = formatDate(weekStart)
+    const weekStartDate = new Date(weekStartStr)
 
     const weeklyCoachResponse = getWeeklyCoachResponseModel()
     let response: WeeklyCoachResponseRow | null = null
@@ -103,7 +110,7 @@ export async function GET(req: NextRequest) {
           coachId_clientId_weekStart: {
             coachId: session.user.id,
             clientId: clientId,
-            weekStart: weekStart,
+            weekStart: weekStartDate,
           },
         },
       })
@@ -186,7 +193,8 @@ export async function POST(req: NextRequest) {
     }
 
     const weekStart = getMonday(new Date(validated.weekStart))
-    weekStart.setHours(0, 0, 0, 0)
+    const weekStartStr = formatDate(weekStart)
+    const weekStartDate = new Date(weekStartStr)
 
     // Check if the WeeklyCoachResponse model exists in the Prisma client
     // This handles the case where the schema was updated but Prisma client hasn't been regenerated
@@ -208,7 +216,7 @@ export async function POST(req: NextRequest) {
           coachId_clientId_weekStart: {
             coachId: session.user.id,
             clientId: validated.clientId,
-            weekStart: weekStart,
+            weekStart: weekStartDate,
           },
         },
         update: {
@@ -229,7 +237,7 @@ export async function POST(req: NextRequest) {
         FROM "WeeklyCoachResponse"
         WHERE "coachId" = ${session.user.id}
           AND "clientId" = ${validated.clientId}
-          AND "weekStart" = ${weekStart}
+          AND "weekStart" = ${weekStartDate}
         LIMIT 1
       `
 
@@ -247,7 +255,7 @@ export async function POST(req: NextRequest) {
           INSERT INTO "WeeklyCoachResponse"
             ("id", "coachId", "clientId", "weekStart", "loomUrl", "note", "createdAt", "updatedAt")
           VALUES
-            (${newId}, ${session.user.id}, ${validated.clientId}, ${weekStart}, ${validated.loomUrl}, ${validated.note}, NOW(), NOW())
+            (${newId}, ${session.user.id}, ${validated.clientId}, ${weekStartDate}, ${validated.loomUrl}, ${validated.note}, NOW(), NOW())
         `
       }
 

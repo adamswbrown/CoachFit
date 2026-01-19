@@ -62,9 +62,9 @@ export async function GET(req: NextRequest) {
       : getMonday(new Date())
     const weekEnd = getSunday(weekStart)
 
-    // Normalize dates to start of day for comparison
-    weekStart.setHours(0, 0, 0, 0)
-    weekEnd.setHours(23, 59, 59, 999)
+    // Convert to ISO date strings for database queries (Date columns don't have time)
+    const weekStartStr = formatDate(weekStart)
+    const weekEndStr = formatDate(weekEnd)
 
     // Get all clients - admins see all, coaches see their cohorts
     let clients
@@ -119,8 +119,8 @@ export async function GET(req: NextRequest) {
       where: {
         userId: { in: clientIds },
         date: {
-          gte: weekStart,
-          lte: weekEnd,
+          gte: new Date(weekStartStr),
+          lte: new Date(weekEndStr),
         },
       },
       select: {
@@ -137,8 +137,8 @@ export async function GET(req: NextRequest) {
       where: {
         userId: { in: clientIds },
         date: {
-          gte: weekStart,
-          lte: weekEnd,
+          gte: new Date(weekStartStr),
+          lte: new Date(weekEndStr),
         },
       },
       select: {

@@ -88,17 +88,17 @@ export async function GET(
       : getMonday(new Date())
     const weekEnd = getSunday(weekStart)
 
-    // Normalize dates to start of day for comparison
-    weekStart.setHours(0, 0, 0, 0)
-    weekEnd.setHours(23, 59, 59, 999)
+    // Convert to ISO date strings for database queries (Date columns don't have time)
+    const weekStartStr = formatDate(weekStart)
+    const weekEndStr = formatDate(weekEnd)
 
     // Fetch entries for the week
     const entries = await db.entry.findMany({
       where: {
         userId: id,
         date: {
-          gte: weekStart,
-          lte: weekEnd,
+          gte: new Date(weekStartStr),
+          lte: new Date(weekEndStr),
         },
       },
       orderBy: {
@@ -256,15 +256,15 @@ export async function GET(
     const prevWeekStart = new Date(weekStart)
     prevWeekStart.setDate(prevWeekStart.getDate() - 7)
     const prevWeekEnd = getSunday(prevWeekStart)
-    prevWeekStart.setHours(0, 0, 0, 0)
-    prevWeekEnd.setHours(23, 59, 59, 999)
+    const prevWeekStartStr = formatDate(prevWeekStart)
+    const prevWeekEndStr = formatDate(prevWeekEnd)
 
     const prevWeekEntries = await db.entry.findMany({
       where: {
         userId: id,
         date: {
-          gte: prevWeekStart,
-          lte: prevWeekEnd,
+          gte: new Date(prevWeekStartStr),
+          lte: new Date(prevWeekEndStr),
         },
       },
       orderBy: {
