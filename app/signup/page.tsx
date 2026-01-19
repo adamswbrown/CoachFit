@@ -129,10 +129,10 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white rounded-lg shadow p-8 max-w-md w-full">
-        <h1 className="text-2xl font-bold mb-6 text-center">CoachSync</h1>
-        <p className="text-gray-600 mb-6 text-center">Create your account</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6 md:p-8 max-w-md w-full">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center">CoachSync</h1>
+        <p className="text-gray-600 mb-4 sm:mb-6 text-center text-sm sm:text-base">Create your account</p>
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-md text-sm">
             {error}

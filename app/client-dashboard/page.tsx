@@ -375,9 +375,9 @@ export default function ClientDashboard() {
         )}
 
         {/* Greeting Section */}
-        <div className="mb-6 flex items-start justify-between">
+        <div className="mb-6 flex flex-col sm:flex-row items-start justify-between gap-3">
           <div className="flex-1">
-            <h1 className="text-2xl font-semibold text-neutral-900 mb-1">
+            <h1 className="text-xl sm:text-2xl font-semibold text-neutral-900 mb-1">
               {getGreeting()}, {firstName}
             </h1>
             <p className="text-sm text-neutral-600">
@@ -386,20 +386,22 @@ export default function ClientDashboard() {
                 : "Track your progress and stay on top of your goals."}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <Link
               href="/client-dashboard/pairing"
-              className="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors text-center"
               title="Connect your iOS device for automatic HealthKit syncing"
             >
-              📱 Pairing
+              <span className="sm:hidden">📱</span>
+              <span className="hidden sm:inline">📱 Pairing</span>
             </Link>
             <Link
               href="/client-dashboard/settings"
-              className="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors text-center"
               title="Account settings"
             >
-              ⚙️ Settings
+              <span className="sm:hidden">⚙️</span>
+              <span className="hidden sm:inline">⚙️ Settings</span>
             </Link>
           </div>
         </div>

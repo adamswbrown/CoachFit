@@ -428,22 +428,22 @@ function CoachDashboardContent() {
         {data && (
           <>
             {/* Stats Bar */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
-              <div className="bg-white rounded-lg border border-neutral-200 p-6 border border-neutral-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 sm:p-6">
                 <div className="text-sm text-neutral-600 mb-1">Active Clients</div>
-                <div className="text-3xl font-bold text-neutral-900">{data.stats.totalClients}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-neutral-900">{data.stats.totalClients}</div>
               </div>
-              <div className="bg-white rounded-lg border border-neutral-200 p-6 border border-neutral-200">
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 sm:p-6">
                 <div className="text-sm text-neutral-600 mb-1">Unassigned</div>
-                <div className="text-3xl font-bold text-neutral-900">{data.stats.unassignedCount}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-neutral-900">{data.stats.unassignedCount}</div>
               </div>
-              <div className="bg-white rounded-lg border border-neutral-200 p-6 border border-neutral-200">
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 sm:p-6">
                 <div className="text-sm text-neutral-600 mb-1">Pending Invites</div>
-                <div className="text-3xl font-bold text-neutral-900">{data.stats.pendingInvites}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-neutral-900">{data.stats.pendingInvites}</div>
               </div>
-              <div className="bg-white rounded-lg border border-neutral-200 p-6 border border-neutral-200">
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 sm:p-6">
                 <div className="text-sm text-neutral-600 mb-1">Cohorts</div>
-                <div className="text-3xl font-bold text-neutral-900">{data.stats.totalCohorts}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-neutral-900">{data.stats.totalCohorts}</div>
               </div>
             </div>
 
@@ -454,13 +454,13 @@ function CoachDashboardContent() {
                 <p className="text-sm text-neutral-600 mb-4">
                   These clients have been invited but haven't signed up yet.
                 </p>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full min-w-full">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left p-3 font-semibold">Email</th>
-                        <th className="text-left p-3 font-semibold">Cohort (if any)</th>
-                        <th className="text-left p-3 font-semibold">Actions</th>
+                        <th className="text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Email</th>
+                        <th className="hidden sm:table-cell text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Cohort (if any)</th>
+                        <th className="text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -469,11 +469,11 @@ function CoachDashboardContent() {
                         const globalInvite = data.globalInvites.find(i => i.email === client.email)
                         return (
                           <tr key={client.email} className="border-b bg-neutral-50 italic">
-                            <td className="p-3">{client.email}</td>
-                            <td className="p-3 text-sm text-neutral-500">
+                            <td className="p-2 sm:p-3 text-sm">{client.email}</td>
+                            <td className="hidden sm:table-cell p-2 sm:p-3 text-sm text-neutral-500">
                               {client.cohorts.length > 0 ? client.cohorts.join(", ") : "Not assigned yet"}
                             </td>
-                            <td className="p-3">
+                            <td className="p-2 sm:p-3">
                               {globalInvite && (
                                 <button
                                   onClick={() => handleCancelInvite(globalInvite.id)}
@@ -499,23 +499,23 @@ function CoachDashboardContent() {
                 <p className="text-sm text-orange-700 mb-4">
                   These clients have signed up but aren't in any cohort yet. Assign them to a cohort to get started.
                 </p>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full min-w-full">
                     <thead>
                       <tr className="border-b border-amber-200">
-                        <th className="text-left p-3 font-semibold">Name</th>
-                        <th className="text-left p-3 font-semibold">Email</th>
-                        <th className="text-left p-3 font-semibold">Assign to Cohort</th>
+                        <th className="text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Name</th>
+                        <th className="hidden sm:table-cell text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Email</th>
+                        <th className="text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Assign to Cohort</th>
                       </tr>
                     </thead>
                     <tbody>
                       {unassignedClients.map((client) => (
                         <tr key={client.email} className="border-b border-amber-100">
-                          <td className="p-3">{client.name || "No name"}</td>
-                          <td className="p-3">{client.email}</td>
-                          <td className="p-3">
+                          <td className="p-2 sm:p-3 text-sm">{client.name || "No name"}</td>
+                          <td className="hidden sm:table-cell p-2 sm:p-3 text-sm">{client.email}</td>
+                          <td className="p-2 sm:p-3">
                             {data.cohorts.length > 0 ? (
-                              <div className="flex gap-2 items-center">
+                              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                                 <select
                                   value={selectedCohortForAssign[client.id!] || ""}
                                   onChange={(e) =>
@@ -524,7 +524,7 @@ function CoachDashboardContent() {
                                       [client.id!]: e.target.value,
                                     })
                                   }
-                                  className="px-2 py-1 border rounded-md text-sm"
+                                  className="px-2 py-1 border rounded-md text-sm w-full sm:w-auto"
                                 >
                                   <option value="">Select cohort...</option>
                                   {data.cohorts.map((cohort) => (
@@ -536,7 +536,7 @@ function CoachDashboardContent() {
                                 <button
                                   onClick={() => handleAssignClient(client.id!)}
                                   disabled={assigningClient === client.id || !selectedCohortForAssign[client.id!]}
-                                  className="bg-neutral-900 text-white px-3 py-1 rounded-md hover:bg-neutral-800 disabled:opacity-50 text-sm"
+                                  className="bg-neutral-900 text-white px-3 py-1 rounded-md hover:bg-neutral-800 disabled:opacity-50 text-sm whitespace-nowrap"
                                 >
                                   {assigningClient === client.id ? "..." : "Assign"}
                                 </button>
@@ -607,20 +607,20 @@ function CoachDashboardContent() {
                   />
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full min-w-full">
                     <thead>
                       <tr className="border-b border-neutral-200">
-                        <th className="text-left p-3 font-semibold text-neutral-900">Name</th>
-                        <th className="text-left p-3 font-semibold text-neutral-900">Status</th>
+                        <th className="text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Name</th>
+                        <th className="text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Status</th>
                         {currentFilter === "all" || currentFilter === "active" || currentFilter === "connected" || currentFilter === "needs-attention" || currentFilter === "offline" ? (
                           <>
-                            <th className="text-left p-3 font-semibold text-neutral-900">Adherence</th>
-                            <th className="text-left p-3 font-semibold text-neutral-900">Weight Trend</th>
-                            <th className="text-left p-3 font-semibold text-neutral-900">Last Check-In</th>
+                            <th className="hidden md:table-cell text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Adherence</th>
+                            <th className="hidden lg:table-cell text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Weight Trend</th>
+                            <th className="hidden sm:table-cell text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Last Check-In</th>
                           </>
                         ) : null}
-                        <th className="text-left p-3 font-semibold text-neutral-900">Actions</th>
+                        <th className="text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -636,20 +636,20 @@ function CoachDashboardContent() {
 
                         return (
                           <tr key={client.email || client.id} className="border-b border-neutral-100 hover:bg-neutral-50">
-                            <td className="p-3">
+                            <td className="p-2 sm:p-3">
                               {client.id ? (
                                 <Link
                                   href={`/clients/${client.id}`}
-                                  className="font-medium text-neutral-900 hover:underline"
+                                  className="font-medium text-neutral-900 hover:underline text-sm sm:text-base"
                                 >
                                   {client.name || client.email}
                                 </Link>
                               ) : (
-                                <span className="font-medium text-neutral-900">{client.name || client.email}</span>
+                                <span className="font-medium text-neutral-900 text-sm sm:text-base">{client.name || client.email}</span>
                               )}
                             </td>
-                            <td className="p-3">
-                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            <td className="p-2 sm:p-3">
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
                                 client.status === "active" ? "bg-green-100 text-green-700" :
                                 client.status === "invited" ? "bg-amber-100 text-amber-700" :
                                 "bg-neutral-100 text-neutral-700"
@@ -661,7 +661,7 @@ function CoachDashboardContent() {
                             </td>
                             {(currentFilter === "all" || currentFilter === "active" || currentFilter === "connected" || currentFilter === "needs-attention" || currentFilter === "offline") && client.status === "active" ? (
                               <>
-                                <td className="p-3">
+                                <td className="hidden md:table-cell p-2 sm:p-3">
                                   <div className="flex items-center gap-2">
                                     <span
                                       className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -679,7 +679,7 @@ function CoachDashboardContent() {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="p-3">
+                                <td className="hidden lg:table-cell p-2 sm:p-3">
                                   {client.weightTrend === "up" && (
                                     <span className="text-red-600 font-medium">↑ Up</span>
                                   )}
@@ -698,7 +698,7 @@ function CoachDashboardContent() {
                                     </span>
                                   )}
                                 </td>
-                                <td className="p-3 text-sm text-neutral-600">
+                                <td className="hidden sm:table-cell p-2 sm:p-3 text-sm text-neutral-600">
                                   {client.lastCheckInDate
                                     ? new Date(client.lastCheckInDate).toLocaleDateString()
                                     : "Never"}
@@ -706,12 +706,12 @@ function CoachDashboardContent() {
                               </>
                             ) : (currentFilter === "all" || currentFilter === "active" || currentFilter === "connected" || currentFilter === "needs-attention" || currentFilter === "offline") ? (
                               <>
-                                <td className="p-3 text-sm text-neutral-400">—</td>
-                                <td className="p-3 text-sm text-neutral-400">—</td>
-                                <td className="p-3 text-sm text-neutral-400">—</td>
+                                <td className="hidden md:table-cell p-2 sm:p-3 text-sm text-neutral-400">—</td>
+                                <td className="hidden lg:table-cell p-2 sm:p-3 text-sm text-neutral-400">—</td>
+                                <td className="hidden sm:table-cell p-2 sm:p-3 text-sm text-neutral-400">—</td>
                               </>
                             ) : null}
-                            <td className="p-3">
+                            <td className="p-2 sm:p-3">
                               {client.id ? (
                                 <Link
                                   href={`/clients/${client.id}`}

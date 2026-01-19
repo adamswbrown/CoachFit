@@ -1,13 +1,13 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useState, useEffect, useRef, Suspense } from "react"
 import { isAdmin } from "@/lib/permissions"
 import { ClientsIcon, CohortsIcon, MobileIcon, CalendarIcon } from "@/components/icons"
 import { HealthKitIcon } from "@/components/icons/HealthKitIcon"
-import { RoleSwitcher } from "@/components/RoleSwitcher"
+import { UserProfileMenu } from "@/components/UserProfileMenu"
 import { useRole } from "@/contexts/RoleContext"
 import { Role } from "@/lib/types"
 
@@ -23,7 +23,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false) // Sidebar starts closed for cleaner mobile UX, users can toggle if needed
   const [clientsDropdownOpen, setClientsDropdownOpen] = useState(false)
   const [cohortsDropdownOpen, setCohortsDropdownOpen] = useState(false)
   const clientsDropdownRef = useRef<HTMLDivElement>(null)
@@ -150,49 +150,45 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     <div className="min-h-screen bg-neutral-50">
       {/* Top header */}
       <header className="bg-white border-b border-neutral-200 sticky top-0 z-30">
-        <div className="px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="px-3 sm:px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-2 hover:bg-neutral-100 rounded-md transition-colors"
+              aria-label="Toggle sidebar"
             >
               <svg className="w-5 h-5 text-neutral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <Link href="/coach-dashboard" className="text-lg font-semibold text-neutral-900">
+            <Link href="/coach-dashboard" className="text-base sm:text-lg font-semibold text-neutral-900">
               CoachFit
             </Link>
           </div>
-          <div className="flex items-center gap-3">
-            <RoleSwitcher />
-            <div className="text-sm text-neutral-600">
-              {firstName}
-            </div>
-            <Link
-              href="/client-dashboard/settings"
-              className="px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
-            >
-              Settings
-            </Link>
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
-            >
-              Sign out
-            </button>
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
+            <UserProfileMenu 
+              userName={firstName}
+              showRoleSwitcher={true}
+              showAdminLink={isAdmin(session.user)}
+            />
           </div>
         </div>
       </header>
 
       <div className="flex">
-        {/* Left sidebar */}
+        {/* Left sidebar - mobile overlay on small screens */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
         <aside
-          className={`bg-white border-r border-neutral-200 transition-all duration-200 ${
-            sidebarOpen ? "w-64" : "w-0 overflow-hidden"
+          className={`fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-neutral-200 transition-transform duration-200 lg:transition-all ${
+            sidebarOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0 lg:w-0 lg:overflow-hidden"
           }`}
         >
-          <nav className="p-4 space-y-1">
+          <nav className="p-4 space-y-1 overflow-y-auto h-full">
             {navigation.map((item) => {
               const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
               const isItemActive = item.name === "Clients" ? isClientsActive : isCohortsActive
@@ -227,7 +223,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
 
                     {/* Clients Dropdown Menu */}
                     {clientsDropdownOpen && (
-                      <div className="absolute left-full top-0 ml-2 w-56 bg-neutral-900 rounded-lg shadow-xl z-50 overflow-hidden">
+                      <div className="fixed lg:absolute left-4 lg:left-full top-auto lg:top-0 lg:ml-2 w-[calc(100vw-2rem)] lg:w-56 bg-neutral-900 rounded-lg shadow-xl z-50 overflow-hidden max-h-[80vh] overflow-y-auto">
                         <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between">
                           <span className="text-white font-medium text-sm">{item.name}</span>
                           <item.icon size={16} className="text-neutral-400" />
@@ -283,7 +279,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
 
                     {/* Cohorts Dropdown Menu */}
                     {cohortsDropdownOpen && (
-                      <div className="absolute left-full top-0 ml-2 w-56 bg-neutral-900 rounded-lg shadow-xl z-50 overflow-hidden">
+                      <div className="fixed lg:absolute left-4 lg:left-full top-auto lg:top-0 lg:ml-2 w-[calc(100vw-2rem)] lg:w-56 bg-neutral-900 rounded-lg shadow-xl z-50 overflow-hidden max-h-[80vh] overflow-y-auto">
                         <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between">
                           <span className="text-white font-medium text-sm">{item.name}</span>
                           <item.icon size={16} className="text-neutral-400" />
@@ -333,8 +329,8 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1">
-          <div className="p-8">{children}</div>
+        <main className="flex-1 w-full lg:w-auto">
+          <div className="p-4 sm:p-6 md:p-8">{children}</div>
         </main>
       </div>
     </div>

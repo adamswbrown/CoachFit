@@ -788,8 +788,8 @@ export default function ClientSettingsPage() {
             {/* Delete Modal */}
             {showDeleteModal && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-                  <h3 className="text-lg font-semibold text-neutral-900 mb-4">Delete Account</h3>
+                <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+                  <h3 className="text-base sm:text-lg font-semibold text-neutral-900 mb-4">Delete Account</h3>
 
                   {deleteError && (
                     <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-800 rounded-md text-sm">

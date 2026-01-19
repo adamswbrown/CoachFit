@@ -111,16 +111,16 @@ export default function CohortsPage() {
   return (
     <CoachLayout>
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8 flex justify-between items-start">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-neutral-900">Cohorts</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold text-neutral-900">Cohorts</h1>
             <p className="text-neutral-600 text-sm mt-1">
               Manage your client cohorts
             </p>
           </div>
           <Link
             href="/cohorts/create"
-            className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 transition-colors text-sm font-medium"
+            className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 transition-colors text-sm font-medium w-full sm:w-auto text-center"
           >
             Create Cohort
           </Link>
@@ -161,42 +161,44 @@ export default function CohortsPage() {
                   No cohorts found matching "{searchQuery}"
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full min-w-full">
                     <thead>
                       <tr className="border-b bg-neutral-50">
-                        <th className="text-left p-3 font-semibold text-neutral-900">Cohort Name</th>
-                        <th className="text-left p-3 font-semibold text-neutral-900">Active Clients</th>
-                        <th className="text-left p-3 font-semibold text-neutral-900">Pending Invites</th>
-                        <th className="text-left p-3 font-semibold text-neutral-900">Actions</th>
+                        <th className="text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Cohort Name</th>
+                        <th className="hidden sm:table-cell text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Active Clients</th>
+                        <th className="hidden md:table-cell text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Pending Invites</th>
+                        <th className="text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredCohorts.map((cohort) => (
                         <tr key={cohort.id} className="border-b hover:bg-neutral-50">
-                          <td className="p-3">
+                          <td className="p-2 sm:p-3">
                             <Link
                               href={`/cohorts/${cohort.id}`}
-                              className="font-semibold text-neutral-900 hover:underline"
+                              className="font-semibold text-neutral-900 hover:underline text-sm sm:text-base"
                             >
                               {cohort.name}
                             </Link>
                           </td>
-                          <td className="p-3">{cohort.activeClients}</td>
-                          <td className="p-3">{cohort.pendingInvites}</td>
-                          <td className="p-3">
-                            <Link
-                              href={`/cohorts/${cohort.id}`}
-                              className="text-neutral-900 hover:underline text-sm mr-3"
-                            >
-                              View
-                            </Link>
-                            <Link
-                              href={`/cohorts/${cohort.id}/analytics`}
-                              className="text-neutral-900 hover:underline text-sm"
-                            >
-                              Analytics
-                            </Link>
+                          <td className="hidden sm:table-cell p-2 sm:p-3 text-sm sm:text-base">{cohort.activeClients}</td>
+                          <td className="hidden md:table-cell p-2 sm:p-3 text-sm sm:text-base">{cohort.pendingInvites}</td>
+                          <td className="p-2 sm:p-3">
+                            <div className="flex flex-col sm:flex-row gap-1 sm:gap-3">
+                              <Link
+                                href={`/cohorts/${cohort.id}`}
+                                className="text-neutral-900 hover:underline text-sm"
+                              >
+                                View
+                              </Link>
+                              <Link
+                                href={`/cohorts/${cohort.id}/analytics`}
+                                className="text-neutral-900 hover:underline text-sm"
+                              >
+                                Analytics
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       ))}
