@@ -146,6 +146,7 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SystemSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [randomizing, setRandomizing] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [formData, setFormData] = useState<Partial<SystemSettings>>(DEFAULT_SETTINGS)
 
@@ -233,6 +234,39 @@ export default function AdminSettingsPage() {
   const handleReset = () => {
     setFormData(settings || DEFAULT_SETTINGS)
     setMessage(null)
+  }
+
+  const handleRandomizeCheckins = async () => {
+    if (!confirm("This will randomize check-in data for all clients. Continue?")) {
+      return
+    }
+
+    setRandomizing(true)
+    setMessage(null)
+
+    try {
+      const response = await fetch("/api/admin/randomize-checkins", {
+        method: "POST",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to randomize check-ins")
+      }
+
+      const data = await response.json()
+      setMessage({ 
+        type: "success", 
+        text: `✅ Randomized ${data.totalClients} clients: ${data.distribution.active} active, ${data.distribution.good} good, ${data.distribution.moderate} moderate, ${data.distribution.needsAttention} needs attention, ${data.distribution.offline} offline`
+      })
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Failed to randomize check-ins",
+      })
+    } finally {
+      setRandomizing(false)
+    }
   }
 
   if (loading) {
@@ -538,6 +572,32 @@ export default function AdminSettingsPage() {
               >
                 Reset
               </button>
+            </div>
+          </div>
+
+          {/* Test Data Actions */}
+          <div className="bg-white rounded-lg border border-neutral-200 p-8">
+            <div className="mb-6 pb-6 border-b border-neutral-200">
+              <h2 className="text-2xl font-semibold text-neutral-900 mb-2">Test Data Actions</h2>
+              <p className="text-neutral-600">
+                Development and testing utilities
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">Randomize Client Check-ins</h3>
+                <p className="text-neutral-600 text-sm mb-4">
+                  Generate realistic check-in patterns for all clients. Creates a distribution of active (35%), good (25%), moderate (20%), needs attention (15%), and offline (5%) clients with varied entry patterns over the past 2 weeks.
+                </p>
+                <button
+                  onClick={handleRandomizeCheckins}
+                  disabled={randomizing}
+                  className="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 font-medium"
+                >
+                  {randomizing ? "Randomizing..." : "🎲 Randomize Check-in Status"}
+                </button>
+              </div>
             </div>
           </div>
 
