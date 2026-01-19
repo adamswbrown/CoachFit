@@ -8,6 +8,7 @@ import { Role } from "@/lib/types"
 import { isAdmin, isAdminOrCoach } from "@/lib/permissions"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
+import { DashboardSkeleton } from "@/components/skeletons/LoadingSkeletons"
 
 type ClientFilter = "all" | "active" | "connected" | "pending" | "offline" | "unassigned" | "invited" | "needs-attention"
 
@@ -253,7 +254,11 @@ function CoachDashboardContent() {
   }
 
   if (status === "loading" || loading) {
-    return <div className="p-8">Loading...</div>
+    return (
+      <CoachLayout>
+        <DashboardSkeleton />
+      </CoachLayout>
+    )
   }
 
   if (!session) {
@@ -738,14 +743,7 @@ export default function CoachDashboard() {
   return (
     <Suspense fallback={
       <CoachLayout>
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="w-8 h-8 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-neutral-600">Loading...</p>
-            </div>
-          </div>
-        </div>
+        <DashboardSkeleton />
       </CoachLayout>
     }>
       <CoachDashboardContent />

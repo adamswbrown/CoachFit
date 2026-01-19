@@ -153,61 +153,14 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Batch fetch entry stats for all active clients
+    // Batch fetch entry stats for all active clients - OPTIMIZED
     if (activeClientIds.length > 0) {
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 7)
 
-      // Fetch all entries for active clients (last 7 days and latest entries)
-      const [weekEntries, latestEntries] = await Promise.all([
-        db.entry.findMany({
-          where: {
-            userId: { in: activeClientIds },
-            date: { gte: weekAgo },
-          },
-          select: {
-            userId: true,
-            date: true,
-          },
-        }),
-        db.entry.findMany({
-          where: {
-            userId: { in: activeClientIds },
-          },
-          select: {
-            userId: true,
-            date: true,
-            weightLbs: true,
-          },
-          orderBy: {
-            date: "desc",
-          },
-        }),
-      ])
-
-      // Group entries by userId
-      const entriesByUser = new Map<string, { date: Date; weightLbs: number | null }[]>()
-      const weekEntriesByUser = new Map<string, number>()
-
-      // Count week entries per user
-      for (const entry of weekEntries) {
-        const count = weekEntriesByUser.get(entry.userId) || 0
-        weekEntriesByUser.set(entry.userId, count + 1)
-      }
-
-      // Group latest entries (get most recent per user)
-      for (const entry of latestEntries) {
-        if (!entriesByUser.has(entry.userId)) {
-          entriesByUser.set(entry.userId, [])
-        }
-        const userEntries = entriesByUser.get(entry.userId)!
-        if (userEntries.length === 0 || userEntries[0].date.getTime() === entry.date.getTime()) {
-          userEntries.push({ date: entry.date, weightLbs: entry.weightLbs })
-        }
-      }
-
-      // Fetch previous entries for weight trend calculation (optimized - batch fetch all entries for active clients)
-      const allEntriesForTrend = await db.entry.findMany({
+      // Single optimized query to fetch all needed entries
+      // Fetch entries for last 7 days AND the 2 most recent entries per user (for weight trend)
+      const allEntries = await db.entry.findMany({
         where: {
           userId: { in: activeClientIds },
         },
@@ -221,27 +174,43 @@ export async function GET(req: NextRequest) {
         },
       })
 
-      // Group entries by user and find previous entry for each user's latest entry
-      const previousEntriesMap = new Map<string, number | null>()
+      // Process all entries in a single pass
+      const weekEntriesByUser = new Map<string, number>()
       const entriesByUserId = new Map<string, Array<{ date: Date; weightLbs: number | null }>>()
       
-      for (const entry of allEntriesForTrend) {
+      // Group all entries by user and count week entries
+      for (const entry of allEntries) {
+        // Count week entries
+        if (entry.date >= weekAgo) {
+          const count = weekEntriesByUser.get(entry.userId) || 0
+          weekEntriesByUser.set(entry.userId, count + 1)
+        }
+
+        // Group by user for trend calculation
         if (!entriesByUserId.has(entry.userId)) {
           entriesByUserId.set(entry.userId, [])
         }
         entriesByUserId.get(entry.userId)!.push({ date: entry.date, weightLbs: entry.weightLbs })
       }
 
-      // For each user, find the entry before their latest entry
+      // Calculate weight trends and latest data for each user
+      const previousEntriesMap = new Map<string, number | null>()
+      const entriesByUser = new Map<string, { date: Date; weightLbs: number | null }[]>()
+
       for (const userId of entriesByUserId.keys()) {
         const userEntries = entriesByUserId.get(userId)!
-        if (userEntries.length > 1) {
-          // Sort by date descending to get latest first
-          userEntries.sort((a, b) => b.date.getTime() - a.date.getTime())
+        
+        // Entries are already sorted by date desc
+        if (userEntries.length > 0) {
           const latestEntry = userEntries[0]
-          const previousEntry = userEntries.find(e => e.date < latestEntry.date)
-          if (previousEntry?.weightLbs) {
-            previousEntriesMap.set(userId, previousEntry.weightLbs)
+          entriesByUser.set(userId, [latestEntry])
+
+          // Find previous entry for weight trend (entry before latest)
+          if (userEntries.length > 1) {
+            const previousEntry = userEntries[1]
+            if (previousEntry?.weightLbs != null) {
+              previousEntriesMap.set(userId, previousEntry.weightLbs)
+            }
           }
         }
       }
