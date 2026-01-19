@@ -7,6 +7,22 @@ import { isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 
+const DEFAULT_SETTINGS: Omit<SystemSettings, "id"> = {
+  maxClientsPerCoach: 50,
+  minClientsPerCoach: 10,
+  recentActivityDays: 14,
+  lowEngagementEntries: 7,
+  noActivityDays: 14,
+  criticalNoActivityDays: 30,
+  shortTermWindowDays: 7,
+  longTermWindowDays: 30,
+  adminOverrideEmail: null,
+  healthkitEnabled: true,
+  iosIntegrationEnabled: true,
+  adherenceGreenMinimum: 6,
+  adherenceAmberMinimum: 3,
+}
+
 interface SystemSettings {
   id: string
   maxClientsPerCoach: number
@@ -20,6 +36,8 @@ interface SystemSettings {
   adminOverrideEmail: string | null
   healthkitEnabled: boolean
   iosIntegrationEnabled: boolean
+  adherenceGreenMinimum: number
+  adherenceAmberMinimum: number
 }
 
 interface TechnicalConstant {
@@ -129,7 +147,7 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
-  const [formData, setFormData] = useState<Partial<SystemSettings>>({})
+  const [formData, setFormData] = useState<Partial<SystemSettings>>(DEFAULT_SETTINGS)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -160,13 +178,15 @@ export default function AdminSettingsPage() {
         throw new Error("Failed to fetch settings")
       }
       const data = await response.json()
-      setSettings(data.data)
-      setFormData(data.data)
+      const merged = { ...DEFAULT_SETTINGS, ...(data?.data || {}) }
+      setSettings(merged as SystemSettings)
+      setFormData(merged)
     } catch (error) {
       setMessage({
         type: "error",
         text: error instanceof Error ? error.message : "Failed to load settings",
       })
+      setFormData(DEFAULT_SETTINGS)
     } finally {
       setLoading(false)
     }
@@ -211,7 +231,7 @@ export default function AdminSettingsPage() {
   }
 
   const handleReset = () => {
-    setFormData(settings || {})
+    setFormData(settings || DEFAULT_SETTINGS)
     setMessage(null)
   }
 
@@ -357,6 +377,44 @@ export default function AdminSettingsPage() {
                       className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <p className="text-xs text-neutral-500 mt-1">Days without entries triggers critical alert</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Adherence Thresholds */}
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Adherence Thresholds (Weekly Check-ins)</h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      Green (On Track) Minimum
+                    </label>
+                    <input
+                      type="number"
+                      name="adherenceGreenMinimum"
+                      min={1}
+                      max={7}
+                      value={formData.adherenceGreenMinimum ?? ""}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-neutral-500 mt-1">Required check-ins per week to show ✅ ON TRACK</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      Amber (Attention) Minimum
+                    </label>
+                    <input
+                      type="number"
+                      name="adherenceAmberMinimum"
+                      min={0}
+                      max={6}
+                      value={formData.adherenceAmberMinimum ?? ""}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-neutral-500 mt-1">Minimum check-ins before dropping to 🔴 PRIORITY</p>
+                    <p className="text-xs text-amber-600 mt-1">Amber minimum must be less than Green minimum</p>
                   </div>
                 </div>
               </div>

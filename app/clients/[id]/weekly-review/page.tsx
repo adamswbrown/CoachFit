@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { Role } from "@/lib/types"
+import { isAdminOrCoach } from "@/lib/permissions"
 
 interface WeeklyEntry {
   date: string
@@ -111,12 +112,19 @@ export default function WeeklyReviewPage() {
   const [allNotes, setAllNotes] = useState<CoachNote[]>([])
   const [showAllNotes, setShowAllNotes] = useState(false)
   const [recalculating, setRecalculating] = useState(false)
+  const [loomUrl, setLoomUrl] = useState("")
+  const [weeklyNote, setWeeklyNote] = useState("")
+  const [savingWeeklyResponse, setSavingWeeklyResponse] = useState(false)
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user.roles.includes(Role.CLIENT)) {
-      router.push("/client-dashboard")
+    } else if (session?.user && !isAdminOrCoach(session.user)) {
+      if (session.user.roles.includes(Role.CLIENT)) {
+        router.push("/client-dashboard")
+      } else {
+        router.push("/login")
+      }
     }
   }, [status, session, router])
 
@@ -125,7 +133,15 @@ export default function WeeklyReviewPage() {
       const loadData = async () => {
         setLoading(true)
         try {
-          await Promise.all([fetchClient(), fetchWeeklySummary(), fetchCoachNote()])
+          await Promise.all([
+            fetchClient(),
+            fetchWeeklySummary(),
+            fetchCoachNote(),
+          ])
+          // Fetch weekly response separately - don't block page load if it fails
+          fetchWeeklyResponse().catch((err) =>
+            console.error("Failed to fetch weekly response:", err)
+          )
         } finally {
           setLoading(false)
         }
@@ -187,6 +203,47 @@ export default function WeeklyReviewPage() {
       }
     } catch (err) {
       console.error("Error fetching all notes:", err)
+    }
+  }
+
+  const fetchWeeklyResponse = async () => {
+    try {
+      const res = await fetch(
+        `/api/coach-dashboard/weekly-response?clientId=${clientId}&weekStart=${selectedWeekStart}`
+      )
+      if (res.ok) {
+        const data = await res.json()
+        setLoomUrl(data?.loomUrl || "")
+        setWeeklyNote(data?.note || "")
+      }
+    } catch (err) {
+      console.error("Error fetching weekly response:", err)
+    }
+  }
+
+  const handleSaveWeeklyResponse = async () => {
+    setSavingWeeklyResponse(true)
+    try {
+      const res = await fetch(`/api/coach-dashboard/weekly-response`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clientId,
+          weekStart: selectedWeekStart,
+          loomUrl: loomUrl || null,
+          note: weeklyNote || null,
+        }),
+      })
+
+      if (res.ok) {
+        // Success feedback handled by UI state
+      }
+    } catch (err) {
+      console.error("Error saving weekly response:", err)
+    } finally {
+      setSavingWeeklyResponse(false)
     }
   }
 
@@ -635,6 +692,50 @@ export default function WeeklyReviewPage() {
             </div>
           </div>
         )}
+
+        {/* Weekly Coach Response Section */}
+        <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">Weekly Coach Response</h2>
+          <p className="text-sm text-neutral-600 mb-4">
+            Save your Loom video link and notes for this week's review.
+          </p>
+
+          {/* Loom URL Input */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Loom Video URL
+            </label>
+            <input
+              type="url"
+              value={loomUrl}
+              onChange={(e) => setLoomUrl(e.target.value)}
+              placeholder="https://www.loom.com/share/..."
+              className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            />
+          </div>
+
+          {/* Weekly Note */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Weekly Notes
+            </label>
+            <textarea
+              rows={4}
+              value={weeklyNote}
+              onChange={(e) => setWeeklyNote(e.target.value)}
+              placeholder="Add notes about this week's coaching response..."
+              className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+            />
+          </div>
+
+          <button
+            onClick={handleSaveWeeklyResponse}
+            disabled={savingWeeklyResponse}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {savingWeeklyResponse ? "Saving..." : "Save Weekly Response"}
+          </button>
+        </div>
 
         {/* Coach Notes Section */}
         <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-6">

@@ -7,7 +7,6 @@ UPDATE "CoachNote" SET "noteDate" = "weekStart" WHERE "noteDate" IS NULL;
 
 -- Now make it NOT NULL with default
 ALTER TABLE "CoachNote" ALTER COLUMN "noteDate" SET NOT NULL;
-ALTER TABLE "CoachNote" ALTER COLUMN "noteDate" SET DEFAULT CURRENT_DATE;
 
 -- CreateIndex
 CREATE INDEX "CoachNote_noteDate_idx" ON "CoachNote"("noteDate");

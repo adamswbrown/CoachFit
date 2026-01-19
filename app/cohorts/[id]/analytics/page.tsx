@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Role } from "@/lib/types"
-import { isAdmin } from "@/lib/permissions"
+import { isAdminOrCoach } from "@/lib/permissions"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 
 interface CohortAnalytics {
@@ -51,10 +51,13 @@ export default function CohortAnalyticsPage({
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user.roles.includes(Role.CLIENT)) {
-      router.push("/client-dashboard")
+    } else if (session?.user && !isAdminOrCoach(session.user)) {
+      if (session.user.roles.includes(Role.CLIENT)) {
+        router.push("/client-dashboard")
+      } else {
+        router.push("/login")
+      }
     }
-    // ADMIN and COACH can access - no redirect needed
   }, [status, session, router])
 
   useEffect(() => {

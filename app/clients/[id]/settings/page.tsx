@@ -7,6 +7,7 @@ import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import { Role } from "@/lib/types"
+import { isAdminOrCoach } from "@/lib/permissions"
 
 interface Client {
   id: string
@@ -45,8 +46,12 @@ export default function ClientSettingsPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user.roles.includes(Role.CLIENT)) {
-      router.push("/client-dashboard")
+    } else if (session?.user && !isAdminOrCoach(session.user)) {
+      if (session.user.roles.includes(Role.CLIENT)) {
+        router.push("/client-dashboard")
+      } else {
+        router.push("/login")
+      }
     }
   }, [status, session, router])
 

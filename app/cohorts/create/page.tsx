@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
-import { isAdmin } from "@/lib/permissions"
+import { isAdmin, isAdminOrCoach } from "@/lib/permissions"
 import { Role } from "@/lib/types"
 
 interface Coach {
@@ -37,8 +37,12 @@ export default function CreateCohortPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user.roles.includes(Role.CLIENT)) {
-      router.push("/client-dashboard")
+    } else if (session?.user && !isAdminOrCoach(session.user)) {
+      if (session.user.roles.includes(Role.CLIENT)) {
+        router.push("/client-dashboard")
+      } else {
+        router.push("/login")
+      }
     }
   }, [status, session, router])
 
