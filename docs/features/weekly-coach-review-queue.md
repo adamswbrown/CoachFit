@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Weekly Coach Review Queue is a coach-focused feature that provides a centralized dashboard for reviewing all clients' weekly progress, recording Loom video responses, and generating copyable email drafts.
+The Weekly Coach Review Queue is a coach-focused feature that provides a centralized dashboard for reviewing all clients' weekly progress, recording Loom video responses, and generating copyable email drafts. The queue includes priority-based filtering and visual indicators to help coaches efficiently focus on clients who need the most attention.
 
 ## Features
 
@@ -12,7 +12,9 @@ The Weekly Coach Review Queue is a coach-focused feature that provides a central
 
 The main dashboard displays:
 - Week selector (defaults to current week)
-- List of all clients in the coach's cohorts
+- **Priority summary cards** showing distribution of clients by engagement level
+- **Filter buttons** to focus on specific priority levels
+- List of all clients in the coach's cohorts, sorted by priority
 - Weekly aggregated stats for each client:
   - Check-in count and adherence rate
   - Average weight and weight trend
@@ -21,7 +23,39 @@ The main dashboard displays:
   - Average sleep duration per night
 - Last check-in date for each client
 
-### 2. Per-Client Actions
+### 2. Priority-Based Queue Management
+
+Clients are automatically categorized into three priority levels based on their check-in rate:
+
+#### Red Priority (Needs Attention)
+- **Criteria:** < 40% check-in rate (less than 3 check-ins out of 7)
+- **Visual:** Red border and background with red badge
+- **Action:** These clients require immediate attention and outreach
+
+#### Amber Priority (Watch Closely)
+- **Criteria:** 40-70% check-in rate (3-5 check-ins out of 7)
+- **Visual:** Amber border and background with amber badge
+- **Action:** Monitor these clients and consider check-in reminders
+
+#### Green Priority (Stable)
+- **Criteria:** > 70% check-in rate (5-7 check-ins out of 7)
+- **Visual:** Green border and background with green badge
+- **Action:** These clients are maintaining good engagement
+
+#### Priority Filters
+- **All:** Shows all clients sorted by priority (red → amber → green)
+- **Red:** Shows only clients needing immediate attention
+- **Amber:** Shows only clients to watch closely
+- **Green:** Shows only stable clients
+
+#### Summary Cards
+At the top of the queue, four summary cards display:
+- **Red count** with threshold explanation
+- **Amber count** with threshold explanation
+- **Green count** with threshold explanation
+- **Total client count** across all cohorts
+
+### 3. Per-Client Actions
 
 For each client in the queue, coaches can:
 
@@ -174,19 +208,41 @@ model WeeklyCoachResponse {
 
 ## User Workflow
 
-### Sunday Weekly Review Process
+### Efficient Priority-Based Review Process
 
 1. Coach navigates to `/coach-dashboard/weekly-review`
-2. Reviews the current week's client summaries
-3. For each client:
+2. Views **summary cards** at the top to understand overall engagement:
+   - Red: Clients needing immediate attention
+   - Amber: Clients to monitor closely  
+   - Green: Stable clients
+   - Total: All clients across cohorts
+3. Uses **filter buttons** to focus review efforts:
+   - Start with "Red" filter to prioritize clients needing attention
+   - Move to "Amber" filter for moderate engagement clients
+   - Review "Green" clients for positive reinforcement
+   - Or use "All" to see the complete list sorted by priority
+4. For each client (prioritized by urgency):
    - Reviews stats to identify progress or concerns
+   - Notes the priority badge and reason (e.g., "Only 2/7 check-ins (29%)")
    - Records a personalized Loom video
    - Pastes the Loom URL into the input field
    - Adds any private notes for internal tracking
    - Clicks "Save" to store the response
-4. Clicks "Copy Email Draft" to get pre-filled email text
-5. Pastes into email client and sends to client
-6. Optionally clicks "Open Review" for detailed day-by-day breakdown
+5. Clicks "Copy Email Draft" to get pre-filled email text
+6. Pastes into email client and sends to client
+7. Optionally clicks "Open Review" for detailed day-by-day breakdown
+
+### Sunday Weekly Review Process (Recommended)
+
+1. Start with **Red priority clients** (< 40% check-in rate)
+   - These require immediate outreach and intervention
+   - May need phone calls or additional support beyond email
+2. Move to **Amber priority clients** (40-70% check-in rate)
+   - Send encouraging reminders
+   - Identify barriers to consistent check-ins
+3. Finish with **Green priority clients** (> 70% check-in rate)
+   - Provide positive reinforcement
+   - Share progress insights and encouragement
 
 ### Mid-Week Follow-Up
 
@@ -194,6 +250,7 @@ Coaches can:
 - Select previous weeks to review past responses
 - Add or update Loom URLs for any week
 - View client's detailed weekly review page
+- Use priority filters to quickly check on red/amber clients mid-week
 
 ## Technical Details
 
