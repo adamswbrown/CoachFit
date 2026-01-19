@@ -67,6 +67,7 @@ export default function WeeklyReviewPage() {
   const [savingClient, setSavingClient] = useState<string | null>(null)
   const [copiedClient, setCopiedClient] = useState<string | null>(null)
   const [recalculating, setRecalculating] = useState(false)
+  const [priorityFilter, setPriorityFilter] = useState<"all" | "red" | "amber" | "green">("all")
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -192,6 +193,71 @@ export default function WeeklyReviewPage() {
     }
   }
 
+  // Calculate priority for a client based on check-in rate
+  const getClientPriority = (client: ClientSummary): "red" | "amber" | "green" => {
+    const checkInRate = client.stats.checkInRate
+    if (checkInRate < 0.4) { // Less than 40% (< 3 check-ins out of 7)
+      return "red"
+    } else if (checkInRate < 0.7) { // 40-70% (3-5 check-ins)
+      return "amber"
+    } else { // 70%+ (5-7 check-ins)
+      return "green"
+    }
+  }
+
+  // Get priority label and reasons
+  const getPriorityInfo = (client: ClientSummary) => {
+    const priority = getClientPriority(client)
+    const checkInCount = client.stats.checkInCount
+    const checkInRate = Math.round(client.stats.checkInRate * 100)
+    
+    const labels = {
+      red: "Needs Attention",
+      amber: "Watch Closely",
+      green: "Stable"
+    }
+    
+    const reasons = {
+      red: `Only ${checkInCount}/7 check-ins (${checkInRate}%)`,
+      amber: `${checkInCount}/7 check-ins (${checkInRate}%)`,
+      green: `${checkInCount}/7 check-ins (${checkInRate}%)`
+    }
+    
+    return { priority, label: labels[priority], reason: reasons[priority] }
+  }
+
+  // Filter and sort clients based on priority filter
+  const getFilteredClients = () => {
+    if (!data) return []
+    
+    const clientsWithPriority = data.clients.map(client => ({
+      ...client,
+      priority: getClientPriority(client)
+    }))
+    
+    // Filter by selected priority
+    const filtered = priorityFilter === "all" 
+      ? clientsWithPriority
+      : clientsWithPriority.filter(c => c.priority === priorityFilter)
+    
+    // Sort by priority (red first, then amber, then green)
+    return filtered.sort((a, b) => {
+      const priorityOrder = { red: 0, amber: 1, green: 2 }
+      return priorityOrder[a.priority] - priorityOrder[b.priority]
+    })
+  }
+
+  // Get summary counts
+  const getSummary = () => {
+    if (!data) return { red: 0, amber: 0, green: 0, total: 0 }
+    
+    const red = data.clients.filter(c => getClientPriority(c) === "red").length
+    const amber = data.clients.filter(c => getClientPriority(c) === "amber").length
+    const green = data.clients.filter(c => getClientPriority(c) === "green").length
+    
+    return { red, amber, green, total: data.clients.length }
+  }
+
   if (status === "loading" || loading) {
     return (
       <CoachLayout>
@@ -268,17 +334,91 @@ export default function WeeklyReviewPage() {
           </button>
         </div>
 
+        {/* Summary Cards */}
+        {data && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="text-sm text-red-700 font-medium mb-1">Red (Needs Attention)</div>
+              <div className="text-2xl font-bold text-red-900">{getSummary().red}</div>
+              <div className="text-xs text-red-600 mt-1">&lt; 40% check-in rate</div>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="text-sm text-amber-700 font-medium mb-1">Amber (Watch Closely)</div>
+              <div className="text-2xl font-bold text-amber-900">{getSummary().amber}</div>
+              <div className="text-xs text-amber-600 mt-1">40-70% check-in rate</div>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="text-sm text-green-700 font-medium mb-1">Green (Stable)</div>
+              <div className="text-2xl font-bold text-green-900">{getSummary().green}</div>
+              <div className="text-xs text-green-600 mt-1">&gt; 70% check-in rate</div>
+            </div>
+            <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+              <div className="text-sm text-neutral-700 font-medium mb-1">Total Clients</div>
+              <div className="text-2xl font-bold text-neutral-900">{getSummary().total}</div>
+              <div className="text-xs text-neutral-600 mt-1">All cohorts</div>
+            </div>
+          </div>
+        )}
+
+        {/* Priority Filters */}
+        {data && data.clients.length > 0 && (
+          <div className="mb-6 flex gap-2">
+            <button
+              onClick={() => setPriorityFilter("all")}
+              className={`px-4 py-2 rounded-md transition-colors text-sm font-medium ${
+                priorityFilter === "all"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50"
+              }`}
+            >
+              All ({getSummary().total})
+            </button>
+            <button
+              onClick={() => setPriorityFilter("red")}
+              className={`px-4 py-2 rounded-md transition-colors text-sm font-medium ${
+                priorityFilter === "red"
+                  ? "bg-red-600 text-white"
+                  : "bg-white border border-red-300 text-red-700 hover:bg-red-50"
+              }`}
+            >
+              Red ({getSummary().red})
+            </button>
+            <button
+              onClick={() => setPriorityFilter("amber")}
+              className={`px-4 py-2 rounded-md transition-colors text-sm font-medium ${
+                priorityFilter === "amber"
+                  ? "bg-amber-600 text-white"
+                  : "bg-white border border-amber-300 text-amber-700 hover:bg-amber-50"
+              }`}
+            >
+              Amber ({getSummary().amber})
+            </button>
+            <button
+              onClick={() => setPriorityFilter("green")}
+              className={`px-4 py-2 rounded-md transition-colors text-sm font-medium ${
+                priorityFilter === "green"
+                  ? "bg-green-600 text-white"
+                  : "bg-white border border-green-300 text-green-700 hover:bg-green-50"
+              }`}
+            >
+              Green ({getSummary().green})
+            </button>
+          </div>
+        )}
+
         {/* Client List */}
-        {data && data.clients.length === 0 ? (
+        {data && getFilteredClients().length === 0 ? (
           <div className="bg-white rounded-lg border border-neutral-200 p-8 text-center">
             <p className="text-neutral-600">
-              No clients found for this week. Add clients to your cohorts to see their
-              weekly summaries here.
+              {priorityFilter === "all"
+                ? "No clients found for this week. Add clients to your cohorts to see their weekly summaries here."
+                : `No ${priorityFilter} priority clients for this week.`}
             </p>
           </div>
         ) : (
           <div className="space-y-4">
-            {data?.clients.map((client) => {
+            {getFilteredClients().map((client) => {
+              const { priority, label, reason } = getPriorityInfo(client)
               const adherenceColor =
                 client.stats.checkInCount >= 6
                   ? "green"
@@ -286,14 +426,34 @@ export default function WeeklyReviewPage() {
                   ? "yellow"
                   : "red"
 
+              const priorityColors = {
+                red: "border-red-300 bg-red-50",
+                amber: "border-amber-300 bg-amber-50",
+                green: "border-green-300 bg-green-50",
+              }
+
+              const priorityBadgeColors = {
+                red: "bg-red-600 text-white",
+                amber: "bg-amber-600 text-white",
+                green: "bg-green-600 text-white",
+              }
+
               return (
                 <div
                   key={client.clientId}
-                  className="bg-white rounded-lg border border-neutral-200 p-6"
+                  className={`bg-white rounded-lg border p-6 ${priorityColors[priority]}`}
                 >
-                  {/* Client Header */}
+                  {/* Client Header with Priority Badge */}
                   <div className="flex items-start justify-between mb-4">
-                    <div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded ${priorityBadgeColors[priority]}`}
+                        >
+                          {label}
+                        </span>
+                        <span className="text-xs text-neutral-500">{reason}</span>
+                      </div>
                       <h3 className="text-lg font-semibold text-neutral-900">
                         {client.name || client.email}
                       </h3>
