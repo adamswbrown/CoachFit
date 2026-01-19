@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import Script from "next/script"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 import { SessionProvider } from "@/components/SessionProvider"
 import { RoleProvider } from "@/contexts/RoleContext"
@@ -91,6 +92,7 @@ export default function RootLayout({
         <SessionProvider>
           <RoleProvider>{children}</RoleProvider>
         </SessionProvider>
+        <SpeedInsights />
       </body>
     </html>
   )
