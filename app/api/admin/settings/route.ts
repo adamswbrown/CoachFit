@@ -14,8 +14,8 @@ const DEFAULT_SETTINGS = {
   shortTermWindowDays: 7,
   longTermWindowDays: 30,
   adminOverrideEmail: null,
-  healthkitEnabled: true,
-  iosIntegrationEnabled: true,
+  healthkitEnabled: false,
+  iosIntegrationEnabled: false,
   adherenceGreenMinimum: 6,
   adherenceAmberMinimum: 3,
 }
