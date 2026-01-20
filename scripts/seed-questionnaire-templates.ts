@@ -8,6 +8,13 @@ async function seedQuestionnaireTemplates() {
     // Create a "Template Coach" user if doesn't exist
     let templateCoach = await db.user.findFirst({
       where: { email: "template-coach@coachfit.internal" },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        roles: true,
+        isTestUser: true,
+      },
     })
 
     if (!templateCoach) {
@@ -17,6 +24,13 @@ async function seedQuestionnaireTemplates() {
           email: "template-coach@coachfit.internal",
           name: "Template Coach",
           roles: ["COACH"],
+          isTestUser: true,
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          roles: true,
           isTestUser: true,
         },
       })
