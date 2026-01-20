@@ -17,13 +17,6 @@ const updateTemplateSchema = z.object({
   enabled: z.boolean().optional(),
 })
 
-const previewTemplateSchema = z.object({
-  subjectTemplate: z.string(),
-  bodyTemplate: z.string(),
-  textTemplate: z.string(),
-  mockVariables: z.record(z.string()),
-})
-
 // GET /api/admin/email-templates/[key] - Get a single template
 export async function GET(
   req: NextRequest,

@@ -8,7 +8,7 @@ const previewSchema = z.object({
   subjectTemplate: z.string(),
   bodyTemplate: z.string(),
   textTemplate: z.string(),
-  mockVariables: z.record(z.string()),
+  mockVariables: z.record(z.string(), z.string()),
 })
 
 // POST /api/admin/email-templates/preview - Preview a template with mock data
