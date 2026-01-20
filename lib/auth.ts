@@ -256,14 +256,17 @@ export const authOptions: NextAuthConfig = {
         if (Array.isArray(user.roles) && user.roles.length > 0) {
           token.roles = user.roles
           token.isTestUser = user.isTestUser ?? false
+          token.isOnboardingComplete =
+            (user as any).isOnboardingComplete ?? (user as any).onboardingComplete ?? false
         } else {
           const dbUser = await db.user.findUnique({
             where: { id: user.id },
-            select: { roles: true, isTestUser: true },
+            select: { roles: true, isTestUser: true, onboardingComplete: true },
           })
 
           token.roles = dbUser?.roles ?? [Role.CLIENT]
           token.isTestUser = dbUser?.isTestUser ?? false
+          token.isOnboardingComplete = dbUser?.onboardingComplete ?? false
         }
       }
 
@@ -290,6 +293,7 @@ export const authOptions: NextAuthConfig = {
         session.user.id = token.id as string
         session.user.roles = (token.roles as Role[]) ?? [Role.CLIENT]
         session.user.isTestUser = token.isTestUser as boolean
+        ;(session.user as any).isOnboardingComplete = token.isOnboardingComplete as boolean
       }
 
       return session

@@ -194,6 +194,10 @@ model User {
   createdAt              DateTime                @default(now())
   invitedByCoachId       String?
   onboardingComplete     Boolean                 @default(false)
+  gender                 String?
+  dateOfBirth            DateTime?               @db.Date
+  activityLevel          String?
+  primaryGoal            String?
   Account                Account[]
   AdminActions           AdminAction[]           @relation("AdminActions")
   CoachCohortMembership  CoachCohortMembership[]
@@ -212,6 +216,8 @@ model User {
   User                   User?                   @relation("UserToUser", fields: [invitedByCoachId], references: [id])
   other_User             User[]                  @relation("UserToUser")
   UserConsent            UserConsent?
+  UserGoals              UserGoals?
+  UserPreference         UserPreference?
   Workouts               Workout[]
 
   @@index([invitedByCoachId])
@@ -331,22 +337,41 @@ model AdminAction {
 }
 
 model SystemSettings {
-  id                     String   @id @default(uuid())
-  maxClientsPerCoach     Int      @default(50)
-  minClientsPerCoach     Int      @default(10)
-  recentActivityDays     Int      @default(14)
-  lowEngagementEntries   Int      @default(7)
-  noActivityDays         Int      @default(14)
-  criticalNoActivityDays Int      @default(30)
-  shortTermWindowDays    Int      @default(7)
-  longTermWindowDays     Int      @default(30)
-  adminOverrideEmail     String?
-  healthkitEnabled       Boolean  @default(true)
-  iosIntegrationEnabled  Boolean  @default(true)
-  adherenceGreenMinimum  Int      @default(6)
-  adherenceAmberMinimum  Int      @default(3)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                       String   @id @default(uuid())
+  maxClientsPerCoach       Int      @default(50)
+  minClientsPerCoach       Int      @default(10)
+  recentActivityDays       Int      @default(14)
+  lowEngagementEntries     Int      @default(7)
+  noActivityDays           Int      @default(14)
+  criticalNoActivityDays   Int      @default(30)
+  shortTermWindowDays      Int      @default(7)
+  longTermWindowDays       Int      @default(30)
+  adminOverrideEmail       String?
+  healthkitEnabled         Boolean  @default(true)
+  iosIntegrationEnabled    Boolean  @default(true)
+  adherenceGreenMinimum    Int      @default(6)
+  adherenceAmberMinimum    Int      @default(3)
+  bodyFatLowPercent        Float    @default(12.5)
+  bodyFatMediumPercent     Float    @default(20.0)
+  bodyFatHighPercent       Float    @default(30.0)
+  bodyFatVeryHighPercent   Float    @default(37.5)
+  minDailyCalories         Int      @default(1000)
+  maxDailyCalories         Int      @default(5000)
+  minProteinPerLb          Float    @default(0.4)
+  maxProteinPerLb          Float    @default(2.0)
+  defaultCarbsPercent      Float    @default(40.0)
+  defaultProteinPercent    Float    @default(30.0)
+  defaultFatPercent        Float    @default(30.0)
+  stepsNotMuch             Int      @default(5000)
+  stepsLight               Int      @default(7500)
+  stepsModerate            Int      @default(10000)
+  stepsHeavy               Int      @default(12500)
+  workoutNotMuch           Int      @default(75)
+  workoutLight             Int      @default(150)
+  workoutModerate          Int      @default(225)
+  workoutHeavy             Int      @default(300)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   @@index([createdAt])
 }
@@ -385,6 +410,39 @@ model EmailTemplate {
 
   @@index([key])
   @@index([enabled])
+}
+
+model UserGoals {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  currentWeightKg      Float?
+  targetWeightKg       Float?
+  heightCm             Float?
+  dailyCaloriesKcal    Int?
+  proteinGrams         Float?
+  carbGrams            Float?
+  fatGrams             Float?
+  waterIntakeMl        Int?
+  dailyStepsTarget     Int?
+  weeklyWorkoutMinutes Int?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model UserPreference {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  weightUnit        String   @default("lbs")
+  measurementUnit   String   @default("inches")
+  dateFormat        String   @default("MM/dd/yyyy")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum Role {

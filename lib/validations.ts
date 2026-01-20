@@ -72,3 +72,93 @@ export const signupSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().optional(),
 })
+
+// Onboarding validation schemas
+export const onboardingStep1Schema = z.object({
+  sex: z.enum(["male", "female"], { message: "Sex must be either male or female" }),
+  weightUnit: z.enum(["lbs", "kg"]).default("lbs"),
+  measurementUnit: z.enum(["inches", "cm"]).default("inches"),
+})
+
+export const onboardingStep2Schema = z.object({
+  primaryGoal: z.enum(["lose_weight", "maintain_weight", "gain_weight"], {
+    message: "Primary goal must be lose_weight, maintain_weight, or gain_weight",
+  }),
+})
+
+export const onboardingStep3Schema = z.object({
+  currentWeight: z.number().positive("Weight must be greater than 0").max(1000, "Weight must be 1000 or less"),
+})
+
+export const onboardingStep4Schema = z.object({
+  height: z.number().positive("Height must be greater than 0").max(300, "Height must be 300 or less"),
+})
+
+export const onboardingStep5Schema = z.object({
+  birthDate: z.string().refine(
+    (date) => {
+      const d = new Date(date)
+      return !isNaN(d.getTime())
+    },
+    { message: "Invalid birth date format" }
+  ),
+  dateFormat: z.enum(["MM/dd/yyyy", "dd/MM/yyyy", "dd-MMM-yyyy", "yyyy-MM-dd", "MMM dd, yyyy"]).default("MM/dd/yyyy"),
+})
+
+export const onboardingStep6Schema = z.object({
+  bodyFatRange: z.enum(["low", "medium", "high", "very_high"], {
+    message: "Body fat range must be low, medium, high, or very_high",
+  }),
+})
+
+export const onboardingStep7Schema = z.object({
+  targetWeight: z.number().positive("Target weight must be greater than 0").max(1000, "Target weight must be 1000 or less"),
+})
+
+export const onboardingStep8Schema = z.object({
+  activityLevel: z.enum(["not_much", "light", "moderate", "heavy"], {
+    message: "Activity level must be not_much, light, moderate, or heavy",
+  }),
+})
+
+export const onboardingStep9Schema = z.object({
+  addBurnedCalories: z.boolean().default(false),
+})
+
+export const onboardingPlanReviewSchema = z.object({
+  dailyCaloriesKcal: z.number().int().min(500, "Daily calories must be at least 500 kcal").max(10000, "Daily calories must not exceed 10,000 kcal"),
+  proteinGrams: z.number().positive("Protein must be greater than 0").max(500, "Protein must not exceed 500g"),
+  carbGrams: z.number().nonnegative("Carbs must be 0 or greater").max(1000, "Carbs must not exceed 1,000g"),
+  fatGrams: z.number().nonnegative("Fat must be 0 or greater").max(500, "Fat must not exceed 500g"),
+  waterIntakeMl: z.number().positive("Water intake must be greater than 0").max(10000, "Water intake must not exceed 10,000 ml"),
+  dailyStepsTarget: z.number().int().nonnegative().optional(),
+  weeklyWorkoutMinutes: z.number().int().nonnegative().optional(),
+})
+
+export const onboardingSubmitSchema = z.object({
+  sex: z.enum(["male", "female"]),
+  primaryGoal: z.enum(["lose_weight", "maintain_weight", "gain_weight"]),
+  currentWeightKg: z.number().positive(),
+  heightCm: z.number().positive(),
+  birthDate: z.string(),
+  bodyFatRange: z.enum(["low", "medium", "high", "very_high"]),
+  targetWeightKg: z.number().positive(),
+  activityLevel: z.enum(["not_much", "light", "moderate", "heavy"]),
+  addBurnedCalories: z.boolean(),
+  weightUnit: z.enum(["lbs", "kg"]).default("lbs"),
+  measurementUnit: z.enum(["inches", "cm"]).default("inches"),
+  dateFormat: z.enum(["MM/dd/yyyy", "dd/MM/yyyy", "dd-MMM-yyyy", "yyyy-MM-dd", "MMM dd, yyyy"]).default("MM/dd/yyyy"),
+  dailyCaloriesKcal: z.number().int(),
+  proteinGrams: z.number(),
+  carbGrams: z.number(),
+  fatGrams: z.number(),
+  waterIntakeMl: z.number().int(),
+  dailyStepsTarget: z.number().int().optional(),
+  weeklyWorkoutMinutes: z.number().int().optional(),
+})
+
+export const userPreferenceSchema = z.object({
+  weightUnit: z.enum(["lbs", "kg"]).default("lbs"),
+  measurementUnit: z.enum(["inches", "cm"]).default("inches"),
+  dateFormat: z.enum(["MM/dd/yyyy", "dd/MM/yyyy", "dd-MMM-yyyy", "yyyy-MM-dd", "MMM dd, yyyy"]).default("MM/dd/yyyy"),
+})
