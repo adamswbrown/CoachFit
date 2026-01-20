@@ -344,7 +344,7 @@ export default function ClientOverviewPage() {
             {/* Training Section */}
             <div className="bg-white border border-neutral-200 rounded-lg p-6">
               <h2 className="text-lg font-semibold text-neutral-900 mb-4">Training</h2>
-              <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <div className="text-xs text-neutral-500 mb-1">LAST 7 DAYS</div>
                   <div className="text-2xl font-semibold text-neutral-900">
@@ -355,12 +355,6 @@ export default function ClientOverviewPage() {
                   <div className="text-xs text-neutral-500 mb-1">LAST 30 DAYS</div>
                   <div className="text-2xl font-semibold text-neutral-900">
                     {checkInCount30d}/30 Tracked
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-neutral-500 mb-1">NEXT WEEK</div>
-                  <div className="text-2xl font-semibold text-neutral-900">
-                    0 Assigned
                   </div>
                 </div>
               </div>
