@@ -18,6 +18,17 @@ const DEFAULT_SETTINGS = {
   iosIntegrationEnabled: false,
   adherenceGreenMinimum: 6,
   adherenceAmberMinimum: 3,
+  bodyFatLowPercent: 12.5,
+  bodyFatMediumPercent: 20.0,
+  bodyFatHighPercent: 30.0,
+  bodyFatVeryHighPercent: 37.5,
+  minDailyCalories: 1000,
+  maxDailyCalories: 5000,
+  minProteinPerLb: 0.4,
+  maxProteinPerLb: 2.0,
+  defaultCarbsPercent: 40,
+  defaultProteinPercent: 30,
+  defaultFatPercent: 30,
 }
 
 // Validation schema for settings updates
@@ -35,6 +46,17 @@ const settingsSchema = z.object({
   iosIntegrationEnabled: z.boolean().optional(),
   adherenceGreenMinimum: z.number().int().min(1).max(7).optional(),
   adherenceAmberMinimum: z.number().int().min(0).max(6).optional(),
+  bodyFatLowPercent: z.number().min(5).max(30).optional(),
+  bodyFatMediumPercent: z.number().min(10).max(40).optional(),
+  bodyFatHighPercent: z.number().min(15).max(50).optional(),
+  bodyFatVeryHighPercent: z.number().min(20).max(60).optional(),
+  minDailyCalories: z.number().int().min(500).max(4000).optional(),
+  maxDailyCalories: z.number().int().min(2000).max(8000).optional(),
+  minProteinPerLb: z.number().min(0.2).max(1).optional(),
+  maxProteinPerLb: z.number().min(1).max(3).optional(),
+  defaultCarbsPercent: z.number().min(0).max(100).optional(),
+  defaultProteinPercent: z.number().min(0).max(100).optional(),
+  defaultFatPercent: z.number().min(0).max(100).optional(),
 })
 
 /**
@@ -115,6 +137,13 @@ export async function PUT(req: NextRequest) {
       minClientsPerCoach,
       adherenceGreenMinimum,
       adherenceAmberMinimum,
+      minDailyCalories,
+      maxDailyCalories,
+      minProteinPerLb,
+      maxProteinPerLb,
+      defaultCarbsPercent,
+      defaultProteinPercent,
+      defaultFatPercent,
     } = validationResult.data
     if (
       maxClientsPerCoach !== undefined &&
@@ -161,6 +190,13 @@ export async function PUT(req: NextRequest) {
             iosIntegrationEnabled: validationResult.data.iosIntegrationEnabled ?? DEFAULT_SETTINGS.iosIntegrationEnabled,
             adherenceGreenMinimum: validationResult.data.adherenceGreenMinimum ?? DEFAULT_SETTINGS.adherenceGreenMinimum,
             adherenceAmberMinimum: validationResult.data.adherenceAmberMinimum ?? DEFAULT_SETTINGS.adherenceAmberMinimum,
+            minDailyCalories: validationResult.data.minDailyCalories ?? DEFAULT_SETTINGS.minDailyCalories,
+            maxDailyCalories: validationResult.data.maxDailyCalories ?? DEFAULT_SETTINGS.maxDailyCalories,
+            minProteinPerLb: validationResult.data.minProteinPerLb ?? DEFAULT_SETTINGS.minProteinPerLb,
+            maxProteinPerLb: validationResult.data.maxProteinPerLb ?? DEFAULT_SETTINGS.maxProteinPerLb,
+            defaultCarbsPercent: validationResult.data.defaultCarbsPercent ?? DEFAULT_SETTINGS.defaultCarbsPercent,
+            defaultProteinPercent: validationResult.data.defaultProteinPercent ?? DEFAULT_SETTINGS.defaultProteinPercent,
+            defaultFatPercent: validationResult.data.defaultFatPercent ?? DEFAULT_SETTINGS.defaultFatPercent,
           },
         })
       } else {

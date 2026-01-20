@@ -7,6 +7,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useRole } from "@/contexts/RoleContext"
 import { Role } from "@/lib/types"
+import { ConfirmDialog } from "./ConfirmDialog"
+import { UnitToggle } from "./onboarding/UnitToggle"
 
 interface UserProfileMenuProps {
   userName: string
@@ -35,12 +37,33 @@ const roleConfig = {
   },
 }
 
+const dateFormatOptions = [
+  "MM/dd/yyyy",
+  "dd/MM/yyyy",
+  "dd-MMM-yyyy",
+  "yyyy-MM-dd",
+  "MMM dd, yyyy",
+] as const
+
 export function UserProfileMenu({ 
   userName, 
   showRoleSwitcher = false,
   showAdminLink = false 
 }: UserProfileMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
+  const [resetError, setResetError] = useState("")
+  const [isPrefModalOpen, setIsPrefModalOpen] = useState(false)
+  const [prefError, setPrefError] = useState("")
+  const [isSavingPrefs, setIsSavingPrefs] = useState(false)
+  const [isPrefLoading, setIsPrefLoading] = useState(false)
+  const [prefLoaded, setPrefLoaded] = useState(false)
+  const [preferenceForm, setPreferenceForm] = useState({
+    weightUnit: "lbs" as "lbs" | "kg",
+    measurementUnit: "inches" as "inches" | "cm",
+    dateFormat: dateFormatOptions[0] as (typeof dateFormatOptions)[number],
+  })
   const dropdownRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
   const router = useRouter()
@@ -81,6 +104,81 @@ export function UserProfileMenu({
   }
 
   const showRoles = showRoleSwitcher && availableRoles && availableRoles.length > 1
+  const showClientActions = availableRoles?.includes(Role.CLIENT)
+
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      setIsPrefLoading(true)
+      try {
+        const res = await fetch("/api/onboarding/preferences")
+        if (!res.ok) return
+        const body = await res.json()
+        const pref = body?.data?.preference
+        if (!pref) return
+
+        setPreferenceForm({
+          weightUnit: (pref.weightUnit as "lbs" | "kg") ?? "lbs",
+          measurementUnit: (pref.measurementUnit as "inches" | "cm") ?? "inches",
+          dateFormat: (pref.dateFormat as (typeof dateFormatOptions)[number]) ?? dateFormatOptions[0],
+        })
+        setPrefLoaded(true)
+      } catch (error) {
+        console.error("Failed to fetch preferences", error)
+      } finally {
+        setIsPrefLoading(false)
+      }
+    }
+
+    if (isPrefModalOpen && !prefLoaded) {
+      void fetchPreferences()
+    }
+  }, [isPrefModalOpen, prefLoaded])
+
+  const handleResetOnboarding = async () => {
+    setResetError("")
+    setIsResetting(true)
+
+    try {
+      const res = await fetch("/api/onboarding/reset", { method: "POST" })
+      if (!res.ok) {
+        throw new Error("Failed to reset onboarding")
+      }
+
+      setIsResetDialogOpen(false)
+      setIsOpen(false)
+      router.push("/onboarding/client")
+      router.refresh()
+    } catch (error) {
+      setResetError("Could not reset onboarding. Please try again.")
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
+  const handleSavePreferences = async () => {
+    setPrefError("")
+    setIsSavingPrefs(true)
+
+    try {
+      const res = await fetch("/api/onboarding/preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(preferenceForm),
+      })
+
+      if (!res.ok) {
+        throw new Error("Failed to save preferences")
+      }
+
+      setIsPrefModalOpen(false)
+      setIsOpen(false)
+      router.refresh()
+    } catch (error) {
+      setPrefError("Could not save preferences. Please try again.")
+    } finally {
+      setIsSavingPrefs(false)
+    }
+  }
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -171,6 +269,32 @@ export function UserProfileMenu({
                 <span>Settings</span>
               </Link>
 
+              {showClientActions && (
+                <>
+                  <button
+                    onClick={() => {
+                      setResetError("")
+                      setIsResetDialogOpen(true)
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                  >
+                    <span className="text-lg">♻️</span>
+                    <span>Reset onboarding</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setPrefError("")
+                      setIsPrefModalOpen(true)
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                  >
+                    <span className="text-lg">📏</span>
+                    <span>Units & dates</span>
+                  </button>
+                </>
+              )}
+
               {showAdminLink && (
                 <Link
                   href="/admin"
@@ -199,6 +323,118 @@ export function UserProfileMenu({
                 <span className="text-lg">🚪</span>
                 <span>Sign out</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        isOpen={isResetDialogOpen}
+        title="Reset onboarding?"
+        message="You'll restart the onboarding flow and replace your current plan. Unit preferences are kept."
+        confirmText="Yes, reset"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleResetOnboarding}
+        onCancel={() => {
+          if (!isResetting) setIsResetDialogOpen(false)
+        }}
+        isLoading={isResetting}
+      />
+
+      {isResetDialogOpen && resetError && (
+        <div className="fixed inset-0 flex items-end justify-center pb-6 pointer-events-none">
+          <div className="bg-red-600 text-white text-sm px-4 py-2 rounded shadow pointer-events-auto">
+            {resetError}
+          </div>
+        </div>
+      )}
+
+      {isPrefModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
+            <div className="p-6 space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-900">Units & date format</h2>
+                <p className="text-sm text-neutral-600 mt-1">Applies to dashboards and onboarding.</p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-neutral-800">Weight</div>
+                {isPrefLoading ? (
+                  <div className="text-sm text-neutral-500">Loading preferences...</div>
+                ) : (
+                  <UnitToggle
+                    unit1="lbs"
+                    unit1Label="lbs"
+                    unit2="kg"
+                    unit2Label="kg"
+                    value={preferenceForm.weightUnit}
+                    onChange={(value) => setPreferenceForm((prev) => ({ ...prev, weightUnit: value as "lbs" | "kg" }))}
+                  />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-neutral-800">Measurements</div>
+                {isPrefLoading ? (
+                  <div className="text-sm text-neutral-500">Loading preferences...</div>
+                ) : (
+                  <UnitToggle
+                    unit1="inches"
+                    unit1Label="inches"
+                    unit2="cm"
+                    unit2Label="cm"
+                    value={preferenceForm.measurementUnit}
+                    onChange={(value) => setPreferenceForm((prev) => ({ ...prev, measurementUnit: value as "inches" | "cm" }))}
+                  />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-neutral-800">Date format</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {dateFormatOptions.map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => setPreferenceForm((prev) => ({ ...prev, dateFormat: option }))}
+                      className={`text-sm border rounded-md px-3 py-2 text-left transition-colors ${
+                        preferenceForm.dateFormat === option
+                          ? "border-blue-600 bg-blue-50 text-blue-900"
+                          : "border-neutral-200 hover:border-blue-500 hover:text-blue-700"
+                      } ${isPrefLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+                      disabled={isPrefLoading}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {prefError && (
+                <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
+                  {prefError}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    if (!isSavingPrefs) setIsPrefModalOpen(false)
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors disabled:opacity-50"
+                  disabled={isSavingPrefs}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSavePreferences}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:opacity-50"
+                  disabled={isSavingPrefs || isPrefLoading}
+                >
+                  {isSavingPrefs ? "Saving..." : "Save preferences"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
