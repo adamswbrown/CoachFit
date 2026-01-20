@@ -99,9 +99,9 @@ export async function renderEmailTemplate(
     // If template exists and is enabled, use it
     if (template && template.enabled) {
       return {
-        subject: substituteTokens(template.subjectTemplate, variables),
-        html: substituteTokens(template.bodyTemplate, variables),
-        text: substituteTokens(template.textTemplate, variables),
+        subject: substituteTokens(template.subjectTemplate, variables, false), // No escaping for subject
+        html: substituteTokens(template.bodyTemplate, variables, true), // Escape for HTML
+        text: substituteTokens(template.textTemplate, variables, false), // No escaping for plain text
       }
     }
 
@@ -179,8 +179,8 @@ export function previewEmailTemplate(
   mockVariables: EmailVariables
 ): RenderedEmail {
   return {
-    subject: substituteTokens(subjectTemplate, mockVariables),
-    html: substituteTokens(bodyTemplate, mockVariables),
-    text: substituteTokens(textTemplate, mockVariables),
+    subject: substituteTokens(subjectTemplate, mockVariables, false), // No escaping for subject
+    html: substituteTokens(bodyTemplate, mockVariables, true), // Escape for HTML
+    text: substituteTokens(textTemplate, mockVariables, false), // No escaping for plain text
   }
 }

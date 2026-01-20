@@ -10,7 +10,7 @@ const DEFAULT_TEMPLATES = [
     bodyTemplate: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #1f2937;">Welcome to CoachFit!</h2>
-        <p>Hi{{userName}},</p>
+        <p>Hi {{userName}},</p>
         <p>Welcome to CoachFit! We're excited to have you on board.</p>
         <p>You're all set — your coach will guide you next.</p>
         <p style="margin-top: 24px;">
@@ -26,7 +26,7 @@ const DEFAULT_TEMPLATES = [
         </p>
       </div>
     `,
-    textTemplate: `Welcome to CoachFit!\n\nHi{{userName}},\n\nWelcome to CoachFit! We're excited to have you on board.\n\nYou're all set — your coach will guide you next.\n\nSign in to your dashboard: {{loginUrl}}\n\nIf you have any questions, please contact your coach.`,
+    textTemplate: `Welcome to CoachFit!\n\nHi {{userName}},\n\nWelcome to CoachFit! We're excited to have you on board.\n\nYou're all set — your coach will guide you next.\n\nSign in to your dashboard: {{loginUrl}}\n\nIf you have any questions, please contact your coach.`,
     availableTokens: ["userName", "loginUrl"],
   },
   {
@@ -110,7 +110,7 @@ const DEFAULT_TEMPLATES = [
     bodyTemplate: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #1f2937;">New Sign-In Option Available</h2>
-        <p>Hi{{userName}},</p>
+        <p>Hi {{userName}},</p>
         <p>Good news! Your administrator has set up a password for your CoachFit account.</p>
         <p>You can now sign in using <strong>either</strong>:</p>
         <ul>
@@ -128,7 +128,7 @@ const DEFAULT_TEMPLATES = [
         </p>
       </div>
     `,
-    textTemplate: `New Sign-In Option Available\n\nHi{{userName}},\n\nGood news! Your administrator has set up a password for your CoachFit account.\n\nYou can now sign in using either:\n- Your Google account (as before)\n- Your email and new password\n\nContact your administrator for your password, then sign in: {{loginUrl}}\n\nIf you did not expect this, please contact your administrator.`,
+    textTemplate: `New Sign-In Option Available\n\nHi {{userName}},\n\nGood news! Your administrator has set up a password for your CoachFit account.\n\nYou can now sign in using either:\n- Your Google account (as before)\n- Your email and new password\n\nContact your administrator for your password, then sign in: {{loginUrl}}\n\nIf you did not expect this, please contact your administrator.`,
     availableTokens: ["userName", "loginUrl"],
   },
   {
@@ -139,7 +139,7 @@ const DEFAULT_TEMPLATES = [
     bodyTemplate: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #1f2937;">Password Reset</h2>
-        <p>Hi{{userName}},</p>
+        <p>Hi {{userName}},</p>
         <p>Your password has been reset by an administrator.</p>
         <p>Please contact your administrator for your new password, then sign in:</p>
         <p style="margin-top: 24px;">
@@ -152,7 +152,7 @@ const DEFAULT_TEMPLATES = [
         </p>
       </div>
     `,
-    textTemplate: `Password Reset\n\nHi{{userName}},\n\nYour password has been reset by an administrator.\n\nPlease contact your administrator for your new password, then sign in: {{loginUrl}}\n\nIf you did not expect this, please contact your administrator immediately.`,
+    textTemplate: `Password Reset\n\nHi {{userName}},\n\nYour password has been reset by an administrator.\n\nPlease contact your administrator for your new password, then sign in: {{loginUrl}}\n\nIf you did not expect this, please contact your administrator immediately.`,
     availableTokens: ["userName", "loginUrl"],
   },
 ]
