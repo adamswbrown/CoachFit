@@ -127,7 +127,7 @@ Get authenticated user's entries.
       "steps": 10000,
       "calories": 2000,
       "sleepQuality": 8,
-      "perceivedEffort": 6,
+      "perceivedStress": 6,
       "notes": "Great workout today",
       "customResponses": {},
       "createdAt": "2025-01-15T10:00:00Z",
@@ -151,7 +151,7 @@ Create or update entry for authenticated user.
   "steps": 10000,        // optional
   "calories": 2000,      // optional
   "sleepQuality": 8,     // optional (1-10)
-  "perceivedEffort": 6,  // optional (1-10)
+  "perceivedStress": 6,  // optional (1-10)
   "notes": "Text",       // optional
   "customResponses": {}  // optional
 }

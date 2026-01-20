@@ -104,7 +104,7 @@ function generateEntryData(
   profile: ActivityProfile,
   dayOffset: number,
   gender: Gender
-): { weight: number; steps: number; calories: number; heightInches?: number; sleepQuality?: number; perceivedEffort?: number } {
+): { weight: number; steps: number; calories: number; heightInches?: number; sleepQuality?: number; perceivedStress?: number } {
   // Weight varies by ±3 lbs with slight trend over time
   const weightTrend = dayOffset * 0.01 // Slight weight loss trend
   const weightVariation = (Math.random() - 0.5) * 6
@@ -129,12 +129,12 @@ function generateEntryData(
     ? Math.floor(Math.random() * 10) + 1
     : undefined
 
-  // Perceived effort (1-10 scale, only set for some entries)
-  const perceivedEffort = Math.random() > 0.5
+  // Perceived stress (1-10 scale, only set for some entries)
+  const perceivedStress = Math.random() > 0.5
     ? Math.floor(Math.random() * 10) + 1
     : undefined
 
-  return { weight, steps, calories, heightInches, sleepQuality, perceivedEffort }
+  return { weight, steps, calories, heightInches, sleepQuality, perceivedStress }
 }
 
 // Generate random client name and email
@@ -379,7 +379,7 @@ async function main() {
       calories?: number
       heightInches?: number
       sleepQuality?: number
-      perceivedEffort?: number
+      perceivedStress?: number
       dataSources: string[]
     }> = []
 
@@ -395,7 +395,7 @@ async function main() {
         calories: entryData.calories,
         heightInches: entryData.heightInches,
         sleepQuality: entryData.sleepQuality,
-        perceivedEffort: entryData.perceivedEffort,
+        perceivedStress: entryData.perceivedStress,
         dataSources: ["manual"],
       })
     }

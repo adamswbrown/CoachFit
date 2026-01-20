@@ -111,7 +111,7 @@ export async function GET(
         calories: true,
         heightInches: true,
         sleepQuality: true,
-        perceivedEffort: true,
+        perceivedStress: true,
         dataSources: true,
       },
     })
@@ -130,7 +130,7 @@ export async function GET(
       steps: number | null
       calories: number | null
       sleepQuality: number | null
-      perceivedEffort: number | null
+      perceivedStress: number | null
       bmi: number | null
       hasEntry: boolean
     }> = []
@@ -150,14 +150,14 @@ export async function GET(
         steps: entry?.steps ?? null,
         calories: entry?.calories ?? null,
         sleepQuality: entry?.sleepQuality ?? null,
-        perceivedEffort: entry?.perceivedEffort ?? null,
+        perceivedStress: entry?.perceivedStress ?? null,
         bmi: entry ? calculateBMI(entry.weightLbs, entry.heightInches) : null,
         hasEntry: !!entry,
       })
     }
 
     // Calculate summary stats
-    type WeekEntry = { date: string; weightLbs: number | null; steps: number | null; calories: number | null; sleepQuality: number | null; perceivedEffort: number | null; bmi: number | null; hasEntry: boolean }
+    type WeekEntry = { date: string; weightLbs: number | null; steps: number | null; calories: number | null; sleepQuality: number | null; perceivedStress: number | null; bmi: number | null; hasEntry: boolean }
     const entriesWithData = weekEntries.filter((e: WeekEntry) => e.hasEntry)
     const checkInCount = entriesWithData.length
     const checkInRate = checkInCount / 7
@@ -215,15 +215,15 @@ export async function GET(
         : null
 
     // Adherence score: composite of check-ins (70%) + completeness (30%)
-    // Completeness = average of fields filled per entry (weight, steps, calories, sleepQuality, perceivedEffort)
+    // Completeness = average of fields filled per entry (weight, steps, calories, sleepQuality, perceivedStress)
     const completenessScores = entriesWithData.map((entry: WeekEntry) => {
       let fieldsFilled = 0
-      let totalFields = 5 // weight, steps, calories, sleepQuality, perceivedEffort
+      let totalFields = 5 // weight, steps, calories, sleepQuality, perceivedStress
       if (entry.weightLbs !== null) fieldsFilled++
       if (entry.steps !== null) fieldsFilled++
       if (entry.calories !== null) fieldsFilled++
       if (entry.sleepQuality !== null) fieldsFilled++
-      if (entry.perceivedEffort !== null) fieldsFilled++
+      if (entry.perceivedStress !== null) fieldsFilled++
       return fieldsFilled / totalFields
     })
     const avgCompleteness =
@@ -244,12 +244,12 @@ export async function GET(
         ? sleepQualities.reduce((sum, s) => sum + s, 0) / sleepQualities.length
         : null
 
-    const perceivedEfforts = weekEntries
-      .filter((e) => e.perceivedEffort !== null)
-      .map((e) => e.perceivedEffort!)
-    const avgPerceivedEffort =
-      perceivedEfforts.length > 0
-        ? perceivedEfforts.reduce((sum, p) => sum + p, 0) / perceivedEfforts.length
+    const perceivedStresses = weekEntries
+      .filter((e) => e.perceivedStress !== null)
+      .map((e) => e.perceivedStress!)
+    const avgPerceivedStress =
+      perceivedStresses.length > 0
+        ? perceivedStresses.reduce((sum, p) => sum + p, 0) / perceivedStresses.length
         : null
 
     // Get previous week for comparison
@@ -277,7 +277,7 @@ export async function GET(
         calories: true,
         heightInches: true,
         sleepQuality: true,
-        perceivedEffort: true,
+        perceivedStress: true,
         dataSources: true,
       },
     })
@@ -313,7 +313,7 @@ export async function GET(
           avgSteps: avgSteps ? Math.round(avgSteps) : null,
           avgCalories: avgCalories ? Math.round(avgCalories) : null,
           avgSleepQuality: avgSleepQuality ? Math.round(avgSleepQuality * 10) / 10 : null,
-          avgPerceivedEffort: avgPerceivedEffort ? Math.round(avgPerceivedEffort * 10) / 10 : null,
+          avgPerceivedStress: avgPerceivedStress ? Math.round(avgPerceivedStress * 10) / 10 : null,
           avgBMI: avgBMI ? Math.round(avgBMI * 10) / 10 : null, // COACH ONLY
           adherenceScore,
         },

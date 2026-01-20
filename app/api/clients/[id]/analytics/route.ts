@@ -70,7 +70,7 @@ export async function GET(
         calories: true,
         heightInches: true,
         sleepQuality: true,
-        perceivedEffort: true,
+        perceivedStress: true,
         dataSources: true,
       },
     })
@@ -133,7 +133,7 @@ export async function GET(
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
     // Filter entries for last 7 and 30 days (only count entries with values)
-    type Entry = { date: Date; weightLbs: number | null; steps: number | null; calories: number | null; heightInches: number | null; sleepQuality: number | null; perceivedEffort: number | null }
+    type Entry = { date: Date; weightLbs: number | null; steps: number | null; calories: number | null; heightInches: number | null; sleepQuality: number | null; perceivedStress: number | null }
     const entries7d = entries.filter((entry: Entry) => {
       const entryDate = new Date(entry.date)
       return entryDate >= sevenDaysAgo
@@ -188,7 +188,7 @@ export async function GET(
             steps: entry.steps,
             calories: entry.calories,
             sleepQuality: entry.sleepQuality,
-            perceivedEffort: entry.perceivedEffort,
+            perceivedStress: entry.perceivedStress,
             bmi: bmi, // COACH ONLY - uses most recent height for all entries
           }
         }),

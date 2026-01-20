@@ -135,7 +135,7 @@ Cohort
 Entry
   ├── userId: String
   ├── date: DateTime
-  ├── weightLbs, steps, calories, sleepQuality, perceivedEffort, notes
+  ├── weightLbs, steps, calories, sleepQuality, perceivedStress, notes
   └── customResponses: Json?
 ```
 

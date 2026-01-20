@@ -25,7 +25,7 @@ interface Entry {
   steps: number | null
   calories: number | null
   sleepQuality: number | null
-  perceivedEffort: number | null
+  perceivedStress: number | null
   notes: string | null
   dataSources: string[] | null
   createdAt: string
@@ -56,7 +56,7 @@ interface AnalyticsData {
     steps: number | null
     calories: number | null
     sleepQuality: number | null
-    perceivedEffort: number | null
+    perceivedStress: number | null
     bmi: number | null
   }>
 }
@@ -394,12 +394,12 @@ export default function ClientEntriesPage() {
               </div>
             )}
 
-            {/* Perceived Effort Chart (if data available) */}
-            {analytics.entries.some(e => e.perceivedEffort !== null) && (
+            {/* Perceived Stress Chart (if data available) */}
+            {analytics.entries.some(e => e.perceivedStress !== null) && (
               <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
-                <h2 className="text-xl font-semibold mb-4">Perceived Effort Trend</h2>
+                <h2 className="text-xl font-semibold mb-4">Perceived Stress Trend</h2>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={analytics.entries.filter(e => e.perceivedEffort !== null)}>
+                  <LineChart data={analytics.entries.filter(e => e.perceivedStress !== null)}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                       dataKey="date"
@@ -409,14 +409,14 @@ export default function ClientEntriesPage() {
                     <Tooltip
                       labelFormatter={(value) => new Date(value).toLocaleDateString()}
                       formatter={(value: any) => {
-                        if (value === null || value === undefined) return [null, "Perceived Effort"]
+                        if (value === null || value === undefined) return [null, "Perceived Stress"]
                         const numValue = typeof value === "number" ? value : parseFloat(value)
-                        return isNaN(numValue) ? [null, "Perceived Effort"] : [`${numValue}/10`, "Perceived Effort"]
+                        return isNaN(numValue) ? [null, "Perceived Stress"] : [`${numValue}/10`, "Perceived Stress"]
                       }}
                     />
                     <Line
                       type="monotone"
-                      dataKey="perceivedEffort"
+                      dataKey="perceivedStress"
                       stroke="#ef4444"
                       strokeWidth={2}
                       dot={{ r: 4 }}
@@ -466,7 +466,7 @@ export default function ClientEntriesPage() {
                         <td className="p-2">{entry.steps !== null ? entry.steps.toLocaleString() : "—"}</td>
                         <td className="p-2">{entry.calories !== null ? entry.calories.toLocaleString() : "—"}</td>
                         <td className="p-2">{entry.sleepQuality !== null ? `${entry.sleepQuality}/10` : "—"}</td>
-                        <td className="p-2">{entry.perceivedEffort !== null ? `${entry.perceivedEffort}/10` : "—"}</td>
+                        <td className="p-2">{entry.perceivedStress !== null ? `${entry.perceivedStress}/10` : "—"}</td>
                         <td className="p-2">{analyticsEntry?.bmi !== null && analyticsEntry?.bmi !== undefined ? analyticsEntry.bmi.toFixed(1) : "—"}</td>
                         <td className="p-2 max-w-xs truncate" title={entry.notes || undefined}>
                           {entry.notes ? (

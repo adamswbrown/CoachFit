@@ -27,6 +27,8 @@ export default function CreateCohortPage() {
     name: "",
     ownerCoachId: "",
     coCoaches: [] as string[],
+    durationConfig: "six-week" as "six-week" | "custom",
+    durationWeeks: 6,
     checkInConfig: {
       enabledPrompts: ["weightLbs", "steps", "calories"] as string[],
       customPrompt1: "",
@@ -77,6 +79,12 @@ export default function CreateCohortPage() {
     try {
       const requestBody: any = {
         name: formData.name,
+        durationConfig: formData.durationConfig,
+      }
+
+      // Add duration weeks if custom
+      if (formData.durationConfig === "custom") {
+        requestBody.durationWeeks = formData.durationWeeks
       }
 
       if (isAdmin(session?.user) && formData.ownerCoachId) {
@@ -232,6 +240,66 @@ export default function CreateCohortPage() {
                 </p>
               </div>
             )}
+
+            {/* Cohort Duration */}
+            <div className="bg-white rounded-lg border border-neutral-200 p-6">
+              <label className="block text-sm font-semibold mb-3">Program Duration *</label>
+              <div className="space-y-3">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="duration"
+                    value="six-week"
+                    checked={formData.durationConfig === "six-week"}
+                    onChange={() => {
+                      setFormData({ ...formData, durationConfig: "six-week", durationWeeks: 6 })
+                    }}
+                    className="w-4 h-4 text-blue-600 cursor-pointer"
+                  />
+                  <span className="ml-3">
+                    <span className="text-sm font-medium text-neutral-900">6-Week Program</span>
+                    <p className="text-xs text-neutral-600">Standard cohort duration</p>
+                  </span>
+                </label>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="duration"
+                    value="custom"
+                    checked={formData.durationConfig === "custom"}
+                    onChange={() => {
+                      setFormData({ ...formData, durationConfig: "custom" })
+                    }}
+                    className="w-4 h-4 text-blue-600 cursor-pointer"
+                  />
+                  <span className="ml-3">
+                    <span className="text-sm font-medium text-neutral-900">Custom Duration</span>
+                    <p className="text-xs text-neutral-600">Specify weeks (1-52)</p>
+                  </span>
+                </label>
+              </div>
+
+              {formData.durationConfig === "custom" && (
+                <div className="mt-4 pt-4 border-t border-neutral-200">
+                  <label htmlFor="durationWeeks" className="block text-sm font-medium text-neutral-900 mb-2">
+                    Duration (weeks) *
+                  </label>
+                  <input
+                    id="durationWeeks"
+                    type="number"
+                    min="1"
+                    max="52"
+                    required={formData.durationConfig === "custom"}
+                    value={formData.durationWeeks}
+                    onChange={(e) =>
+                      setFormData({ ...formData, durationWeeks: parseInt(e.target.value) || 0 })
+                    }
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    placeholder="Enter number of weeks"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Middle Column: Co-Coaches */}
@@ -362,7 +430,7 @@ export default function CreateCohortPage() {
               <div className="space-y-2 mb-4">
                 {[
                   { value: "sleepQuality", label: "Sleep Quality" },
-                  { value: "perceivedEffort", label: "Perceived Effort" },
+                  { value: "perceivedStress", label: "Perceived Stress" },
                   { value: "notes", label: "Notes" },
                 ].map((prompt) => (
                   <label key={prompt.value} className="flex items-center text-xs cursor-pointer">

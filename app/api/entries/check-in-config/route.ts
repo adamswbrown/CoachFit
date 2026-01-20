@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
         {
           cohortId: null,
           config: null,
-          enabledPrompts: ["sleepQuality", "perceivedEffort", "notes"], // Default enabled
+          enabledPrompts: ["sleepQuality", "perceivedStress", "notes"], // Default enabled
           customPrompt1: null,
           customPrompt1Type: null,
         },
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
       {
         cohortId: membership.cohortId,
         config: config,
-        enabledPrompts: config?.enabledPrompts || ["sleepQuality", "perceivedEffort", "notes"],
+        enabledPrompts: config?.enabledPrompts || ["sleepQuality", "perceivedStress", "notes"],
         customPrompt1: config?.customPrompt1 || null,
         customPrompt1Type: config?.customPrompt1Type || null,
       },

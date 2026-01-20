@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
         calories: entry.calories,
         height: entry.heightInches,
         sleepQuality: entry.sleepQuality,
-        perceivedEffort: entry.perceivedEffort,
+        perceivedStress: entry.perceivedStress,
         notes: entry.notes,
         dataSources: entry.dataSources,
         createdAt: entry.createdAt,
@@ -151,10 +151,10 @@ function generateCSV(data: any) {
 
   // Entries
   lines.push("Daily Entries")
-  lines.push("Date,Weight (lbs),Steps,Calories,Height (in),Sleep Quality,Perceived Effort,Notes,Data Sources")
+  lines.push("Date,Weight (lbs),Steps,Calories,Height (in),Sleep Quality,Perceived Stress,Notes,Data Sources")
   data.entries.forEach((entry: any) => {
     lines.push(
-      `"${entry.date}","${entry.weight || ""}","${entry.steps || ""}","${entry.calories || ""}","${entry.height || ""}","${entry.sleepQuality || ""}","${entry.perceivedEffort || ""}","${entry.notes || ""}","${Array.isArray(entry.dataSources) ? entry.dataSources.join(";") : ""}"`
+      `"${entry.date}","${entry.weight || ""}","${entry.steps || ""}","${entry.calories || ""}","${entry.height || ""}","${entry.sleepQuality || ""}","${entry.perceivedStress || ""}","${entry.notes || ""}","${Array.isArray(entry.dataSources) ? entry.dataSources.join(";") : ""}"` 
     )
   })
   lines.push("")

@@ -30,6 +30,8 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   const cohortsDropdownRef = useRef<HTMLDivElement>(null)
   const [healthkitEnabled, setHealthkitEnabled] = useState<boolean>(true)
   const [iosIntegrationEnabled, setIosIntegrationEnabled] = useState<boolean>(true)
+  const [cohortsData, setCohortsData] = useState<Array<{ id: string; name: string; activeClients: number; pendingInvites: number }>>([])
+  const [cohortsLoading, setCohortsLoading] = useState(true)
 
   const currentFilter = (searchParams.get("filter") as ClientFilter) || "all"
 
@@ -49,6 +51,31 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     }
     fetchFeatureFlags()
   }, [])
+
+  // Fetch cohorts when session is available
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setCohortsLoading(false)
+      return
+    }
+
+    const fetchCohorts = async () => {
+      try {
+        setCohortsLoading(true)
+        const res = await fetch("/api/cohorts")
+        if (res.ok) {
+          const data = await res.json()
+          setCohortsData(data)
+        }
+      } catch (err) {
+        console.error("Error fetching cohorts:", err)
+      } finally {
+        setCohortsLoading(false)
+      }
+    }
+
+    fetchCohorts()
+  }, [session?.user?.id])
 
   if (!session) return null
 
@@ -77,10 +104,12 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
       }
     }
 
-    if (clientsDropdownOpen || cohortsDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside)
-      return () => document.removeEventListener("mousedown", handleClickOutside)
+    if (!clientsDropdownOpen && !cohortsDropdownOpen) {
+      return
     }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [clientsDropdownOpen, cohortsDropdownOpen])
 
   const handleFilterChange = (filter: ClientFilter) => {
@@ -297,13 +326,39 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
                           >
                             All Cohorts
                           </Link>
-                          <Link
-                            href="/coach-dashboard?showForm=true"
-                            onClick={() => setCohortsDropdownOpen(false)}
-                            className="w-full text-left px-4 py-2.5 text-sm transition-colors block text-neutral-300 hover:bg-neutral-800 hover:text-white"
-                          >
-                            Create Cohort
-                          </Link>
+                          
+                          {cohortsLoading ? (
+                            <div className="px-4 py-2 text-sm text-neutral-400">Loading cohorts...</div>
+                          ) : cohortsData.length > 0 ? (
+                            <>
+                              <div className="px-4 py-2 text-xs text-neutral-500 border-t border-neutral-800">My Cohorts</div>
+                              {cohortsData.map((cohort) => (
+                                <Link
+                                  key={cohort.id}
+                                  href={`/cohorts/${cohort.id}`}
+                                  onClick={() => setCohortsDropdownOpen(false)}
+                                  className="w-full text-left px-4 py-2.5 text-sm transition-colors block text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span>{cohort.name}</span>
+                                    <span className="text-xs text-neutral-500">({cohort.activeClients})</span>
+                                  </div>
+                                </Link>
+                              ))}
+                            </>
+                          ) : (
+                            <div className="px-4 py-2 text-sm text-neutral-400">No cohorts yet</div>
+                          )}
+                          
+                          <div className="border-t border-neutral-800 pt-2">
+                            <Link
+                              href="/coach-dashboard?showForm=true"
+                              onClick={() => setCohortsDropdownOpen(false)}
+                              className="w-full text-left px-4 py-2.5 text-sm transition-colors block text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                            >
+                              Create Cohort
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     )}

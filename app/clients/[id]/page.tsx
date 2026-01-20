@@ -53,7 +53,7 @@ interface AnalyticsData {
     steps: number | null
     calories: number | null
     sleepQuality: number | null
-    perceivedEffort: number | null
+    perceivedStress: number | null
     bmi: number | null
   }>
 }

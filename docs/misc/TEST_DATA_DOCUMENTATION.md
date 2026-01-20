@@ -129,7 +129,7 @@ Each entry may include:
 - **calories:** Daily calorie intake (varies by activity level)
 - **heightInches:** Height in inches (70% of entries have this)
 - **sleepQuality:** Sleep quality rating 1-10 (60% of entries have this)
-- **perceivedEffort:** Perceived effort rating 1-10 (50% of entries have this)
+- **perceivedStress:** Perceived stress level 1-10 (50% of entries have this)
 
 ### Data Realism
 

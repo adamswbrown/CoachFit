@@ -153,7 +153,7 @@ async function seed() {
     await db.cohortCheckInConfig.create({
       data: {
         cohortId: cohort.id,
-        enabledPrompts: ["weightLbs", "steps", "calories", "sleepQuality", "perceivedEffort", "notes"],
+        enabledPrompts: ["weightLbs", "steps", "calories", "sleepQuality", "perceivedStress", "notes"],
         customPrompt1: "How did your workouts feel?",
         customPrompt1Type: "text",
       },
@@ -219,7 +219,7 @@ async function seed() {
           steps,
           calories,
           sleepQuality: Math.floor(1 + Math.random() * 10),
-          perceivedEffort: Math.floor(1 + Math.random() * 10),
+          perceivedStress: Math.floor(1 + Math.random() * 10),
           notes: `Entry for ${entryDate.toLocaleDateString()}`,
           dataSources: ["manual"],
         },

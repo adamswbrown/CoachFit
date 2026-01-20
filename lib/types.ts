@@ -5,3 +5,5 @@ export enum Role {
   COACH = "COACH",
   ADMIN = "ADMIN",
 }
+
+export type CohortDurationConfig = "six-week" | "custom"

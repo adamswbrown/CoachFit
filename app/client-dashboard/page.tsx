@@ -19,7 +19,7 @@ interface Entry {
   calories: number | null
   heightInches: number | null
   sleepQuality: number | null
-  perceivedEffort: number | null
+  perceivedStress: number | null
   notes: string | null
   dataSources: string[] | null
   createdAt: string
@@ -57,7 +57,7 @@ export default function ClientDashboard() {
     steps: "",
     calories: "",
     sleepQuality: "",
-    perceivedEffort: "",
+    perceivedStress: "",
     notes: "",
     date: new Date().toISOString().split("T")[0],
   })
@@ -110,7 +110,7 @@ export default function ClientDashboard() {
       console.error("Error fetching check-in config:", err)
       // Default to showing all prompts if config fetch fails
       setCheckInConfig({
-        enabledPrompts: ["sleepQuality", "perceivedEffort", "notes"],
+        enabledPrompts: ["sleepQuality", "perceivedStress", "notes"],
         customPrompt1: null,
         customPrompt1Type: null,
       })
@@ -132,7 +132,7 @@ export default function ClientDashboard() {
           steps: entryForDate.steps?.toString() || "",
           calories: entryForDate.calories?.toString() || "",
           sleepQuality: entryForDate.sleepQuality?.toString() || "",
-          perceivedEffort: entryForDate.perceivedEffort?.toString() || "",
+          perceivedStress: entryForDate.perceivedStress?.toString() || "",
           notes: entryForDate.notes || "",
           date: formData.date,
         })
@@ -143,7 +143,7 @@ export default function ClientDashboard() {
         setFormData((prev) => ({
           ...prev,
           sleepQuality: "",
-          perceivedEffort: "",
+          perceivedStress: "",
           notes: "",
           date: prev.date,
         }))
@@ -227,9 +227,9 @@ export default function ClientDashboard() {
         const parsed = parseInt(formData.sleepQuality.toString(), 10)
         if (!isNaN(parsed)) body.sleepQuality = parsed
       }
-      if (formData.perceivedEffort && formData.perceivedEffort.toString().trim() !== "") {
-        const parsed = parseInt(formData.perceivedEffort.toString(), 10)
-        if (!isNaN(parsed)) body.perceivedEffort = parsed
+      if (formData.perceivedStress && formData.perceivedStress.toString().trim() !== "") {
+        const parsed = parseInt(formData.perceivedStress.toString(), 10)
+        if (!isNaN(parsed)) body.perceivedStress = parsed
       }
       if (formData.notes && formData.notes.trim() !== "") {
         body.notes = formData.notes.trim()
@@ -264,7 +264,7 @@ export default function ClientDashboard() {
             calories: data.calories,
             heightInches: data.heightInches || null, // Height is part of user profile, but kept in Entry interface for backward compatibility
             sleepQuality: data.sleepQuality || null,
-            perceivedEffort: data.perceivedEffort || null,
+            perceivedStress: data.perceivedStress || null,
             notes: data.notes || null,
             dataSources: data.dataSources || null,
             createdAt: data.createdAt,
@@ -652,32 +652,32 @@ export default function ClientDashboard() {
                   </div>
                 )}
 
-                {/* Perceived Effort - Always Visible if enabled */}
-                {checkInConfig && checkInConfig.enabledPrompts.includes("perceivedEffort") && (
+                {/* Perceived Stress - Always Visible if enabled */}
+                {checkInConfig && checkInConfig.enabledPrompts.includes("perceivedStress") && (
                   <div className="pt-4 border-t border-neutral-100">
                     <label className="block text-sm font-medium text-neutral-700 mb-3">
-                      Perceived Effort <span className="text-neutral-400 font-normal">(optional, 1-10)</span>
+                      Perceived Stress <span className="text-neutral-400 font-normal">(optional, 1-10)</span>
                     </label>
                     <div className="flex items-center gap-4">
                       <input
                         type="range"
                         min="1"
                         max="10"
-                        value={formData.perceivedEffort || "5"}
+                        value={formData.perceivedStress || "5"}
                         onChange={(e) =>
-                          setFormData({ ...formData, perceivedEffort: e.target.value })
+                          setFormData({ ...formData, perceivedStress: e.target.value })
                         }
                         disabled={hasCoach === false}
                         className="flex-1 h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
                       />
                       <span className="text-lg font-semibold text-neutral-900 min-w-[3rem] text-center">
-                        {formData.perceivedEffort || "5"}
+                        {formData.perceivedStress || "5"}
                       </span>
                     </div>
                     <div className="flex justify-between text-xs text-neutral-500 mt-2">
-                      <span>Very Easy</span>
+                      <span>Not Stressed</span>
                       <span>Moderate</span>
-                      <span>Maximum</span>
+                      <span>Extremely Stressed</span>
                     </div>
                   </div>
                 )}
@@ -718,15 +718,15 @@ export default function ClientDashboard() {
                             type="range"
                             min="1"
                             max="10"
-                            value={formData.perceivedEffort || "5"}
+                            value={formData.perceivedStress || "5"}
                             onChange={(e) => {
-                              setFormData({ ...formData, perceivedEffort: e.target.value })
+                              setFormData({ ...formData, perceivedStress: e.target.value })
                             }}
                             disabled={hasCoach === false}
                             className="flex-1 h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
                           />
                           <span className="text-lg font-semibold text-neutral-900 min-w-[3rem] text-center">
-                            {formData.perceivedEffort || "5"}
+                            {formData.perceivedStress || "5"}
                           </span>
                         </div>
                         <div className="flex justify-between text-xs text-neutral-500 mt-2">
@@ -780,7 +780,7 @@ export default function ClientDashboard() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={submitting || hasCoach === false || (!formData.weightLbs && !formData.steps && !formData.calories && !formData.sleepQuality && !formData.perceivedEffort && !formData.notes)}
+                  disabled={submitting || hasCoach === false || (!formData.weightLbs && !formData.steps && !formData.calories && !formData.sleepQuality && !formData.perceivedStress && !formData.notes)}
                   className="w-full bg-neutral-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-neutral-800 focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? (

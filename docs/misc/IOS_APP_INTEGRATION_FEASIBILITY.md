@@ -25,7 +25,7 @@ Entry model:
 - calories (Int)
 - heightInches (Float)
 - sleepQuality (Int, 1-10 scale)
-- perceivedEffort (Int, 1-10 scale)
+- perceivedStress (Int, 1-10 scale)
 - notes (Text)
 - date (DateTime)
 ```
@@ -55,7 +55,7 @@ Profile Metrics:
 | **calories** | workouts.calories_active | ⚠️ Partial | HealthKit: workout calories only, CoachFit: total daily intake |
 | **steps** | ❌ Not collected | ❌ Missing | Would need HKQuantityType.stepCount |
 | **sleepQuality** | ❌ Not collected | ❌ Missing | Would need HKCategoryType.sleepAnalysis |
-| **perceivedEffort** | ❌ Not collected | ❌ Missing | Subjective - requires manual entry |
+| **perceivedStress** | ❌ Not collected | ❌ Missing | Subjective - requires manual entry |
 | **notes** | ❌ Not collected | ❌ Missing | Subjective - requires manual entry |
 
 **Verdict:** Partial overlap. iOS app covers weight/height automatically, but steps, sleep, and subjective metrics require manual entry or app enhancements.

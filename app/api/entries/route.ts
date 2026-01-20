@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       steps?: number | null
       calories?: number | null
       sleepQuality?: number | null
-      perceivedEffort?: number | null
+      perceivedStress?: number | null
       notes?: string | null
       customResponses?: any
     } = {}
@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
     if (validated.sleepQuality !== undefined && !isNaN(validated.sleepQuality)) {
       updateData.sleepQuality = validated.sleepQuality
     }
-    if (validated.perceivedEffort !== undefined && !isNaN(validated.perceivedEffort)) {
-      updateData.perceivedEffort = validated.perceivedEffort
+    if (validated.perceivedStress !== undefined && !isNaN(validated.perceivedStress)) {
+      updateData.perceivedStress = validated.perceivedStress
     }
     if (validated.notes !== undefined) {
       updateData.notes = validated.notes || null

@@ -91,7 +91,7 @@ export async function GET(
         calories: true,
         heightInches: true,
         sleepQuality: true,
-        perceivedEffort: true,
+        perceivedStress: true,
       },
     })
 

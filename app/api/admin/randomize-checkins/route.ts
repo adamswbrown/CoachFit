@@ -20,7 +20,7 @@ function generateEntryData() {
     steps: Math.floor(5000 + Math.random() * 10000),
     calories: Math.floor(1800 + Math.random() * 800),
     sleepQuality: Math.ceil(Math.random() * 10),
-    perceivedEffort: Math.ceil(Math.random() * 10),
+    perceivedStress: Math.ceil(Math.random() * 10),
   }
 }
 

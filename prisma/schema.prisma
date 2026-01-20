@@ -42,6 +42,8 @@ model Cohort {
   name             String
   coachId          String
   createdAt        DateTime                @default(now())
+  durationConfig   String                  @default("six-week") // "six-week" or "custom"
+  durationWeeks    Int?                    // Weeks duration (6 for six-week, or custom value)
   coachMemberships CoachCohortMembership[]
   User             User                    @relation(fields: [coachId], references: [id], onDelete: Cascade)
   CheckInConfig    CohortCheckInConfig?
@@ -99,7 +101,7 @@ model Entry {
   heightInches    Float?
   updatedAt       DateTime @updatedAt
   sleepQuality    Int?
-  perceivedEffort Int?
+  perceivedStress Int?
   notes           String?
   customResponses Json?
   dataSources     Json?    @default("[]")

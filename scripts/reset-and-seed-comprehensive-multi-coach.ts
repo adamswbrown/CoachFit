@@ -117,9 +117,9 @@ function generateEntryData(profile: ActivityProfile, _dayOffset: number, gender:
 
   const heightInches = Math.random() > 0.3 ? Math.floor(Math.random() * 12 + 60) : undefined
   const sleepQuality = Math.random() > 0.4 ? Math.floor(Math.random() * 10) + 1 : undefined
-  const perceivedEffort = Math.random() > 0.5 ? Math.floor(Math.random() * 10) + 1 : undefined
+  const perceivedStress = Math.random() > 0.5 ? Math.floor(Math.random() * 10) + 1 : undefined
 
-  return { weight, steps, calories, heightInches, sleepQuality, perceivedEffort }
+  return { weight, steps, calories, heightInches, sleepQuality, perceivedStress }
 }
 
 function generateClientData(index: number): { name: string; email: string; gender: Gender } {
@@ -263,7 +263,7 @@ async function main() {
     await db.cohortCheckInConfig.create({
       data: {
         cohortId: cohort.id,
-        enabledPrompts: ["weightLbs", "steps", "calories", "sleepQuality", "perceivedEffort", "notes"],
+        enabledPrompts: ["weightLbs", "steps", "calories", "sleepQuality", "perceivedStress", "notes"],
         customPrompt1: "How did your workouts feel?",
         customPrompt1Type: "text",
       },
@@ -386,7 +386,7 @@ async function main() {
           calories: entryData.calories,
           heightInches: entryData.heightInches,
           sleepQuality: entryData.sleepQuality,
-          perceivedEffort: entryData.perceivedEffort,
+          perceivedStress: entryData.perceivedStress,
           dataSources: ["manual"],
         },
         create: {
@@ -397,7 +397,7 @@ async function main() {
           calories: entryData.calories,
           heightInches: entryData.heightInches,
           sleepQuality: entryData.sleepQuality,
-          perceivedEffort: entryData.perceivedEffort,
+          perceivedStress: entryData.perceivedStress,
           dataSources: ["manual"],
         },
       })

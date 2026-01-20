@@ -70,7 +70,7 @@ export async function GET(
         calories: true,
         heightInches: true,
         sleepQuality: true,
-        perceivedEffort: true,
+        perceivedStress: true,
         notes: true,
         customResponses: true,
         dataSources: true, // Include data source indicator

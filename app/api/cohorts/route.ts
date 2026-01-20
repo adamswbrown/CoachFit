@@ -94,11 +94,16 @@ export async function POST(req: NextRequest) {
     // Create cohort with check-in config and co-coaches in a transaction
     // Mandatory prompts (weightLbs, steps, calories) are always included
     const cohort = await db.$transaction(async (tx: any) => {
+      // Determine duration weeks based on config
+      const durationWeeks = validated.durationConfig === "six-week" ? 6 : validated.durationWeeks
+
       // Create the cohort
       const newCohort = await tx.cohort.create({
         data: {
           name: validated.name,
           coachId: coachId,
+          durationConfig: validated.durationConfig,
+          durationWeeks: durationWeeks,
         },
       })
 

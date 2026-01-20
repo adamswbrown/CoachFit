@@ -258,7 +258,7 @@ All conversions are rounded for human-readable results:
       "steps": 8500,
       "calories": 2450,
       "sleepQuality": 8,
-      "perceivedEffort": 7,
+      "perceivedStress": 7,
       "bmi": 25.8
     }
   ]

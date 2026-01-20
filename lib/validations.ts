@@ -8,7 +8,7 @@ export const upsertEntrySchema = z.object({
   steps: z.number().int("Steps must be an integer").nonnegative("Steps cannot be negative").max(100000, "Steps must be 100,000 or less").optional(),
   calories: z.number().int("Calories must be an integer").nonnegative("Calories cannot be negative").max(20000, "Calories must be 20,000 or less").optional(),
   sleepQuality: z.number().int("Sleep quality must be an integer").min(1, "Sleep quality must be between 1 and 10").max(10, "Sleep quality must be between 1 and 10").optional(),
-  perceivedEffort: z.number().int("Perceived effort must be an integer").min(1, "Perceived effort must be between 1 and 10").max(10, "Perceived effort must be between 1 and 10").optional(),
+  perceivedStress: z.number().int("Perceived stress must be an integer").min(1, "Perceived stress must be between 1 and 10").max(10, "Perceived stress must be between 1 and 10").optional(),
   notes: z.string().max(2000, "Notes must be 2,000 characters or less").optional(),
   customResponses: z.record(z.string(), z.any()).optional(), // Phase 3: Custom coach prompts
   date: z.string().refine(
@@ -25,7 +25,7 @@ export const upsertEntrySchema = z.object({
 }).refine(
   (data) => data.weightLbs !== undefined || data.steps !== undefined || 
             data.calories !== undefined || data.sleepQuality !== undefined ||
-            data.perceivedEffort !== undefined || data.notes !== undefined ||
+            data.perceivedStress !== undefined || data.notes !== undefined ||
             data.customResponses !== undefined,
   { message: "At least one field must be provided" }
 )
@@ -39,13 +39,29 @@ export const createCohortSchema = z.object({
   ownerCoachId: z.string().uuid().optional(),
   // coCoaches is an array of coach emails to add as co-coaches
   coCoaches: z.array(z.string().email()).optional(),
+  // Duration configuration
+  durationConfig: z.enum(["six-week", "custom"]).default("six-week"),
+  durationWeeks: z.number().int("Duration must be a whole number").min(1, "Duration must be at least 1 week").max(52, "Duration must be at most 52 weeks").optional(),
   // Check-in configuration (optional)
   checkInConfig: z.object({
     enabledPrompts: z.array(z.string()).optional(),
     customPrompt1: z.string().optional(),
     customPrompt1Type: z.enum(["scale", "text", "number"]).optional(),
   }).optional(),
-})
+}).refine(
+  (data) => {
+    // If custom, durationWeeks is required
+    if (data.durationConfig === "custom") {
+      return data.durationWeeks !== undefined && data.durationWeeks > 0
+    }
+    // If six-week, durationWeeks should be 6
+    return true
+  },
+  {
+    message: "Custom cohorts must specify a duration in weeks",
+    path: ["durationWeeks"],
+  }
+)
 
 export const addClientToCohortSchema = z.object({
   email: z.string().email("Invalid email format"),
