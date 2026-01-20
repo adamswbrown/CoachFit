@@ -157,6 +157,7 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 - ✅ Loom video integration for weekly responses (shipped)
 - 📝 Rich text coach notes with tagging (planned)
 - 📅 Workout plan templates (planned)
+- 📅 Training assignments surfaced in client overview (planned)
 - 💬 In-app messaging between coaches and clients (planned)
 - 📋 Client progress reports (PDF export) (planned)
 

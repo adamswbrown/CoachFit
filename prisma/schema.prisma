@@ -91,22 +91,22 @@ model CohortMembership {
 }
 
 model Entry {
-  id              String   @id @default(uuid())
-  userId          String
-  date            DateTime @db.Date
-  weightLbs       Float?
-  steps           Int?
-  calories        Int?
-  createdAt           DateTime @default(now())
-  heightInches        Float?
-  updatedAt           DateTime @updatedAt
-  sleepQuality        Int?
-  perceivedStress     Int?
-  notes               String?
-  customResponses     Json?
-  dataSources         Json?    @default("[]")
-  bodyFatPercentage   Float?
-  User                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String   @id @default(uuid())
+  userId            String
+  date              DateTime @db.Date
+  weightLbs         Float?
+  steps             Int?
+  calories          Int?
+  createdAt         DateTime @default(now())
+  heightInches      Float?
+  updatedAt         DateTime @updatedAt
+  sleepQuality      Int?
+  perceivedStress   Int?
+  notes             String?
+  customResponses   Json?
+  dataSources       Json?    @default("[]")
+  bodyFatPercentage Float?
+  User              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
   @@index([userId, date])
