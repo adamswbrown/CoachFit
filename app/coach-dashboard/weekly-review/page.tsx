@@ -111,6 +111,13 @@ export default function WeeklyReviewPage() {
   const [recalculating, setRecalculating] = useState(false)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [priorityFilter, setPriorityFilter] = useState<"all" | "red" | "amber" | "green">("all")
+  const [questionnaireStatus, setQuestionnaireStatus] = useState<Record<string, {
+    weekNumber: number
+    status: string
+    updatedAt: string
+  }[]>>({})
+  const [sendingReminder, setSendingReminder] = useState(false)
+  const [reminderToast, setReminderToast] = useState<string | null>(null)
 
   // Initialize week on mount
   useEffect(() => {
@@ -193,6 +200,30 @@ export default function WeeklyReviewPage() {
 
         setLoomUrls(newLoomUrls)
         setNotes(newNotes)
+
+        // Fetch questionnaire status for all clients
+        try {
+          const questionnaireRes = await fetch('/api/coach/weekly-questionnaire-status')
+          if (questionnaireRes.ok) {
+            const questionnaireData = await questionnaireRes.json()
+            
+            // Group by userId
+            const statusByUser: Record<string, any[]> = {}
+            questionnaireData.responses?.forEach((resp: any) => {
+              if (!statusByUser[resp.userId]) {
+                statusByUser[resp.userId] = []
+              }
+              statusByUser[resp.userId].push({
+                weekNumber: resp.weekNumber,
+                status: resp.status,
+                updatedAt: resp.updatedAt,
+              })
+            })
+            setQuestionnaireStatus(statusByUser)
+          }
+        } catch (err) {
+          console.error('Failed to fetch questionnaire status:', err)
+        }
       } catch (err) {
         console.error("Error fetching data:", err)
         setData(null)
@@ -300,10 +331,63 @@ export default function WeeklyReviewPage() {
 
       setLoomUrls(newLoomUrls)
       setNotes(newNotes)
+
+      // Fetch questionnaire status for all clients
+      try {
+        const questionnaireRes = await fetch('/api/coach/weekly-questionnaire-status')
+        if (questionnaireRes.ok) {
+          const questionnaireData = await questionnaireRes.json()
+          
+          // Group by userId
+          const statusByUser: Record<string, any[]> = {}
+          questionnaireData.responses?.forEach((resp: any) => {
+            if (!statusByUser[resp.userId]) {
+              statusByUser[resp.userId] = []
+            }
+            statusByUser[resp.userId].push({
+              weekNumber: resp.weekNumber,
+              status: resp.status,
+              updatedAt: resp.updatedAt,
+            })
+          })
+          setQuestionnaireStatus(statusByUser)
+        }
+      } catch (err) {
+        console.error('Failed to fetch questionnaire status:', err)
+      }
     } catch (err) {
       console.error("Error recalculating:", err)
     } finally {
       setRecalculating(false)
+    }
+  }
+
+  const handleSendQuestionnaireReminder = async (cohortId: string, weekNumber: number) => {
+    setSendingReminder(true)
+    try {
+      const res = await fetch('/api/coach-dashboard/send-questionnaire-reminder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cohortId, weekNumber }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setReminderToast(`Sent reminder to ${data.sent} client(s)`)
+        setTimeout(() => setReminderToast(null), 3000)
+      } else {
+        const error = await res.json()
+        setReminderToast(error.error || 'Failed to send reminders')
+        setTimeout(() => setReminderToast(null), 3000)
+      }
+    } catch (err) {
+      console.error('Error sending reminders:', err)
+      setReminderToast('Failed to send reminders')
+      setTimeout(() => setReminderToast(null), 3000)
+    } finally {
+      setSendingReminder(false)
     }
   }
 
@@ -384,6 +468,13 @@ export default function WeeklyReviewPage() {
             </span>
           </p>
         </div>
+
+        {/* Toast Notification */}
+        {reminderToast && (
+          <div className="fixed top-4 right-4 z-50 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">
+            {reminderToast}
+          </div>
+        )}
 
         {/* Week Selector */}
         <div className="bg-white rounded-lg border border-neutral-200 p-4 mb-6 flex items-center justify-between gap-4">
@@ -603,6 +694,34 @@ export default function WeeklyReviewPage() {
                           <div className="text-sm text-neutral-600 mb-2">
                             Check-ins: {client.stats.checkInCount}/7 ({Math.round(client.stats.checkInRate * 100)}%)
                           </div>
+
+                          {/* Questionnaire Status */}
+                          {questionnaireStatus[client.clientId] && questionnaireStatus[client.clientId].length > 0 && (
+                            <div className="text-sm text-neutral-600 mb-2">
+                              Questionnaires: {questionnaireStatus[client.clientId].map((q) => {
+                                const hoursSinceUpdate = Math.floor(
+                                  (Date.now() - new Date(q.updatedAt).getTime()) / (1000 * 60 * 60)
+                                )
+                                return (
+                                  <span key={q.weekNumber} className="mr-2">
+                                    W{q.weekNumber}:{" "}
+                                    {q.status === "completed" ? (
+                                      <span className="text-green-600">✓</span>
+                                    ) : q.status === "in_progress" ? (
+                                      <span
+                                        className="text-red-600 cursor-help"
+                                        title={`Last saved ${hoursSinceUpdate} hours ago`}
+                                      >
+                                        ◐
+                                      </span>
+                                    ) : (
+                                      <span className="text-neutral-400">✗</span>
+                                    )}
+                                  </span>
+                                )
+                              })}
+                            </div>
+                          )}
 
                           {/* Key Insights Row */}
                           <div className="flex items-start gap-2 mt-2 flex-wrap">
