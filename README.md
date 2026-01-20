@@ -216,6 +216,9 @@ cp .env.example .env.local
 npm run db:migrate
 npm run db:generate
 
+# Seed email templates (REQUIRED for emails to work)
+npm run db:seed-email-templates
+
 # Seed test data
 npm run db:seed
 npm run test:generate
