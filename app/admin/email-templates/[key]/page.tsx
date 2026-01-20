@@ -6,7 +6,9 @@ import { useSession } from "next-auth/react"
 import { isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
+import { EmailEditor } from "@/components/admin/EmailEditor"
 import Link from "next/link"
+import "./tiptap.css"
 
 interface EmailTemplate {
   id: string
@@ -22,14 +24,17 @@ interface EmailTemplate {
   updatedAt: string
 }
 
-const MOCK_VARIABLES: Record<string, string> = {
-  userName: " John Doe",
-  userEmail: "john@example.com",
-  coachName: "Sarah Coach",
-  coachEmail: "sarah@example.com",
-  cohortName: "Elite Athletes 2024",
-  loginUrl: "https://coachfit.app/login",
-  appName: "CoachFit",
+function getMockVariables(): Record<string, string> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+  return {
+    userName: " John Doe",
+    userEmail: "john@example.com",
+    coachName: "Sarah Coach",
+    coachEmail: "sarah@example.com",
+    cohortName: "Elite Athletes 2024",
+    loginUrl: `${appUrl}/login`,
+    appName: "CoachFit",
+  }
 }
 
 export default function EditEmailTemplatePage() {
@@ -139,7 +144,7 @@ export default function EditEmailTemplatePage() {
           subjectTemplate: formData.subjectTemplate,
           bodyTemplate: formData.bodyTemplate,
           textTemplate: formData.textTemplate,
-          mockVariables: MOCK_VARIABLES,
+          mockVariables: getMockVariables(),
         }),
       })
 
@@ -244,11 +249,10 @@ export default function EditEmailTemplatePage() {
                   <label className="block text-sm font-medium text-neutral-700 mb-2">
                     HTML Body Template
                   </label>
-                  <textarea
-                    value={formData.bodyTemplate}
-                    onChange={(e) => setFormData({ ...formData, bodyTemplate: e.target.value })}
-                    rows={12}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                  <EmailEditor
+                    content={formData.bodyTemplate}
+                    onChange={(html) => setFormData({ ...formData, bodyTemplate: html })}
+                    availableTokens={template?.availableTokens || []}
                   />
                 </div>
 
