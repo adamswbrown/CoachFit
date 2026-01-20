@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { signupSchema } from "@/lib/validations"
-import { sendTransactionalEmail } from "@/lib/email"
+import { sendSystemEmail } from "@/lib/email"
+import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
 import { Role } from "@/lib/types"
 import bcrypt from "bcryptjs"
 
@@ -42,10 +43,16 @@ export async function POST(req: NextRequest) {
 
     // Send welcome email (non-blocking)
     const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
-    sendTransactionalEmail({
+    sendSystemEmail({
+      templateKey: EMAIL_TEMPLATE_KEYS.WELCOME_CLIENT,
       to: user.email,
-      subject: "Welcome to CoachSync",
-      html: `
+      variables: {
+        userName: user.name || "",
+        userEmail: user.email,
+        loginUrl,
+      },
+      fallbackSubject: "Welcome to CoachSync",
+      fallbackHtml: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1f2937;">Welcome to CoachSync!</h2>
           <p>Hi${user.name ? ` ${user.name}` : ""},</p>
@@ -61,7 +68,7 @@ export async function POST(req: NextRequest) {
           </p>
         </div>
       `,
-      text: `Welcome to CoachSync!\n\nHi${user.name ? ` ${user.name}` : ""},\n\nWelcome to CoachSync! We're excited to have you on board.\n\nYou're all set — your coach will guide you next.\n\nSign in to your dashboard: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
+      fallbackText: `Welcome to CoachSync!\n\nHi${user.name ? ` ${user.name}` : ""},\n\nWelcome to CoachSync! We're excited to have you on board.\n\nYou're all set — your coach will guide you next.\n\nSign in to your dashboard: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
       isTestUser: false,
     }).catch((err) => {
       console.error("Error sending welcome email:", err)

@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdminOrCoach } from "@/lib/permissions"
 import { z } from "zod"
-import { sendTransactionalEmail } from "@/lib/email"
+import { sendSystemEmail } from "@/lib/email"
+import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
 
 const createInviteSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -113,10 +114,16 @@ export async function POST(req: NextRequest) {
     const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login?invited=1`
     const isTestUserEmail = email.endsWith(".test.local")
 
-    await sendTransactionalEmail({
+    await sendSystemEmail({
+      templateKey: EMAIL_TEMPLATE_KEYS.COACH_INVITE,
       to: email,
-      subject: "You've been invited to CoachSync",
-      html: `
+      variables: {
+        coachName,
+        userEmail: email,
+        loginUrl,
+      },
+      fallbackSubject: "You've been invited to CoachSync",
+      fallbackHtml: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1f2937;">You've been invited to CoachSync</h2>
           <p>Hi there,</p>
@@ -132,7 +139,7 @@ export async function POST(req: NextRequest) {
           </p>
         </div>
       `,
-      text: `You've been invited to CoachSync\n\n${coachName} has invited you to join CoachSync to track your fitness progress.\n\nSign in to get started: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
+      fallbackText: `You've been invited to CoachSync\n\n${coachName} has invited you to join CoachSync to track your fitness progress.\n\nSign in to get started: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
       isTestUser: isTestUserEmail,
     })
 
