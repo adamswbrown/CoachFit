@@ -1,5 +1,7 @@
-import { db } from "../lib/db"
+import { PrismaClient } from "@prisma/client"
 import { EMAIL_TEMPLATE_KEYS } from "../lib/email-templates"
+
+const prisma = new PrismaClient()
 
 const DEFAULT_TEMPLATES = [
   {
@@ -162,7 +164,7 @@ async function seedEmailTemplates() {
 
   for (const template of DEFAULT_TEMPLATES) {
     try {
-      await db.emailTemplate.upsert({
+      await prisma.emailTemplate.upsert({
         where: { key: template.key },
         update: {
           // Only update metadata, not the content (preserve customizations)
@@ -190,11 +192,13 @@ if (require.main === module) {
   seedEmailTemplates()
     .then(() => {
       console.log("Done!")
-      process.exit(0)
     })
     .catch((error) => {
       console.error("Error:", error)
       process.exit(1)
+    })
+    .finally(async () => {
+      await prisma.$disconnect()
     })
 }
 
