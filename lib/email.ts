@@ -1,4 +1,9 @@
 import { Resend } from "resend"
+import {
+  renderEmailTemplate,
+  type EmailTemplateKey,
+  type EmailVariables,
+} from "./email-templates"
 
 // Lazy initialization to avoid build errors when RESEND_API_KEY is missing
 let resend: Resend | null = null
@@ -15,6 +20,16 @@ export interface SendEmailOptions {
   html: string
   text: string
   isTestUser?: boolean
+}
+
+export interface SendSystemEmailOptions {
+  templateKey: EmailTemplateKey
+  to: string
+  variables: EmailVariables
+  isTestUser?: boolean
+  fallbackSubject?: string
+  fallbackHtml?: string
+  fallbackText?: string
 }
 
 export async function sendTransactionalEmail(
@@ -61,6 +76,64 @@ export async function sendTransactionalEmail(
     return { success: true }
   } catch (error: any) {
     console.error("Error sending email:", error)
+    return { success: false, error: error.message || "Failed to send email" }
+  }
+}
+
+/**
+ * Send a system email using templates from the database
+ * Falls back to provided fallback content if template not found or disabled
+ */
+export async function sendSystemEmail(
+  options: SendSystemEmailOptions
+): Promise<{ success: boolean; error?: string }> {
+  const {
+    templateKey,
+    to,
+    variables,
+    isTestUser,
+    fallbackSubject,
+    fallbackHtml,
+    fallbackText,
+  } = options
+
+  try {
+    // Try to render from template
+    const rendered = await renderEmailTemplate(templateKey, variables)
+
+    let subject: string
+    let html: string
+    let text: string
+
+    if (rendered) {
+      // Use template
+      subject = rendered.subject
+      html = rendered.html
+      text = rendered.text
+    } else {
+      // Use fallback
+      if (!fallbackSubject || !fallbackHtml || !fallbackText) {
+        console.error(
+          `Template ${templateKey} not found/disabled and no fallback provided`
+        )
+        return { success: false, error: "Email template not available" }
+      }
+      subject = fallbackSubject
+      html = fallbackHtml
+      text = fallbackText
+      console.warn(`Using fallback for template ${templateKey}`)
+    }
+
+    // Send the email
+    return sendTransactionalEmail({
+      to,
+      subject,
+      html,
+      text,
+      isTestUser,
+    })
+  } catch (error: any) {
+    console.error(`Error sending system email ${templateKey}:`, error)
     return { success: false, error: error.message || "Failed to send email" }
   }
 }
