@@ -88,10 +88,12 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 - ✅ **Feature Flags**: Toggle HealthKit and iOS integration features via system settings
 - ✅ **Admin Override**: Emergency admin access via configurable email override
 - ✅ **Test Data Tools**: Randomize client check-in status for realistic testing
+- ✅ **Email Template Management**: Configure all system email templates through admin UI
 
 #### System Features
 - ✅ **Multi-Provider Auth**: Google OAuth, Apple Sign-In, Email/Password
 - ✅ **Role-Based Access Control**: CLIENT, COACH, ADMIN roles with proper authorization and multi-role support
+- ✅ **Configurable Email Templates**: Database-backed email templates with token substitution and preview
 - ✅ **Transactional Emails**: Automated invitations and welcome emails (via Resend)
 - ✅ **Test User Support**: Email suppression for development/testing
 - ✅ **Error Boundaries**: Graceful error handling throughout the app
@@ -213,6 +215,9 @@ cp .env.example .env.local
 # Set up database
 npm run db:migrate
 npm run db:generate
+
+# Seed email templates (REQUIRED for emails to work)
+npm run db:seed-email-templates
 
 # Seed test data
 npm run db:seed

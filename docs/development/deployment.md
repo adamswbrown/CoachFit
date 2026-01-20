@@ -195,6 +195,9 @@ vercel link
 # Run migration
 vercel env pull .env.production.local
 npx prisma migrate deploy
+
+# IMPORTANT: Seed email templates after migration
+npm run db:seed-email-templates
 ```
 
 Or use Railway CLI:
@@ -211,7 +214,12 @@ railway link
 
 # Run migration in Railway environment
 railway run npx prisma migrate deploy
+
+# IMPORTANT: Seed email templates after migration
+railway run npm run db:seed-email-templates
 ```
+
+**Note**: The email template seeding step is required for the email system to work properly. Skip this and all system emails will use hardcoded fallback content.
 
 ### 6. Verify Deployment
 
@@ -303,7 +311,32 @@ npx prisma studio
 - [ ] View analytics (as coach)
 - [ ] Test admin features
 
-### 4. Configure Email Notifications
+### 4. Seed Email Templates
+
+**IMPORTANT**: After deploying and running database migrations, you must seed the email templates:
+
+```bash
+# Using Vercel CLI in production
+vercel env pull .env.production.local
+npm run db:seed-email-templates
+
+# Or using Railway CLI
+railway run npm run db:seed-email-templates
+```
+
+This creates the default email templates in the database:
+- Welcome emails (client/coach)
+- Invitation emails (coach/cohort)
+- Password set/reset emails
+
+**Without this step, all system emails will use hardcoded fallback content.**
+
+To verify templates are seeded:
+1. Log in to the admin panel
+2. Navigate to **Admin → Email Templates**
+3. Confirm all 6 templates are listed
+
+### 5. Configure Email Notifications
 
 Test emails work correctly:
 
@@ -311,8 +344,9 @@ Test emails work correctly:
 2. Test invitation email
 3. Check spam folder if not received
 4. Configure SPF/DKIM records for better deliverability
+5. Customize email templates in Admin → Email Templates (optional)
 
-### 5. Set Up Monitoring
+### 6. Set Up Monitoring
 
 Recommended monitoring tools:
 

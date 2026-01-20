@@ -4,7 +4,8 @@ import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/permissions"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
-import { sendTransactionalEmail } from "@/lib/email"
+import { sendSystemEmail } from "@/lib/email"
+import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
 
 const resetPasswordSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -58,10 +59,16 @@ export async function POST(
 
       if (isFirstPassword) {
         // First-time password - user previously only had OAuth
-        await sendTransactionalEmail({
+        await sendSystemEmail({
+          templateKey: EMAIL_TEMPLATE_KEYS.PASSWORD_SET,
           to: user.email,
-          subject: "You Can Now Sign In with Email & Password",
-          html: `
+          variables: {
+            userName: user.name || "",
+            userEmail: user.email,
+            loginUrl,
+          },
+          fallbackSubject: "You Can Now Sign In with Email & Password",
+          fallbackHtml: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #1f2937;">New Sign-In Option Available</h2>
               <p>Hi${user.name ? ` ${user.name}` : ""},</p>
@@ -82,15 +89,21 @@ export async function POST(
               </p>
             </div>
           `,
-          text: `New Sign-In Option Available\n\nHi${user.name ? ` ${user.name}` : ""},\n\nGood news! Your administrator has set up a password for your CoachSync account.\n\nYou can now sign in using either:\n- Your Google account (as before)\n- Your email and new password\n\nContact your administrator for your password, then sign in: ${loginUrl}\n\nIf you did not expect this, please contact your administrator.`,
+          fallbackText: `New Sign-In Option Available\n\nHi${user.name ? ` ${user.name}` : ""},\n\nGood news! Your administrator has set up a password for your CoachSync account.\n\nYou can now sign in using either:\n- Your Google account (as before)\n- Your email and new password\n\nContact your administrator for your password, then sign in: ${loginUrl}\n\nIf you did not expect this, please contact your administrator.`,
           isTestUser: user.isTestUser,
         })
       } else {
         // Password reset - user already had a password
-        await sendTransactionalEmail({
+        await sendSystemEmail({
+          templateKey: EMAIL_TEMPLATE_KEYS.PASSWORD_RESET,
           to: user.email,
-          subject: "Your CoachSync Password Has Been Reset",
-          html: `
+          variables: {
+            userName: user.name || "",
+            userEmail: user.email,
+            loginUrl,
+          },
+          fallbackSubject: "Your CoachSync Password Has Been Reset",
+          fallbackHtml: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #1f2937;">Password Reset</h2>
               <p>Hi${user.name ? ` ${user.name}` : ""},</p>
@@ -106,7 +119,7 @@ export async function POST(
               </p>
             </div>
           `,
-          text: `Password Reset\n\nHi${user.name ? ` ${user.name}` : ""},\n\nYour password has been reset by an administrator.\n\nPlease contact your administrator for your new password, then sign in: ${loginUrl}\n\nIf you did not expect this, please contact your administrator immediately.`,
+          fallbackText: `Password Reset\n\nHi${user.name ? ` ${user.name}` : ""},\n\nYour password has been reset by an administrator.\n\nPlease contact your administrator for your new password, then sign in: ${loginUrl}\n\nIf you did not expect this, please contact your administrator immediately.`,
           isTestUser: user.isTestUser,
         })
       }

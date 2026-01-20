@@ -142,7 +142,8 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
       { name: "Overview", href: "/admin/overview", icon: (props: any) => <span className="text-xl">📈</span>, hasDropdown: false, dropdownKey: "admin-overview" },
       { name: "Attention", href: "/admin/attention", icon: (props: any) => <span className="text-xl">🔔</span>, hasDropdown: false, dropdownKey: "admin-attention" },
       { name: "System", href: "/admin/system", icon: (props: any) => <span className="text-xl">⚙️</span>, hasDropdown: false, dropdownKey: "admin-system" },
-      { name: "Settings", href: "/admin/settings", icon: (props: any) => <span className="text-xl">⚡</span>, hasDropdown: false, dropdownKey: "admin-settings" }
+      { name: "Settings", href: "/admin/settings", icon: (props: any) => <span className="text-xl">⚡</span>, hasDropdown: false, dropdownKey: "admin-settings" },
+      { name: "Email Templates", href: "/admin/email-templates", icon: (props: any) => <span className="text-xl">✉️</span>, hasDropdown: false, dropdownKey: "admin-email-templates" }
     )
   }
 

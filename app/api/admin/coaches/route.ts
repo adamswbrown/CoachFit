@@ -5,7 +5,8 @@ import { isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
-import { sendTransactionalEmail } from "@/lib/email"
+import { sendSystemEmail } from "@/lib/email"
+import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
 
 const createCoachSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -101,10 +102,16 @@ export async function POST(req: NextRequest) {
     const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
     const isTestUserEmail = email.endsWith(".test.local")
 
-    await sendTransactionalEmail({
+    await sendSystemEmail({
+      templateKey: EMAIL_TEMPLATE_KEYS.WELCOME_COACH,
       to: email,
-      subject: "Welcome to CoachSync - Your Coach Account",
-      html: `
+      variables: {
+        userName: name,
+        userEmail: email,
+        loginUrl,
+      },
+      fallbackSubject: "Welcome to CoachSync - Your Coach Account",
+      fallbackHtml: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1f2937;">Welcome to CoachSync!</h2>
           <p>Hi ${name},</p>
@@ -121,7 +128,7 @@ export async function POST(req: NextRequest) {
           </p>
         </div>
       `,
-      text: `Welcome to CoachSync!\n\nHi ${name},\n\nYour coach account has been created.\n\nEmail: ${email}\nPassword: (the one provided by your administrator)\n\nSign in: ${loginUrl}\n\nIf you have any questions, please contact your administrator.`,
+      fallbackText: `Welcome to CoachSync!\n\nHi ${name},\n\nYour coach account has been created.\n\nEmail: ${email}\nPassword: (the one provided by your administrator)\n\nSign in: ${loginUrl}\n\nIf you have any questions, please contact your administrator.`,
       isTestUser: isTestUserEmail,
     })
 

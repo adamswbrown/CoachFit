@@ -366,6 +366,24 @@ model UserConsent {
   @@index([createdAt])
 }
 
+model EmailTemplate {
+  id              String   @id @default(uuid())
+  key             String   @unique
+  name            String
+  description     String?
+  subjectTemplate String
+  bodyTemplate    String
+  textTemplate    String
+  availableTokens String[]
+  enabled         Boolean  @default(true)
+  isSystem        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([key])
+  @@index([enabled])
+}
+
 enum Role {
   CLIENT
   COACH

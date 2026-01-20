@@ -101,16 +101,24 @@ export const authOptions: NextAuthConfig = {
           select: { isTestUser: true },
         })
 
-        const { sendTransactionalEmail } = await import("./email")
+        const { sendSystemEmail } = await import("./email")
+        const { EMAIL_TEMPLATE_KEYS } = await import("./email-templates")
         const loginUrl = `${
           process.env.NEXTAUTH_URL || "http://localhost:3000"
         }/login`
 
         // Fire-and-forget: do not block auth lifecycle
-        void sendTransactionalEmail({
+        void sendSystemEmail({
+          templateKey: EMAIL_TEMPLATE_KEYS.WELCOME_CLIENT,
           to: user.email,
-          subject: "Welcome to CoachFit",
-          html: `
+          variables: {
+            userName: user.name ? ` ${user.name}` : "",
+            loginUrl,
+          },
+          isTestUser: dbUser?.isTestUser,
+          // Fallback to inline content if template not available
+          fallbackSubject: "Welcome to CoachFit",
+          fallbackHtml: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #1f2937;">Welcome to CoachFit!</h2>
               <p>Hi${user.name ? ` ${user.name}` : ""},</p>
@@ -129,18 +137,7 @@ export const authOptions: NextAuthConfig = {
               </p>
             </div>
           `,
-          text: `Welcome to CoachFit!
-
-Hi${user.name ? ` ${user.name}` : ""}
-
-Welcome to CoachFit! We're excited to have you on board.
-
-You're all set — your coach will guide you next.
-
-Sign in to your dashboard: ${loginUrl}
-
-If you have any questions, please contact your coach.`,
-          isTestUser: dbUser?.isTestUser ?? false,
+          fallbackText: `Welcome to CoachFit!\n\nHi${user.name ? ` ${user.name}` : ""},\n\nWelcome to CoachFit! We're excited to have you on board.\n\nYou're all set — your coach will guide you next.\n\nSign in to your dashboard: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
         })
       } catch (error) {
         console.error("Error sending welcome email:", error)
