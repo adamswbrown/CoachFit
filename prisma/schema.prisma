@@ -38,17 +38,20 @@ model CoachInvite {
 }
 
 model Cohort {
-  id               String                  @id @default(uuid())
-  name             String
-  coachId          String
-  createdAt        DateTime                @default(now())
-  durationConfig   String                  @default("six-week") // "six-week" or "custom"
-  durationWeeks    Int?                    // Weeks duration (6 for six-week, or custom value)
-  coachMemberships CoachCohortMembership[]
-  User             User                    @relation(fields: [coachId], references: [id], onDelete: Cascade)
-  CheckInConfig    CohortCheckInConfig?
-  invites          CohortInvite[]
-  memberships      CohortMembership[]
+  id                        String                         @id @default(uuid())
+  name                      String
+  coachId                   String
+  createdAt                 DateTime                       @default(now())
+  cohortStartDate           DateTime?                      @db.Date // Week 1 start date for questionnaire tracking
+  durationConfig            String                         @default("six-week") // "six-week" or "custom"
+  durationWeeks             Int?                           // Weeks duration (6 for six-week, or custom value)
+  coachMemberships          CoachCohortMembership[]
+  User                      User                           @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  CheckInConfig             CohortCheckInConfig?
+  invites                   CohortInvite[]
+  memberships               CohortMembership[]
+  questionnaireBundle       QuestionnaireBundle?
+  weeklyQuestionnaireResponses WeeklyQuestionnaireResponse[]
 
   @@unique([coachId, name])
   @@index([coachId])
@@ -183,42 +186,43 @@ model Session {
 }
 
 model User {
-  id                     String                  @id @default(uuid())
-  email                  String                  @unique
+  id                     String                           @id @default(uuid())
+  email                  String                           @unique
   name                   String?
   image                  String?
   passwordHash           String?
-  roles                  Role[]                  @default([CLIENT])
-  isTestUser             Boolean                 @default(false)
+  roles                  Role[]                           @default([CLIENT])
+  isTestUser             Boolean                          @default(false)
   emailVerified          DateTime?
-  createdAt              DateTime                @default(now())
+  createdAt              DateTime                         @default(now())
   invitedByCoachId       String?
-  onboardingComplete     Boolean                 @default(false)
+  onboardingComplete     Boolean                          @default(false)
   gender                 String?
-  dateOfBirth            DateTime?               @db.Date
+  dateOfBirth            DateTime?                        @db.Date
   activityLevel          String?
   primaryGoal            String?
   Account                Account[]
-  AdminActions           AdminAction[]           @relation("AdminActions")
+  AdminActions           AdminAction[]                    @relation("AdminActions")
   CoachCohortMembership  CoachCohortMembership[]
   CoachInvite            CoachInvite[]
-  ClientNotes            CoachNote[]             @relation("ClientNotes")
-  CoachNotes             CoachNote[]             @relation("CoachNotes")
-  ClientWeeklyResponses  WeeklyCoachResponse[]   @relation("ClientWeeklyResponses")
-  CoachWeeklyResponses   WeeklyCoachResponse[]   @relation("CoachWeeklyResponses")
+  ClientNotes            CoachNote[]                      @relation("ClientNotes")
+  CoachNotes             CoachNote[]                      @relation("CoachNotes")
+  ClientWeeklyResponses  WeeklyCoachResponse[]            @relation("ClientWeeklyResponses")
+  CoachWeeklyResponses   WeeklyCoachResponse[]            @relation("CoachWeeklyResponses")
   Cohort                 Cohort[]
   CohortMembership       CohortMembership[]
   Entry                  Entry[]
-  ClientPairingCodes     PairingCode[]           @relation("ClientPairingCodes")
-  CoachPairingCodes      PairingCode[]           @relation("CoachPairingCodes")
+  ClientPairingCodes     PairingCode[]                    @relation("ClientPairingCodes")
+  CoachPairingCodes      PairingCode[]                    @relation("CoachPairingCodes")
   Session                Session[]
   SleepRecords           SleepRecord[]
-  User                   User?                   @relation("UserToUser", fields: [invitedByCoachId], references: [id])
-  other_User             User[]                  @relation("UserToUser")
+  User                   User?                            @relation("UserToUser", fields: [invitedByCoachId], references: [id])
+  other_User             User[]                           @relation("UserToUser")
   UserConsent            UserConsent?
   UserGoals              UserGoals?
   UserPreference         UserPreference?
   Workouts               Workout[]
+  WeeklyQuestionnaireResponses WeeklyQuestionnaireResponse[]
 
   @@index([invitedByCoachId])
   @@index([createdAt])
@@ -443,6 +447,37 @@ model UserPreference {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model QuestionnaireBundle {
+  id          String   @id @default(uuid())
+  cohortId    String   @unique
+  bundleJson  Json     // SurveyJS JSON schema with all 5 weeks
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cohort      Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+
+  @@index([cohortId])
+}
+
+model WeeklyQuestionnaireResponse {
+  id          String   @id @default(uuid())
+  userId      String
+  cohortId    String
+  weekNumber  Int      // 1-5
+  responseJson Json    // SurveyJS response data
+  status      String   @default("in_progress") // "in_progress" or "completed"
+  submittedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort      Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cohortId, weekNumber])
+  @@index([userId])
+  @@index([cohortId])
+  @@index([cohortId, weekNumber])
+  @@index([status])
 }
 
 enum Role {
