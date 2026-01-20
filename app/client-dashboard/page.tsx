@@ -622,36 +622,6 @@ export default function ClientDashboard() {
                   </div>
                 </div>
 
-                {/* Sleep Quality - Always Visible */}
-                {checkInConfig && checkInConfig.enabledPrompts.includes("sleepQuality") && (
-                  <div className="pt-4 border-t border-neutral-100">
-                    <label className="block text-sm font-medium text-neutral-700 mb-3">
-                      Sleep Quality <span className="text-neutral-400 font-normal">(optional, 1-10)</span>
-                    </label>
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="range"
-                        min="1"
-                        max="10"
-                        value={formData.sleepQuality || "5"}
-                        onChange={(e) =>
-                          setFormData({ ...formData, sleepQuality: e.target.value })
-                        }
-                        disabled={hasCoach === false}
-                        className="flex-1 h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
-                      />
-                      <span className="text-lg font-semibold text-neutral-900 min-w-[3rem] text-center">
-                        {formData.sleepQuality || "5"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs text-neutral-500 mt-2">
-                      <span>Terrible</span>
-                      <span>Okay</span>
-                      <span>Excellent</span>
-                    </div>
-                  </div>
-                )}
-
                 {/* Perceived Stress - Always Visible if enabled */}
                 {checkInConfig && checkInConfig.enabledPrompts.includes("perceivedStress") && (
                   <div className="pt-4 border-t border-neutral-100">
@@ -780,7 +750,7 @@ export default function ClientDashboard() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={submitting || hasCoach === false || (!formData.weightLbs && !formData.steps && !formData.calories && !formData.sleepQuality && !formData.perceivedStress && !formData.notes)}
+                  disabled={submitting || hasCoach === false || (!formData.weightLbs && !formData.steps && !formData.calories && !formData.perceivedStress && !formData.notes)}
                   className="w-full bg-neutral-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-neutral-800 focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? (
@@ -872,13 +842,7 @@ export default function ClientDashboard() {
                               <span className="font-medium text-neutral-900">{entry.calories.toLocaleString()}</span>
                             </div>
                           )}
-                          {entry.sleepQuality !== null && (
-                            <div className="flex justify-between text-xs">
-                              <span className="text-neutral-500">Sleep:</span>
-                              <span className="font-medium text-neutral-900">{entry.sleepQuality}/10</span>
-                            </div>
-                          )}
-                          {entry.weightLbs === null && entry.steps === null && entry.calories === null && entry.sleepQuality === null && (
+                          {entry.weightLbs === null && entry.steps === null && entry.calories === null && (
                             <div>
                               <p className="text-xs text-neutral-400 italic">No data logged</p>
                             </div>

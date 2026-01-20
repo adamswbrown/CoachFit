@@ -361,39 +361,6 @@ export default function ClientEntriesPage() {
               </ResponsiveContainer>
             </div>
 
-            {/* Sleep Quality Chart (if data available) */}
-            {analytics.entries.some(e => e.sleepQuality !== null) && (
-              <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
-                <h2 className="text-xl font-semibold mb-4">Sleep Quality Trend</h2>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={analytics.entries.filter(e => e.sleepQuality !== null)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="date"
-                      tickFormatter={(value) => new Date(value).toLocaleDateString()}
-                    />
-                    <YAxis domain={[0, 10]} />
-                    <Tooltip
-                      labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                      formatter={(value: any) => {
-                        if (value === null || value === undefined) return [null, "Sleep Quality"]
-                        const numValue = typeof value === "number" ? value : parseFloat(value)
-                        return isNaN(numValue) ? [null, "Sleep Quality"] : [`${numValue}/10`, "Sleep Quality"]
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="sleepQuality"
-                      stroke="#f59e0b"
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      connectNulls={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-
             {/* Perceived Stress Chart (if data available) */}
             {analytics.entries.some(e => e.perceivedStress !== null) && (
               <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
@@ -444,7 +411,6 @@ export default function ClientEntriesPage() {
                     <th className="text-left p-2">Weight (lbs)</th>
                     <th className="text-left p-2">Steps</th>
                     <th className="text-left p-2">Calories</th>
-                    <th className="text-left p-2">Sleep</th>
                     <th className="text-left p-2">Effort</th>
                     <th className="text-left p-2">BMI</th>
                     <th className="text-left p-2">Notes</th>
@@ -465,7 +431,6 @@ export default function ClientEntriesPage() {
                         <td className="p-2">{entry.weightLbs !== null ? entry.weightLbs.toFixed(1) : "—"}</td>
                         <td className="p-2">{entry.steps !== null ? entry.steps.toLocaleString() : "—"}</td>
                         <td className="p-2">{entry.calories !== null ? entry.calories.toLocaleString() : "—"}</td>
-                        <td className="p-2">{entry.sleepQuality !== null ? `${entry.sleepQuality}/10` : "—"}</td>
                         <td className="p-2">{entry.perceivedStress !== null ? `${entry.perceivedStress}/10` : "—"}</td>
                         <td className="p-2">{analyticsEntry?.bmi !== null && analyticsEntry?.bmi !== undefined ? analyticsEntry.bmi.toFixed(1) : "—"}</td>
                         <td className="p-2 max-w-xs truncate" title={entry.notes || undefined}>

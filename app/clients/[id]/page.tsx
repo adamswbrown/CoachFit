@@ -435,36 +435,6 @@ export default function ClientOverviewPage() {
                     </div>
                   )}
 
-                  {/* Sleep */}
-                  {chartData.some(e => e.sleepQuality !== null) && (
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <div className="text-sm font-medium text-neutral-900">Sleep Quality</div>
-                          <div className="text-2xl font-semibold text-neutral-900 mt-1">
-                            {chartData.filter(e => e.sleepQuality !== null).length > 0
-                              ? `${(chartData.filter(e => e.sleepQuality !== null).reduce((sum, e) => sum + (e.sleepQuality || 0), 0) / chartData.filter(e => e.sleepQuality !== null).length).toFixed(1)}/10`
-                              : "—"}
-                          </div>
-                        </div>
-                      </div>
-                      {/* Simple sleep chart placeholder */}
-                      <div className="h-24 bg-neutral-50 rounded border border-neutral-200 flex items-end justify-start gap-1 p-2">
-                        {chartData.filter(e => e.sleepQuality !== null).slice(-14).map((entry, idx) => {
-                          const height = entry.sleepQuality ? (entry.sleepQuality / 10) * 100 : 0
-                          return (
-                            <div
-                              key={idx}
-                              className="flex-1 bg-indigo-500 rounded-t"
-                              style={{ height: `${height}%` }}
-                              title={`${entry.sleepQuality}/10`}
-                            />
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Steps */}
                   {analytics?.summary.avgSteps7d && (
                     <div>

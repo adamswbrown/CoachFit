@@ -574,12 +574,6 @@ export default function WeeklyReviewPage() {
                           </span>
                         </div>
                       )}
-                      {entry.sleepQuality !== null && (
-                        <div className="text-xs">
-                          <span className="text-neutral-600">Sleep:</span>{" "}
-                          <span className="font-medium">{entry.sleepQuality}/10</span>
-                        </div>
-                      )}
                     </div>
                   ) : (
                     <div className="text-xs text-neutral-400 italic">No entry</div>

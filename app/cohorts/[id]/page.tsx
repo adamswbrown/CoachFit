@@ -669,20 +669,6 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                     <label className="flex items-center">
                       <input
                         type="checkbox"
-                        checked={checkInConfig.enabledPrompts.includes("sleepQuality")}
-                        onChange={(e) => {
-                          const prompts = e.target.checked
-                            ? [...checkInConfig.enabledPrompts, "sleepQuality"]
-                            : checkInConfig.enabledPrompts.filter((p) => p !== "sleepQuality")
-                          setCheckInConfig({ ...checkInConfig, enabledPrompts: prompts })
-                        }}
-                        className="mr-2"
-                      />
-                      <span className="text-sm">Sleep Quality (1-10 scale)</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
                         checked={checkInConfig.enabledPrompts.includes("perceivedStress")}
                         onChange={(e) => {
                           const prompts = e.target.checked
@@ -795,7 +781,6 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                   ? checkInConfig.enabledPrompts
                       .filter((p) => !["weightLbs", "steps", "calories"].includes(p))
                       .map((p) => {
-                        if (p === "sleepQuality") return "Sleep Quality"
                         if (p === "perceivedStress") return "Perceived Stress"
                         if (p === "notes") return "Notes"
                         return p

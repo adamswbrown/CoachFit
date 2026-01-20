@@ -125,6 +125,8 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
 
   const isCohortsActive = pathname === "/cohorts" || pathname?.startsWith("/cohorts/")
   const isPairingActive = pathname === "/coach-dashboard/pairing"
+  const isCoachPath = pathname === "/coach-dashboard" || pathname?.startsWith("/coach-dashboard/") || pathname?.startsWith("/clients/") || pathname?.startsWith("/cohorts/")
+  const isAdminPath = pathname?.startsWith("/admin") || false
 
   // Build navigation array based on active role
   const navigation = []
@@ -134,8 +136,8 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   const userHasAdminRole = session?.user?.roles.includes(Role.ADMIN)
   
   // Show navigation based on activeRole (respects RoleSwitcher selection)
-  const showCoachNav = activeRole === Role.COACH || (activeRole === null && userHasCoachRole && !userHasAdminRole)
-  const showAdminNav = activeRole === Role.ADMIN || (activeRole === null && userHasAdminRole && !userHasCoachRole)
+  const showCoachNav = userHasCoachRole && (activeRole === Role.COACH || (activeRole === null && !userHasAdminRole) || isCoachPath)
+  const showAdminNav = userHasAdminRole && (activeRole === Role.ADMIN || (activeRole === null && !userHasCoachRole) || isAdminPath)
   
   // Show coach navigation
   if (showCoachNav && userHasCoachRole) {
@@ -253,20 +255,20 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
 
                     {/* Clients Dropdown Menu */}
                     {clientsDropdownOpen && (
-                      <div className="fixed lg:absolute left-4 lg:left-full top-auto lg:top-0 lg:ml-2 w-[calc(100vw-2rem)] lg:w-56 bg-neutral-900 rounded-lg shadow-xl z-50 overflow-hidden max-h-[80vh] overflow-y-auto">
-                        <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between">
-                          <span className="text-white font-medium text-sm">{item.name}</span>
-                          <item.icon size={16} className="text-neutral-400" />
+                      <div className="mt-1 ml-9 mr-2 bg-white border border-neutral-200 rounded-md shadow-sm overflow-hidden">
+                        <div className="px-3 py-2 border-b border-neutral-100 flex items-center justify-between">
+                          <span className="text-neutral-700 font-medium text-xs uppercase tracking-wide">Filters</span>
+                          <item.icon size={14} className="text-neutral-400" />
                         </div>
-                        <div className="py-2">
+                        <div className="py-1">
                           {clientFilters.map((filter) => (
                             <button
                               key={filter.value}
                               onClick={() => handleFilterChange(filter.value)}
-                              className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                              className={`w-full text-left px-3 py-2 text-sm transition-colors ${
                                 currentFilter === filter.value
-                                  ? "bg-neutral-800 text-white"
-                                  : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                                  ? "bg-neutral-100 text-neutral-900"
+                                  : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
                               }`}
                             >
                               {filter.label}
@@ -309,52 +311,52 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
 
                     {/* Cohorts Dropdown Menu */}
                     {cohortsDropdownOpen && (
-                      <div className="fixed lg:absolute left-4 lg:left-full top-auto lg:top-0 lg:ml-2 w-[calc(100vw-2rem)] lg:w-56 bg-neutral-900 rounded-lg shadow-xl z-50 overflow-hidden max-h-[80vh] overflow-y-auto">
-                        <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between">
-                          <span className="text-white font-medium text-sm">{item.name}</span>
-                          <item.icon size={16} className="text-neutral-400" />
+                      <div className="mt-1 ml-9 mr-2 bg-white border border-neutral-200 rounded-md shadow-sm overflow-hidden">
+                        <div className="px-3 py-2 border-b border-neutral-100 flex items-center justify-between">
+                          <span className="text-neutral-700 font-medium text-xs uppercase tracking-wide">Cohorts</span>
+                          <item.icon size={14} className="text-neutral-400" />
                         </div>
-                        <div className="py-2">
+                        <div className="py-1">
                           <Link
                             href="/cohorts"
                             onClick={() => setCohortsDropdownOpen(false)}
-                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors block ${
+                            className={`w-full text-left px-3 py-2 text-sm transition-colors block ${
                               pathname === "/cohorts"
-                                ? "bg-neutral-800 text-white"
-                                : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                                ? "bg-neutral-100 text-neutral-900"
+                                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
                             }`}
                           >
                             All Cohorts
                           </Link>
-                          
+
                           {cohortsLoading ? (
-                            <div className="px-4 py-2 text-sm text-neutral-400">Loading cohorts...</div>
+                            <div className="px-3 py-2 text-sm text-neutral-500">Loading cohorts...</div>
                           ) : cohortsData.length > 0 ? (
                             <>
-                              <div className="px-4 py-2 text-xs text-neutral-500 border-t border-neutral-800">My Cohorts</div>
+                              <div className="px-3 pt-2 pb-1 text-xs text-neutral-500 border-t border-neutral-100">My Cohorts</div>
                               {cohortsData.map((cohort) => (
                                 <Link
                                   key={cohort.id}
                                   href={`/cohorts/${cohort.id}`}
                                   onClick={() => setCohortsDropdownOpen(false)}
-                                  className="w-full text-left px-4 py-2.5 text-sm transition-colors block text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                                  className="w-full text-left px-3 py-2 text-sm transition-colors block text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
                                 >
                                   <div className="flex items-center justify-between">
                                     <span>{cohort.name}</span>
-                                    <span className="text-xs text-neutral-500">({cohort.activeClients})</span>
+                                    <span className="text-xs text-neutral-400">({cohort.activeClients})</span>
                                   </div>
                                 </Link>
                               ))}
                             </>
                           ) : (
-                            <div className="px-4 py-2 text-sm text-neutral-400">No cohorts yet</div>
+                            <div className="px-3 py-2 text-sm text-neutral-500">No cohorts yet</div>
                           )}
-                          
-                          <div className="border-t border-neutral-800 pt-2">
+
+                          <div className="border-t border-neutral-100 pt-1">
                             <Link
                               href="/coach-dashboard?showForm=true"
                               onClick={() => setCohortsDropdownOpen(false)}
-                              className="w-full text-left px-4 py-2.5 text-sm transition-colors block text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                              className="w-full text-left px-3 py-2 text-sm transition-colors block text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
                             >
                               Create Cohort
                             </Link>

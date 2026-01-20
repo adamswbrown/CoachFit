@@ -429,7 +429,7 @@ export default function CreateCohortPage() {
               <p className="text-xs font-semibold text-neutral-700 mb-3">Optional:</p>
               <div className="space-y-2 mb-4">
                 {[
-                  { value: "sleepQuality", label: "Sleep Quality" },
+
                   { value: "perceivedStress", label: "Perceived Stress" },
                   { value: "notes", label: "Notes" },
                 ].map((prompt) => (
