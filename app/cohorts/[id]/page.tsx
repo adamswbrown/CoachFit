@@ -7,6 +7,8 @@ import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { Role } from "@/lib/types"
 import { isAdminOrCoach } from "@/lib/permissions"
+import { SurveyCreatorContainer } from "@/components/questionnaire/SurveyCreatorContainer"
+import { DEFAULT_TEMPLATES, TemplateKey } from "@/lib/default-questionnaire-templates"
 
 interface Cohort {
   id: string
@@ -83,6 +85,14 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
     customPrompt1Type: "",
   })
 
+  // Questionnaire bundle state
+  const [showQuestionnaireForm, setShowQuestionnaireForm] = useState(false)
+  const [questionnaireSubmitting, setQuestionnaireSubmitting] = useState(false)
+  const [questionnaireError, setQuestionnaireError] = useState<string | null>(null)
+  const [questionnaireSuccess, setQuestionnaireSuccess] = useState<string | null>(null)
+  const [questionnaireJson, setQuestionnaireJson] = useState<any>(null)
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateKey | "">("")
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
@@ -105,7 +115,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
       const loadData = async () => {
         setLoading(true)
         try {
-          await Promise.all([fetchCohort(), fetchClients(), fetchCheckInConfig(), fetchAvailableClients(), fetchCoaches()])
+          await Promise.all([fetchCohort(), fetchClients(), fetchCheckInConfig(), fetchAvailableClients(), fetchCoaches(), fetchQuestionnaireBundle()])
         } finally {
           setLoading(false)
         }
@@ -204,6 +214,57 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
       }
     } catch (err) {
       console.error("Error fetching coaches:", err)
+    }
+  }
+
+  const fetchQuestionnaireBundle = async () => {
+    try {
+      const res = await fetch(`/api/cohorts/${cohortId}/questionnaire`)
+      if (res.ok) {
+        const data = await res.json()
+        setQuestionnaireJson(data.bundleJson)
+      }
+    } catch (err) {
+      console.error("Error fetching questionnaire bundle:", err)
+      // Not critical - just means no bundle exists yet
+    }
+  }
+
+  const handleLoadTemplate = () => {
+    if (!selectedTemplate) return
+    
+    const template = DEFAULT_TEMPLATES[selectedTemplate]
+    if (template) {
+      setQuestionnaireJson(template)
+      setQuestionnaireError(null)
+    }
+  }
+
+  const handleSaveQuestionnaire = async (json: any) => {
+    setQuestionnaireSubmitting(true)
+    setQuestionnaireError(null)
+    setQuestionnaireSuccess(null)
+
+    try {
+      const res = await fetch(`/api/cohorts/${cohortId}/questionnaire`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bundleJson: json }),
+      })
+
+      if (res.ok) {
+        setQuestionnaireSuccess("Questionnaire bundle saved successfully!")
+        setShowQuestionnaireForm(false)
+        await fetchQuestionnaireBundle()
+        setTimeout(() => setQuestionnaireSuccess(null), 3000)
+      } else {
+        const data = await res.json()
+        setQuestionnaireError(data.error || "Failed to save questionnaire bundle")
+      }
+    } catch (err) {
+      setQuestionnaireError("Failed to save questionnaire bundle")
+    } finally {
+      setQuestionnaireSubmitting(false)
     }
   }
 
@@ -792,6 +853,116 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                 <p>
                   <strong>Custom prompt:</strong> {checkInConfig.customPrompt1} ({checkInConfig.customPrompt1Type || "text"})
                 </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Questionnaire Bundle Section */}
+        <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Weekly Questionnaire Bundle</h2>
+              <p className="text-sm text-neutral-500 mt-1">
+                Create a custom questionnaire for clients to complete weekly
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowQuestionnaireForm(!showQuestionnaireForm)
+                setQuestionnaireError(null)
+                setQuestionnaireSuccess(null)
+                if (!showQuestionnaireForm) {
+                  fetchQuestionnaireBundle()
+                }
+              }}
+              className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+            >
+              {showQuestionnaireForm ? "Cancel" : questionnaireJson ? "Edit Bundle" : "Create Bundle"}
+            </button>
+          </div>
+
+          {questionnaireSuccess && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded-md text-sm">
+              {questionnaireSuccess}
+            </div>
+          )}
+
+          {questionnaireError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-md text-sm">
+              {questionnaireError}
+            </div>
+          )}
+
+          {showQuestionnaireForm && (
+            <div className="border-t pt-4 mt-4">
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Load Default Template</label>
+                <div className="flex gap-2">
+                  <select
+                    value={selectedTemplate}
+                    onChange={(e) => setSelectedTemplate(e.target.value as TemplateKey | "")}
+                    className="flex-1 px-3 py-2 border rounded-md"
+                  >
+                    <option value="">Select a template...</option>
+                    <option value="week1">Week 1 - First Week Check-In</option>
+                    <option value="week2">Week 2 - Progress Check-In</option>
+                    <option value="week3">Week 3 - Mid-Program Check-In</option>
+                    <option value="week4">Week 4 - Monthly Reflection</option>
+                    <option value="week5">Week 5 - Final Check-In</option>
+                  </select>
+                  <button
+                    onClick={handleLoadTemplate}
+                    disabled={!selectedTemplate}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Load Template
+                  </button>
+                </div>
+                <p className="text-xs text-neutral-500 mt-2">
+                  Select a pre-built template or create your own questionnaire from scratch
+                </p>
+              </div>
+
+              <div className="border rounded-lg p-4 bg-neutral-50 min-h-[600px]">
+                <SurveyCreatorContainer
+                  json={questionnaireJson}
+                  onSaveClick={handleSaveQuestionnaire}
+                />
+              </div>
+
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowQuestionnaireForm(false)
+                    setQuestionnaireError(null)
+                    setQuestionnaireSuccess(null)
+                  }}
+                  className="bg-gray-200 text-neutral-700 px-6 py-2 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!showQuestionnaireForm && (
+            <div className="text-sm text-neutral-600">
+              {questionnaireJson ? (
+                <div>
+                  <p className="text-green-600 font-medium mb-2">✓ Questionnaire bundle is configured</p>
+                  <p className="text-neutral-500">
+                    Clients can access weekly questionnaires from their dashboard.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-amber-600 font-medium mb-2">No questionnaire bundle set up</p>
+                  <p className="text-neutral-500">
+                    Create a questionnaire bundle to enable weekly check-ins for your clients.
+                  </p>
+                </div>
               )}
             </div>
           )}

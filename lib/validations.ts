@@ -162,3 +162,20 @@ export const userPreferenceSchema = z.object({
   measurementUnit: z.enum(["inches", "cm"]).default("inches"),
   dateFormat: z.enum(["MM/dd/yyyy", "dd/MM/yyyy", "dd-MMM-yyyy", "yyyy-MM-dd", "MMM dd, yyyy"]).default("MM/dd/yyyy"),
 })
+
+// Questionnaire validation schemas
+export const questionnaireBundleSchema = z.object({
+  bundleJson: z.any(), // SurveyJS JSON schema
+})
+
+export const weeklyQuestionnaireResponseSchema = z.object({
+  weekNumber: z.number().int().min(1).max(5),
+  responseJson: z.any(), // SurveyJS response data
+  status: z.enum(["in_progress", "completed"]).optional(),
+})
+
+export const questionnaireStatusQuerySchema = z.object({
+  cohortId: z.string().uuid().optional(),
+  weekNumber: z.number().int().min(1).max(5).optional(),
+})
+

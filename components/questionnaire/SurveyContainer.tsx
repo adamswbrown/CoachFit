@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react"
 import { Model } from "survey-core"
 import { Survey } from "survey-react-ui"
-import "survey-core/defaultV2.min.css"
+import "survey-core/survey-core.min.css"
 import { DEFAULT_SURVEY_CONFIG } from "@/lib/surveyjs-config"
 
 interface SurveyContainerProps {
