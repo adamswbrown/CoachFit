@@ -115,6 +115,11 @@ export default function WeeklyReviewPage() {
   const [loomUrl, setLoomUrl] = useState("")
   const [weeklyNote, setWeeklyNote] = useState("")
   const [savingWeeklyResponse, setSavingWeeklyResponse] = useState(false)
+  const [questionnaireResponses, setQuestionnaireResponses] = useState<Array<{
+    weekNumber: number
+    status: string
+    updatedAt: string
+  }>>([])
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -137,6 +142,7 @@ export default function WeeklyReviewPage() {
             fetchClient(),
             fetchWeeklySummary(),
             fetchCoachNote(),
+            fetchQuestionnaireResponses(),
           ])
           // Fetch weekly response separately - don't block page load if it fails
           fetchWeeklyResponse().catch((err) =>
@@ -191,6 +197,18 @@ export default function WeeklyReviewPage() {
       }
     } catch (err) {
       console.error("Error fetching coach note:", err)
+    }
+  }
+
+  const fetchQuestionnaireResponses = async () => {
+    try {
+      const res = await fetch(`/api/coach/weekly-questionnaire-status?userId=${clientId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setQuestionnaireResponses(data.responses || [])
+      }
+    } catch (err) {
+      console.error("Error fetching questionnaire responses:", err)
     }
   }
 
@@ -683,6 +701,54 @@ export default function WeeklyReviewPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Weekly Questionnaire Section */}
+        {questionnaireResponses && questionnaireResponses.length > 0 && (
+          <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Weekly Questionnaires</h2>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              {[1, 2, 3, 4, 5].map((weekNum) => {
+                const response = questionnaireResponses.find((r) => r.weekNumber === weekNum)
+                if (!response) return null
+
+                const hoursSinceUpdate = Math.floor(
+                  (Date.now() - new Date(response.updatedAt).getTime()) / (1000 * 60 * 60)
+                )
+
+                return (
+                  <div
+                    key={weekNum}
+                    className={`p-4 rounded-lg border-2 ${
+                      response.status === "completed"
+                        ? "border-green-200 bg-green-50"
+                        : "border-red-200 bg-red-50"
+                    }`}
+                  >
+                    <div className="text-sm font-medium text-neutral-700 mb-2">
+                      Week {weekNum}
+                    </div>
+                    {response.status === "completed" ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600 text-lg">✓</span>
+                        <span className="text-sm text-green-700 font-medium">Completed</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-600 text-lg">◐</span>
+                        <div>
+                          <div className="text-sm text-red-700 font-medium">In Progress</div>
+                          <div className="text-xs text-red-600 mt-1">
+                            Last saved {hoursSinceUpdate}h ago
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

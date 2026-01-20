@@ -8,6 +8,7 @@ export const EMAIL_TEMPLATE_KEYS = {
   COHORT_INVITE: "cohort_invite",
   PASSWORD_SET: "password_set",
   PASSWORD_RESET: "password_reset",
+  WEEKLY_QUESTIONNAIRE_REMINDER: "weekly_questionnaire_reminder",
 } as const
 
 export type EmailTemplateKey = (typeof EMAIL_TEMPLATE_KEYS)[keyof typeof EMAIL_TEMPLATE_KEYS]
@@ -21,6 +22,9 @@ const TOKEN_WHITELIST = [
   "cohortName",
   "loginUrl",
   "appName",
+  "clientName",
+  "weekNumber",
+  "questionnaireUrl",
 ] as const
 
 export type EmailToken = (typeof TOKEN_WHITELIST)[number]
@@ -33,6 +37,9 @@ export interface EmailVariables {
   cohortName?: string
   loginUrl?: string
   appName?: string
+  clientName?: string
+  weekNumber?: string
+  questionnaireUrl?: string
 }
 
 export interface RenderedEmail {

@@ -26,7 +26,9 @@
     "password:set": "npx tsx scripts/set-password.ts",
     "email:setup-templates": "npx tsx scripts/setup-email-templates.ts",
     "email:verify": "npx tsx scripts/verify-resend-setup.ts",
-    "email:setup-audience": "npx tsx scripts/setup-broadcast-audience.ts"
+    "email:setup-audience": "npx tsx scripts/setup-broadcast-audience.ts",
+    "seed:questionnaire-templates": "npx tsx scripts/seed-questionnaire-templates.ts",
+    "questionnaire:setup-email": "npx tsx scripts/setup-questionnaire-email-template.ts"
   },
   "keywords": [],
   "author": "",
