@@ -25,7 +25,13 @@ export default function DashboardPage() {
     } else if (userRoles.includes(Role.ADMIN)) {
       router.push("/admin")
     } else if (userRoles.includes(Role.CLIENT)) {
-      router.push("/client-dashboard")
+      // Check if client has completed onboarding
+      const isOnboardingComplete = (session.user as any)?.isOnboardingComplete ?? false
+      if (!isOnboardingComplete) {
+        router.push("/onboarding/client")
+      } else {
+        router.push("/client-dashboard")
+      }
     } else {
       router.push("/login")
     }

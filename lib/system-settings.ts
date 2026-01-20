@@ -19,6 +19,25 @@ export interface SystemSettings {
   iosIntegrationEnabled: boolean
   adherenceGreenMinimum: number
   adherenceAmberMinimum: number
+  bodyFatLowPercent: number
+  bodyFatMediumPercent: number
+  bodyFatHighPercent: number
+  bodyFatVeryHighPercent: number
+  minDailyCalories: number
+  maxDailyCalories: number
+  minProteinPerLb: number
+  maxProteinPerLb: number
+  defaultCarbsPercent: number
+  defaultProteinPercent: number
+  defaultFatPercent: number
+  stepsNotMuch: number
+  stepsLight: number
+  stepsModerate: number
+  stepsHeavy: number
+  workoutNotMuch: number
+  workoutLight: number
+  workoutModerate: number
+  workoutHeavy: number
 }
 
 // Default values (fallback if database settings not found)
@@ -36,6 +55,25 @@ const DEFAULT_SETTINGS: SystemSettings = {
   iosIntegrationEnabled: true,
   adherenceGreenMinimum: 6,
   adherenceAmberMinimum: 3,
+  bodyFatLowPercent: 12.5,
+  bodyFatMediumPercent: 20.0,
+  bodyFatHighPercent: 30.0,
+  bodyFatVeryHighPercent: 37.5,
+  minDailyCalories: 1000,
+  maxDailyCalories: 5000,
+  minProteinPerLb: 0.4,
+  maxProteinPerLb: 2.0,
+  defaultCarbsPercent: 40,
+  defaultProteinPercent: 30,
+  defaultFatPercent: 30,
+  stepsNotMuch: 5000,
+  stepsLight: 7500,
+  stepsModerate: 10000,
+  stepsHeavy: 12500,
+  workoutNotMuch: 75,
+  workoutLight: 150,
+  workoutModerate: 225,
+  workoutHeavy: 300,
 }
 
 /**

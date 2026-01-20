@@ -1,78 +1,49 @@
-import { Survey, StylesManager } from "survey-core"
-
 /**
- * Initialize SurveyJS with custom theme and configuration
+ * SurveyJS Configuration
+ * 
+ * This file contains configuration for SurveyJS components including
+ * license keys (if needed) and default settings for surveys and creator.
  */
-export function initializeSurveyJS() {
-  // Apply default Tailwind-compatible theme
-  StylesManager.applyTheme("default")
+
+// License key (if using commercial license)
+// Replace with actual license key when available
+export const SURVEYJS_LICENSE = process.env.NEXT_PUBLIC_SURVEYJS_LICENSE || ""
+
+// Default survey configuration
+export const DEFAULT_SURVEY_CONFIG = {
+  showProgressBar: "top" as const,
+  showQuestionNumbers: "on" as const,
+  completedHtml: "<h4>Thank you for completing the questionnaire!</h4><p>Your responses have been saved.</p>",
+  requiredText: "*",
+  showCompletedPage: false, // We'll handle completion in our modal
 }
 
-/**
- * Create a survey instance with auto-save configuration
- */
-export function createSurveyModel(jsonSchema: any) {
-  const survey = new Survey(jsonSchema)
-  
-  // Enable question numbers
-  survey.showQuestionNumbers = "on"
-  
-  // Show page numbers in progress bar
-  survey.showProgressBar = "top"
-  
-  // Allow partial saves
-  survey.completedHtmlTemplate = "<h3>Thank you for completing this questionnaire!</h3>"
-  
-  return survey
+// Default creator configuration
+export const DEFAULT_CREATOR_CONFIG = {
+  showLogicTab: true,
+  showJSONEditorTab: true,
+  showTranslationTab: false,
+  showEmbeddedSurveyTab: false,
+  showDesignerTab: true,
+  showPreviewTab: true,
+  showThemeTab: false,
 }
 
-/**
- * Debounce utility for auto-save (500ms default)
- */
-export function createAutoSaveDebounce(callback: () => void, delayMs: number = 500) {
-  let timeoutId: NodeJS.Timeout | null = null
-  
-  return () => {
-    if (timeoutId) {
-      clearTimeout(timeoutId)
-    }
-    
-    timeoutId = setTimeout(() => {
-      callback()
-      timeoutId = null
-    }, delayMs)
-  }
-}
+// Week number to display labels
+export const WEEK_LABELS = {
+  1: "Week 1",
+  2: "Week 2",
+  3: "Week 3",
+  4: "Week 4",
+  5: "Week 5",
+} as const
 
-/**
- * Create a 5-second auto-save interval
- * Call this once to start, returns cleanup function
- */
-export function createAutoSaveInterval(callback: () => void, intervalMs: number = 5000) {
-  const intervalId = setInterval(callback, intervalMs)
-  
-  return () => {
-    clearInterval(intervalId)
-  }
-}
+export type WeekNumber = 1 | 2 | 3 | 4 | 5
 
-/**
- * Format last saved timestamp
- */
-export function formatLastSavedTime(date: Date): string {
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffSecs = Math.floor(diffMs / 1000)
-  const diffMins = Math.floor(diffSecs / 60)
-  const diffHours = Math.floor(diffMins / 60)
-  
-  if (diffSecs < 60) {
-    return "Just now"
-  } else if (diffMins < 60) {
-    return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`
-  } else if (diffHours < 24) {
-    return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`
-  } else {
-    return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-  }
-}
+// Questionnaire status types
+export const QUESTIONNAIRE_STATUS = {
+  IN_PROGRESS: "in_progress",
+  COMPLETED: "completed",
+} as const
+
+export type QuestionnaireStatus = typeof QUESTIONNAIRE_STATUS[keyof typeof QUESTIONNAIRE_STATUS]

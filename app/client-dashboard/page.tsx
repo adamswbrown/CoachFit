@@ -10,6 +10,9 @@ import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import { DataSourceBadge } from "@/components/DataSourceBadge"
 import { useRole } from "@/contexts/RoleContext"
 import { Role } from "@/lib/types"
+import { QuestionnaireModal } from "@/components/questionnaire/QuestionnaireModal"
+import { QuestionnaireProgress } from "@/components/questionnaire/QuestionnaireProgress"
+import { WeekNumber } from "@/lib/surveyjs-config"
 
 interface Entry {
   id: string
@@ -69,6 +72,12 @@ export default function ClientDashboard() {
     customPrompt1Type: string | null
   } | null>(null)
 
+  // Questionnaire state
+  const [showQuestionnaireModal, setShowQuestionnaireModal] = useState(false)
+  const [selectedWeek, setSelectedWeek] = useState<WeekNumber>(1)
+  const [userCohorts, setUserCohorts] = useState<Array<{ id: string; name: string }>>([])
+  const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
@@ -92,8 +101,29 @@ export default function ClientDashboard() {
       fetchEntries()
       fetchCheckInConfig()
       fetchWorkouts()
+      fetchUserCohorts()
     }
   }, [session, activeRole])
+
+  const fetchUserCohorts = async () => {
+    try {
+      const res = await fetch("/api/client/cohorts")
+      if (res.ok) {
+        const data = await res.json()
+        setUserCohorts(data.cohorts || [])
+        if (data.cohorts && data.cohorts.length > 0) {
+          setSelectedCohortId(data.cohorts[0].id)
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching user cohorts:", err)
+    }
+  }
+
+  const handleWeekClick = (weekNumber: WeekNumber) => {
+    setSelectedWeek(weekNumber)
+    setShowQuestionnaireModal(true)
+  }
 
   const fetchCheckInConfig = async () => {
     try {
@@ -446,6 +476,31 @@ export default function ClientDashboard() {
               <p className="text-2xl font-semibold text-neutral-900">
                 {totalEntriesThisWeek} <span className="text-base font-normal text-neutral-400">/ 7</span>
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Weekly Questionnaire Card */}
+        {hasCoach !== false && selectedCohortId && (
+          <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-900 mb-1">Weekly Questionnaire</h2>
+                <p className="text-sm text-neutral-600">
+                  Complete your weekly check-in to help your coach track your progress
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+            </div>
+            <div className="mt-4">
+              <QuestionnaireProgress
+                cohortId={selectedCohortId}
+                onWeekClick={handleWeekClick}
+              />
             </div>
           </div>
         )}
@@ -857,6 +912,16 @@ export default function ClientDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Questionnaire Modal */}
+      {selectedCohortId && (
+        <QuestionnaireModal
+          cohortId={selectedCohortId}
+          weekNumber={selectedWeek}
+          isOpen={showQuestionnaireModal}
+          onClose={() => setShowQuestionnaireModal(false)}
+        />
+      )}
     </ClientLayout>
   )
 }

@@ -21,6 +21,25 @@ const DEFAULT_SETTINGS: Omit<SystemSettings, "id"> = {
   iosIntegrationEnabled: true,
   adherenceGreenMinimum: 6,
   adherenceAmberMinimum: 3,
+  bodyFatLowPercent: 12.5,
+  bodyFatMediumPercent: 20.0,
+  bodyFatHighPercent: 30.0,
+  bodyFatVeryHighPercent: 37.5,
+  minDailyCalories: 1000,
+  maxDailyCalories: 5000,
+  minProteinPerLb: 0.4,
+  maxProteinPerLb: 2.0,
+  defaultCarbsPercent: 40,
+  defaultProteinPercent: 30,
+  defaultFatPercent: 30,
+  stepsNotMuch: 5000,
+  stepsLight: 7500,
+  stepsModerate: 10000,
+  stepsHeavy: 12500,
+  workoutNotMuch: 75,
+  workoutLight: 150,
+  workoutModerate: 225,
+  workoutHeavy: 300,
 }
 
 interface SystemSettings {
@@ -38,6 +57,25 @@ interface SystemSettings {
   iosIntegrationEnabled: boolean
   adherenceGreenMinimum: number
   adherenceAmberMinimum: number
+  bodyFatLowPercent: number
+  bodyFatMediumPercent: number
+  bodyFatHighPercent: number
+  bodyFatVeryHighPercent: number
+  minDailyCalories: number
+  maxDailyCalories: number
+  minProteinPerLb: number
+  maxProteinPerLb: number
+  defaultCarbsPercent: number
+  defaultProteinPercent: number
+  defaultFatPercent: number
+  stepsNotMuch: number
+  stepsLight: number
+  stepsModerate: number
+  stepsHeavy: number
+  workoutNotMuch: number
+  workoutLight: number
+  workoutModerate: number
+  workoutHeavy: number
 }
 
 interface TechnicalConstant {
@@ -198,7 +236,7 @@ export default function AdminSettingsPage() {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: parseInt(value, 10),
+      [name]: value === "" ? undefined : parseFloat(value),
     }))
   }
 
@@ -561,6 +599,324 @@ export default function AdminSettingsPage() {
                       <p className="text-xs text-neutral-500 mt-1">
                         Show/hide pairing code generation and iOS device sync features
                       </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Onboarding Configuration */}
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Onboarding Configuration</h3>
+                <div className="space-y-6">
+                  {/* Body Fat Percentages */}
+                  <div>
+                    <p className="text-sm font-medium text-neutral-700 mb-3">Body Fat Range Percentages</p>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                          Low Body Fat %
+                        </label>
+                        <input
+                          type="number"
+                          name="bodyFatLowPercent"
+                          value={formData.bodyFatLowPercent || ""}
+                          onChange={handleInputChange}
+                          step="0.1"
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">Midpoint for "Low" body fat range</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                          Medium Body Fat %
+                        </label>
+                        <input
+                          type="number"
+                          name="bodyFatMediumPercent"
+                          value={formData.bodyFatMediumPercent || ""}
+                          onChange={handleInputChange}
+                          step="0.1"
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">Midpoint for "Medium" body fat range</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                          High Body Fat %
+                        </label>
+                        <input
+                          type="number"
+                          name="bodyFatHighPercent"
+                          value={formData.bodyFatHighPercent || ""}
+                          onChange={handleInputChange}
+                          step="0.1"
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">Midpoint for "High" body fat range</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                          Very High Body Fat %
+                        </label>
+                        <input
+                          type="number"
+                          name="bodyFatVeryHighPercent"
+                          value={formData.bodyFatVeryHighPercent || ""}
+                          onChange={handleInputChange}
+                          step="0.1"
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">Midpoint for "Very High" body fat range</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Calorie Range */}
+                  <div>
+                    <p className="text-sm font-medium text-neutral-700 mb-3">Daily Calorie Limits</p>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                          Min Daily Calories
+                        </label>
+                        <input
+                          type="number"
+                          name="minDailyCalories"
+                          value={formData.minDailyCalories || ""}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">Minimum allowed daily calories (kcal)</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                          Max Daily Calories
+                        </label>
+                        <input
+                          type="number"
+                          name="maxDailyCalories"
+                          value={formData.maxDailyCalories || ""}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">Maximum allowed daily calories (kcal)</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Protein Range */}
+                  <div>
+                    <p className="text-sm font-medium text-neutral-700 mb-3">Daily Protein (per lb of body weight)</p>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                          Min Protein per Lb
+                        </label>
+                        <input
+                          type="number"
+                          name="minProteinPerLb"
+                          value={formData.minProteinPerLb || ""}
+                          onChange={handleInputChange}
+                          step="0.1"
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">Minimum protein per lb (0.4-0.8g typical)</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                          Max Protein per Lb
+                        </label>
+                        <input
+                          type="number"
+                          name="maxProteinPerLb"
+                          value={formData.maxProteinPerLb || ""}
+                          onChange={handleInputChange}
+                          step="0.1"
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">Maximum protein per lb (1.5-2.2g typical)</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Macro Defaults */}
+                  <div>
+                    <p className="text-sm font-medium text-neutral-700 mb-3">Default Macro Distribution (%)</p>
+                    <div className="grid grid-cols-3 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                          Carbs %
+                        </label>
+                        <input
+                          type="number"
+                          name="defaultCarbsPercent"
+                          value={formData.defaultCarbsPercent || ""}
+                          onChange={handleInputChange}
+                          min="0"
+                          max="100"
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">Default carbohydrate percentage</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                          Protein %
+                        </label>
+                        <input
+                          type="number"
+                          name="defaultProteinPercent"
+                          value={formData.defaultProteinPercent || ""}
+                          onChange={handleInputChange}
+                          min="0"
+                          max="100"
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">Default protein percentage</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                          Fat %
+                        </label>
+                        <input
+                          type="number"
+                          name="defaultFatPercent"
+                          value={formData.defaultFatPercent || ""}
+                          onChange={handleInputChange}
+                          min="0"
+                          max="100"
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">Default fat percentage</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-amber-600 mt-3">
+                      ⚠️ Percentages should sum to 100 for valid default distribution
+                    </p>
+                  </div>
+
+                  {/* Activity Target Defaults */}
+                  <div className="border-t border-neutral-200 pt-6">
+                    <h3 className="text-base font-semibold text-neutral-900 mb-4">Activity Target Defaults by Level</h3>
+                    <p className="text-sm text-neutral-600 mb-6">
+                      Configure default daily steps and weekly workout minutes based on user's selected activity level
+                    </p>
+
+                    {/* Daily Steps Targets */}
+                    <div className="mb-6">
+                      <p className="text-sm font-medium text-neutral-700 mb-3">Default Daily Steps Target</p>
+                      <div className="grid grid-cols-4 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            Not Much
+                          </label>
+                          <input
+                            type="number"
+                            name="stepsNotMuch"
+                            value={formData.stepsNotMuch || ""}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <p className="text-xs text-neutral-500 mt-1">Sedentary</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            Light
+                          </label>
+                          <input
+                            type="number"
+                            name="stepsLight"
+                            value={formData.stepsLight || ""}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <p className="text-xs text-neutral-500 mt-1">Some activity</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            Moderate
+                          </label>
+                          <input
+                            type="number"
+                            name="stepsModerate"
+                            value={formData.stepsModerate || ""}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <p className="text-xs text-neutral-500 mt-1">WHO standard</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            Heavy
+                          </label>
+                          <input
+                            type="number"
+                            name="stepsHeavy"
+                            value={formData.stepsHeavy || ""}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <p className="text-xs text-neutral-500 mt-1">Very active</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Weekly Workout Minutes */}
+                    <div>
+                      <p className="text-sm font-medium text-neutral-700 mb-3">Default Weekly Workout Minutes</p>
+                      <div className="grid grid-cols-4 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            Not Much
+                          </label>
+                          <input
+                            type="number"
+                            name="workoutNotMuch"
+                            value={formData.workoutNotMuch || ""}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <p className="text-xs text-neutral-500 mt-1">~11 min/day</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            Light
+                          </label>
+                          <input
+                            type="number"
+                            name="workoutLight"
+                            value={formData.workoutLight || ""}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <p className="text-xs text-neutral-500 mt-1">~21 min/day</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            Moderate
+                          </label>
+                          <input
+                            type="number"
+                            name="workoutModerate"
+                            value={formData.workoutModerate || ""}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <p className="text-xs text-neutral-500 mt-1">~32 min/day</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            Heavy
+                          </label>
+                          <input
+                            type="number"
+                            name="workoutHeavy"
+                            value={formData.workoutHeavy || ""}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <p className="text-xs text-neutral-500 mt-1">~43 min/day</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

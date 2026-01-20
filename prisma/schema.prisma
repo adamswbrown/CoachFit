@@ -38,20 +38,20 @@ model CoachInvite {
 }
 
 model Cohort {
-  id                        String                  @id @default(uuid())
+  id                        String                         @id @default(uuid())
   name                      String
   coachId                   String
-  createdAt                 DateTime                @default(now())
-  cohortStartDate           DateTime?              // Optional custom start date, defaults to createdAt
-  durationConfig            String                  @default("six-week") // "six-week" or "custom"
-  durationWeeks             Int?                    // Weeks duration (6 for six-week, or custom value)
+  createdAt                 DateTime                       @default(now())
+  cohortStartDate           DateTime?                      @db.Date // Week 1 start date for questionnaire tracking
+  durationConfig            String                         @default("six-week") // "six-week" or "custom"
+  durationWeeks             Int?                           // Weeks duration (6 for six-week, or custom value)
   coachMemberships          CoachCohortMembership[]
-  User                      User                    @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  User                      User                           @relation(fields: [coachId], references: [id], onDelete: Cascade)
   CheckInConfig             CohortCheckInConfig?
-  QuestionnaireBundle       QuestionnaireBundle?
-  WeeklyQuestionnaireResponses WeeklyQuestionnaireResponse[]
   invites                   CohortInvite[]
   memberships               CohortMembership[]
+  questionnaireBundle       QuestionnaireBundle?
+  weeklyQuestionnaireResponses WeeklyQuestionnaireResponse[]
 
   @@unique([coachId, name])
   @@index([coachId])
@@ -186,37 +186,43 @@ model Session {
 }
 
 model User {
-  id                     String                        @id @default(uuid())
-  email                  String                        @unique
+  id                     String                           @id @default(uuid())
+  email                  String                           @unique
   name                   String?
   image                  String?
   passwordHash           String?
-  roles                  Role[]                        @default([CLIENT])
-  isTestUser             Boolean                       @default(false)
+  roles                  Role[]                           @default([CLIENT])
+  isTestUser             Boolean                          @default(false)
   emailVerified          DateTime?
-  createdAt              DateTime                      @default(now())
+  createdAt              DateTime                         @default(now())
   invitedByCoachId       String?
-  onboardingComplete     Boolean                       @default(false)
+  onboardingComplete     Boolean                          @default(false)
+  gender                 String?
+  dateOfBirth            DateTime?                        @db.Date
+  activityLevel          String?
+  primaryGoal            String?
   Account                Account[]
-  AdminActions           AdminAction[]                 @relation("AdminActions")
+  AdminActions           AdminAction[]                    @relation("AdminActions")
   CoachCohortMembership  CoachCohortMembership[]
   CoachInvite            CoachInvite[]
-  ClientNotes            CoachNote[]                   @relation("ClientNotes")
-  CoachNotes             CoachNote[]                   @relation("CoachNotes")
-  ClientWeeklyResponses  WeeklyCoachResponse[]         @relation("ClientWeeklyResponses")
-  CoachWeeklyResponses   WeeklyCoachResponse[]         @relation("CoachWeeklyResponses")
+  ClientNotes            CoachNote[]                      @relation("ClientNotes")
+  CoachNotes             CoachNote[]                      @relation("CoachNotes")
+  ClientWeeklyResponses  WeeklyCoachResponse[]            @relation("ClientWeeklyResponses")
+  CoachWeeklyResponses   WeeklyCoachResponse[]            @relation("CoachWeeklyResponses")
   Cohort                 Cohort[]
   CohortMembership       CohortMembership[]
   Entry                  Entry[]
-  ClientPairingCodes     PairingCode[]                 @relation("ClientPairingCodes")
-  CoachPairingCodes      PairingCode[]                 @relation("CoachPairingCodes")
+  ClientPairingCodes     PairingCode[]                    @relation("ClientPairingCodes")
+  CoachPairingCodes      PairingCode[]                    @relation("CoachPairingCodes")
   Session                Session[]
   SleepRecords           SleepRecord[]
-  WeeklyQuestionnaireResponses WeeklyQuestionnaireResponse[]
-  User                   User?                         @relation("UserToUser", fields: [invitedByCoachId], references: [id])
-  other_User             User[]                        @relation("UserToUser")
+  User                   User?                            @relation("UserToUser", fields: [invitedByCoachId], references: [id])
+  other_User             User[]                           @relation("UserToUser")
   UserConsent            UserConsent?
+  UserGoals              UserGoals?
+  UserPreference         UserPreference?
   Workouts               Workout[]
+  WeeklyQuestionnaireResponses WeeklyQuestionnaireResponse[]
 
   @@index([invitedByCoachId])
   @@index([createdAt])
@@ -335,22 +341,41 @@ model AdminAction {
 }
 
 model SystemSettings {
-  id                     String   @id @default(uuid())
-  maxClientsPerCoach     Int      @default(50)
-  minClientsPerCoach     Int      @default(10)
-  recentActivityDays     Int      @default(14)
-  lowEngagementEntries   Int      @default(7)
-  noActivityDays         Int      @default(14)
-  criticalNoActivityDays Int      @default(30)
-  shortTermWindowDays    Int      @default(7)
-  longTermWindowDays     Int      @default(30)
-  adminOverrideEmail     String?
-  healthkitEnabled       Boolean  @default(true)
-  iosIntegrationEnabled  Boolean  @default(true)
-  adherenceGreenMinimum  Int      @default(6)
-  adherenceAmberMinimum  Int      @default(3)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                       String   @id @default(uuid())
+  maxClientsPerCoach       Int      @default(50)
+  minClientsPerCoach       Int      @default(10)
+  recentActivityDays       Int      @default(14)
+  lowEngagementEntries     Int      @default(7)
+  noActivityDays           Int      @default(14)
+  criticalNoActivityDays   Int      @default(30)
+  shortTermWindowDays      Int      @default(7)
+  longTermWindowDays       Int      @default(30)
+  adminOverrideEmail       String?
+  healthkitEnabled         Boolean  @default(true)
+  iosIntegrationEnabled    Boolean  @default(true)
+  adherenceGreenMinimum    Int      @default(6)
+  adherenceAmberMinimum    Int      @default(3)
+  bodyFatLowPercent        Float    @default(12.5)
+  bodyFatMediumPercent     Float    @default(20.0)
+  bodyFatHighPercent       Float    @default(30.0)
+  bodyFatVeryHighPercent   Float    @default(37.5)
+  minDailyCalories         Int      @default(1000)
+  maxDailyCalories         Int      @default(5000)
+  minProteinPerLb          Float    @default(0.4)
+  maxProteinPerLb          Float    @default(2.0)
+  defaultCarbsPercent      Float    @default(40.0)
+  defaultProteinPercent    Float    @default(30.0)
+  defaultFatPercent        Float    @default(30.0)
+  stepsNotMuch             Int      @default(5000)
+  stepsLight               Int      @default(7500)
+  stepsModerate            Int      @default(10000)
+  stepsHeavy               Int      @default(12500)
+  workoutNotMuch           Int      @default(75)
+  workoutLight             Int      @default(150)
+  workoutModerate          Int      @default(225)
+  workoutHeavy             Int      @default(300)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   @@index([createdAt])
 }
@@ -391,42 +416,68 @@ model EmailTemplate {
   @@index([enabled])
 }
 
+model UserGoals {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  currentWeightKg      Float?
+  targetWeightKg       Float?
+  heightCm             Float?
+  dailyCaloriesKcal    Int?
+  proteinGrams         Float?
+  carbGrams            Float?
+  fatGrams             Float?
+  waterIntakeMl        Int?
+  dailyStepsTarget     Int?
+  weeklyWorkoutMinutes Int?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model UserPreference {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  weightUnit        String   @default("lbs")
+  measurementUnit   String   @default("inches")
+  dateFormat        String   @default("MM/dd/yyyy")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 model QuestionnaireBundle {
-  id            String                        @id @default(uuid())
-  cohortId      String                        @unique
-  name          String
-  description   String?
-  jsonSchema    Json                          // SurveyJS form schema
-  isActive      Boolean                       @default(true)
-  createdAt     DateTime                      @default(now())
-  updatedAt     DateTime                      @updatedAt
-  cohort        Cohort                        @relation(fields: [cohortId], references: [id], onDelete: Cascade)
-  responses     WeeklyQuestionnaireResponse[]
+  id          String   @id @default(uuid())
+  cohortId    String   @unique
+  bundleJson  Json     // SurveyJS JSON schema with all 5 weeks
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cohort      Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
 
   @@index([cohortId])
 }
 
 model WeeklyQuestionnaireResponse {
-  id               String   @id @default(uuid())
-  userId           String
-  cohortId         String
-  bundleId         String?
-  weekNumber       Int      // 1-5 for 6WC or custom
-  responses        Json?    // Client's answers
-  submittedAt      DateTime?
-  completionStatus String   @default("not_started") // "not_started" | "in_progress" | "completed"
-  lastSavedAt      DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohort           Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
-  bundle           QuestionnaireBundle? @relation(fields: [bundleId], references: [id], onDelete: SetNull)
+  id          String   @id @default(uuid())
+  userId      String
+  cohortId    String
+  weekNumber  Int      // 1-5
+  responseJson Json    // SurveyJS response data
+  status      String   @default("in_progress") // "in_progress" or "completed"
+  submittedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort      Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
 
   @@unique([userId, cohortId, weekNumber])
   @@index([userId])
   @@index([cohortId])
-  @@index([weekNumber])
-  @@index([completionStatus])
+  @@index([cohortId, weekNumber])
+  @@index([status])
 }
 
 enum Role {

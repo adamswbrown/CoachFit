@@ -386,7 +386,6 @@ async function main() {
           calories: entryData.calories,
           heightInches: entryData.heightInches,
           sleepQuality: entryData.sleepQuality,
-          perceivedStress: entryData.perceivedStress,
           dataSources: ["manual"],
         },
         create: {
@@ -397,7 +396,6 @@ async function main() {
           calories: entryData.calories,
           heightInches: entryData.heightInches,
           sleepQuality: entryData.sleepQuality,
-          perceivedStress: entryData.perceivedStress,
           dataSources: ["manual"],
         },
       })
