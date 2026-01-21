@@ -58,6 +58,21 @@ interface Client {
   email: string
 }
 
+interface QuestionnaireDetail {
+  cohortId: string
+  cohortName: string
+  weekNumber: number
+  status: string
+  submittedAt: string | null
+  updatedAt: string
+  answers: Array<{
+    key: string
+    title: string
+    description: string | null
+    value: any
+  }>
+}
+
 /**
  * Get Monday of a given date (start of week)
  */
@@ -119,7 +134,13 @@ export default function WeeklyReviewPage() {
     weekNumber: number
     status: string
     updatedAt: string
+    cohortId: string
   }>>([])
+  const [questionnaireDetail, setQuestionnaireDetail] = useState<QuestionnaireDetail | null>(null)
+  const [questionnaireDetailLoading, setQuestionnaireDetailLoading] = useState(false)
+  const [questionnaireDetailError, setQuestionnaireDetailError] = useState<string | null>(null)
+  const [selectedQuestionnaireWeek, setSelectedQuestionnaireWeek] = useState<number | null>(null)
+  const [selectedQuestionnaireCohortId, setSelectedQuestionnaireCohortId] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -137,6 +158,9 @@ export default function WeeklyReviewPage() {
     if (session && clientId) {
       const loadData = async () => {
         setLoading(true)
+        setQuestionnaireResponses([])
+        setQuestionnaireDetail(null)
+        setQuestionnaireDetailError(null)
         try {
           await Promise.all([
             fetchClient(),
@@ -155,6 +179,12 @@ export default function WeeklyReviewPage() {
       loadData()
     }
   }, [session, clientId, selectedWeekStart])
+
+  useEffect(() => {
+    if (session && clientId) {
+      fetchQuestionnaireDetail()
+    }
+  }, [session, clientId, selectedQuestionnaireWeek, selectedQuestionnaireCohortId])
 
   const fetchClient = async () => {
     try {
@@ -205,10 +235,67 @@ export default function WeeklyReviewPage() {
       const res = await fetch(`/api/coach/weekly-questionnaire-status?userId=${clientId}`)
       if (res.ok) {
         const data = await res.json()
-        setQuestionnaireResponses(data.responses || [])
+        const responses = data.responses || []
+        setQuestionnaireResponses(responses)
+        if (responses.length > 0) {
+          const first = responses[0]
+          setSelectedQuestionnaireWeek(first.weekNumber)
+          setSelectedQuestionnaireCohortId(first.cohortId)
+        } else {
+          setSelectedQuestionnaireWeek(null)
+          setSelectedQuestionnaireCohortId(null)
+        }
+      } else {
+        setQuestionnaireResponses([])
+        setSelectedQuestionnaireWeek(null)
+        setSelectedQuestionnaireCohortId(null)
       }
     } catch (err) {
       console.error("Error fetching questionnaire responses:", err)
+      setQuestionnaireResponses([])
+      setSelectedQuestionnaireWeek(null)
+      setSelectedQuestionnaireCohortId(null)
+    }
+  }
+
+  const fetchQuestionnaireDetail = async () => {
+    setQuestionnaireDetailLoading(true)
+    setQuestionnaireDetailError(null)
+    try {
+      if (!selectedQuestionnaireWeek) {
+        setQuestionnaireDetail(null)
+        setQuestionnaireDetailLoading(false)
+        return
+      }
+
+      const params = new URLSearchParams({
+        clientId,
+        weekNumber: String(selectedQuestionnaireWeek),
+      })
+
+      if (selectedQuestionnaireCohortId) {
+        params.set("cohortId", selectedQuestionnaireCohortId)
+      }
+
+      const res = await fetch(
+        `/api/coach/weekly-questionnaire-response?${params.toString()}`
+      )
+      if (res.ok) {
+        const data = await res.json()
+        setQuestionnaireDetail(data)
+      } else {
+        setQuestionnaireDetail(null)
+        if (res.status !== 404) {
+          const errorData = await res.json().catch(() => ({}))
+          setQuestionnaireDetailError(errorData.error || "Failed to load questionnaire response")
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching questionnaire detail:", err)
+      setQuestionnaireDetailError("Failed to load questionnaire response")
+      setQuestionnaireDetail(null)
+    } finally {
+      setQuestionnaireDetailLoading(false)
     }
   }
 
@@ -718,14 +805,28 @@ export default function WeeklyReviewPage() {
                   (Date.now() - new Date(response.updatedAt).getTime()) / (1000 * 60 * 60)
                 )
 
+                const isSelected = selectedQuestionnaireWeek === weekNum
+
                 return (
                   <div
                     key={weekNum}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      setSelectedQuestionnaireWeek(weekNum)
+                      setSelectedQuestionnaireCohortId(response.cohortId)
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        setSelectedQuestionnaireWeek(weekNum)
+                        setSelectedQuestionnaireCohortId(response.cohortId)
+                      }
+                    }}
                     className={`p-4 rounded-lg border-2 ${
                       response.status === "completed"
                         ? "border-green-200 bg-green-50"
                         : "border-red-200 bg-red-50"
-                    }`}
+                    } ${isSelected ? "ring-2 ring-neutral-900" : ""}`}
                   >
                     <div className="text-sm font-medium text-neutral-700 mb-2">
                       Week {weekNum}
@@ -749,6 +850,56 @@ export default function WeeklyReviewPage() {
                   </div>
                 )
               })}
+            </div>
+
+            <div className="mt-6 border-t border-neutral-200 pt-4">
+              <h3 className="text-lg font-semibold mb-3">Selected Week Responses</h3>
+              {questionnaireDetailLoading && (
+                <p className="text-sm text-neutral-500">Loading responses...</p>
+              )}
+              {!questionnaireDetailLoading && questionnaireDetailError && (
+                <p className="text-sm text-red-600">{questionnaireDetailError}</p>
+              )}
+              {!questionnaireDetailLoading && !questionnaireDetailError && !questionnaireDetail && (
+                <p className="text-sm text-neutral-500">No questionnaire response for this week.</p>
+              )}
+              {!questionnaireDetailLoading && questionnaireDetail && (
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-600">
+                    <span className="font-medium text-neutral-800">
+                      Week {questionnaireDetail.weekNumber}
+                    </span>
+                    <span className="px-2 py-1 rounded-full text-xs bg-neutral-100 text-neutral-700">
+                      {questionnaireDetail.status === "completed" ? "Completed" : "In Progress"}
+                    </span>
+                    {questionnaireDetail.submittedAt && (
+                      <span>
+                        Submitted{" "}
+                        {new Date(questionnaireDetail.submittedAt).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    {questionnaireDetail.answers.map((answer) => (
+                      <div key={answer.key} className="rounded-lg border border-neutral-200 p-3">
+                        <div className="text-sm font-semibold text-neutral-800">
+                          {answer.title}
+                        </div>
+                        {answer.description && (
+                          <div className="text-xs text-neutral-500 mt-1">
+                            {answer.description}
+                          </div>
+                        )}
+                        <div className="text-sm text-neutral-700 mt-2 whitespace-pre-wrap">
+                          {answer.value === null || answer.value === undefined || answer.value === ""
+                            ? "—"
+                            : String(answer.value)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

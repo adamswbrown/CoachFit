@@ -14,6 +14,11 @@ export const DEFAULT_TEMPLATES = {
         name: "week1",
         elements: [
           {
+            type: "html",
+            name: "intro",
+            html: "<p><strong>Hi Folks,</strong></p><p>You've officially made it through your first week, congratulations!</p><p>It's time for your Sunday check-in! This is a crucial step in ensuring you're on track to achieve your fat loss goals and helps me provide the best support possible.</p><p>Please complete the following questions by copying and pasting the entire email into your reply and then filling out the questions asked honestly and in as much detail as you can. I will review your responses and send you personalized feedback.</p>",
+          },
+          {
             type: "comment",
             name: "wins",
             title: "What went well this week?",
@@ -85,6 +90,11 @@ export const DEFAULT_TEMPLATES = {
         name: "week2",
         elements: [
           {
+            type: "html",
+            name: "intro",
+            html: "<p><strong>Hi Folks,</strong></p><p>You've officially made it through your first two weeks, congratulations!</p><p>It's time for your Sunday check-in! This is a crucial step in ensuring you're on track to achieve your fat loss goals and helps me provide the best support possible.</p><p>Please complete the following questions by copying and pasting the entire email into your reply and then filling out the questions asked honestly and in as much detail as you can. I will review your responses and send you personalized feedback.</p>",
+          },
+          {
             type: "comment",
             name: "wins",
             title: "What went well this week?",
@@ -154,6 +164,11 @@ export const DEFAULT_TEMPLATES = {
       {
         name: "week3",
         elements: [
+          {
+            type: "html",
+            name: "intro",
+            html: "<p><strong>Hi Folks,</strong></p><p>As Jon Bon Jovi would say wooooahhh we're halfway there!</p><p>It's time for your Sunday check-in! This is a crucial step in ensuring you're on track to achieve your fat loss goals and helps me provide the best support possible.</p><p>Please complete the following questions by copying and pasting the entire email into your reply and then filling out the questions asked honestly and in as much detail as you can. I will review your responses and send you personalized feedback.</p>",
+          },
           {
             type: "comment",
             name: "wins",
@@ -225,6 +240,11 @@ export const DEFAULT_TEMPLATES = {
         name: "week4",
         elements: [
           {
+            type: "html",
+            name: "intro",
+            html: "<p><strong>Hi Folks,</strong></p><p>You've officially made it through your first four weeks, congratulations!!</p><p>Only two weeks left!!</p><p>It's time for your Sunday check-in! This is a crucial step in ensuring you're on track to achieve your fat loss goals and helps me provide the best support possible.</p><p>Please complete the following questions by copying and pasting the entire email into your reply and then filling out the questions asked honestly and in as much detail as you can. I will review your responses and send you personalized feedback.</p>",
+          },
+          {
             type: "comment",
             name: "wins",
             title: "What went well this week?",
@@ -295,6 +315,11 @@ export const DEFAULT_TEMPLATES = {
       {
         name: "week5",
         elements: [
+          {
+            type: "html",
+            name: "intro",
+            html: "<p><strong>Hi Folks,</strong></p><p>Final week - let's finish strong!</p><p>It's time for your Sunday check-in! This is a crucial step in ensuring you're on track to achieve your fat loss goals and helps me provide the best support possible.</p><p>Please complete the following questions by copying and pasting the entire email into your reply and then filling out the questions asked honestly and in as much detail as you can. I will review your responses and send you personalized feedback.</p>",
+          },
           {
             type: "comment",
             name: "wins",

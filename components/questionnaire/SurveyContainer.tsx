@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useState } from "react"
 import { Model } from "survey-core"
 import { Survey } from "survey-react-ui"
 import "survey-core/survey-core.min.css"
@@ -21,7 +21,7 @@ export function SurveyContainer({
   data,
   mode = "edit",
 }: SurveyContainerProps) {
-  const surveyRef = useRef<Model | null>(null)
+  const [surveyModel, setSurveyModel] = useState<Model | null>(null)
 
   useEffect(() => {
     // Create survey model
@@ -53,7 +53,7 @@ export function SurveyContainer({
       })
     }
     
-    surveyRef.current = survey
+    setSurveyModel(survey)
     
     return () => {
       // Cleanup
@@ -61,9 +61,9 @@ export function SurveyContainer({
     }
   }, [surveyJson, onComplete, onValueChanged, data, mode])
 
-  if (!surveyRef.current) {
+  if (!surveyModel) {
     return <div>Loading survey...</div>
   }
 
-  return <Survey model={surveyRef.current} />
+  return <Survey model={surveyModel} />
 }

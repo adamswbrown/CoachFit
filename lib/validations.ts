@@ -35,6 +35,13 @@ export const createEntrySchema = upsertEntrySchema
 
 export const createCohortSchema = z.object({
   name: z.string().min(1, "Name is required").max(255, "Name must be 255 characters or less"),
+  cohortStartDate: z.string().refine(
+    (date) => {
+      const parsed = new Date(date)
+      return !isNaN(parsed.getTime())
+    },
+    { message: "Start date must be a valid date" }
+  ),
   // ownerCoachId is for admins to assign a specific coach as owner
   ownerCoachId: z.string().uuid().optional(),
   // coCoaches is an array of coach emails to add as co-coaches
@@ -178,4 +185,3 @@ export const questionnaireStatusQuerySchema = z.object({
   cohortId: z.string().uuid().optional(),
   weekNumber: z.number().int().min(1).max(5).optional(),
 })
-

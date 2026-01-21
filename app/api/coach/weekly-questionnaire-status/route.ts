@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams
     const cohortId = searchParams.get("cohortId")
     const weekNumberParam = searchParams.get("weekNumber")
+    const userId = searchParams.get("userId")
     const weekNumber = weekNumberParam ? parseInt(weekNumberParam) : undefined
 
     if (weekNumber !== undefined && (isNaN(weekNumber) || weekNumber < 1 || weekNumber > 5)) {
@@ -56,6 +57,10 @@ export async function GET(req: NextRequest) {
 
     if (weekNumber !== undefined) {
       whereClause.weekNumber = weekNumber
+    }
+
+    if (userId) {
+      whereClause.userId = userId
     }
 
     // Fetch all responses matching the criteria

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { isAdminOrCoach } from "@/lib/permissions"
+import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
 
 export async function DELETE(
   req: NextRequest,
@@ -29,8 +29,20 @@ export async function DELETE(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
     }
 
-    if (cohort.coachId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    const isAdminUser = isAdmin(session.user)
+    if (!isAdminUser && cohort.coachId !== session.user.id) {
+      const isCoCoach = await db.coachCohortMembership.findUnique({
+        where: {
+          coachId_cohortId: {
+            coachId: session.user.id,
+            cohortId,
+          },
+        },
+      })
+
+      if (!isCoCoach) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
     }
 
     // Remove the client from the cohort

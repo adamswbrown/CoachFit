@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
           select: {
             id: true,
             name: true,
+            cohortStartDate: true,
           },
         },
       },
@@ -34,6 +35,7 @@ export async function GET(req: NextRequest) {
     const cohorts = memberships.map((membership) => ({
       id: membership.Cohort.id,
       name: membership.Cohort.name,
+      cohortStartDate: membership.Cohort.cohortStartDate,
     }))
 
     return NextResponse.json({ cohorts })

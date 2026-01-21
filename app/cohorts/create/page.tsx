@@ -17,6 +17,7 @@ interface Coach {
 export default function CreateCohortPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const today = new Date().toISOString().split("T")[0]
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -25,12 +26,13 @@ export default function CreateCohortPage() {
   const [coachSearch, setCoachSearch] = useState("")
   const [formData, setFormData] = useState({
     name: "",
+    cohortStartDate: today,
     ownerCoachId: "",
     coCoaches: [] as string[],
     durationConfig: "six-week" as "six-week" | "custom",
     durationWeeks: 6,
     checkInConfig: {
-      enabledPrompts: ["weightLbs", "steps", "calories"] as string[],
+      enabledPrompts: ["weightLbs", "steps", "calories", "perceivedStress"] as string[],
       customPrompt1: "",
       customPrompt1Type: "" as "scale" | "text" | "number" | "",
     },
@@ -79,6 +81,7 @@ export default function CreateCohortPage() {
     try {
       const requestBody: any = {
         name: formData.name,
+        cohortStartDate: formData.cohortStartDate,
         durationConfig: formData.durationConfig,
       }
 
@@ -115,7 +118,7 @@ export default function CreateCohortPage() {
         }
       }
 
-      const res = await fetch("/api/coach-dashboard/cohorts", {
+      const res = await fetch("/api/cohorts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
@@ -206,6 +209,21 @@ export default function CreateCohortPage() {
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 maxLength={255}
                 placeholder="e.g., Morning Group"
+              />
+            </div>
+
+            {/* Cohort Start Date */}
+            <div className="bg-white rounded-lg border border-neutral-200 p-6">
+              <label htmlFor="cohortStartDate" className="block text-sm font-semibold mb-3">
+                Cohort Start Date *
+              </label>
+              <input
+                id="cohortStartDate"
+                type="date"
+                required
+                value={formData.cohortStartDate}
+                onChange={(e) => setFormData({ ...formData, cohortStartDate: e.target.value })}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               />
             </div>
 

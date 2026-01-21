@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { createCohortSchema } from "@/lib/validations"
 import { Role } from "@/lib/types"
 import { isAdminOrCoach } from "@/lib/permissions"
+import { DEFAULT_TEMPLATES } from "@/lib/default-questionnaire-templates"
 import { z } from "zod"
 
 export async function GET(req: NextRequest) {
@@ -102,6 +103,7 @@ export async function POST(req: NextRequest) {
         data: {
           name: validated.name,
           coachId: coachId,
+          cohortStartDate: new Date(validated.cohortStartDate),
           durationConfig: validated.durationConfig,
           durationWeeks: durationWeeks,
         },
@@ -109,10 +111,13 @@ export async function POST(req: NextRequest) {
 
       // Always create check-in config with mandatory prompts
       const mandatoryPrompts = ["weightLbs", "steps", "calories"]
+      const defaultOptionalPrompts = ["perceivedStress"]
       const additionalPrompts = validated.checkInConfig?.enabledPrompts?.filter(
         (p) => !mandatoryPrompts.includes(p)
       ) || []
-      const allEnabledPrompts = [...mandatoryPrompts, ...additionalPrompts]
+      const allEnabledPrompts = Array.from(
+        new Set([...mandatoryPrompts, ...defaultOptionalPrompts, ...additionalPrompts])
+      )
 
       await tx.cohortCheckInConfig.create({
         data: {
@@ -150,6 +155,21 @@ export async function POST(req: NextRequest) {
           }
         }
       }
+
+      const bundleJson = {
+        week1: DEFAULT_TEMPLATES.week1,
+        week2: DEFAULT_TEMPLATES.week2,
+        week3: DEFAULT_TEMPLATES.week3,
+        week4: DEFAULT_TEMPLATES.week4,
+        week5: DEFAULT_TEMPLATES.week5,
+      }
+
+      await tx.questionnaireBundle.create({
+        data: {
+          cohortId: newCohort.id,
+          bundleJson: bundleJson as any,
+        },
+      })
 
       return newCohort
     })

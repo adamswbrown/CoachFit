@@ -75,8 +75,9 @@ export default function ClientDashboard() {
   // Questionnaire state
   const [showQuestionnaireModal, setShowQuestionnaireModal] = useState(false)
   const [selectedWeek, setSelectedWeek] = useState<WeekNumber>(1)
-  const [userCohorts, setUserCohorts] = useState<Array<{ id: string; name: string }>>([])
+  const [userCohorts, setUserCohorts] = useState<Array<{ id: string; name: string; cohortStartDate: string | null }>>([])
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
+  const [selectedCohortStartDate, setSelectedCohortStartDate] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -113,6 +114,7 @@ export default function ClientDashboard() {
         setUserCohorts(data.cohorts || [])
         if (data.cohorts && data.cohorts.length > 0) {
           setSelectedCohortId(data.cohorts[0].id)
+          setSelectedCohortStartDate(data.cohorts[0].cohortStartDate || null)
         }
       }
     } catch (err) {
@@ -499,6 +501,7 @@ export default function ClientDashboard() {
             <div className="mt-4">
               <QuestionnaireProgress
                 cohortId={selectedCohortId}
+                cohortStartDate={selectedCohortStartDate}
                 onWeekClick={handleWeekClick}
               />
             </div>

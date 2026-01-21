@@ -4,6 +4,17 @@ import { db } from "@/lib/db"
 import { weeklyQuestionnaireResponseSchema } from "@/lib/validations"
 import { isClient } from "@/lib/permissions"
 
+const getCurrentWeek = (startDate: Date) => {
+  const start = new Date(startDate)
+  const today = new Date()
+  start.setUTCHours(0, 0, 0, 0)
+  today.setUTCHours(0, 0, 0, 0)
+  const diffMs = today.getTime() - start.getTime()
+  if (diffMs < 0) return 0
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  return Math.min(5, Math.floor(diffDays / 7) + 1)
+}
+
 // GET /api/weekly-questionnaire/[cohortId]/[weekNumber] - Fetch questionnaire template + user's response
 export async function GET(
   req: NextRequest,
@@ -39,6 +50,28 @@ export async function GET(
 
     if (!membership) {
       return NextResponse.json({ error: "You are not a member of this cohort" }, { status: 403 })
+    }
+
+    const cohort = await db.cohort.findUnique({
+      where: { id: cohortId },
+      select: { cohortStartDate: true },
+    })
+
+    if (!cohort) {
+      return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
+    }
+
+    if (!cohort.cohortStartDate) {
+      return NextResponse.json({ error: "Cohort start date not set" }, { status: 400 })
+    }
+
+    const currentWeek = getCurrentWeek(cohort.cohortStartDate)
+    if (currentWeek < 1) {
+      return NextResponse.json({ error: "Questionnaire not available yet" }, { status: 403 })
+    }
+
+    if (weekNum > currentWeek) {
+      return NextResponse.json({ error: "Questionnaire not available yet" }, { status: 403 })
     }
 
     // Fetch the questionnaire bundle
@@ -111,6 +144,28 @@ export async function PUT(
       return NextResponse.json({ error: "You are not a member of this cohort" }, { status: 403 })
     }
 
+    const cohort = await db.cohort.findUnique({
+      where: { id: cohortId },
+      select: { cohortStartDate: true },
+    })
+
+    if (!cohort) {
+      return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
+    }
+
+    if (!cohort.cohortStartDate) {
+      return NextResponse.json({ error: "Cohort start date not set" }, { status: 400 })
+    }
+
+    const currentWeek = getCurrentWeek(cohort.cohortStartDate)
+    if (currentWeek < 1) {
+      return NextResponse.json({ error: "Questionnaire not available yet" }, { status: 403 })
+    }
+
+    if (weekNum > currentWeek) {
+      return NextResponse.json({ error: "Questionnaire not available yet" }, { status: 403 })
+    }
+
     const body = await req.json()
     const validated = weeklyQuestionnaireResponseSchema.parse({
       weekNumber: weekNum,
@@ -118,8 +173,22 @@ export async function PUT(
       status: body.status,
     })
 
-    // Determine submitted timestamp
-    const submittedAt = validated.status === "completed" ? new Date() : null
+    const existing = await db.weeklyQuestionnaireResponse.findUnique({
+      where: {
+        userId_cohortId_weekNumber: {
+          userId: session.user.id,
+          cohortId,
+          weekNumber: weekNum,
+        },
+      },
+      select: { status: true, submittedAt: true },
+    })
+
+    const isAlreadyCompleted = existing?.status === "completed"
+    const nextStatus =
+      validated.status === "completed" ? "completed" : isAlreadyCompleted ? "completed" : "in_progress"
+    const submittedAt =
+      nextStatus === "completed" ? existing?.submittedAt || new Date() : null
 
     // Upsert the response
     const response = await db.weeklyQuestionnaireResponse.upsert({

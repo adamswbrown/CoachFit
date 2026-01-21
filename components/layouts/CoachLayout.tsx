@@ -143,7 +143,8 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   if (showCoachNav && userHasCoachRole) {
     navigation.push(
       { name: "Clients", href: "/coach-dashboard", icon: ClientsIcon, hasDropdown: true, dropdownKey: "clients" },
-      { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" }
+      { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" },
+      { name: "Questionnaire Analytics", href: "/coach-dashboard/questionnaire-analytics", icon: CalendarIcon, hasDropdown: false, dropdownKey: "questionnaire-analytics" }
     )
     
     // Add Weekly Review as a separate navigation item

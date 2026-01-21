@@ -32,20 +32,25 @@ export async function GET(
 
     const isAdminUser = isAdmin(session.user)
     if (!isAdminUser && cohort.coachId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      const isCoCoach = await db.coachCohortMembership.findUnique({
+        where: {
+          coachId_cohortId: {
+            coachId: session.user.id,
+            cohortId,
+          },
+        },
+      })
+
+      if (!isCoCoach) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
     }
 
     // Get unassigned clients (no cohort memberships)
-    const clientWhere = isAdminUser
-      ? {
-          roles: { has: Role.CLIENT },
-          CohortMembership: { none: {} },
-        }
-      : {
-          invitedByCoachId: session.user.id,
-          roles: { has: Role.CLIENT },
-          CohortMembership: { none: {} },
-        }
+    const clientWhere = {
+      roles: { has: Role.CLIENT },
+      CohortMembership: { none: {} },
+    }
 
     const allClients = await db.user.findMany({
       where: clientWhere,
