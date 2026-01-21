@@ -25,6 +25,10 @@ interface Client {
   email: string
   status: "active" | "invited" | "unassigned"
   cohorts: string[]
+  inviteId?: string
+  inviteType?: "global" | "cohort"
+  inviteCohortId?: string
+  invitedAt?: string
   lastCheckInDate?: string | null
   checkInCount?: number
   adherenceRate?: number
@@ -69,6 +73,8 @@ function CoachDashboardContent() {
   const [selectedCohortForAssign, setSelectedCohortForAssign] = useState<Record<string, string>>({})
   const [retryCount, setRetryCount] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
+  const [inviteActionId, setInviteActionId] = useState<string | null>(null)
+  const [inviteAction, setInviteAction] = useState<"resend" | "remove" | null>(null)
 
   const currentFilter = (searchParams.get("filter") as ClientFilter) || "all"
 
@@ -244,25 +250,54 @@ function CoachDashboardContent() {
     }
   }
 
-  const handleCancelInvite = async (inviteId: string) => {
-    if (!confirm("Cancel this invite?")) return
+  const handleInviteAction = async (client: Client, action: "resend" | "remove") => {
+    if (!client.inviteId) {
+      setError("Invite details not found. Please refresh.")
+      return
+    }
+
+    if (action === "remove" && !confirm("Remove this invite?")) return
+
+    const inviteId = client.inviteId
+    const inviteUrl = client.inviteType === "cohort" && client.inviteCohortId
+      ? `/api/cohorts/${client.inviteCohortId}/invites/${inviteId}`
+      : `/api/invites/${inviteId}`
+
+    setInviteActionId(inviteId)
+    setInviteAction(action)
+    setError(null)
+    setSuccess(null)
 
     try {
-      const res = await fetch(`/api/invites/${inviteId}`, {
-        method: "DELETE",
+      const res = await fetch(inviteUrl, {
+        method: action === "remove" ? "DELETE" : "POST",
       })
 
       if (res.ok) {
-        setSuccess("Invite cancelled")
+        setSuccess(action === "remove" ? "Invite removed" : "Invite resent")
         setLoading(true)
         await fetchOverview()
       } else {
-        const responseData = await res.json()
-        setError(responseData.error || "Failed to cancel invite")
+        const responseData = await res.json().catch(() => ({}))
+        setError(responseData.error || "Failed to update invite")
       }
     } catch (err) {
       setError("An error occurred. Please try again.")
+    } finally {
+      setInviteActionId(null)
+      setInviteAction(null)
     }
+  }
+
+  const formatInviteDate = (invitedAt?: string) => {
+    if (!invitedAt) return "—"
+    const date = new Date(invitedAt)
+    if (Number.isNaN(date.getTime())) return "—"
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })
   }
 
   if (status === "loading" || loading) {
@@ -487,27 +522,44 @@ function CoachDashboardContent() {
                       <tr className="border-b">
                         <th className="text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Email</th>
                         <th className="hidden sm:table-cell text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Cohort (if any)</th>
+                        <th className="hidden sm:table-cell text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Date Added</th>
                         <th className="text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {invitedClients.map((client) => {
-                        // Find if this is a global invite (no cohorts)
-                        const globalInvite = data.globalInvites.find(i => i.email === client.email)
+                        const isActionLoading = inviteActionId === client.inviteId
                         return (
                           <tr key={client.email} className="border-b bg-neutral-50 italic">
                             <td className="p-2 sm:p-3 text-sm">{client.email}</td>
                             <td className="hidden sm:table-cell p-2 sm:p-3 text-sm text-neutral-500">
                               {client.cohorts.length > 0 ? client.cohorts.join(", ") : "Not assigned yet"}
                             </td>
+                            <td className="hidden sm:table-cell p-2 sm:p-3 text-sm text-neutral-500">
+                              {formatInviteDate(client.invitedAt)}
+                            </td>
                             <td className="p-2 sm:p-3">
-                              {globalInvite && (
-                                <button
-                                  onClick={() => handleCancelInvite(globalInvite.id)}
-                                  className="text-neutral-700 hover:underline text-sm"
-                                >
-                                  Cancel
-                                </button>
+                              {client.inviteId ? (
+                                <div className="flex flex-col sm:flex-row gap-2 sm:items-center text-sm">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleInviteAction(client, "resend")}
+                                    disabled={isActionLoading}
+                                    className="text-neutral-700 hover:underline disabled:opacity-50"
+                                  >
+                                    {isActionLoading && inviteAction === "resend" ? "Resending..." : "Resend"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleInviteAction(client, "remove")}
+                                    disabled={isActionLoading}
+                                    className="text-neutral-700 hover:underline disabled:opacity-50"
+                                  >
+                                    {isActionLoading && inviteAction === "remove" ? "Removing..." : "Remove"}
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-neutral-400">No actions</span>
                               )}
                             </td>
                           </tr>

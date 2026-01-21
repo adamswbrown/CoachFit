@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
         },
         invites: {
           select: {
+            id: true,
             email: true,
             createdAt: true,
           },
@@ -111,6 +112,10 @@ export async function GET(req: NextRequest) {
         email: string
         status: "active" | "invited" | "unassigned"
         cohorts: string[]
+        inviteId?: string
+        inviteType?: "global" | "cohort"
+        inviteCohortId?: string
+        invitedAt?: string
         lastCheckInDate?: string | null
         checkInCount?: number
         adherenceRate?: number
@@ -265,6 +270,10 @@ export async function GET(req: NextRequest) {
             email: email,
             status: "invited",
             cohorts: [cohort.name],
+            inviteId: invite.id,
+            inviteType: "cohort",
+            inviteCohortId: cohort.id,
+            invitedAt: invite.createdAt.toISOString(),
           })
         }
       }
@@ -292,18 +301,44 @@ export async function GET(req: NextRequest) {
           email: invite.email,
           status: "invited",
           cohorts: [],
+          inviteId: invite.id,
+          inviteType: "global",
+          invitedAt: invite.createdAt.toISOString(),
         })
+      } else if (!existing.invitedAt || new Date(invite.createdAt) > new Date(existing.invitedAt)) {
+        existing.inviteId = invite.id
+        existing.inviteType = "global"
+        existing.invitedAt = invite.createdAt.toISOString()
       }
     }
 
     // Convert map to array and sort cohort names alphabetically for each client
-    type ClientMapValue = { id?: string; name?: string | null; email: string; status: string; cohorts: string[]; lastCheckInDate?: string | null; checkInCount?: number; adherenceRate?: number; weightTrend?: string | null; latestWeight?: number | null }
+    type ClientMapValue = {
+      id?: string
+      name?: string | null
+      email: string
+      status: string
+      cohorts: string[]
+      inviteId?: string
+      inviteType?: "global" | "cohort"
+      inviteCohortId?: string
+      invitedAt?: string
+      lastCheckInDate?: string | null
+      checkInCount?: number
+      adherenceRate?: number
+      weightTrend?: string | null
+      latestWeight?: number | null
+    }
     const clients = Array.from(clientMap.values()).map((client: ClientMapValue) => ({
       id: client.id,
       name: client.name ?? undefined,
       email: client.email,
       status: client.status,
       cohorts: [...client.cohorts].sort(),
+      inviteId: client.inviteId,
+      inviteType: client.inviteType,
+      inviteCohortId: client.inviteCohortId,
+      invitedAt: client.invitedAt,
       lastCheckInDate: client.lastCheckInDate ?? undefined,
       checkInCount: client.checkInCount,
       adherenceRate: client.adherenceRate,

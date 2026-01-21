@@ -102,6 +102,7 @@ export async function GET(
         cohortId: id,
       },
       select: {
+        id: true,
         email: true,
         createdAt: true,
       },
@@ -312,6 +313,7 @@ export async function POST(
         cohortId: id,
       },
       select: {
+        id: true,
         email: true,
         createdAt: true,
       },

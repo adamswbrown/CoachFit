@@ -271,6 +271,13 @@ npm run email:setup-templates
 npm run test:setup
 ```
 
+### Minimal Test Setup (Admins + Coaches Only)
+
+```bash
+# WARNING: Resets data and creates admin/coaches only (no clients)
+npm run test:setup:minimal
+```
+
 ### Environment Variables
 
 Create `.env.local` with:
@@ -321,6 +328,7 @@ npm run test:generate    # Generate full test dataset (15 clients, 5 cohorts, en
 npm run test:cleanup     # Remove all test data
 npx tsx scripts/reset-and-seed-comprehensive-multi-coach.ts  # Comprehensive reset + seed (100 clients, ~10 cohorts, questionnaires)
 npm run test:setup       # Full reset + setup (email templates, questionnaire templates, system settings)
+npm run test:setup:minimal # Admins + coaches only (no clients)
 
 # Admin Utilities
 npm run admin:set [email]              # Grant admin role to user
