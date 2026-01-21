@@ -306,16 +306,14 @@ export function QuestionnaireBuilder({
                       />
                     </label>
                   )}
-                  {element.type !== "html" && (
-                    <label className="flex items-center gap-2 text-xs text-neutral-600">
-                      <input
-                        type="checkbox"
-                        checked={element.isRequired ?? false}
-                        onChange={(e) => updateElement(index, { isRequired: e.target.checked })}
-                      />
-                      Required
-                    </label>
-                  )}
+                  <label className="flex items-center gap-2 text-xs text-neutral-600">
+                    <input
+                      type="checkbox"
+                      checked={element.isRequired ?? false}
+                      onChange={(e) => updateElement(index, { isRequired: e.target.checked })}
+                    />
+                    Required
+                  </label>
                   {element.type === "text" && (
                     <div className="grid grid-cols-2 gap-2">
                       <label className="text-xs text-neutral-600">

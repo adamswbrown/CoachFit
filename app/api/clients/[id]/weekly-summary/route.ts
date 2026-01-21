@@ -112,6 +112,7 @@ export async function GET(
         heightInches: true,
         sleepQuality: true,
         perceivedStress: true,
+        notes: true,
         dataSources: true,
       },
     })
@@ -131,6 +132,7 @@ export async function GET(
       calories: number | null
       sleepQuality: number | null
       perceivedStress: number | null
+      notes?: string | null
       bmi: number | null
       hasEntry: boolean
     }> = []
@@ -151,13 +153,14 @@ export async function GET(
         calories: entry?.calories ?? null,
         sleepQuality: entry?.sleepQuality ?? null,
         perceivedStress: entry?.perceivedStress ?? null,
+        notes: entry?.notes ?? null,
         bmi: entry ? calculateBMI(entry.weightLbs, entry.heightInches) : null,
         hasEntry: !!entry,
       })
     }
 
     // Calculate summary stats
-    type WeekEntry = { date: string; weightLbs: number | null; steps: number | null; calories: number | null; sleepQuality: number | null; perceivedStress: number | null; bmi: number | null; hasEntry: boolean }
+    type WeekEntry = { date: string; weightLbs: number | null; steps: number | null; calories: number | null; sleepQuality: number | null; perceivedStress: number | null; notes?: string | null; bmi: number | null; hasEntry: boolean }
     const entriesWithData = weekEntries.filter((e: WeekEntry) => e.hasEntry)
     const checkInCount = entriesWithData.length
     const checkInRate = checkInCount / 7

@@ -15,6 +15,7 @@ interface WeeklyEntry {
   calories: number | null
   sleepQuality: number | null
   perceivedStress: number | null
+  notes?: string | null
   bmi: number | null
   hasEntry: boolean
 }

@@ -1,12 +1,9 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import Script from "next/script"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 import { SessionProvider } from "@/components/SessionProvider"
 import { RoleProvider } from "@/contexts/RoleContext"
-
-const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "CoachFit",
@@ -20,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="font-sans">
         <Script
           id="suppress-extension-errors"
           strategy="beforeInteractive"
