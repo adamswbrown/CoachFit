@@ -11,9 +11,25 @@ interface EmailEditorProps {
   content: string
   onChange: (html: string) => void
   availableTokens?: string[]
+  editorClassName?: string
+  minHeightClassName?: string
 }
 
-export function EmailEditor({ content, onChange, availableTokens = [] }: EmailEditorProps) {
+export function EmailEditor({
+  content,
+  onChange,
+  availableTokens = [],
+  editorClassName,
+  minHeightClassName,
+}: EmailEditorProps) {
+  const editorClasses = [
+    "prose prose-sm max-w-none focus:outline-none px-3 py-2 border border-neutral-300 rounded-md",
+    minHeightClassName ?? "min-h-[300px]",
+    editorClassName ?? "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -32,8 +48,7 @@ export function EmailEditor({ content, onChange, availableTokens = [] }: EmailEd
     content,
     editorProps: {
       attributes: {
-        class:
-          "prose prose-sm max-w-none focus:outline-none min-h-[300px] px-3 py-2 border border-neutral-300 rounded-md",
+        class: editorClasses,
       },
     },
     onUpdate: ({ editor }) => {

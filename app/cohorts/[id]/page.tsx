@@ -7,7 +7,7 @@ import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { Role } from "@/lib/types"
 import { isAdminOrCoach } from "@/lib/permissions"
-import { SurveyCreatorContainer } from "@/components/questionnaire/SurveyCreatorContainer"
+import { QuestionnaireBuilder } from "@/components/questionnaire/QuestionnaireBuilder"
 import { DEFAULT_TEMPLATES, TemplateKey } from "@/lib/default-questionnaire-templates"
 
 interface Cohort {
@@ -92,6 +92,20 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
   const [questionnaireSuccess, setQuestionnaireSuccess] = useState<string | null>(null)
   const [questionnaireJson, setQuestionnaireJson] = useState<any>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateKey | "">("")
+  const [selectedQuestionnaireWeek, setSelectedQuestionnaireWeek] = useState<TemplateKey>("week1")
+
+  const defaultQuestionnaireBundle = {
+    week1: DEFAULT_TEMPLATES.week1,
+    week2: DEFAULT_TEMPLATES.week2,
+    week3: DEFAULT_TEMPLATES.week3,
+    week4: DEFAULT_TEMPLATES.week4,
+    week5: DEFAULT_TEMPLATES.week5,
+  }
+
+  const normalizeQuestionnaireBundle = (bundle: any) => ({
+    ...defaultQuestionnaireBundle,
+    ...(bundle || {}),
+  })
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -222,7 +236,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
       const res = await fetch(`/api/cohorts/${cohortId}/questionnaire`)
       if (res.ok) {
         const data = await res.json()
-        setQuestionnaireJson(data.bundleJson)
+        setQuestionnaireJson(normalizeQuestionnaireBundle(data.bundleJson))
       }
     } catch (err) {
       console.error("Error fetching questionnaire bundle:", err)
@@ -235,12 +249,21 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
     
     const template = DEFAULT_TEMPLATES[selectedTemplate]
     if (template) {
-      setQuestionnaireJson(template)
+      setQuestionnaireJson({
+        ...normalizeQuestionnaireBundle(questionnaireJson),
+        [selectedTemplate]: template,
+      })
+      setSelectedQuestionnaireWeek(selectedTemplate)
       setQuestionnaireError(null)
     }
   }
 
   const handleSaveQuestionnaire = async (json: any) => {
+    if (!json) {
+      setQuestionnaireError("Add at least one question before saving.")
+      return
+    }
+
     setQuestionnaireSubmitting(true)
     setQuestionnaireError(null)
     setQuestionnaireSuccess(null)
@@ -249,7 +272,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
       const res = await fetch(`/api/cohorts/${cohortId}/questionnaire`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bundleJson: json }),
+        body: JSON.stringify({ bundleJson: normalizeQuestionnaireBundle(json) }),
       })
 
       if (res.ok) {
@@ -873,6 +896,9 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                 setQuestionnaireError(null)
                 setQuestionnaireSuccess(null)
                 if (!showQuestionnaireForm) {
+                  if (!questionnaireJson) {
+                    setQuestionnaireJson(defaultQuestionnaireBundle)
+                  }
                   fetchQuestionnaireBundle()
                 }
               }}
@@ -925,13 +951,25 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
               </div>
 
               <div className="border rounded-lg p-4 bg-neutral-50 min-h-[600px]">
-                <SurveyCreatorContainer
-                  json={questionnaireJson}
-                  onSaveClick={handleSaveQuestionnaire}
+                <QuestionnaireBuilder
+                  bundle={questionnaireJson}
+                  selectedWeek={selectedQuestionnaireWeek}
+                  onWeekChange={setSelectedQuestionnaireWeek}
+                  onChange={(nextBundle) => {
+                    setQuestionnaireJson(nextBundle)
+                  }}
                 />
               </div>
 
               <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSaveQuestionnaire(questionnaireJson)}
+                  disabled={questionnaireSubmitting}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {questionnaireSubmitting ? "Saving..." : "Save Bundle"}
+                </button>
                 <button
                   type="button"
                   onClick={() => {

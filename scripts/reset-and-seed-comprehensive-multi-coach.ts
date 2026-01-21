@@ -1,6 +1,7 @@
 import { PrismaClient, Role } from "@prisma/client"
 import bcrypt from "bcryptjs"
 import { randomUUID } from "crypto"
+import { DEFAULT_TEMPLATES } from "../lib/default-questionnaire-templates"
 
 const db = new PrismaClient()
 const ADMIN_EMAIL = "adamswbrown@gmail.com"
@@ -98,10 +99,10 @@ type ActivityProfile = {
 }
 
 const activityProfiles: ActivityProfile[] = [
-  { level: "low", baseWeight: 190, baseSteps: 6000, baseCalories: 2000, consistency: 0.4 },
-  { level: "moderate", baseWeight: 175, baseSteps: 9000, baseCalories: 2200, consistency: 0.6 },
-  { level: "high", baseWeight: 165, baseSteps: 11000, baseCalories: 2400, consistency: 0.75 },
-  { level: "very-high", baseWeight: 155, baseSteps: 13000, baseCalories: 2600, consistency: 0.85 },
+  { level: "low", baseWeight: 190, baseSteps: 6000, baseCalories: 2000, consistency: 0.6 },
+  { level: "moderate", baseWeight: 175, baseSteps: 9000, baseCalories: 2200, consistency: 0.75 },
+  { level: "high", baseWeight: 165, baseSteps: 11000, baseCalories: 2400, consistency: 0.85 },
+  { level: "very-high", baseWeight: 155, baseSteps: 13000, baseCalories: 2600, consistency: 0.92 },
 ]
 
 function generateEntryData(profile: ActivityProfile, _dayOffset: number, gender: Gender) {
@@ -120,6 +121,123 @@ function generateEntryData(profile: ActivityProfile, _dayOffset: number, gender:
   const perceivedStress = Math.random() > 0.5 ? Math.floor(Math.random() * 10) + 1 : undefined
 
   return { weight, steps, calories, heightInches, sleepQuality, perceivedStress }
+}
+
+const winsOptions = [
+  "Hit my step goal most days and felt more consistent.",
+  "Meal prep made the week much easier.",
+  "Workouts felt stronger and more focused.",
+  "I kept a steady routine even with a busy schedule.",
+  "I tracked meals more accurately this week.",
+]
+
+const challengeOptions = [
+  "Late nights made recovery harder than expected.",
+  "A couple of social events threw off my calories.",
+  "Stressful workdays led to lower energy.",
+  "I struggled with hydration on two days.",
+  "Sleep was inconsistent, which affected training.",
+]
+
+const nutritionHelpOptions = [
+  "Ideas for quick high-protein breakfasts.",
+  "Help with snacks that fit my calorie targets.",
+  "Guidance on eating out without overdoing it.",
+  "Simple meal prep routines for weekdays.",
+  "How to manage late-night cravings.",
+]
+
+const behaviorGoals = [
+  "Prepare lunch the night before at least 4 days.",
+  "Hit 2L of water daily.",
+  "Do a 10-minute stretch routine 3 times.",
+  "Track every meal for the next 7 days.",
+  "Aim for bedtime before 10:30pm on weekdays.",
+]
+
+const reflectionOptions = [
+  "Staying consistent with tracking and training.",
+  "Feeling more confident with my routine.",
+  "Improved energy and fewer skipped workouts.",
+  "Better nutrition choices and less snacking.",
+  "More consistent steps even on busy days.",
+]
+
+const pick = <T,>(items: T[]) => items[Math.floor(Math.random() * items.length)]
+
+const randomInt = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min + 1)) + min
+
+const getWeeklyNumbers = (profile: ActivityProfile) => {
+  switch (profile.level) {
+    case "very-high":
+      return {
+        daysTrained: randomInt(4, 6),
+        daysSteps: randomInt(5, 7),
+        daysCalories: randomInt(5, 7),
+      }
+    case "high":
+      return {
+        daysTrained: randomInt(3, 5),
+        daysSteps: randomInt(4, 6),
+        daysCalories: randomInt(4, 6),
+      }
+    case "moderate":
+      return {
+        daysTrained: randomInt(2, 4),
+        daysSteps: randomInt(3, 5),
+        daysCalories: randomInt(3, 5),
+      }
+    default:
+      return {
+        daysTrained: randomInt(2, 3),
+        daysSteps: randomInt(2, 4),
+        daysCalories: randomInt(2, 4),
+      }
+  }
+}
+
+const generateWeekResponse = (weekNumber: number, profile: ActivityProfile) => {
+  const numbers = getWeeklyNumbers(profile)
+  const goal = pick(behaviorGoals)
+  const goalReview = `${goal} — I hit it on ${randomInt(2, 5)} days and feel more on track.`
+
+  const base = {
+    wins: pick(winsOptions),
+    challenges: pick(challengeOptions),
+    days_trained: numbers.daysTrained,
+    days_hit_steps: numbers.daysSteps,
+    days_on_calories: numbers.daysCalories,
+    nutrition_help: pick(nutritionHelpOptions),
+  }
+
+  if (weekNumber === 1) {
+    return {
+      ...base,
+      behavior_goal: goal,
+    }
+  }
+
+  if (weekNumber === 4) {
+    return {
+      ...base,
+      monthly_reflection: pick(reflectionOptions),
+    }
+  }
+
+  return {
+    ...base,
+    behavior_goal_review: goalReview,
+  }
+}
+
+const getMonday = (date: Date) => {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+  d.setDate(diff)
+  d.setHours(0, 0, 0, 0)
+  return d
 }
 
 function generateClientData(index: number): { name: string; email: string; gender: Gender } {
@@ -150,8 +268,9 @@ async function main() {
   console.log("📊 Generation Plan:")
   console.log("   • 100 clients")
   console.log("   • 5 coaches")
-  console.log("   • ~13 cohorts (~8 clients each)")
+  console.log("   • ~10 cohorts (~10 clients each)")
   console.log("   • ~70% multi-coach, ~30% single-coach")
+  console.log("   • Multi-week questionnaires with varied responses")
   console.log("   • Keeping admin: " + ADMIN_EMAIL + "\n")
 
   const startTime = Date.now()
@@ -185,6 +304,8 @@ async function main() {
   await db.adminAction.deleteMany({})
   await db.coachNote.deleteMany({})
   await db.entry.deleteMany({})
+  await db.weeklyQuestionnaireResponse.deleteMany({})
+  await db.questionnaireBundle.deleteMany({})
   await db.pairingCode.deleteMany({})
   console.log("   Deleting: sleep records, workouts, memberships, invites...")
   await db.sleepRecord.deleteMany({})
@@ -205,7 +326,8 @@ async function main() {
   const coaches = []
   for (let i = 0; i < coachNames.length; i++) {
     const coachInfo = coachNames[i]
-    const roles = adminCoachEmails.has(coachInfo.email)
+    const isAdminCoach = coachInfo.email === "alex.thompson@test.local" || adminCoachEmails.has(coachInfo.email)
+    const roles = isAdminCoach
       ? [Role.COACH, Role.ADMIN]
       : [Role.COACH]
     const coach = await db.user.create({
@@ -230,19 +352,26 @@ async function main() {
   let multiCoachCount = 0
   let singleCoachCount = 0
   const targetClients = 100
-  const targetCohorts = Math.ceil(targetClients / 8)
+  const targetCohorts = Math.ceil(targetClients / 10)
   const selectedCohortNames = cohortNames.slice(0, targetCohorts)
+  const baseStart = getMonday(new Date())
+  baseStart.setDate(baseStart.getDate() - 35)
 
   for (let i = 0; i < selectedCohortNames.length; i++) {
     const owner = coaches[i % coaches.length]
     const isMultiCoach = Math.random() < 0.7
     const coCoach = isMultiCoach ? coaches[(i + 1) % coaches.length] : null
 
+    const cohortStartDate = new Date(baseStart)
+
     const cohort = await db.cohort.create({
       data: {
         id: randomUUID(),
         name: selectedCohortNames[i],
         coachId: owner.id,
+        cohortStartDate,
+        durationConfig: "six-week",
+        durationWeeks: 6,
       },
     })
 
@@ -269,6 +398,19 @@ async function main() {
       },
     })
 
+    await db.questionnaireBundle.create({
+      data: {
+        cohortId: cohort.id,
+        bundleJson: {
+          week1: DEFAULT_TEMPLATES.week1,
+          week2: DEFAULT_TEMPLATES.week2,
+          week3: DEFAULT_TEMPLATES.week3,
+          week4: DEFAULT_TEMPLATES.week4,
+          week5: DEFAULT_TEMPLATES.week5,
+        } as any,
+      },
+    })
+
     cohorts.push(cohort)
     
     if ((i + 1) % 5 === 0 || i === selectedCohortNames.length - 1) {
@@ -279,8 +421,8 @@ async function main() {
 
   // Create clients
   console.log("👤 Step 5: Creating 100 clients...")
-  const clients: Array<{ id: string; gender: Gender; activityProfile: ActivityProfile }> = []
-  const activityDistribution = [0.2, 0.3, 0.3, 0.2]
+  const clients: Array<{ id: string; gender: Gender; activityProfile: ActivityProfile; cohortId?: string }> = []
+  const activityDistribution = [0.1, 0.3, 0.35, 0.25]
   const activityCounts = [0, 0, 0, 0]
 
   for (let i = 0; i < targetClients; i++) {
@@ -337,6 +479,7 @@ async function main() {
           cohortId: cohorts[i].id,
         },
       })
+      client.cohortId = cohorts[i].id
       totalAssigned++
     }
     
@@ -386,6 +529,7 @@ async function main() {
           calories: entryData.calories,
           heightInches: entryData.heightInches,
           sleepQuality: entryData.sleepQuality,
+          perceivedStress: entryData.perceivedStress,
           dataSources: ["manual"],
         },
         create: {
@@ -396,6 +540,7 @@ async function main() {
           calories: entryData.calories,
           heightInches: entryData.heightInches,
           sleepQuality: entryData.sleepQuality,
+          perceivedStress: entryData.perceivedStress,
           dataSources: ["manual"],
         },
       })
@@ -415,6 +560,56 @@ async function main() {
   }
   console.log(`✅ Generated ${entriesCreated} entries from ${clientsWithEntries} clients\n`)
 
+  // Generate weekly questionnaire responses
+  console.log("🧾 Step 8: Generating questionnaire responses (multiple weeks)...")
+  const questionnaireWeeks = [1, 2, 3, 4, 5]
+  let responsesCreated = 0
+
+  for (const client of clients) {
+    if (!client.cohortId) {
+      continue
+    }
+
+    const completionRoll = Math.random()
+    const completedWeeks =
+      completionRoll < 0.7 ? 5 : completionRoll < 0.9 ? 4 : 3
+
+    for (const weekNumber of questionnaireWeeks.slice(0, completedWeeks)) {
+      const responseJson = generateWeekResponse(weekNumber, client.activityProfile)
+      const isFinalWeek = weekNumber === completedWeeks && completedWeeks === 5
+      const status = isFinalWeek && Math.random() < 0.15 ? "in_progress" : "completed"
+
+      const submittedAt = new Date()
+      submittedAt.setDate(submittedAt.getDate() - (5 - weekNumber) * 7 + randomInt(0, 2))
+
+      await db.weeklyQuestionnaireResponse.upsert({
+        where: {
+          userId_cohortId_weekNumber: {
+            userId: client.id,
+            cohortId: client.cohortId,
+            weekNumber,
+          },
+        },
+        create: {
+          userId: client.id,
+          cohortId: client.cohortId,
+          weekNumber,
+          responseJson: responseJson as any,
+          status,
+          submittedAt: status === "completed" ? submittedAt : null,
+        },
+        update: {
+          responseJson: responseJson as any,
+          status,
+          submittedAt: status === "completed" ? submittedAt : null,
+        },
+      })
+      responsesCreated += 1
+    }
+  }
+
+  console.log(`✅ Generated ${responsesCreated} questionnaire responses\n`)
+
   const endTime = Date.now()
   const duration = ((endTime - startTime) / 1000).toFixed(1)
 
@@ -430,6 +625,7 @@ async function main() {
   console.log(`  • Health entries: ${entriesCreated}`)
   console.log(`  • Clients with entries: ${clientsWithEntries}`)
   console.log(`  • Avg entries/active client: ${(entriesCreated / clientsWithEntries).toFixed(1)}`)
+  console.log(`  • Questionnaire responses: ${responsesCreated}`)
   console.log(`  • Duration: ${duration}s\n`)
 }
 

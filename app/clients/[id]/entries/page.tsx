@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter, useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { DataSourceBadge } from "@/components/DataSourceBadge"
@@ -16,6 +16,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
+  ReferenceDot,
 } from "recharts"
 
 interface Entry {
@@ -65,12 +67,17 @@ export default function ClientEntriesPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const clientId = params.id as string
 
   const [client, setClient] = useState<Client | null>(null)
   const [entries, setEntries] = useState<Entry[]>([])
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const filterDate = searchParams.get("date")
+  const selectedAnalyticsEntry = filterDate
+    ? analytics?.entries.find((entry) => entry.date === filterDate)
+    : null
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -281,7 +288,14 @@ export default function ClientEntriesPage() {
           <>
             {/* Weight Chart with BMI (if available) */}
             <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
-              <h2 className="text-xl font-semibold mb-4">Weight Trend</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Weight Trend</h2>
+                {filterDate && (
+                  <span className="text-xs text-neutral-500">
+                    Highlighting {filterDate}
+                  </span>
+                )}
+              </div>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={analytics.entries.filter(e => e.weightLbs !== null)}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -292,6 +306,9 @@ export default function ClientEntriesPage() {
                   <YAxis yAxisId="weight" orientation="left" />
                   {analytics.entries.some(e => e.bmi !== null) && (
                     <YAxis yAxisId="bmi" orientation="right" />
+                  )}
+                  {filterDate && (
+                    <ReferenceLine x={filterDate} stroke="#111827" strokeDasharray="3 3" />
                   )}
                   <Tooltip
                     labelFormatter={(value) => new Date(value).toLocaleDateString()}
@@ -314,6 +331,16 @@ export default function ClientEntriesPage() {
                     dot={{ r: 4 }}
                     connectNulls={false}
                   />
+                  {filterDate && selectedAnalyticsEntry?.weightLbs !== null && selectedAnalyticsEntry?.weightLbs !== undefined && (
+                    <ReferenceDot
+                      x={filterDate}
+                      y={selectedAnalyticsEntry.weightLbs}
+                      yAxisId="weight"
+                      r={6}
+                      fill="#2563eb"
+                      stroke="#1f2937"
+                    />
+                  )}
                   {analytics.entries.some(e => e.bmi !== null) && (
                     <Line
                       yAxisId="bmi"
@@ -326,13 +353,30 @@ export default function ClientEntriesPage() {
                       strokeDasharray="5 5"
                     />
                   )}
+                  {filterDate && selectedAnalyticsEntry?.bmi !== null && selectedAnalyticsEntry?.bmi !== undefined && (
+                    <ReferenceDot
+                      x={filterDate}
+                      y={selectedAnalyticsEntry.bmi}
+                      yAxisId="bmi"
+                      r={6}
+                      fill="#8b5cf6"
+                      stroke="#1f2937"
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>
 
             {/* Steps Chart */}
             <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
-              <h2 className="text-xl font-semibold mb-4">Steps Trend</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Steps Trend</h2>
+                {filterDate && (
+                  <span className="text-xs text-neutral-500">
+                    Highlighting {filterDate}
+                  </span>
+                )}
+              </div>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={analytics.entries.filter(e => e.steps !== null)}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -341,6 +385,9 @@ export default function ClientEntriesPage() {
                     tickFormatter={(value) => new Date(value).toLocaleDateString()}
                   />
                   <YAxis />
+                  {filterDate && (
+                    <ReferenceLine x={filterDate} stroke="#111827" strokeDasharray="3 3" />
+                  )}
                   <Tooltip
                     labelFormatter={(value) => new Date(value).toLocaleDateString()}
                     formatter={(value: any) => {
@@ -357,6 +404,15 @@ export default function ClientEntriesPage() {
                     dot={{ r: 4 }}
                     connectNulls={false}
                   />
+                  {filterDate && selectedAnalyticsEntry?.steps !== null && selectedAnalyticsEntry?.steps !== undefined && (
+                    <ReferenceDot
+                      x={filterDate}
+                      y={selectedAnalyticsEntry.steps}
+                      r={6}
+                      fill="#10b981"
+                      stroke="#1f2937"
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -364,7 +420,14 @@ export default function ClientEntriesPage() {
             {/* Perceived Stress Chart (if data available) */}
             {analytics.entries.some(e => e.perceivedStress !== null) && (
               <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
-                <h2 className="text-xl font-semibold mb-4">Perceived Stress Trend</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold">Perceived Stress Trend</h2>
+                  {filterDate && (
+                    <span className="text-xs text-neutral-500">
+                      Highlighting {filterDate}
+                    </span>
+                  )}
+                </div>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={analytics.entries.filter(e => e.perceivedStress !== null)}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -373,6 +436,9 @@ export default function ClientEntriesPage() {
                       tickFormatter={(value) => new Date(value).toLocaleDateString()}
                     />
                     <YAxis domain={[0, 10]} />
+                    {filterDate && (
+                      <ReferenceLine x={filterDate} stroke="#111827" strokeDasharray="3 3" />
+                    )}
                     <Tooltip
                       labelFormatter={(value) => new Date(value).toLocaleDateString()}
                       formatter={(value: any) => {
@@ -389,6 +455,15 @@ export default function ClientEntriesPage() {
                       dot={{ r: 4 }}
                       connectNulls={false}
                     />
+                    {filterDate && selectedAnalyticsEntry?.perceivedStress !== null && selectedAnalyticsEntry?.perceivedStress !== undefined && (
+                      <ReferenceDot
+                        x={filterDate}
+                        y={selectedAnalyticsEntry.perceivedStress}
+                        r={6}
+                        fill="#ef4444"
+                        stroke="#1f2937"
+                      />
+                    )}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -398,8 +473,23 @@ export default function ClientEntriesPage() {
 
         {/* Entries Table */}
         <div className="bg-white rounded-lg border border-neutral-200 p-6">
-          <h2 className="text-xl font-semibold mb-4">All Entries</h2>
-          {entries.length === 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <h2 className="text-xl font-semibold">
+              {filterDate ? `Entries for ${filterDate}` : "All Entries"}
+            </h2>
+            {filterDate && (
+              <Link
+                href={`/clients/${clientId}/entries`}
+                className="text-sm text-neutral-600 hover:text-neutral-900"
+              >
+                Clear filter
+              </Link>
+            )}
+          </div>
+          {(filterDate
+            ? entries.filter((entry) => entry.date.split("T")[0] === filterDate)
+            : entries
+          ).length === 0 ? (
             <p className="text-neutral-500">No entries found for this client.</p>
           ) : (
             <div className="overflow-x-auto">
@@ -417,7 +507,10 @@ export default function ClientEntriesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {entries.map((entry) => {
+                  {(filterDate
+                    ? entries.filter((entry) => entry.date.split("T")[0] === filterDate)
+                    : entries
+                  ).map((entry) => {
                     // Find corresponding analytics entry for BMI
                     const analyticsEntry = analytics?.entries.find(e => e.date === entry.date.split('T')[0])
                     return (

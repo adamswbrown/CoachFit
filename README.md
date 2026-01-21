@@ -284,6 +284,7 @@ npm run db:studio        # Open Prisma Studio (database GUI)
 npm run db:seed          # Create basic test users
 npm run test:generate    # Generate full test dataset (15 clients, 5 cohorts, entries)
 npm run test:cleanup     # Remove all test data
+npx tsx scripts/reset-and-seed-comprehensive-multi-coach.ts  # Comprehensive reset + seed (100 clients, ~10 cohorts, questionnaires)
 
 # Admin Utilities
 npm run admin:set [email]              # Grant admin role to user
@@ -294,6 +295,24 @@ npm run email:setup-templates    # Setup email templates
 npm run email:verify             # Verify Resend API key
 ```
 
+---
+
+## ✅ Questionnaire Functionality
+
+Weekly questionnaires are bundled per cohort using SurveyJS templates and surfaced in the client dashboard. Coaches can view aggregated responses and per‑client weekly answers.
+
+**Highlights:**
+- Weekly SurveyJS bundle stored per cohort
+- Per‑week client responses with in‑progress/completed status
+- Client view with week‑by‑week progress
+- Coach analytics view for responses by cohort/week
+- Coach weekly review shows client answers for the selected week
+- SurveyJS renderer only (custom in‑app builder replaces the paid Creator)
+
+**Key routes:**
+- Client questionnaire access: `GET/PUT /api/weekly-questionnaire/[cohortId]/[weekNumber]`
+- Coach response analytics: `GET /api/coach/weekly-questionnaire-responses/[cohortId]/[weekNumber]`
+- Coach per‑client responses: `GET /api/coach/weekly-questionnaire-response?clientId=...&weekNumber=...`
 ---
 
 ## 🏗️ Architecture Highlights
@@ -310,6 +329,8 @@ npm run email:verify             # Verify Resend API key
 - `CohortInvite` - Cohort-specific invitations (auto-assigns on signup)
 - `CoachNote` - Weekly coach notes for client progress
 - `WeeklyCoachResponse` - Weekly review responses with Loom URLs and notes
+- `QuestionnaireBundle` - Per-cohort weekly questionnaire templates (SurveyJS JSON)
+- `WeeklyQuestionnaireResponse` - Client questionnaire responses with per-week status
 - `CohortCheckInConfig` - Custom prompts per cohort
 - `AdminInsight` - Auto-generated insights for admin dashboard
 - `AttentionScore` - Calculated attention scores for prioritization

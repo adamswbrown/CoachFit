@@ -46,6 +46,7 @@ interface AnalyticsData {
     avgSteps30d: number | null
     avgCalories7d: number | null
     avgCalories30d: number | null
+    avgStress7d: number | null
   }
   entries: Array<{
     date: string
@@ -451,6 +452,34 @@ export default function ClientOverviewPage() {
                               className="flex-1 bg-green-500 rounded-t"
                               style={{ height: `${Math.max(height, 5)}%` }}
                               title={`${entry.steps?.toLocaleString()} steps`}
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Stress */}
+                  {analytics?.summary.avgStress7d !== null && analytics?.summary.avgStress7d !== undefined && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <div className="text-sm font-medium text-neutral-900">Stress</div>
+                          <div className="text-2xl font-semibold text-neutral-900 mt-1">
+                            {analytics.summary.avgStress7d}/10 Average last 7 days
+                          </div>
+                        </div>
+                      </div>
+                      {/* Simple stress chart placeholder */}
+                      <div className="h-24 bg-neutral-50 rounded border border-neutral-200 flex items-end justify-start gap-1 p-2">
+                        {chartData.filter(e => e.perceivedStress !== null).slice(-7).map((entry, idx) => {
+                          const height = entry.perceivedStress ? (entry.perceivedStress / 10) * 100 : 0
+                          return (
+                            <div
+                              key={idx}
+                              className="flex-1 bg-red-500 rounded-t"
+                              style={{ height: `${Math.max(height, 5)}%` }}
+                              title={`${entry.perceivedStress}/10 stress`}
                             />
                           )
                         })}

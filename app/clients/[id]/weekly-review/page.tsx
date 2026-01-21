@@ -642,8 +642,9 @@ export default function WeeklyReviewPage() {
                 : "missing"
 
               return (
-                <div
+                <Link
                   key={entry.date}
+                  href={`/clients/${clientId}/entries?date=${entry.date.split("T")[0]}`}
                   className={`p-3 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md ${
                     entryStatus === "complete"
                       ? "bg-neutral-50 border-neutral-200"
@@ -679,11 +680,40 @@ export default function WeeklyReviewPage() {
                           </span>
                         </div>
                       )}
+                      {entry.calories !== null && (
+                        <div className="text-xs">
+                          <span className="text-neutral-600">C:</span>{" "}
+                          <span className="font-medium">
+                            {entry.calories.toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                      {entry.sleepQuality !== null && (
+                        <div className="text-xs">
+                          <span className="text-neutral-600">SQ:</span>{" "}
+                          <span className="font-medium">
+                            {entry.sleepQuality}/10
+                          </span>
+                        </div>
+                      )}
+                      {entry.perceivedStress !== null && (
+                        <div className="text-xs">
+                          <span className="text-neutral-600">Stress:</span>{" "}
+                          <span className="font-medium">
+                            {entry.perceivedStress}/10
+                          </span>
+                        </div>
+                      )}
+                      {entry.notes && (
+                        <div className="text-xs text-neutral-500 truncate">
+                          Notes: {entry.notes}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-xs text-neutral-400 italic">No entry</div>
                   )}
-                </div>
+                </Link>
               )
             })}
           </div>

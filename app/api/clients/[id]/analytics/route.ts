@@ -90,6 +90,7 @@ export async function GET(
             avgSteps30d: null,
             avgCalories7d: null,
             avgCalories30d: null,
+            avgStress7d: null,
           },
           entries: [],
         },
@@ -165,6 +166,11 @@ export async function GET(
       ? calories30d.reduce((sum: number, c: number) => sum + c, 0) / calories30d.length
       : null
 
+    const stress7d = entries7d.filter((e: Entry) => e.perceivedStress !== null).map((e: Entry) => e.perceivedStress!)
+    const avgStress7d = stress7d.length > 0
+      ? stress7d.reduce((sum: number, s: number) => sum + s, 0) / stress7d.length
+      : null
+
     return NextResponse.json(
       {
         summary: {
@@ -178,6 +184,7 @@ export async function GET(
           avgSteps30d: avgSteps30d ? Math.round(avgSteps30d) : null,
           avgCalories7d: avgCalories7d ? Math.round(avgCalories7d) : null,
           avgCalories30d: avgCalories30d ? Math.round(avgCalories30d) : null,
+          avgStress7d: avgStress7d ? Math.round(avgStress7d) : null,
         },
         entries: entries.map((entry: Entry) => {
           // Use most recent height for all BMI calculations (height is constant/infrequent)
