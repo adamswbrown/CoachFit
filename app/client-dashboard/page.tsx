@@ -78,6 +78,7 @@ export default function ClientDashboard() {
   const [userCohorts, setUserCohorts] = useState<Array<{ id: string; name: string; cohortStartDate: string | null }>>([])
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
   const [selectedCohortStartDate, setSelectedCohortStartDate] = useState<string | null>(null)
+  const [selectedCohortName, setSelectedCohortName] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -111,15 +112,28 @@ export default function ClientDashboard() {
       const res = await fetch("/api/client/cohorts")
       if (res.ok) {
         const data = await res.json()
-        setUserCohorts(data.cohorts || [])
-        if (data.cohorts && data.cohorts.length > 0) {
-          setSelectedCohortId(data.cohorts[0].id)
-          setSelectedCohortStartDate(data.cohorts[0].cohortStartDate || null)
+        const cohorts = data.cohorts || []
+        setUserCohorts(cohorts)
+        if (cohorts.length > 0) {
+          setSelectedCohortId(cohorts[0].id)
+          setSelectedCohortStartDate(cohorts[0].cohortStartDate || null)
+          setSelectedCohortName(cohorts[0].name)
+        } else {
+          setSelectedCohortId(null)
+          setSelectedCohortStartDate(null)
+          setSelectedCohortName(null)
         }
       }
     } catch (err) {
       console.error("Error fetching user cohorts:", err)
     }
+  }
+
+  const handleCohortSelect = (cohortId: string) => {
+    setSelectedCohortId(cohortId || null)
+    const selected = userCohorts.find((cohort) => cohort.id === cohortId) || null
+    setSelectedCohortStartDate(selected?.cohortStartDate || null)
+    setSelectedCohortName(selected?.name || null)
   }
 
   const handleWeekClick = (weekNumber: WeekNumber) => {
@@ -491,6 +505,9 @@ export default function ClientDashboard() {
                 <p className="text-sm text-neutral-600">
                   Complete your weekly check-in to help your coach track your progress
                 </p>
+                {selectedCohortName && (
+                  <p className="text-xs text-neutral-500 mt-2">Cohort: {selectedCohortName}</p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -498,6 +515,27 @@ export default function ClientDashboard() {
                 </svg>
               </div>
             </div>
+            {userCohorts.length > 1 && (
+              <div className="mb-4">
+                <label className="text-xs font-medium text-neutral-600">Select Cohort</label>
+                <select
+                  value={selectedCohortId ?? ""}
+                  onChange={(e) => handleCohortSelect(e.target.value)}
+                  className="mt-2 w-full sm:max-w-xs px-3 py-2 border border-blue-200 rounded-lg text-sm bg-white"
+                >
+                  {userCohorts.map((cohort) => (
+                    <option key={cohort.id} value={cohort.id}>
+                      {cohort.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {!selectedCohortStartDate && (
+              <div className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                Your cohort doesn’t have a start date yet, so questionnaires are locked.
+              </div>
+            )}
             <div className="mt-4">
               <QuestionnaireProgress
                 cohortId={selectedCohortId}
@@ -505,6 +543,14 @@ export default function ClientDashboard() {
                 onWeekClick={handleWeekClick}
               />
             </div>
+          </div>
+        )}
+
+        {hasCoach !== false && !selectedCohortId && (
+          <div className="mb-6 bg-white border border-neutral-200 rounded-lg p-6">
+            <p className="text-sm text-neutral-600">
+              You’re not assigned to a cohort yet. Ask your coach to add you so you can complete questionnaires.
+            </p>
           </div>
         )}
 

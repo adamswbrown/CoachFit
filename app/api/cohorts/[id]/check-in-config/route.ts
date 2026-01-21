@@ -48,13 +48,21 @@ export async function GET(
     // If no config exists, return default with mandatory prompts
     if (!config) {
       return NextResponse.json({
-        enabledPrompts: ["weightLbs", "steps", "calories"], // Default mandatory prompts
+        enabledPrompts: ["weightLbs", "steps", "calories", "perceivedStress"], // Default mandatory prompts
         customPrompt1: null,
         customPrompt1Type: null,
       }, { status: 200 })
     }
 
-    return NextResponse.json(config, { status: 200 })
+    const mandatoryPrompts = ["weightLbs", "steps", "calories", "perceivedStress"]
+    const enabledPrompts = Array.from(new Set([...mandatoryPrompts, ...config.enabledPrompts]))
+    return NextResponse.json(
+      {
+        ...config,
+        enabledPrompts,
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error("Error fetching check-in config:", error)
     return NextResponse.json(
@@ -98,7 +106,7 @@ export async function PUT(
     const validated = updateCheckInConfigSchema.parse(body)
 
     // Mandatory prompts must always be included
-    const mandatoryPrompts = ["weightLbs", "steps", "calories"]
+    const mandatoryPrompts = ["weightLbs", "steps", "calories", "perceivedStress"]
     const additionalPrompts = validated.enabledPrompts?.filter(
       (p) => !mandatoryPrompts.includes(p)
     ) || []

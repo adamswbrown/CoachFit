@@ -33,15 +33,18 @@ export async function GET(req: NextRequest) {
       // If cohortId provided, verify coach has access to this cohort
       const cohort = await db.cohort.findUnique({
         where: { id: cohortId },
-        select: { id: true, coachId: true },
+        select: { id: true, coachId: true, coachMemberships: { select: { coachId: true } } },
       })
 
       if (!cohort) {
         return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
       }
 
-      // Check ownership (only owner or admin can access)
-      if (cohort.coachId !== session.user.id && !isAdmin(session.user)) {
+      // Check ownership (owner, co-coach, or admin)
+      const isCoCoach = cohort.coachMemberships.some(
+        (membership) => membership.coachId === session.user.id
+      )
+      if (cohort.coachId !== session.user.id && !isCoCoach && !isAdmin(session.user)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
 
@@ -50,7 +53,10 @@ export async function GET(req: NextRequest) {
       // No cohortId - get all cohorts this coach owns (admins can see all)
       if (!isAdmin(session.user)) {
         whereClause.cohort = {
-          coachId: session.user.id,
+          OR: [
+            { coachId: session.user.id },
+            { coachMemberships: { some: { coachId: session.user.id } } },
+          ],
         }
       }
     }

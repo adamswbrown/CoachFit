@@ -438,6 +438,10 @@ export default function CreateCohortPage() {
                     <input type="checkbox" checked disabled className="mr-2" />
                     Calories
                   </label>
+                  <label className="flex items-center cursor-not-allowed opacity-60">
+                    <input type="checkbox" checked disabled className="mr-2" />
+                    Perceived Stress (1-10 scale)
+                  </label>
                 </div>
               </div>
 
@@ -446,11 +450,7 @@ export default function CreateCohortPage() {
               {/* Optional Prompts */}
               <p className="text-xs font-semibold text-neutral-700 mb-3">Optional:</p>
               <div className="space-y-2 mb-4">
-                {[
-
-                  { value: "perceivedStress", label: "Perceived Stress" },
-                  { value: "notes", label: "Notes" },
-                ].map((prompt) => (
+                {[{ value: "notes", label: "Notes" }].map((prompt) => (
                   <label key={prompt.value} className="flex items-center text-xs cursor-pointer">
                     <input
                       type="checkbox"

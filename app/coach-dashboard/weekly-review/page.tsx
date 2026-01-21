@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useSession } from "next-auth/react"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { generateWeeklyEmailDraft } from "@/lib/utils/email-draft"
+import { Role } from "@/lib/types"
 
 type AdherenceThresholds = {
   greenMinimum: number
@@ -66,6 +68,20 @@ interface WeeklyResponse {
   note?: string | null
 }
 
+interface CohortOption {
+  id: string
+  name: string
+  coachId: string
+  coachName: string | null
+  coachEmail: string
+}
+
+interface OwnerOption {
+  id: string
+  name: string | null
+  email: string
+}
+
 interface ClientAttention {
   clientId: string
   name: string | null
@@ -99,6 +115,8 @@ function formatDate(date: Date): string {
 }
 
 export default function WeeklyReviewPage() {
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.roles?.includes(Role.ADMIN) ?? false
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<WeeklySummariesResponse | null>(null)
   const [attentionData, setAttentionData] = useState<ClientAttention[]>([])
@@ -111,6 +129,10 @@ export default function WeeklyReviewPage() {
   const [recalculating, setRecalculating] = useState(false)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [priorityFilter, setPriorityFilter] = useState<"all" | "red" | "amber" | "green">("all")
+  const [ownerOptions, setOwnerOptions] = useState<OwnerOption[]>([])
+  const [cohortOptions, setCohortOptions] = useState<CohortOption[]>([])
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string>("")
+  const [selectedCohortId, setSelectedCohortId] = useState<string>("")
   const [questionnaireStatus, setQuestionnaireStatus] = useState<Record<string, {
     weekNumber: number
     status: string
@@ -124,6 +146,45 @@ export default function WeeklyReviewPage() {
   useEffect(() => {
     setSelectedWeekStart(formatDate(getMonday(new Date())))
   }, [])
+
+  useEffect(() => {
+    if (!isAdmin) return
+    const fetchOwners = async () => {
+      try {
+        const res = await fetch("/api/admin/coaches")
+        if (!res.ok) return
+        const data = await res.json()
+        setOwnerOptions(data.coaches || [])
+      } catch (err) {
+        console.error("Failed to fetch coach owners", err)
+      }
+    }
+
+    fetchOwners()
+  }, [isAdmin])
+
+  useEffect(() => {
+    const fetchCohorts = async () => {
+      try {
+        const params = new URLSearchParams()
+        if (isAdmin && selectedOwnerId) {
+          params.set("ownerId", selectedOwnerId)
+        }
+        const res = await fetch(`/api/cohorts${params.toString() ? `?${params.toString()}` : ""}`)
+        if (!res.ok) return
+        const data = await res.json()
+        setCohortOptions(data || [])
+      } catch (err) {
+        console.error("Failed to fetch cohorts", err)
+      }
+    }
+
+    fetchCohorts()
+  }, [isAdmin, selectedOwnerId])
+
+  useEffect(() => {
+    setSelectedCohortId("")
+  }, [selectedOwnerId])
 
   // Fetch adherence thresholds (coach-accessible)
   useEffect(() => {
@@ -157,8 +218,14 @@ export default function WeeklyReviewPage() {
       setLoading(true)
       try {
         // Fetch summaries
+        const summaryParams = new URLSearchParams({ weekStart: selectedWeekStart })
+        if (selectedCohortId) {
+          summaryParams.set("cohortId", selectedCohortId)
+        } else if (isAdmin && selectedOwnerId) {
+          summaryParams.set("ownerId", selectedOwnerId)
+        }
         const res = await fetch(
-          `/api/coach-dashboard/weekly-summaries?weekStart=${selectedWeekStart}`
+          `/api/coach-dashboard/weekly-summaries?${summaryParams.toString()}`
         )
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
@@ -204,7 +271,13 @@ export default function WeeklyReviewPage() {
 
         // Fetch questionnaire status for all clients
         try {
-          const questionnaireRes = await fetch('/api/coach/weekly-questionnaire-status')
+          const questionnaireParams = new URLSearchParams()
+          if (selectedCohortId) {
+            questionnaireParams.set("cohortId", selectedCohortId)
+          }
+          const questionnaireRes = await fetch(
+            `/api/coach/weekly-questionnaire-status${questionnaireParams.toString() ? `?${questionnaireParams.toString()}` : ""}`
+          )
           if (questionnaireRes.ok) {
             const questionnaireData = await questionnaireRes.json()
             
@@ -236,7 +309,7 @@ export default function WeeklyReviewPage() {
     }
 
     doFetch()
-  }, [selectedWeekStart])
+  }, [selectedWeekStart, selectedCohortId, selectedOwnerId, isAdmin])
 
   const handleSaveResponse = async (clientId: string) => {
     setSavingClient(clientId)
@@ -289,9 +362,15 @@ export default function WeeklyReviewPage() {
   const handleRecalculate = async () => {
     setRecalculating(true)
     try {
-      const res = await fetch(
-        `/api/coach-dashboard/weekly-summaries?weekStart=${selectedWeekStart}`
-      )
+        const summaryParams = new URLSearchParams({ weekStart: selectedWeekStart })
+        if (selectedCohortId) {
+          summaryParams.set("cohortId", selectedCohortId)
+        } else if (isAdmin && selectedOwnerId) {
+          summaryParams.set("ownerId", selectedOwnerId)
+        }
+        const res = await fetch(
+          `/api/coach-dashboard/weekly-summaries?${summaryParams.toString()}`
+        )
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
       const responseData: WeeklySummariesResponse = await res.json()
@@ -336,7 +415,13 @@ export default function WeeklyReviewPage() {
 
       // Fetch questionnaire status for all clients
       try {
-        const questionnaireRes = await fetch('/api/coach/weekly-questionnaire-status')
+        const questionnaireParams = new URLSearchParams()
+        if (selectedCohortId) {
+          questionnaireParams.set("cohortId", selectedCohortId)
+        }
+        const questionnaireRes = await fetch(
+          `/api/coach/weekly-questionnaire-status${questionnaireParams.toString() ? `?${questionnaireParams.toString()}` : ""}`
+        )
         if (questionnaireRes.ok) {
           const questionnaireData = await questionnaireRes.json()
           
@@ -479,6 +564,49 @@ export default function WeeklyReviewPage() {
           </div>
         )}
 
+        {/* Cohort Filters */}
+        <div className="bg-white rounded-lg border border-neutral-200 p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {isAdmin && (
+              <label className="text-sm text-neutral-700">
+                Cohort Owner
+                <select
+                  value={selectedOwnerId}
+                  onChange={(e) => setSelectedOwnerId(e.target.value)}
+                  className="mt-2 w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm"
+                >
+                  <option value="">All owners</option>
+                  {ownerOptions.map((owner) => (
+                    <option key={owner.id} value={owner.id}>
+                      {owner.name || owner.email}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label className="text-sm text-neutral-700">
+              Cohort
+              <select
+                value={selectedCohortId}
+                onChange={(e) => setSelectedCohortId(e.target.value)}
+                className="mt-2 w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm"
+              >
+                <option value="">
+                  {isAdmin && selectedOwnerId ? "All owner cohorts" : "All cohorts"}
+                </option>
+                {cohortOptions.map((cohort) => (
+                  <option key={cohort.id} value={cohort.id}>
+                    {cohort.name}
+                    {isAdmin && (cohort.coachName || cohort.coachEmail)
+                      ? ` — ${cohort.coachName || cohort.coachEmail}`
+                      : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
         {/* Week Selector */}
         <div className="bg-white rounded-lg border border-neutral-200 p-4 mb-6 flex items-center justify-between gap-4">
           <button
@@ -546,7 +674,15 @@ export default function WeeklyReviewPage() {
             <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
               <div className="text-sm text-neutral-700 font-medium mb-1">Total Clients</div>
               <div className="text-2xl font-bold text-neutral-900">{getSummary().total}</div>
-              <div className="text-xs text-neutral-600 mt-1">All cohorts</div>
+              <div className="text-xs text-neutral-600 mt-1">
+                {selectedCohortId
+                  ? cohortOptions.find((cohort) => cohort.id === selectedCohortId)?.name || "Selected cohort"
+                  : isAdmin && selectedOwnerId
+                  ? ownerOptions.find((owner) => owner.id === selectedOwnerId)?.name ||
+                    ownerOptions.find((owner) => owner.id === selectedOwnerId)?.email ||
+                    "Selected owner"
+                  : "All cohorts"}
+              </div>
             </div>
           </div>
         )}

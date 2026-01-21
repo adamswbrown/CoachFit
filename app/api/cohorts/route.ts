@@ -20,14 +20,42 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    // Admins can see all cohorts, coaches see only their own
+    const searchParams = req.nextUrl.searchParams
+    const ownerId = searchParams.get("ownerId")
+
+    // Admins can see all cohorts; optional owner filter. Coaches see owned or co-owned.
     const whereClause = session.user.roles.includes(Role.ADMIN)
-      ? {}
-      : { coachId: session.user.id }
+      ? ownerId
+        ? { coachId: ownerId }
+        : {}
+      : {
+          OR: [
+            { coachId: session.user.id },
+            { coachMemberships: { some: { coachId: session.user.id } } },
+          ],
+        }
 
     const cohorts = await db.cohort.findMany({
-      where: whereClause,
+      where: {
+        AND: [
+          whereClause,
+          {
+            NOT: {
+              name: {
+                startsWith: "Template:",
+              },
+            },
+          },
+        ],
+      },
       include: {
+        User: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         _count: {
           select: {
             memberships: true,
@@ -44,8 +72,12 @@ export async function GET(req: NextRequest) {
       id: cohort.id,
       name: cohort.name,
       createdAt: cohort.createdAt,
+      cohortStartDate: cohort.cohortStartDate,
       activeClients: cohort._count.memberships,
       pendingInvites: cohort._count.invites,
+      coachId: cohort.User.id,
+      coachName: cohort.User.name,
+      coachEmail: cohort.User.email,
     }))
 
     return NextResponse.json(cohortsWithCounts, { status: 200 })
@@ -110,8 +142,8 @@ export async function POST(req: NextRequest) {
       })
 
       // Always create check-in config with mandatory prompts
-      const mandatoryPrompts = ["weightLbs", "steps", "calories"]
-      const defaultOptionalPrompts = ["perceivedStress"]
+      const mandatoryPrompts = ["weightLbs", "steps", "calories", "perceivedStress"]
+      const defaultOptionalPrompts: string[] = []
       const additionalPrompts = validated.checkInConfig?.enabledPrompts?.filter(
         (p) => !mandatoryPrompts.includes(p)
       ) || []

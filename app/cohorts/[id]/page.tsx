@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { Role } from "@/lib/types"
-import { isAdminOrCoach } from "@/lib/permissions"
+import { isAdmin, isAdminOrCoach } from "@/lib/permissions"
 import { QuestionnaireBuilder } from "@/components/questionnaire/QuestionnaireBuilder"
 import { DEFAULT_TEMPLATES, TemplateKey } from "@/lib/default-questionnaire-templates"
 
@@ -15,6 +15,7 @@ interface Cohort {
   name: string
   createdAt: string
   coachId: string
+  cohortStartDate?: string | null
   memberships: Array<{
     user: {
       id: string
@@ -69,6 +70,10 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
   const [formData, setFormData] = useState({ email: "" })
   const [selectedClientId, setSelectedClientId] = useState<string>("")
   const [searchQuery, setSearchQuery] = useState("")
+  const [startDateInput, setStartDateInput] = useState<string>("")
+  const [startDateSaving, setStartDateSaving] = useState(false)
+  const [startDateError, setStartDateError] = useState<string | null>(null)
+  const [startDateSuccess, setStartDateSuccess] = useState<string | null>(null)
 
   // Check-in config state
   const [showConfigForm, setShowConfigForm] = useState(false)
@@ -80,7 +85,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
     customPrompt1: string | null
     customPrompt1Type: "scale" | "text" | "number" | ""
   }>({
-    enabledPrompts: ["weightLbs", "steps", "calories"], // Default mandatory prompts
+    enabledPrompts: ["weightLbs", "steps", "calories", "perceivedStress"], // Default mandatory prompts
     customPrompt1: "",
     customPrompt1Type: "",
   })
@@ -151,6 +156,9 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
       if (res.ok) {
         const data = await res.json()
         setCohort(data)
+        setStartDateInput(
+          data.cohortStartDate ? new Date(data.cohortStartDate).toISOString().split("T")[0] : ""
+        )
       } else {
         const errorData = await res.json()
         console.error("Error fetching cohort:", errorData)
@@ -187,7 +195,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
         const data = await res.json()
         if (data) {
           setCheckInConfig({
-            enabledPrompts: data.enabledPrompts || ["weightLbs", "steps", "calories"],
+            enabledPrompts: data.enabledPrompts || ["weightLbs", "steps", "calories", "perceivedStress"],
             customPrompt1: data.customPrompt1 || "",
             customPrompt1Type: (data.customPrompt1Type as "scale" | "text" | "number") || "",
           })
@@ -196,6 +204,37 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
     } catch (err) {
       console.error("Error fetching check-in config:", err)
       // Use defaults if fetch fails
+    }
+  }
+
+  const handleStartDateSave = async () => {
+    setStartDateSaving(true)
+    setStartDateError(null)
+    setStartDateSuccess(null)
+    try {
+      const res = await fetch(`/api/cohorts/${cohortId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cohortStartDate: startDateInput ? startDateInput : null,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        setStartDateError(data.error || "Failed to update start date")
+        return
+      }
+
+      setCohort((prev) =>
+        prev ? { ...prev, cohortStartDate: data.cohortStartDate } : prev
+      )
+      setStartDateSuccess("Cohort start date updated.")
+      setTimeout(() => setStartDateSuccess(null), 3000)
+    } catch (err) {
+      setStartDateError("Unable to update start date. Please try again.")
+    } finally {
+      setStartDateSaving(false)
     }
   }
 
@@ -403,7 +442,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
 
     try {
       // Prepare request body - only include additional prompts (mandatory ones are handled by API)
-      const mandatoryPrompts = ["weightLbs", "steps", "calories"]
+      const mandatoryPrompts = ["weightLbs", "steps", "calories", "perceivedStress"]
       const additionalPrompts = checkInConfig.enabledPrompts.filter(
         (p) => !mandatoryPrompts.includes(p)
       )
@@ -436,7 +475,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
         setShowConfigForm(false)
         // Update local state with response
         setCheckInConfig({
-          enabledPrompts: data.enabledPrompts || ["weightLbs", "steps", "calories"],
+          enabledPrompts: data.enabledPrompts || ["weightLbs", "steps", "calories", "perceivedStress"],
           customPrompt1: data.customPrompt1 || "",
           customPrompt1Type: (data.customPrompt1Type as "scale" | "text" | "number") || "",
         })
@@ -552,6 +591,15 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
     )
   }
 
+  const canEditStartDate = isAdmin(session.user) || cohort.coachId === session.user.id
+  const formattedStartDate = cohort.cohortStartDate
+    ? new Date(cohort.cohortStartDate).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null
+
   return (
     <CoachLayout>
       <div className="max-w-4xl mx-auto">
@@ -567,6 +615,44 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                 timeZone: 'UTC'
               })}
             </p>
+            <div className="mt-3 space-y-2">
+              <div className="text-sm text-neutral-600">
+                Start date:{" "}
+                {formattedStartDate ? (
+                  <span className="text-neutral-900">{formattedStartDate}</span>
+                ) : (
+                  <span className="text-red-600 font-medium">Missing</span>
+                )}
+              </div>
+              {canEditStartDate && (
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <label htmlFor="cohort-start-date" className="text-neutral-600">
+                    Set start date
+                  </label>
+                  <input
+                    id="cohort-start-date"
+                    type="date"
+                    value={startDateInput}
+                    onChange={(event) => setStartDateInput(event.target.value)}
+                    className="border rounded-md px-2 py-1 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleStartDateSave}
+                    disabled={startDateSaving}
+                    className="bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 disabled:opacity-60"
+                  >
+                    {startDateSaving ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              )}
+              {startDateError && (
+                <div className="text-sm text-red-600">{startDateError}</div>
+              )}
+              {startDateSuccess && (
+                <div className="text-sm text-green-600">{startDateSuccess}</div>
+              )}
+            </div>
           </div>
           <div className="flex gap-2">
             <Link
@@ -747,23 +833,18 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                       />
                       <span className="text-sm font-medium">Calories - Required</span>
                     </label>
+                    <label className="flex items-center text-neutral-900">
+                      <input
+                        type="checkbox"
+                        checked={true}
+                        disabled
+                        className="mr-2 cursor-not-allowed opacity-60"
+                      />
+                      <span className="text-sm font-medium">Perceived Stress (1-10 scale) - Required</span>
+                    </label>
                   </div>
                   <label className="block text-sm font-medium mb-2 mt-4">Additional Prompts (Optional)</label>
                   <div className="space-y-2">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={checkInConfig.enabledPrompts.includes("perceivedStress")}
-                        onChange={(e) => {
-                          const prompts = e.target.checked
-                            ? [...checkInConfig.enabledPrompts, "perceivedStress"]
-                            : checkInConfig.enabledPrompts.filter((p) => p !== "perceivedStress")
-                          setCheckInConfig({ ...checkInConfig, enabledPrompts: prompts })
-                        }}
-                        className="mr-2"
-                      />
-                      <span className="text-sm">Perceived Stress (1-10 scale)</span>
-                    </label>
                     <label className="flex items-center">
                       <input
                         type="checkbox"

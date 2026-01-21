@@ -57,6 +57,8 @@ export async function GET(req: NextRequest) {
     // Get weekStart from query params (optional, defaults to current week Monday)
     const searchParams = req.nextUrl.searchParams
     const weekStartParam = searchParams.get("weekStart")
+    const cohortIdParam = searchParams.get("cohortId")
+    const ownerIdParam = searchParams.get("ownerId")
     const weekStart = weekStartParam
       ? getMonday(new Date(weekStartParam))
       : getMonday(new Date())
@@ -66,10 +68,87 @@ export async function GET(req: NextRequest) {
     const weekStartStr = formatDate(weekStart)
     const weekEndStr = formatDate(weekEnd)
 
-    // Get all clients - admins see all, coaches see their cohorts
+    let cohortIds: string[] | null = null
     let clients
-    if (isAdminUser) {
-      // Admins see all users with CLIENT role
+
+    if (cohortIdParam) {
+      const cohort = await db.cohort.findUnique({
+        where: { id: cohortIdParam },
+        include: {
+          coachMemberships: {
+            select: { coachId: true },
+          },
+        },
+      })
+
+      if (!cohort) {
+        return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
+      }
+
+      if (
+        !isAdminUser &&
+        cohort.coachId !== session.user.id &&
+        !cohort.coachMemberships.some((membership) => membership.coachId === session.user.id)
+      ) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
+
+      cohortIds = [cohort.id]
+    } else if (isAdminUser && ownerIdParam) {
+      const ownerCohorts = await db.cohort.findMany({
+        where: { coachId: ownerIdParam },
+        select: { id: true },
+      })
+      cohortIds = ownerCohorts.map((cohort) => cohort.id)
+    } else if (!isAdminUser) {
+      const accessibleCohorts = await db.cohort.findMany({
+        where: {
+          OR: [
+            { coachId: session.user.id },
+            { coachMemberships: { some: { coachId: session.user.id } } },
+          ],
+        },
+        select: { id: true },
+      })
+      cohortIds = accessibleCohorts.map((cohort) => cohort.id)
+    }
+
+    if (cohortIds) {
+      if (cohortIds.length === 0) {
+        return NextResponse.json(
+          {
+            weekStart: formatDate(weekStart),
+            weekEnd: formatDate(weekEnd),
+            clients: [],
+          },
+          { status: 200 }
+        )
+      }
+
+      const cohortMemberships = await db.cohortMembership.findMany({
+        where: {
+          cohortId: { in: cohortIds },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      })
+
+      const clientsMap = new Map()
+      cohortMemberships.forEach((membership) => {
+        if (!clientsMap.has(membership.user.id)) {
+          clientsMap.set(membership.user.id, membership.user)
+        }
+      })
+
+      clients = Array.from(clientsMap.values())
+    } else {
       const allUsers = await db.user.findMany({
         where: {
           roles: {
@@ -83,38 +162,20 @@ export async function GET(req: NextRequest) {
         },
       })
       clients = allUsers
-    } else {
-      // Coaches see only clients in their cohorts
-      const cohortMemberships = await db.cohortMembership.findMany({
-        where: {
-          Cohort: {
-            coachId: session.user.id,
-          },
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-      })
-
-      // Extract unique clients
-      const clientsMap = new Map()
-      cohortMemberships.forEach((membership) => {
-        if (!clientsMap.has(membership.user.id)) {
-          clientsMap.set(membership.user.id, membership.user)
-        }
-      })
-
-      clients = Array.from(clientsMap.values())
     }
 
     // Fetch all entries for the week for all clients (batch query)
     const clientIds = clients.map((c) => c.id)
+    if (clientIds.length === 0) {
+      return NextResponse.json(
+        {
+          weekStart: formatDate(weekStart),
+          weekEnd: formatDate(weekEnd),
+          clients: [],
+        },
+        { status: 200 }
+      )
+    }
     const allEntries = await db.entry.findMany({
       where: {
         userId: { in: clientIds },

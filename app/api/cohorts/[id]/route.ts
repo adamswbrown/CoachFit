@@ -95,6 +95,70 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth()
+    const { id } = await params
+
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const isAdminUser = isAdmin(session.user)
+
+    if (!session.user.roles.includes(Role.COACH) && !isAdminUser) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    const cohort = await db.cohort.findUnique({
+      where: { id },
+      select: { id: true, coachId: true },
+    })
+
+    if (!cohort) {
+      return NextResponse.json({ error: "Cohort not found" }, { status: 404 })
+    }
+
+    if (!isAdminUser && cohort.coachId !== session.user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    const body = await req.json()
+    const startDateValue = body.cohortStartDate
+    let cohortStartDate: Date | null = null
+
+    if (startDateValue) {
+      const parsed = new Date(startDateValue)
+      if (isNaN(parsed.getTime())) {
+        return NextResponse.json({ error: "Invalid start date" }, { status: 400 })
+      }
+      cohortStartDate = parsed
+    }
+
+    const updated = await db.cohort.update({
+      where: { id },
+      data: {
+        cohortStartDate,
+      },
+      select: {
+        id: true,
+        cohortStartDate: true,
+      },
+    })
+
+    return NextResponse.json(updated, { status: 200 })
+  } catch (error) {
+    console.error("Error updating cohort:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
