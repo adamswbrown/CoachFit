@@ -374,6 +374,10 @@ model SystemSettings {
   workoutLight             Int      @default(150)
   workoutModerate          Int      @default(225)
   workoutHeavy             Int      @default(300)
+  showPersonalizedPlan     Boolean  @default(true)
+  termsContentHtml         String   @default("")
+  privacyContentHtml       String   @default("")
+  dataProcessingContentHtml String  @default("")
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 

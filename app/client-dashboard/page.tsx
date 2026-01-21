@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useRef, useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -66,6 +66,8 @@ export default function ClientDashboard() {
   })
   const [existingEntry, setExistingEntry] = useState<Entry | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [manualEditEntryId, setManualEditEntryId] = useState<string | null>(null)
+  const entryFormRef = useRef<HTMLDivElement | null>(null)
   const [checkInConfig, setCheckInConfig] = useState<{
     enabledPrompts: string[]
     customPrompt1: string | null
@@ -163,6 +165,36 @@ export default function ClientDashboard() {
     }
   }
 
+  const resetFormForDate = (date: string) => {
+    setFormData({
+      weightLbs: "",
+      steps: "",
+      calories: "",
+      sleepQuality: "",
+      perceivedStress: "",
+      notes: "",
+      date,
+    })
+  }
+
+  const loadEntryForEditing = (entry: Entry) => {
+    setManualEditEntryId(entry.id)
+    setExistingEntry(entry)
+    setIsEditing(true)
+    setFormData({
+      weightLbs: entry.weightLbs?.toString() || "",
+      steps: entry.steps?.toString() || "",
+      calories: entry.calories?.toString() || "",
+      sleepQuality: entry.sleepQuality?.toString() || "",
+      perceivedStress: entry.perceivedStress?.toString() || "",
+      notes: entry.notes || "",
+      date: entry.date.split("T")[0],
+    })
+    requestAnimationFrame(() => {
+      entryFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    })
+  }
+
   // Load existing entry when date changes
   useEffect(() => {
     if (formData.date && entries.length > 0) {
@@ -170,33 +202,23 @@ export default function ClientDashboard() {
         (e) => e.date.split("T")[0] === formData.date
       )
       if (entryForDate) {
+        if (manualEditEntryId === entryForDate.id) {
+          return
+        }
         setExistingEntry(entryForDate)
-        setIsEditing(true)
-        // Pre-fill form with existing data
-        setFormData({
-          weightLbs: entryForDate.weightLbs?.toString() || "",
-          steps: entryForDate.steps?.toString() || "",
-          calories: entryForDate.calories?.toString() || "",
-          sleepQuality: entryForDate.sleepQuality?.toString() || "",
-          perceivedStress: entryForDate.perceivedStress?.toString() || "",
-          notes: entryForDate.notes || "",
-          date: formData.date,
-        })
+        setIsEditing(false)
+        resetFormForDate(formData.date)
       } else {
         setExistingEntry(null)
         setIsEditing(false)
-        // Clear optional fields when switching to a new date
-        setFormData((prev) => ({
-          ...prev,
-          sleepQuality: "",
-          perceivedStress: "",
-          notes: "",
-          date: prev.date,
-        }))
+        setManualEditEntryId(null)
+        resetFormForDate(formData.date)
       }
     } else if (formData.date && entries.length === 0) {
       setExistingEntry(null)
       setIsEditing(false)
+      setManualEditEntryId(null)
+      resetFormForDate(formData.date)
     }
   }, [formData.date, entries])
 
@@ -629,15 +651,15 @@ export default function ClientDashboard() {
           {/* Left Column - Entry Form */}
           <div className="lg:col-span-2 space-y-6">
             {/* Log Entry Card */}
-            <div className="bg-white rounded-lg border border-neutral-200 p-6">
+            <div ref={entryFormRef} className="bg-white rounded-lg border border-neutral-200 p-6">
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-neutral-900 mb-1">
-                  {isEditing ? "Update Entry" : "Log Your Check-In"}
+                  {isEditing ? "Update Entry" : "Add New Entry"}
                 </h2>
                 <p className="text-sm text-neutral-500">
                   {isEditing
                     ? `Editing entry for ${new Date(formData.date).toLocaleDateString()}`
-                    : "Track your daily progress"}
+                    : `New entry for ${new Date(formData.date).toLocaleDateString()}`}
                 </p>
               </div>
               
@@ -650,14 +672,31 @@ export default function ClientDashboard() {
                   <input
                     type="date"
                     value={formData.date}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      setManualEditEntryId(null)
                       setFormData({ ...formData, date: e.target.value })
-                    }
+                    }}
                     max={new Date().toISOString().split("T")[0]}
                     disabled={hasCoach === false}
                     className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                   />
                 </div>
+
+                {existingEntry && !isEditing && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    <p className="font-medium">Entry already exists for this date.</p>
+                    <p className="mt-1">
+                      Choose another date for a new entry, or edit the existing one.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => loadEntryForEditing(existingEntry)}
+                      className="mt-3 inline-flex items-center rounded-md bg-amber-600 px-3 py-1.5 text-white text-sm font-medium hover:bg-amber-700"
+                    >
+                      Edit existing entry
+                    </button>
+                  </div>
+                )}
 
                 {/* Core Metrics Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -854,7 +893,16 @@ export default function ClientDashboard() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={submitting || hasCoach === false || (!formData.weightLbs && !formData.steps && !formData.calories && !formData.perceivedStress && !formData.notes)}
+                  disabled={
+                    submitting ||
+                    hasCoach === false ||
+                    (existingEntry !== null && !isEditing) ||
+                    (!formData.weightLbs &&
+                      !formData.steps &&
+                      !formData.calories &&
+                      !formData.perceivedStress &&
+                      !formData.notes)
+                  }
                   className="w-full bg-neutral-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-neutral-800 focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? (
@@ -916,11 +964,24 @@ export default function ClientDashboard() {
                           <span className={`text-xs font-medium ${isToday ? "text-neutral-900" : "text-neutral-600"}`}>
                             {dateLabel}
                           </span>
-                          {isToday && (
-                            <span className="px-1.5 py-0.5 text-xs font-medium bg-neutral-200 text-neutral-700 rounded">
-                              Latest
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {isToday && (
+                              <span className="px-1.5 py-0.5 text-xs font-medium bg-neutral-200 text-neutral-700 rounded">
+                                Latest
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setError(null)
+                                setSuccess(null)
+                                loadEntryForEditing(entry)
+                              }}
+                              className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                            >
+                              Edit
+                            </button>
+                          </div>
                         </div>
                         {entry.dataSources && entry.dataSources.length > 0 && (
                           <div className="mb-2">

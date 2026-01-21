@@ -108,18 +108,18 @@ The 11-step Sparky Fitness-style onboarding flow has been fully implemented and 
 ### 4. ✅ Build Validation Schemas (Task 4)
 **File**: [lib/validations.ts](../../lib/validations.ts)
 
-**11 Step Schemas + Submission Schema**:
-- `onboardingStep1Schema`: sex (male/female), unit selection
-- `onboardingStep2Schema`: primaryGoal (lose/maintain/gain)
-- `onboardingStep3Schema`: currentWeight (positive, ≤1000)
-- `onboardingStep4Schema`: height (positive, ≤300)
-- `onboardingStep5Schema`: birthDate (valid date, not future)
-- `onboardingStep6Schema`: bodyFatRange (low/medium/high/very_high)
-- `onboardingStep7Schema`: primaryGoal (enum)
+**10 Step Schemas + Submission Schema**:
+- `onboardingStep1Schema`: name (required)
+- `onboardingStep2Schema`: sex (male/female), unit selection
+- `onboardingStep3Schema`: primaryGoal (lose/maintain/gain)
+- `onboardingStep4Schema`: currentWeight (positive, ≤1000)
+- `onboardingStep5Schema`: height (positive, ≤300)
+- `onboardingStep6Schema`: birthDate (valid date, not future)
+- `onboardingStep7Schema`: bodyFatRange (low/medium/high/very_high)
 - `onboardingStep8Schema`: targetWeight (positive, ≤1000)
 - `onboardingStep9Schema`: activityLevel (not_much/light/moderate/heavy)
 - `onboardingStep10Schema`: addBurnedCalories (boolean)
-- `onboardingSubmitSchema`: All fields combined with dependencies (custom durationConfig logic if present)
+- `onboardingSubmitSchema`: All fields combined with dependencies (plan fields optional when plan review is disabled)
 - `userPreferenceSchema`: Unit and date format enums
 
 **Status**: ✅ Complete with proper error messages and boundary validation

@@ -4,6 +4,11 @@
  */
 
 import { db } from "@/lib/db"
+import {
+  DEFAULT_DATA_PROCESSING_HTML,
+  DEFAULT_PRIVACY_HTML,
+  DEFAULT_TERMS_HTML,
+} from "@/lib/legal-content"
 
 export interface SystemSettings {
   maxClientsPerCoach: number
@@ -38,6 +43,10 @@ export interface SystemSettings {
   workoutLight: number
   workoutModerate: number
   workoutHeavy: number
+  showPersonalizedPlan: boolean
+  termsContentHtml: string
+  privacyContentHtml: string
+  dataProcessingContentHtml: string
 }
 
 // Default values (fallback if database settings not found)
@@ -74,6 +83,10 @@ const DEFAULT_SETTINGS: SystemSettings = {
   workoutLight: 150,
   workoutModerate: 225,
   workoutHeavy: 300,
+  showPersonalizedPlan: true,
+  termsContentHtml: DEFAULT_TERMS_HTML,
+  privacyContentHtml: DEFAULT_PRIVACY_HTML,
+  dataProcessingContentHtml: DEFAULT_DATA_PROCESSING_HTML,
 }
 
 /**

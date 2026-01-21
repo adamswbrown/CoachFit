@@ -82,26 +82,30 @@ export const signupSchema = z.object({
 
 // Onboarding validation schemas
 export const onboardingStep1Schema = z.object({
+  name: z.string().min(1, "Name is required"),
+})
+
+export const onboardingStep2Schema = z.object({
   sex: z.enum(["male", "female"], { message: "Sex must be either male or female" }),
   weightUnit: z.enum(["lbs", "kg"]).default("lbs"),
   measurementUnit: z.enum(["inches", "cm"]).default("inches"),
 })
 
-export const onboardingStep2Schema = z.object({
+export const onboardingStep3Schema = z.object({
   primaryGoal: z.enum(["lose_weight", "maintain_weight", "gain_weight"], {
     message: "Primary goal must be lose_weight, maintain_weight, or gain_weight",
   }),
 })
 
-export const onboardingStep3Schema = z.object({
+export const onboardingStep4Schema = z.object({
   currentWeight: z.number().positive("Weight must be greater than 0").max(1000, "Weight must be 1000 or less"),
 })
 
-export const onboardingStep4Schema = z.object({
+export const onboardingStep5Schema = z.object({
   height: z.number().positive("Height must be greater than 0").max(300, "Height must be 300 or less"),
 })
 
-export const onboardingStep5Schema = z.object({
+export const onboardingStep6Schema = z.object({
   birthDate: z.string().refine(
     (date) => {
       const d = new Date(date)
@@ -112,23 +116,23 @@ export const onboardingStep5Schema = z.object({
   dateFormat: z.enum(["MM/dd/yyyy", "dd/MM/yyyy", "dd-MMM-yyyy", "yyyy-MM-dd", "MMM dd, yyyy"]).default("MM/dd/yyyy"),
 })
 
-export const onboardingStep6Schema = z.object({
+export const onboardingStep7Schema = z.object({
   bodyFatRange: z.enum(["low", "medium", "high", "very_high"], {
     message: "Body fat range must be low, medium, high, or very_high",
   }),
 })
 
-export const onboardingStep7Schema = z.object({
+export const onboardingStep8Schema = z.object({
   targetWeight: z.number().positive("Target weight must be greater than 0").max(1000, "Target weight must be 1000 or less"),
 })
 
-export const onboardingStep8Schema = z.object({
+export const onboardingStep9Schema = z.object({
   activityLevel: z.enum(["not_much", "light", "moderate", "heavy"], {
     message: "Activity level must be not_much, light, moderate, or heavy",
   }),
 })
 
-export const onboardingStep9Schema = z.object({
+export const onboardingStep10Schema = z.object({
   addBurnedCalories: z.boolean().default(false),
 })
 
@@ -143,6 +147,7 @@ export const onboardingPlanReviewSchema = z.object({
 })
 
 export const onboardingSubmitSchema = z.object({
+  name: z.string().min(1),
   sex: z.enum(["male", "female"]),
   primaryGoal: z.enum(["lose_weight", "maintain_weight", "gain_weight"]),
   currentWeightKg: z.number().positive(),
@@ -155,11 +160,11 @@ export const onboardingSubmitSchema = z.object({
   weightUnit: z.enum(["lbs", "kg"]).default("lbs"),
   measurementUnit: z.enum(["inches", "cm"]).default("inches"),
   dateFormat: z.enum(["MM/dd/yyyy", "dd/MM/yyyy", "dd-MMM-yyyy", "yyyy-MM-dd", "MMM dd, yyyy"]).default("MM/dd/yyyy"),
-  dailyCaloriesKcal: z.number().int(),
-  proteinGrams: z.number(),
-  carbGrams: z.number(),
-  fatGrams: z.number(),
-  waterIntakeMl: z.number().int(),
+  dailyCaloriesKcal: z.number().int().optional(),
+  proteinGrams: z.number().optional(),
+  carbGrams: z.number().optional(),
+  fatGrams: z.number().optional(),
+  waterIntakeMl: z.number().int().optional(),
   dailyStepsTarget: z.number().int().optional(),
   weeklyWorkoutMinutes: z.number().int().optional(),
 })

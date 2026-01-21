@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { ProgressBar } from "@/components/onboarding/ProgressBar"
 import { SelectionGrid } from "@/components/onboarding/SelectionGrid"
 import { UnitToggle } from "@/components/onboarding/UnitToggle"
@@ -10,7 +11,9 @@ import { DatePicker } from "@/components/onboarding/DatePicker"
 import { PlanReview, MacroPercents, PlanReviewOnSavePayload, PlanReviewRanges } from "@/components/onboarding/PlanReview"
 import { lbsToKg, inchesToCm, kgToLbs } from "@/lib/utils/unit-conversions"
 
-const TOTAL_STEPS = 11
+const BASE_STEPS = 10
+const INTERSTITIAL_STEP = BASE_STEPS + 1
+const PLAN_REVIEW_STEP = BASE_STEPS + 2
 
 const DEFAULT_PLAN_RANGES: PlanReviewRanges = {
   minDailyCalories: 1000,
@@ -25,6 +28,7 @@ const DEFAULT_PLAN_RANGES: PlanReviewRanges = {
 }
 
 interface OnboardingData {
+  name: string
   sex: string
   weightUnit: string
   measurementUnit: string
@@ -41,16 +45,19 @@ interface OnboardingData {
 
 export default function ClientOnboarding() {
   const router = useRouter()
+  const { data: session, status } = useSession()
   const [step, setStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showInterstitial, setShowInterstitial] = useState(false)
   const [calculatedPlan, setCalculatedPlan] = useState<any>(null)
+  const [showPersonalizedPlan, setShowPersonalizedPlan] = useState(true)
   const [macroPercents, setMacroPercents] = useState<MacroPercents>({
     ...DEFAULT_PLAN_RANGES.defaultMacroPercents,
   })
 
   const [data, setData] = useState<OnboardingData>({
+    name: "",
     sex: "",
     weightUnit: "lbs",
     measurementUnit: "inches",
@@ -66,9 +73,22 @@ export default function ClientOnboarding() {
   })
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login")
+    }
+  }, [router, status])
+
+  useEffect(() => {
+    if (session?.user?.name) {
+      setData((prev) => ({ ...prev, name: prev.name || session.user.name || "" }))
+    }
+  }, [session])
+
+  useEffect(() => {
     const loadPreferences = async () => {
       try {
         const res = await fetch("/api/onboarding/preferences")
+        if (res.status === 401) return
         if (!res.ok) return
         const body = await res.json()
         const pref = body?.data?.preference
@@ -86,6 +106,25 @@ export default function ClientOnboarding() {
     }
 
     loadPreferences()
+  }, [])
+
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const res = await fetch("/api/onboarding/config")
+        if (res.status === 401) return
+        if (!res.ok) return
+        const body = await res.json()
+        const flag = body?.data?.showPersonalizedPlan
+        if (typeof flag === "boolean") {
+          setShowPersonalizedPlan(flag)
+        }
+      } catch (error) {
+        console.error("Failed to preload onboarding config", error)
+      }
+    }
+
+    loadConfig()
   }, [])
 
   const updateData = (field: string, value: any) => {
@@ -111,33 +150,36 @@ export default function ClientOnboarding() {
 
     switch (currentStep) {
       case 1:
-        if (!data.sex) newErrors.sex = "Please select your sex"
+        if (!data.name.trim()) newErrors.name = "Please enter your name"
         break
       case 2:
-        if (!data.primaryGoal) newErrors.primaryGoal = "Please select a goal"
+        if (!data.sex) newErrors.sex = "Please select your sex"
         break
       case 3:
+        if (!data.primaryGoal) newErrors.primaryGoal = "Please select a goal"
+        break
+      case 4:
         if (!data.currentWeight || Number(data.currentWeight) <= 0)
           newErrors.currentWeight = "Please enter a valid weight"
         break
-      case 4:
+      case 5:
         if (!data.height || Number(data.height) <= 0)
           newErrors.height = "Please enter a valid height"
         break
-      case 5:
+      case 6:
         if (!data.birthDate) newErrors.birthDate = "Please select a birth date"
         break
-      case 6:
+      case 7:
         if (!data.bodyFatRange) newErrors.bodyFatRange = "Please select a body fat range"
         break
-      case 7:
+      case 8:
         if (!data.targetWeight || Number(data.targetWeight) <= 0)
           newErrors.targetWeight = "Please enter a valid target weight"
         break
-      case 8:
+      case 9:
         if (!data.activityLevel) newErrors.activityLevel = "Please select an activity level"
         break
-      case 9:
+      case 10:
         // No validation needed for boolean toggle
         break
     }
@@ -149,17 +191,18 @@ export default function ClientOnboarding() {
   const handleNext = async () => {
     if (!validateStep(step)) return
 
-    if (step === 9) {
-      // Move to interstitial
-      setShowInterstitial(true)
-      setStep(10)
-      // Auto-advance after 1 second
-      setTimeout(() => {
-        setShowInterstitial(false)
-        // Calculate plan and move to step 11
-        calculatePlan()
-      }, 1000)
-    } else if (step < 10) {
+    if (step === BASE_STEPS) {
+      if (showPersonalizedPlan) {
+        setShowInterstitial(true)
+        setStep(INTERSTITIAL_STEP)
+        setTimeout(() => {
+          setShowInterstitial(false)
+          calculatePlan()
+        }, 1000)
+      } else {
+        setStep(INTERSTITIAL_STEP)
+      }
+    } else if (step < BASE_STEPS) {
       setStep(step + 1)
     }
   }
@@ -176,6 +219,10 @@ export default function ClientOnboarding() {
 
   const calculatePlan = async () => {
     try {
+      if (!session?.user?.id) {
+        throw new Error("Your session expired. Please sign in again.")
+      }
+
       const currentWeightKg =
         data.weightUnit === "kg"
           ? Number(data.currentWeight)
@@ -195,6 +242,7 @@ export default function ClientOnboarding() {
       const response = await fetch("/api/onboarding/calculate-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           weightKg: currentWeightKg,
           heightCm: heightCm,
@@ -205,6 +253,10 @@ export default function ClientOnboarding() {
           targetWeightKg: targetWeightKg,
         }),
       })
+
+      if (response.status === 401) {
+        throw new Error("Your session expired. Please sign in again.")
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
@@ -221,7 +273,7 @@ export default function ClientOnboarding() {
         weightLbs: kgToLbs(currentWeightKg),
       })
       setMacroPercents(deriveMacroPercents(plan))
-      setStep(11)
+      setStep(PLAN_REVIEW_STEP)
     } catch (error) {
       console.error("Error calculating plan:", error)
       setErrors({ submit: error instanceof Error ? error.message : "Failed to calculate plan. Please try again." })
@@ -266,6 +318,7 @@ export default function ClientOnboarding() {
           : lbsToKg(Number(data.targetWeight))
 
       const submitData = {
+        name: data.name.trim(),
         sex: data.sex,
         primaryGoal: data.primaryGoal,
         currentWeightKg,
@@ -278,11 +331,11 @@ export default function ClientOnboarding() {
         weightUnit: data.weightUnit,
         measurementUnit: data.measurementUnit,
         dateFormat: data.dateFormat,
-        dailyCaloriesKcal: calculatedPlan.dailyCaloriesKcal,
-        proteinGrams: calculatedPlan.proteinGrams,
-        carbGrams: calculatedPlan.carbGrams,
-        fatGrams: calculatedPlan.fatGrams,
-        waterIntakeMl: calculatedPlan.waterIntakeMl,
+        dailyCaloriesKcal: calculatedPlan?.dailyCaloriesKcal,
+        proteinGrams: calculatedPlan?.proteinGrams,
+        carbGrams: calculatedPlan?.carbGrams,
+        fatGrams: calculatedPlan?.fatGrams,
+        waterIntakeMl: calculatedPlan?.waterIntakeMl,
       }
 
       const response = await fetch("/api/onboarding/submit", {
@@ -309,6 +362,8 @@ export default function ClientOnboarding() {
     }
   }
 
+  const totalSteps = showPersonalizedPlan ? PLAN_REVIEW_STEP : INTERSTITIAL_STEP
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8">
       <div className="max-w-2xl mx-auto">
@@ -318,12 +373,14 @@ export default function ClientOnboarding() {
             Welcome to CoachFit
           </h1>
           <p className="text-gray-600">
-            Let's create your personalized fitness plan in just a few steps
+            {showPersonalizedPlan
+              ? "Let's create your personalized fitness plan in just a few steps"
+              : "Let's get your account ready in just a few steps"}
           </p>
         </div>
 
         {/* Progress Bar */}
-        {step < 11 && <ProgressBar current={step} total={TOTAL_STEPS} />}
+        {step < totalSteps && <ProgressBar current={step} total={totalSteps} />}
 
         {/* Content */}
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mt-8">
@@ -336,8 +393,33 @@ export default function ClientOnboarding() {
               </h2>
               <p className="text-gray-600">Just a moment while we calculate your targets</p>
             </div>
+          ) : step === INTERSTITIAL_STEP && !showPersonalizedPlan ? (
+            <div className="py-6 text-center space-y-3">
+              <h2 className="text-2xl font-bold text-gray-900">You're all set</h2>
+              <p className="text-gray-600">
+                We&apos;ll finish setting up your account when you continue.
+              </p>
+            </div>
           ) : step === 1 ? (
-            // Step 1: Sex + Unit Selection
+            // Step 1: Name
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">What&apos;s your name?</h2>
+                <p className="text-gray-600 mb-4">
+                  We&apos;ll use this for your account and coach communications.
+                </p>
+                <input
+                  type="text"
+                  value={data.name}
+                  onChange={(event) => updateData("name", event.target.value)}
+                  placeholder="Your full name"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {errors.name && <p className="text-red-600 text-sm">{errors.name}</p>}
+            </div>
+          ) : step === 2 ? (
+            // Step 2: Sex + Unit Selection
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Your biological sex</h2>
@@ -386,8 +468,8 @@ export default function ClientOnboarding() {
 
               {errors.sex && <p className="text-red-600 text-sm">{errors.sex}</p>}
             </div>
-          ) : step === 2 ? (
-            // Step 2: Primary Goal
+          ) : step === 3 ? (
+            // Step 3: Primary Goal
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">What's your primary goal?</h2>
@@ -405,8 +487,8 @@ export default function ClientOnboarding() {
                 <p className="text-red-600 text-sm">{errors.primaryGoal}</p>
               )}
             </div>
-          ) : step === 3 ? (
-            // Step 3: Current Weight
+          ) : step === 4 ? (
+            // Step 4: Current Weight
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Current weight</h2>
@@ -422,8 +504,8 @@ export default function ClientOnboarding() {
                 />
               </div>
             </div>
-          ) : step === 4 ? (
-            // Step 4: Height
+          ) : step === 5 ? (
+            // Step 5: Height
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Height</h2>
@@ -439,8 +521,8 @@ export default function ClientOnboarding() {
                 />
               </div>
             </div>
-          ) : step === 5 ? (
-            // Step 5: Birth Date
+          ) : step === 6 ? (
+            // Step 6: Birth Date
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Birth date</h2>
@@ -452,8 +534,8 @@ export default function ClientOnboarding() {
                 />
               </div>
             </div>
-          ) : step === 6 ? (
-            // Step 6: Body Fat Range
+          ) : step === 7 ? (
+            // Step 7: Body Fat Range
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Body fat estimate</h2>
@@ -492,8 +574,8 @@ export default function ClientOnboarding() {
                 <p className="text-red-600 text-sm">{errors.bodyFatRange}</p>
               )}
             </div>
-          ) : step === 7 ? (
-            // Step 7: Target Weight
+          ) : step === 8 ? (
+            // Step 8: Target Weight
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Target weight</h2>
@@ -509,8 +591,8 @@ export default function ClientOnboarding() {
                 />
               </div>
             </div>
-          ) : step === 8 ? (
-            // Step 8: Activity Level
+          ) : step === 9 ? (
+            // Step 9: Activity Level
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Activity level</h2>
@@ -546,8 +628,8 @@ export default function ClientOnboarding() {
                 <p className="text-red-600 text-sm">{errors.activityLevel}</p>
               )}
             </div>
-          ) : step === 9 ? (
-            // Step 9: Burned Calories Toggle
+          ) : step === 10 ? (
+            // Step 10: Burned Calories Toggle
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -580,8 +662,8 @@ export default function ClientOnboarding() {
                 </div>
               </div>
             </div>
-          ) : step === 11 && calculatedPlan ? (
-            // Step 11: Plan Review (handled by separate component)
+          ) : step === PLAN_REVIEW_STEP && calculatedPlan ? (
+            // Step 12: Plan Review (handled by separate component)
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Your personalized plan</h2>
               <PlanReview
@@ -617,7 +699,7 @@ export default function ClientOnboarding() {
               </button>
             )}
 
-            {step < 11 && (
+            {step < totalSteps && (
               <button
                 onClick={handleSkip}
                 className="px-6 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
@@ -629,13 +711,13 @@ export default function ClientOnboarding() {
 
             <div className="flex-1" />
 
-            {step < 11 ? (
+            {step < totalSteps ? (
               <button
                 onClick={handleNext}
                 className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition-colors disabled:opacity-50"
                 disabled={isLoading}
               >
-                {step === 9 ? "Continue" : "Next"}
+                {step === BASE_STEPS ? "Continue" : "Next"}
               </button>
             ) : (
               <button
@@ -643,7 +725,11 @@ export default function ClientOnboarding() {
                 className="px-6 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg font-medium transition-colors disabled:opacity-50"
                 disabled={isLoading}
               >
-                {isLoading ? "Completing..." : "Complete Onboarding"}
+                {isLoading
+                  ? "Completing..."
+                  : showPersonalizedPlan
+                  ? "Complete Onboarding"
+                  : "Let's get started"}
               </button>
             )}
           </div>

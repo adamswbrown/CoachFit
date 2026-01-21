@@ -58,15 +58,16 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 ### What's Built
 
 #### For Clients
-- ✅ **Daily Check-Ins**: Log weight, steps, calories, sleep quality, perceived effort, and notes
+- ✅ **Daily Check-Ins**: Log weight, steps, calories, sleep quality, perceived stress, and notes
 - ✅ **Personal Dashboard**: Quick stats and entry history with visual tracking
 - ✅ **Data Source Tracking**: Automatic tracking of data sources (HealthKit, manual entry, etc.)
 - ✅ **Self-Service Settings**: Change password, view OAuth connections, manage account
 - ✅ **Seamless Onboarding**: Automatic coach assignment via email invitations with role-based onboarding flows
-- ✅ **Terms & Consent**: Full consent management system with version tracking and IP/user-agent logging
+- ✅ **Terms & Consent**: Consent management with version tracking, IP/user-agent logging, and admin-managed legal content
 
 #### For Coaches
 - ✅ **Cohort Management**: Create and manage multiple client cohorts with co-coach support
+- ✅ **Cohort Start Dates**: Weekly questionnaire availability driven by cohort start date
 - ✅ **Two-Tier Invitations**: Global coach invites + cohort-specific invites
 - ✅ **Client Assignment**: Assign existing clients to cohorts
 - ✅ **Real-Time Search**: Search clients by name or email across dashboard and cohorts
@@ -75,6 +76,7 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 - ✅ **Weekly Notes**: Coach notes system for client progress tracking
 - ✅ **Weekly Review Queue**: Centralized dashboard for reviewing all clients' weekly progress with copyable email drafts and Loom video responses
 - ✅ **Custom Prompts**: Configure custom check-in questions per cohort
+- ✅ **Questionnaire Templates**: Manage weekly questionnaire templates separately from cohorts
 - ✅ **HealthKit Data Explorer**: View and analyze HealthKit data (workouts, sleep records) synced from iOS devices
 - ✅ **Client Pairing**: Generate one-time pairing codes for secure iOS device connections
 
@@ -86,6 +88,8 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 - ✅ **System Overview**: Platform-wide metrics and health monitoring
 - ✅ **Audit Trail**: Complete action history for compliance and accountability
 - ✅ **Feature Flags**: Toggle HealthKit and iOS integration features via system settings
+- ✅ **Onboarding Controls**: Toggle personalized plan review display
+- ✅ **Legal Content Editor**: WYSIWYG editors for Terms, Privacy, and Data Processing consent
 - ✅ **Admin Override**: Emergency admin access via configurable email override
 - ✅ **Test Data Tools**: Randomize client check-in status for realistic testing
 - ✅ **Email Template Management**: Configure all system email templates through admin UI
@@ -115,7 +119,7 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 - Next.js 16.1.1 (App Router) with React 19 Server Components
 - TypeScript for type safety across the stack
 - Tailwind CSS 4.1.18 for styling
-- Turbopack for fast development builds
+- Webpack build target for production
 
 **Database & Auth**
 - PostgreSQL via Railway (production-grade relational database)
@@ -269,8 +273,8 @@ See [CLAUDE.md](./CLAUDE.md) for detailed setup instructions and architecture do
 
 ```bash
 # Development
-npm run dev              # Start dev server with Turbopack
-npm run build            # Production build
+npm run dev              # Start dev server
+npm run build            # Production build (Webpack)
 npm run start            # Start production server
 npm run lint             # Run ESLint
 
@@ -293,13 +297,17 @@ npm run password:set [email] [password] # Set password for user
 # Email Setup (Resend)
 npm run email:setup-templates    # Setup email templates
 npm run email:verify             # Verify Resend API key
+
+# Questionnaires
+npm run seed:questionnaire-templates  # Seed weekly questionnaire templates
+npm run questionnaire:setup-email     # Setup weekly questionnaire email template
 ```
 
 ---
 
 ## ✅ Questionnaire Functionality
 
-Weekly questionnaires are bundled per cohort using SurveyJS templates and surfaced in the client dashboard. Coaches can view aggregated responses and per‑client weekly answers.
+Weekly questionnaires are bundled per cohort using SurveyJS templates and surfaced in the client dashboard. Coaches can manage templates separately and view aggregated responses and per‑client weekly answers.
 
 **Highlights:**
 - Weekly SurveyJS bundle stored per cohort
@@ -307,12 +315,14 @@ Weekly questionnaires are bundled per cohort using SurveyJS templates and surfac
 - Client view with week‑by‑week progress
 - Coach analytics view for responses by cohort/week
 - Coach weekly review shows client answers for the selected week
-- SurveyJS renderer only (custom in‑app builder replaces the paid Creator)
+- SurveyJS renderer only with a custom in‑app builder
+- Templates screen for managing questionnaire templates
 
 **Key routes:**
 - Client questionnaire access: `GET/PUT /api/weekly-questionnaire/[cohortId]/[weekNumber]`
 - Coach response analytics: `GET /api/coach/weekly-questionnaire-responses/[cohortId]/[weekNumber]`
 - Coach per‑client responses: `GET /api/coach/weekly-questionnaire-response?clientId=...&weekNumber=...`
+- Templates: `GET /api/cohorts/templates`
 ---
 
 ## 🏗️ Architecture Highlights
@@ -335,7 +345,7 @@ Weekly questionnaires are bundled per cohort using SurveyJS templates and surfac
 - `AdminInsight` - Auto-generated insights for admin dashboard
 - `AttentionScore` - Calculated attention scores for prioritization
 - `AdminAction` - Audit trail for admin operations
-- `SystemSettings` - Configurable system parameters and feature flags
+- `SystemSettings` - Configurable system parameters, feature flags, and legal content
 
 **HealthKit & iOS Models**:
 - `Workout` - HealthKit workout data (type, duration, calories, heart rate, distance, metadata)
@@ -434,7 +444,7 @@ See [CLAUDE.md](./CLAUDE.md) for the complete development workflow and operating
 10. **Data Source Tracking**: JSON field tracks data origin (HealthKit, manual) for transparency
 11. **Feature Flags**: `SystemSettings` model enables runtime feature toggles without deployment
 12. **Performance First**: Database query caching, batch queries, and skeleton loaders throughout
-13. **Consent Management**: Full audit trail with version tracking, IP, and user-agent logging
+13. **Consent Management**: Full audit trail with version tracking, IP, and user-agent logging plus admin-managed legal copy
 14. **Pairing Codes**: Time-limited one-time codes for secure iOS device pairing
 15. **Admin Override**: Email-based emergency admin access for critical operations
 

@@ -64,6 +64,7 @@ function CoachDashboardContent() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [inviteEmail, setInviteEmail] = useState("")
+  const [inviteCohortId, setInviteCohortId] = useState("")
   const [assigningClient, setAssigningClient] = useState<string | null>(null)
   const [selectedCohortForAssign, setSelectedCohortForAssign] = useState<Record<string, string>>({})
   const [retryCount, setRetryCount] = useState(0)
@@ -146,18 +147,29 @@ function CoachDashboardContent() {
     setSuccess(null)
 
     try {
-      const res = await fetch("/api/invites", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail }),
-      })
+      const res = inviteCohortId
+        ? await fetch(`/api/cohorts/${inviteCohortId}/clients`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: inviteEmail }),
+          })
+        : await fetch("/api/invites", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: inviteEmail }),
+          })
 
       const responseData = await res.json()
 
       if (res.ok) {
         setShowInviteForm(false)
         setInviteEmail("")
-        setSuccess(responseData.message || "Invite sent successfully")
+        setInviteCohortId("")
+        setSuccess(
+          inviteCohortId
+            ? "Invite sent and client added to the cohort"
+            : responseData.message || "Invite sent successfully"
+        )
         setLoading(true)
         await fetchOverview()
       } else {
@@ -400,7 +412,7 @@ function CoachDashboardContent() {
           <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
             <h2 className="text-xl font-semibold mb-2">Invite Client</h2>
             <p className="text-neutral-600 text-sm mb-4">
-              Send an invite by email. The client will be linked to you when they sign up, and you can assign them to a cohort later.
+              Send an invite by email. Optionally add them to a cohort now.
             </p>
             <form onSubmit={handleInviteSubmit} className="space-y-4">
               <div>
@@ -413,6 +425,21 @@ function CoachDashboardContent() {
                   className="w-full px-3 py-2 border rounded-md"
                   placeholder="client@example.com"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Add to Cohort (optional)</label>
+                <select
+                  value={inviteCohortId}
+                  onChange={(e) => setInviteCohortId(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md bg-white"
+                >
+                  <option value="">No cohort selected</option>
+                  {data?.cohorts.map((cohort) => (
+                    <option key={cohort.id} value={cohort.id}>
+                      {cohort.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <button
                 type="submit"

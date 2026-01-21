@@ -1,20 +1,121 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import {
+  DEFAULT_DATA_PROCESSING_HTML,
+  DEFAULT_PRIVACY_HTML,
+  DEFAULT_TERMS_HTML,
+} from "@/lib/legal-content"
 
 export default function ClientInvitedOnboardingPage() {
   const router = useRouter()
   const { data: session } = useSession()
   const [isCompleting, setIsCompleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasConsent, setHasConsent] = useState<boolean>(false)
+  const [consentLoading, setConsentLoading] = useState(true)
+  const [inviteContext, setInviteContext] = useState<{
+    cohortInvites: Array<{ cohortId: string; cohortName: string; coachName: string | null; coachEmail: string | null }>
+    coachInvites: Array<{ coachName: string | null; coachEmail: string | null }>
+  } | null>(null)
+  const [consent, setConsent] = useState({
+    terms: false,
+    privacy: false,
+    dataProcessing: false,
+    marketing: false,
+  })
+  const [showTermsModal, setShowTermsModal] = useState(false)
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false)
+  const [showDataProcessingModal, setShowDataProcessingModal] = useState(false)
+  const [legalContent, setLegalContent] = useState({
+    termsContentHtml: DEFAULT_TERMS_HTML,
+    privacyContentHtml: DEFAULT_PRIVACY_HTML,
+    dataProcessingContentHtml: DEFAULT_DATA_PROCESSING_HTML,
+  })
+
+  useEffect(() => {
+    const loadConsent = async () => {
+      try {
+        const res = await fetch("/api/consent/accept")
+        if (!res.ok) return
+        const data = await res.json()
+        if (data?.hasConsent) {
+          setHasConsent(true)
+        }
+      } catch (err) {
+        console.error("Failed to load consent", err)
+      } finally {
+        setConsentLoading(false)
+      }
+    }
+
+    loadConsent()
+  }, [])
+
+  useEffect(() => {
+    const loadLegalContent = async () => {
+      try {
+        const res = await fetch("/api/public/legal")
+        if (!res.ok) return
+        const body = await res.json()
+        if (body?.data) {
+          setLegalContent((prev) => ({ ...prev, ...body.data }))
+        }
+      } catch (err) {
+        console.error("Failed to load legal content", err)
+      }
+    }
+
+    loadLegalContent()
+  }, [])
+
+  useEffect(() => {
+    const loadInviteContext = async () => {
+      try {
+        const res = await fetch("/api/onboarding/invite-context")
+        if (!res.ok) return
+        const body = await res.json()
+        if (body?.data) {
+          setInviteContext(body.data)
+        }
+      } catch (err) {
+        console.error("Failed to load invite context", err)
+      }
+    }
+
+    loadInviteContext()
+  }, [])
 
   const handleComplete = async () => {
     setIsCompleting(true)
     setError(null)
 
     try {
+      if (!hasConsent) {
+        if (!consent.terms || !consent.privacy || !consent.dataProcessing) {
+          setError("Please accept the required terms to continue.")
+          setIsCompleting(false)
+          return
+        }
+
+        const consentRes = await fetch("/api/consent/accept", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            termsAccepted: consent.terms,
+            privacyAccepted: consent.privacy,
+            dataProcessing: consent.dataProcessing,
+            marketing: consent.marketing,
+          }),
+        })
+
+        if (!consentRes.ok) {
+          throw new Error("Failed to record consent")
+        }
+      }
+
       const res = await fetch("/api/onboarding/complete", {
         method: "POST",
       })
@@ -32,6 +133,14 @@ export default function ClientInvitedOnboardingPage() {
   }
 
   const firstName = session?.user?.name?.split(" ")[0] || "there"
+  const primaryInvite = inviteContext?.cohortInvites?.[0]
+  const coachInvite = inviteContext?.coachInvites?.[0]
+  const coachLabel =
+    primaryInvite?.coachName ||
+    primaryInvite?.coachEmail ||
+    coachInvite?.coachName ||
+    coachInvite?.coachEmail ||
+    "your coach"
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center px-4">
@@ -46,7 +155,9 @@ export default function ClientInvitedOnboardingPage() {
               Welcome, {firstName}!
             </h1>
             <p className="text-slate-600">
-              You're working with a coach
+              {primaryInvite
+                ? `You've been invited to join ${primaryInvite.cohortName}`
+                : "You're working with a coach"}
             </p>
           </div>
 
@@ -58,7 +169,9 @@ export default function ClientInvitedOnboardingPage() {
                 You're All Set
               </h2>
               <p className="text-slate-700 text-sm leading-relaxed mb-4">
-                Your coach has invited you to join their program. Here's what happens next:
+                {primaryInvite
+                  ? `${coachLabel} has invited you to join ${primaryInvite.cohortName}. Here's what happens next:`
+                  : `${coachLabel} has invited you to join their program. Here's what happens next:`}
               </p>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
@@ -95,11 +208,91 @@ export default function ClientInvitedOnboardingPage() {
             </div>
           )}
 
+          {!consentLoading && !hasConsent && (
+            <div className="mb-6 space-y-4 border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <h3 className="text-sm font-semibold text-slate-900">Terms & Agreements</h3>
+              <label className="flex items-start gap-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={consent.terms}
+                  onChange={(event) =>
+                    setConsent((prev) => ({ ...prev, terms: event.target.checked }))
+                  }
+                  className="mt-1 h-4 w-4 rounded border-slate-300"
+                />
+                <span>
+                  I agree to the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowTermsModal(true)}
+                    className="text-blue-700 underline hover:text-blue-800"
+                  >
+                    Terms of Service
+                  </button>
+                  .
+                </span>
+              </label>
+              <label className="flex items-start gap-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={consent.privacy}
+                  onChange={(event) =>
+                    setConsent((prev) => ({ ...prev, privacy: event.target.checked }))
+                  }
+                  className="mt-1 h-4 w-4 rounded border-slate-300"
+                />
+                <span>
+                  I agree to the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowPrivacyModal(true)}
+                    className="text-blue-700 underline hover:text-blue-800"
+                  >
+                    Privacy Policy
+                  </button>
+                  .
+                </span>
+              </label>
+              <label className="flex items-start gap-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={consent.dataProcessing}
+                  onChange={(event) =>
+                    setConsent((prev) => ({ ...prev, dataProcessing: event.target.checked }))
+                  }
+                  className="mt-1 h-4 w-4 rounded border-slate-300"
+                />
+                <span>
+                  I consent to the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowDataProcessingModal(true)}
+                    className="text-blue-700 underline hover:text-blue-800"
+                  >
+                    processing of my health and fitness data
+                  </button>
+                  .
+                </span>
+              </label>
+              <label className="flex items-start gap-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={consent.marketing}
+                  onChange={(event) =>
+                    setConsent((prev) => ({ ...prev, marketing: event.target.checked }))
+                  }
+                  className="mt-1 h-4 w-4 rounded border-slate-300"
+                />
+                <span>Send me product updates and tips (optional).</span>
+              </label>
+            </div>
+          )}
+
           {/* CTA */}
           <div className="flex flex-col gap-3">
             <button
               onClick={handleComplete}
-              disabled={isCompleting}
+              disabled={isCompleting || consentLoading}
               className="w-full bg-gradient-to-r from-emerald-600 to-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:from-emerald-700 hover:to-blue-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCompleting ? (
@@ -113,6 +306,63 @@ export default function ClientInvitedOnboardingPage() {
             </button>
           </div>
         </div>
+
+        {/* Terms Modal */}
+        {showTermsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto p-6">
+              <h2 className="text-xl font-bold mb-4">Terms of Service</h2>
+              <div
+                className="text-sm text-gray-700 space-y-4"
+                dangerouslySetInnerHTML={{ __html: legalContent.termsContentHtml }}
+              />
+              <button
+                onClick={() => setShowTermsModal(false)}
+                className="mt-6 w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Privacy Policy Modal */}
+        {showPrivacyModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto p-6">
+              <h2 className="text-xl font-bold mb-4">Privacy Policy</h2>
+              <div
+                className="text-sm text-gray-700 space-y-4"
+                dangerouslySetInnerHTML={{ __html: legalContent.privacyContentHtml }}
+              />
+              <button
+                onClick={() => setShowPrivacyModal(false)}
+                className="mt-6 w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Data Processing Modal */}
+        {showDataProcessingModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto p-6">
+              <h2 className="text-xl font-bold mb-4">Data Processing</h2>
+              <div
+                className="text-sm text-gray-700 space-y-4"
+                dangerouslySetInnerHTML={{ __html: legalContent.dataProcessingContentHtml }}
+              />
+              <button
+                onClick={() => setShowDataProcessingModal(false)}
+                className="mt-6 w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

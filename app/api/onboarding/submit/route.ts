@@ -48,6 +48,16 @@ export async function POST(request: Request) {
       targetWeightKg: data.targetWeightKg,
     })
 
+    const resolvedPlan = {
+      dailyCaloriesKcal: data.dailyCaloriesKcal ?? calculations.dailyCaloriesKcal,
+      proteinGrams: data.proteinGrams ?? calculations.proteinGrams,
+      carbGrams: data.carbGrams ?? calculations.carbGrams,
+      fatGrams: data.fatGrams ?? calculations.fatGrams,
+      waterIntakeMl: data.waterIntakeMl ?? calculations.waterIntakeMl,
+      dailyStepsTarget: data.dailyStepsTarget ?? calculations.dailyStepsTarget ?? null,
+      weeklyWorkoutMinutes: data.weeklyWorkoutMinutes ?? calculations.weeklyWorkoutMinutes ?? null,
+    }
+
     // Convert weight and height back to imperial for Entry model (which uses lbs/inches)
     const weightLbs = data.currentWeightKg / 0.453592
     const heightInches = data.heightCm / 2.54
@@ -58,6 +68,7 @@ export async function POST(request: Request) {
       const updatedUser = await tx.user.update({
         where: { id: session.user.id },
         data: {
+          name: data.name.trim(),
           gender: data.sex,
           dateOfBirth: new Date(data.birthDate),
           activityLevel: data.activityLevel,
@@ -90,26 +101,26 @@ export async function POST(request: Request) {
           currentWeightKg: data.currentWeightKg,
           targetWeightKg: data.targetWeightKg,
           heightCm: data.heightCm,
-          dailyCaloriesKcal: data.dailyCaloriesKcal,
-          proteinGrams: data.proteinGrams,
-          carbGrams: data.carbGrams,
-          fatGrams: data.fatGrams,
-          waterIntakeMl: data.waterIntakeMl,
-          dailyStepsTarget: data.dailyStepsTarget || null,
-          weeklyWorkoutMinutes: data.weeklyWorkoutMinutes || null,
+          dailyCaloriesKcal: resolvedPlan.dailyCaloriesKcal,
+          proteinGrams: resolvedPlan.proteinGrams,
+          carbGrams: resolvedPlan.carbGrams,
+          fatGrams: resolvedPlan.fatGrams,
+          waterIntakeMl: resolvedPlan.waterIntakeMl,
+          dailyStepsTarget: resolvedPlan.dailyStepsTarget,
+          weeklyWorkoutMinutes: resolvedPlan.weeklyWorkoutMinutes,
         },
         create: {
           userId: session.user.id,
           currentWeightKg: data.currentWeightKg,
           targetWeightKg: data.targetWeightKg,
           heightCm: data.heightCm,
-          dailyCaloriesKcal: data.dailyCaloriesKcal,
-          proteinGrams: data.proteinGrams,
-          carbGrams: data.carbGrams,
-          fatGrams: data.fatGrams,
-          waterIntakeMl: data.waterIntakeMl,
-          dailyStepsTarget: data.dailyStepsTarget || null,
-          weeklyWorkoutMinutes: data.weeklyWorkoutMinutes || null,
+          dailyCaloriesKcal: resolvedPlan.dailyCaloriesKcal,
+          proteinGrams: resolvedPlan.proteinGrams,
+          carbGrams: resolvedPlan.carbGrams,
+          fatGrams: resolvedPlan.fatGrams,
+          waterIntakeMl: resolvedPlan.waterIntakeMl,
+          dailyStepsTarget: resolvedPlan.dailyStepsTarget,
+          weeklyWorkoutMinutes: resolvedPlan.weeklyWorkoutMinutes,
         },
       })
 

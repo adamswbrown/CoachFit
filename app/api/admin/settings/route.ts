@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/permissions"
+import {
+  DEFAULT_DATA_PROCESSING_HTML,
+  DEFAULT_PRIVACY_HTML,
+  DEFAULT_TERMS_HTML,
+} from "@/lib/legal-content"
 import { z } from "zod"
 
 const DEFAULT_SETTINGS = {
@@ -29,6 +34,10 @@ const DEFAULT_SETTINGS = {
   defaultCarbsPercent: 40,
   defaultProteinPercent: 30,
   defaultFatPercent: 30,
+  showPersonalizedPlan: true,
+  termsContentHtml: DEFAULT_TERMS_HTML,
+  privacyContentHtml: DEFAULT_PRIVACY_HTML,
+  dataProcessingContentHtml: DEFAULT_DATA_PROCESSING_HTML,
 }
 
 // Validation schema for settings updates
@@ -57,6 +66,10 @@ const settingsSchema = z.object({
   defaultCarbsPercent: z.number().min(0).max(100).optional(),
   defaultProteinPercent: z.number().min(0).max(100).optional(),
   defaultFatPercent: z.number().min(0).max(100).optional(),
+  showPersonalizedPlan: z.boolean().optional(),
+  termsContentHtml: z.string().optional(),
+  privacyContentHtml: z.string().optional(),
+  dataProcessingContentHtml: z.string().optional(),
 })
 
 /**
@@ -197,6 +210,10 @@ export async function PUT(req: NextRequest) {
             defaultCarbsPercent: validationResult.data.defaultCarbsPercent ?? DEFAULT_SETTINGS.defaultCarbsPercent,
             defaultProteinPercent: validationResult.data.defaultProteinPercent ?? DEFAULT_SETTINGS.defaultProteinPercent,
             defaultFatPercent: validationResult.data.defaultFatPercent ?? DEFAULT_SETTINGS.defaultFatPercent,
+            showPersonalizedPlan: validationResult.data.showPersonalizedPlan ?? DEFAULT_SETTINGS.showPersonalizedPlan,
+            termsContentHtml: validationResult.data.termsContentHtml ?? DEFAULT_SETTINGS.termsContentHtml,
+            privacyContentHtml: validationResult.data.privacyContentHtml ?? DEFAULT_SETTINGS.privacyContentHtml,
+            dataProcessingContentHtml: validationResult.data.dataProcessingContentHtml ?? DEFAULT_SETTINGS.dataProcessingContentHtml,
           },
         })
       } else {

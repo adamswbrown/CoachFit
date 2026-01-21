@@ -2,8 +2,13 @@
 
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import {
+  DEFAULT_DATA_PROCESSING_HTML,
+  DEFAULT_PRIVACY_HTML,
+  DEFAULT_TERMS_HTML,
+} from "@/lib/legal-content"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -23,6 +28,29 @@ export default function SignupPage() {
   const [submitting, setSubmitting] = useState(false)
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
+  const [showDataProcessingModal, setShowDataProcessingModal] = useState(false)
+  const [legalContent, setLegalContent] = useState({
+    termsContentHtml: DEFAULT_TERMS_HTML,
+    privacyContentHtml: DEFAULT_PRIVACY_HTML,
+    dataProcessingContentHtml: DEFAULT_DATA_PROCESSING_HTML,
+  })
+
+  useEffect(() => {
+    const loadLegalContent = async () => {
+      try {
+        const res = await fetch("/api/public/legal")
+        if (!res.ok) return
+        const body = await res.json()
+        if (body?.data) {
+          setLegalContent((prev) => ({ ...prev, ...body.data }))
+        }
+      } catch (err) {
+        console.error("Failed to load legal content", err)
+      }
+    }
+
+    loadLegalContent()
+  }, [])
 
   const validateForm = (): string | null => {
     if (!formData.email) {
@@ -250,7 +278,15 @@ export default function SignupPage() {
                   required
                 />
                 <span className="text-sm text-gray-700">
-                  I consent to the processing of my health and fitness data (including HealthKit integration)
+                  I consent to the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowDataProcessingModal(true)}
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    processing of my health and fitness data
+                  </button>{" "}
+                  (including HealthKit integration)
                   <span className="text-red-500">*</span>
                 </span>
               </label>
@@ -293,49 +329,10 @@ export default function SignupPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto p-6">
               <h2 className="text-xl font-bold mb-4">Terms of Service</h2>
-              <div className="space-y-4 text-sm text-gray-700">
-                <section>
-                  <h3 className="font-semibold mb-2">1. Acceptance of Terms</h3>
-                  <p>
-                    By signing up for CoachFit, you agree to these Terms of Service. If you do not agree, please do not use our service.
-                  </p>
-                </section>
-
-                <section>
-                  <h3 className="font-semibold mb-2">2. Use of Service</h3>
-                  <p>
-                    CoachFit is a fitness and health tracking platform. You agree to use the service only for lawful purposes and in a way that does not infringe upon the rights of others or restrict their use and enjoyment of the service.
-                  </p>
-                </section>
-
-                <section>
-                  <h3 className="font-semibold mb-2">3. User Accounts</h3>
-                  <p>
-                    You are responsible for maintaining the confidentiality of your account information and password. You agree to accept responsibility for all activities that occur under your account.
-                  </p>
-                </section>
-
-                <section>
-                  <h3 className="font-semibold mb-2">4. Health Data Disclaimer</h3>
-                  <p>
-                    CoachFit is not a medical service. Data provided through our platform is for fitness tracking purposes only. Always consult with a healthcare professional before making health-related decisions.
-                  </p>
-                </section>
-
-                <section>
-                  <h3 className="font-semibold mb-2">5. Limitation of Liability</h3>
-                  <p>
-                    CoachFit is provided on an "as-is" basis. We make no warranties regarding the service and shall not be liable for any indirect, incidental, special, consequential, or punitive damages.
-                  </p>
-                </section>
-
-                <section>
-                  <h3 className="font-semibold mb-2">6. Changes to Terms</h3>
-                  <p>
-                    We reserve the right to modify these terms at any time. Your continued use of the service constitutes acceptance of any changes.
-                  </p>
-                </section>
-              </div>
+              <div
+                className="text-sm text-gray-700 space-y-4"
+                dangerouslySetInnerHTML={{ __html: legalContent.termsContentHtml }}
+              />
               <button
                 onClick={() => setShowTermsModal(false)}
                 className="mt-6 w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
@@ -351,58 +348,31 @@ export default function SignupPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto p-6">
               <h2 className="text-xl font-bold mb-4">Privacy Policy</h2>
-              <div className="space-y-4 text-sm text-gray-700">
-                <section>
-                  <h3 className="font-semibold mb-2">1. Information Collection</h3>
-                  <p>
-                    We collect information you provide directly (email, name, fitness data) and information automatically collected through our service (usage data, device information).
-                  </p>
-                </section>
-
-                <section>
-                  <h3 className="font-semibold mb-2">2. HealthKit Data</h3>
-                  <p>
-                    When you connect HealthKit, we collect steps, workouts, sleep, and other health metrics. You can disconnect HealthKit integration at any time.
-                  </p>
-                </section>
-
-                <section>
-                  <h3 className="font-semibold mb-2">3. Data Usage</h3>
-                  <p>
-                    We use your data to provide fitness tracking, coach feedback, analytics, and service improvements. We do not sell your personal data to third parties.
-                  </p>
-                </section>
-
-                <section>
-                  <h3 className="font-semibold mb-2">4. Data Security</h3>
-                  <p>
-                    We implement industry-standard security measures including encryption, secure authentication, and regular security audits to protect your data.
-                  </p>
-                </section>
-
-                <section>
-                  <h3 className="font-semibold mb-2">5. Your Rights (GDPR)</h3>
-                  <p>
-                    You have the right to access, export, and delete your data. You can exercise these rights through your account settings or by contacting us.
-                  </p>
-                </section>
-
-                <section>
-                  <h3 className="font-semibold mb-2">6. Data Retention</h3>
-                  <p>
-                    We retain your data while you maintain an active account. Deleted accounts are permanently purged within 30 days of deletion request.
-                  </p>
-                </section>
-
-                <section>
-                  <h3 className="font-semibold mb-2">7. Contact Us</h3>
-                  <p>
-                    If you have privacy concerns, please contact us at support@coachfit.app or through your account settings.
-                  </p>
-                </section>
-              </div>
+              <div
+                className="text-sm text-gray-700 space-y-4"
+                dangerouslySetInnerHTML={{ __html: legalContent.privacyContentHtml }}
+              />
               <button
                 onClick={() => setShowPrivacyModal(false)}
+                className="mt-6 w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Data Processing Modal */}
+        {showDataProcessingModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto p-6">
+              <h2 className="text-xl font-bold mb-4">Data Processing</h2>
+              <div
+                className="text-sm text-gray-700 space-y-4"
+                dangerouslySetInnerHTML={{ __html: legalContent.dataProcessingContentHtml }}
+              />
+              <button
+                onClick={() => setShowDataProcessingModal(false)}
                 className="mt-6 w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
               >
                 Close

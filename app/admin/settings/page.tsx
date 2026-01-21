@@ -6,6 +6,12 @@ import { useSession } from "next-auth/react"
 import { isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
+import { EmailEditor } from "@/components/admin/EmailEditor"
+import {
+  DEFAULT_DATA_PROCESSING_HTML,
+  DEFAULT_PRIVACY_HTML,
+  DEFAULT_TERMS_HTML,
+} from "@/lib/legal-content"
 
 const DEFAULT_SETTINGS: Omit<SystemSettings, "id"> = {
   maxClientsPerCoach: 50,
@@ -40,6 +46,10 @@ const DEFAULT_SETTINGS: Omit<SystemSettings, "id"> = {
   workoutLight: 150,
   workoutModerate: 225,
   workoutHeavy: 300,
+  showPersonalizedPlan: true,
+  termsContentHtml: DEFAULT_TERMS_HTML,
+  privacyContentHtml: DEFAULT_PRIVACY_HTML,
+  dataProcessingContentHtml: DEFAULT_DATA_PROCESSING_HTML,
 }
 
 interface SystemSettings {
@@ -76,6 +86,10 @@ interface SystemSettings {
   workoutLight: number
   workoutModerate: number
   workoutHeavy: number
+  showPersonalizedPlan: boolean
+  termsContentHtml: string
+  privacyContentHtml: string
+  dataProcessingContentHtml: string
 }
 
 interface TechnicalConstant {
@@ -608,6 +622,31 @@ export default function AdminSettingsPage() {
               <div>
                 <h3 className="text-lg font-semibold text-neutral-900 mb-4">Onboarding Configuration</h3>
                 <div className="space-y-6">
+                  <div className="flex items-start">
+                    <div className="flex items-center h-5">
+                      <input
+                        type="checkbox"
+                        name="showPersonalizedPlan"
+                        checked={formData.showPersonalizedPlan ?? true}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            showPersonalizedPlan: e.target.checked,
+                          }))
+                        }
+                        className="w-4 h-4 border border-neutral-300 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="ml-3">
+                      <label className="block text-sm font-medium text-neutral-700">
+                        Show personalized plan during onboarding
+                      </label>
+                      <p className="text-xs text-neutral-500 mt-1">
+                        When off, clients skip the plan review and finish onboarding with a “Let’s get started” button.
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Body Fat Percentages */}
                   <div>
                     <p className="text-sm font-medium text-neutral-700 mb-3">Body Fat Range Percentages</p>
@@ -918,6 +957,49 @@ export default function AdminSettingsPage() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Legal Content */}
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Legal Content</h3>
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      Terms of Service
+                    </label>
+                    <EmailEditor
+                      content={formData.termsContentHtml || ""}
+                      onChange={(html) =>
+                        setFormData((prev) => ({ ...prev, termsContentHtml: html }))
+                      }
+                      minHeightClassName="min-h-[220px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      Privacy Policy
+                    </label>
+                    <EmailEditor
+                      content={formData.privacyContentHtml || ""}
+                      onChange={(html) =>
+                        setFormData((prev) => ({ ...prev, privacyContentHtml: html }))
+                      }
+                      minHeightClassName="min-h-[220px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      Data Processing Consent
+                    </label>
+                    <EmailEditor
+                      content={formData.dataProcessingContentHtml || ""}
+                      onChange={(html) =>
+                        setFormData((prev) => ({ ...prev, dataProcessingContentHtml: html }))
+                      }
+                      minHeightClassName="min-h-[180px]"
+                    />
                   </div>
                 </div>
               </div>
