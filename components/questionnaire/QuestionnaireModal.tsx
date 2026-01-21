@@ -25,6 +25,8 @@ export function QuestionnaireModal({
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isLocked, setIsLocked] = useState(false)
+  const [submittedAt, setSubmittedAt] = useState<Date | null>(null)
 
   // Debounce timer for auto-save
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -96,6 +98,8 @@ export function QuestionnaireModal({
       setSurveyJson(weekTemplate)
       setSurveyData(data.responseData)
       setHasUnsavedChanges(false)
+      setIsLocked(Boolean(data.locked))
+      setSubmittedAt(data.submittedAt ? new Date(data.submittedAt) : null)
 
       if (data.responseData) {
         setLastSavedAt(new Date())
@@ -183,7 +187,12 @@ export function QuestionnaireModal({
             <h2 className="text-2xl font-bold text-gray-900">
               {WEEK_LABELS[weekNumber]} Questionnaire
             </h2>
-            {lastSavedAt && (
+            {isLocked && submittedAt && (
+              <p className="text-sm text-gray-500 mt-1">
+                Submitted at {submittedAt.toLocaleString()}
+              </p>
+            )}
+            {!isLocked && lastSavedAt && (
               <p className="text-sm text-gray-500 mt-1">
                 {saving ? (
                   <span className="flex items-center gap-1">
@@ -231,13 +240,21 @@ export function QuestionnaireModal({
           )}
 
           {!loading && !error && surveyJson && (
-            <SurveyContainer
-              surveyJson={surveyJson}
-              data={surveyData}
-              onValueChanged={handleValueChanged}
-              onComplete={handleComplete}
-              mode="edit"
-            />
+            <>
+              {isLocked && (
+                <div className="bg-gray-50 border border-gray-200 text-gray-700 px-4 py-3 rounded mb-4">
+                  <p className="font-medium">Responses locked</p>
+                  <p className="text-sm">This questionnaire is read-only.</p>
+                </div>
+              )}
+              <SurveyContainer
+                surveyJson={surveyJson}
+                data={surveyData}
+                onValueChanged={isLocked ? undefined : handleValueChanged}
+                onComplete={isLocked ? undefined : handleComplete}
+                mode={isLocked ? "display" : "edit"}
+              />
+            </>
           )}
 
           {!loading && !error && !surveyJson && (

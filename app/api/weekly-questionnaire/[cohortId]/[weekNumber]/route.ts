@@ -74,6 +74,8 @@ export async function GET(
       return NextResponse.json({ error: "Questionnaire not available yet" }, { status: 403 })
     }
 
+    const isPastWeek = weekNum < currentWeek
+
     // Fetch the questionnaire bundle
     const bundle = await db.questionnaireBundle.findUnique({
       where: { cohortId },
@@ -100,6 +102,7 @@ export async function GET(
       status: response?.status || "not_started",
       submittedAt: response?.submittedAt || null,
       weekNumber: weekNum,
+      locked: isPastWeek || response?.status === "completed",
     })
   } catch (error) {
     console.error("Error fetching questionnaire:", error)
@@ -166,6 +169,10 @@ export async function PUT(
       return NextResponse.json({ error: "Questionnaire not available yet" }, { status: 403 })
     }
 
+    if (weekNum < currentWeek) {
+      return NextResponse.json({ error: "Questionnaire is locked for past weeks" }, { status: 403 })
+    }
+
     const body = await req.json()
     const validated = weeklyQuestionnaireResponseSchema.parse({
       weekNumber: weekNum,
@@ -183,6 +190,10 @@ export async function PUT(
       },
       select: { status: true, submittedAt: true },
     })
+
+    if (existing?.status === "completed") {
+      return NextResponse.json({ error: "Questionnaire is locked after completion" }, { status: 403 })
+    }
 
     const isAlreadyCompleted = existing?.status === "completed"
     const nextStatus =

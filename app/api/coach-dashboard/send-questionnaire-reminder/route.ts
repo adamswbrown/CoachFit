@@ -69,6 +69,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
+    if (!cohort.cohortStartDate) {
+      return NextResponse.json({ error: "Cohort start date not set" }, { status: 400 })
+    }
+
+    const getCurrentWeek = (startDate: Date) => {
+      const start = new Date(startDate)
+      const today = new Date()
+      start.setUTCHours(0, 0, 0, 0)
+      today.setUTCHours(0, 0, 0, 0)
+      const diffMs = today.getTime() - start.getTime()
+      if (diffMs < 0) return 0
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+      return Math.min(5, Math.floor(diffDays / 7) + 1)
+    }
+
+    const currentWeek = getCurrentWeek(cohort.cohortStartDate)
+
+    if (currentWeek < 1) {
+      return NextResponse.json({ error: "Questionnaire not available yet" }, { status: 403 })
+    }
+
+    if (weekNumber !== currentWeek) {
+      return NextResponse.json(
+        { error: "Reminders can only be sent for the current week" },
+        { status: 400 }
+      )
+    }
+
     // Get all responses for this cohort and week
     const responses = await db.weeklyQuestionnaireResponse.findMany({
       where: {

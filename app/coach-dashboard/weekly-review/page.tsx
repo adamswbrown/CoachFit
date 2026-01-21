@@ -115,6 +115,7 @@ export default function WeeklyReviewPage() {
     weekNumber: number
     status: string
     updatedAt: string
+    submittedAt?: string | null
   }[]>>({})
   const [sendingReminder, setSendingReminder] = useState(false)
   const [reminderToast, setReminderToast] = useState<string | null>(null)
@@ -217,6 +218,7 @@ export default function WeeklyReviewPage() {
                 weekNumber: resp.weekNumber,
                 status: resp.status,
                 updatedAt: resp.updatedAt,
+                submittedAt: resp.submittedAt,
               })
             })
             setQuestionnaireStatus(statusByUser)
@@ -348,6 +350,7 @@ export default function WeeklyReviewPage() {
               weekNumber: resp.weekNumber,
               status: resp.status,
               updatedAt: resp.updatedAt,
+              submittedAt: resp.submittedAt,
             })
           })
           setQuestionnaireStatus(statusByUser)
@@ -702,11 +705,19 @@ export default function WeeklyReviewPage() {
                                 const hoursSinceUpdate = Math.floor(
                                   (Date.now() - new Date(q.updatedAt).getTime()) / (1000 * 60 * 60)
                                 )
+                                const submittedLabel = q.submittedAt
+                                  ? `Submitted ${new Date(q.submittedAt).toLocaleString()}`
+                                  : "Submitted"
                                 return (
                                   <span key={q.weekNumber} className="mr-2">
                                     W{q.weekNumber}:{" "}
                                     {q.status === "completed" ? (
-                                      <span className="text-green-600">✓</span>
+                                      <span
+                                        className="text-green-600 cursor-help"
+                                        title={submittedLabel}
+                                      >
+                                        ✓
+                                      </span>
                                     ) : q.status === "in_progress" ? (
                                       <span
                                         className="text-red-600 cursor-help"

@@ -280,6 +280,60 @@ export default function QuestionnaireAnalyticsPage() {
           </div>
         )}
 
+        {/* Submission Status */}
+        {!loading && responses.length > 0 && (
+          <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-6">
+            <h2 className="text-xl font-semibold text-neutral-900 mb-4">
+              Submission Status
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left text-neutral-600 border-b border-neutral-200">
+                    <th className="py-2 pr-4 font-medium">Client</th>
+                    <th className="py-2 pr-4 font-medium">Status</th>
+                    <th className="py-2 pr-4 font-medium">Submitted</th>
+                    <th className="py-2 pr-4 font-medium">Last Saved</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {responses.map((response) => (
+                    <tr key={response.userId} className="border-b border-neutral-100">
+                      <td className="py-2 pr-4">
+                        <div className="font-medium text-neutral-900">
+                          {response.userName || response.userEmail}
+                        </div>
+                        <div className="text-xs text-neutral-500">
+                          {response.userEmail}
+                        </div>
+                      </td>
+                      <td className="py-2 pr-4">
+                        {response.status === "completed" ? (
+                          <span className="text-green-700 font-medium">Completed</span>
+                        ) : response.status === "in_progress" ? (
+                          <span className="text-amber-700 font-medium">In Progress</span>
+                        ) : (
+                          <span className="text-neutral-500">Not Started</span>
+                        )}
+                      </td>
+                      <td className="py-2 pr-4 text-neutral-700">
+                        {response.submittedAt
+                          ? new Date(response.submittedAt).toLocaleString()
+                          : "—"}
+                      </td>
+                      <td className="py-2 pr-4 text-neutral-700">
+                        {response.updatedAt
+                          ? new Date(response.updatedAt).toLocaleString()
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Question Stats */}
         {!loading && questionStats.length > 0 && (
           <div className="bg-white rounded-lg border border-neutral-200 p-6">
