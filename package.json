@@ -21,6 +21,7 @@
     "test:cleanup": "npx tsx scripts/cleanup-test-data.ts",
     "test:cleanup-healthkit": "npx tsx scripts/cleanup-healthkit-demo-data.ts",
     "test:generate-comprehensive": "npx tsx scripts/generate-comprehensive-test-data.ts",
+    "test:setup": "npx tsx scripts/setup-test-environment.ts",
     "admin:set": "npx tsx scripts/set-admin.ts",
     "grant:role": "npx tsx scripts/grant-role.ts",
     "password:set": "npx tsx scripts/set-password.ts",

@@ -67,6 +67,7 @@ export default function ClientDashboard() {
   const [existingEntry, setExistingEntry] = useState<Entry | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [manualEditEntryId, setManualEditEntryId] = useState<string | null>(null)
+  const [entryMode, setEntryMode] = useState<"add" | "edit">("add")
   const entryFormRef = useRef<HTMLDivElement | null>(null)
   const [checkInConfig, setCheckInConfig] = useState<{
     enabledPrompts: string[]
@@ -181,6 +182,7 @@ export default function ClientDashboard() {
     setManualEditEntryId(entry.id)
     setExistingEntry(entry)
     setIsEditing(true)
+    setEntryMode("edit")
     setFormData({
       weightLbs: entry.weightLbs?.toString() || "",
       steps: entry.steps?.toString() || "",
@@ -206,6 +208,10 @@ export default function ClientDashboard() {
           return
         }
         setExistingEntry(entryForDate)
+        if (entryMode === "edit") {
+          loadEntryForEditing(entryForDate)
+          return
+        }
         setIsEditing(false)
         resetFormForDate(formData.date)
       } else {
@@ -220,7 +226,7 @@ export default function ClientDashboard() {
       setManualEditEntryId(null)
       resetFormForDate(formData.date)
     }
-  }, [formData.date, entries])
+  }, [entryMode, formData.date, entries])
 
   const checkCohortMembership = async () => {
     try {
@@ -274,30 +280,56 @@ export default function ClientDashboard() {
     setSuccess(null)
 
     try {
-      // Build request body with only provided fields (partial entry support)
-      const body: any = {
-        date: formData.date,
+      if (entryMode === "add" && existingEntry) {
+        setError("Entry already exists for this date. Switch to Edit or choose another date.")
+        setSubmitting(false)
+        return
       }
 
-      if (formData.weightLbs && formData.weightLbs.toString().trim() !== "") {
-        const parsed = parseFloat(formData.weightLbs.toString())
-        if (!isNaN(parsed)) body.weightLbs = parsed
+      if (entryMode === "edit" && !existingEntry) {
+        setError("Select a date with an existing entry to edit.")
+        setSubmitting(false)
+        return
       }
-      if (formData.steps && formData.steps.toString().trim() !== "") {
-        const parsed = parseInt(formData.steps.toString(), 10)
-        if (!isNaN(parsed)) body.steps = parsed
+
+      const hasValue = (value: string | number) =>
+        value !== null && value !== undefined && value.toString().trim() !== ""
+
+      if (
+        !hasValue(formData.weightLbs) ||
+        !hasValue(formData.steps) ||
+        !hasValue(formData.calories) ||
+        !hasValue(formData.perceivedStress)
+      ) {
+        setError("Weight, steps, calories, and perceived stress are required.")
+        setSubmitting(false)
+        return
       }
-      if (formData.calories && formData.calories.toString().trim() !== "") {
-        const parsed = parseInt(formData.calories.toString(), 10)
-        if (!isNaN(parsed)) body.calories = parsed
+
+      const weightParsed = parseFloat(formData.weightLbs.toString())
+      const stepsParsed = parseInt(formData.steps.toString(), 10)
+      const caloriesParsed = parseInt(formData.calories.toString(), 10)
+      const stressParsed = parseInt(formData.perceivedStress.toString(), 10)
+
+      if (
+        [weightParsed, stepsParsed, caloriesParsed, stressParsed].some((value) => isNaN(value))
+      ) {
+        setError("Please enter valid values for all required fields.")
+        setSubmitting(false)
+        return
       }
+
+      const body: any = {
+        date: formData.date,
+        weightLbs: weightParsed,
+        steps: stepsParsed,
+        calories: caloriesParsed,
+        perceivedStress: stressParsed,
+      }
+
       if (formData.sleepQuality && formData.sleepQuality.toString().trim() !== "") {
         const parsed = parseInt(formData.sleepQuality.toString(), 10)
         if (!isNaN(parsed)) body.sleepQuality = parsed
-      }
-      if (formData.perceivedStress && formData.perceivedStress.toString().trim() !== "") {
-        const parsed = parseInt(formData.perceivedStress.toString(), 10)
-        if (!isNaN(parsed)) body.perceivedStress = parsed
       }
       if (formData.notes && formData.notes.trim() !== "") {
         body.notes = formData.notes.trim()
@@ -654,13 +686,55 @@ export default function ClientDashboard() {
             <div ref={entryFormRef} className="bg-white rounded-lg border border-neutral-200 p-6">
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-neutral-900 mb-1">
-                  {isEditing ? "Update Entry" : "Add New Entry"}
+                  {entryMode === "edit" ? "Edit Entry" : "Add New Entry"}
                 </h2>
                 <p className="text-sm text-neutral-500">
-                  {isEditing
-                    ? `Editing entry for ${new Date(formData.date).toLocaleDateString()}`
+                  {entryMode === "edit"
+                    ? existingEntry
+                      ? `Editing entry for ${new Date(formData.date).toLocaleDateString()}`
+                      : "Select a date with an existing entry."
+                    : existingEntry
+                    ? `Add data for ${new Date(formData.date).toLocaleDateString()}`
                     : `New entry for ${new Date(formData.date).toLocaleDateString()}`}
                 </p>
+              </div>
+
+              <div className="mb-6 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEntryMode("add")
+                    setIsEditing(false)
+                    setManualEditEntryId(null)
+                    resetFormForDate(formData.date)
+                  }}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    entryMode === "add"
+                      ? "bg-neutral-900 text-white"
+                      : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                  }`}
+                >
+                  Add new entry
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEntryMode("edit")
+                    if (existingEntry) {
+                      loadEntryForEditing(existingEntry)
+                    } else {
+                      setIsEditing(false)
+                      setManualEditEntryId(null)
+                    }
+                  }}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    entryMode === "edit"
+                      ? "bg-neutral-900 text-white"
+                      : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                  }`}
+                >
+                  Edit existing entry
+                </button>
               </div>
               
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -682,19 +756,19 @@ export default function ClientDashboard() {
                   />
                 </div>
 
-                {existingEntry && !isEditing && (
+                {existingEntry && entryMode === "add" && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                     <p className="font-medium">Entry already exists for this date.</p>
                     <p className="mt-1">
-                      Choose another date for a new entry, or edit the existing one.
+                      Choose another date to add a new entry, or switch to edit this one.
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => loadEntryForEditing(existingEntry)}
-                      className="mt-3 inline-flex items-center rounded-md bg-amber-600 px-3 py-1.5 text-white text-sm font-medium hover:bg-amber-700"
-                    >
-                      Edit existing entry
-                    </button>
+                  </div>
+                )}
+
+                {!existingEntry && entryMode === "edit" && (
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                    <p className="font-medium">No entry found for this date.</p>
+                    <p className="mt-1">Pick a date that already has an entry to edit it.</p>
                   </div>
                 )}
 
@@ -702,7 +776,7 @@ export default function ClientDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Weight <span className="text-neutral-400 font-normal">(optional)</span>
+                      Weight
                     </label>
                     <div className="relative">
                       <input
@@ -715,6 +789,7 @@ export default function ClientDashboard() {
                         onChange={(e) =>
                           setFormData({ ...formData, weightLbs: e.target.value })
                         }
+                        required
                         disabled={hasCoach === false}
                         className="w-full px-4 py-2.5 pr-12 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                       />
@@ -724,7 +799,7 @@ export default function ClientDashboard() {
                   
                   <div>
                     <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Steps <span className="text-neutral-400 font-normal">(optional)</span>
+                      Steps
                     </label>
                     <div className="relative">
                       <input
@@ -736,6 +811,7 @@ export default function ClientDashboard() {
                         onChange={(e) =>
                           setFormData({ ...formData, steps: e.target.value })
                         }
+                        required
                         disabled={hasCoach === false}
                         className="w-full px-4 py-2.5 pr-16 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                       />
@@ -745,7 +821,7 @@ export default function ClientDashboard() {
                   
                   <div>
                     <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Calories <span className="text-neutral-400 font-normal">(optional)</span>
+                      Calories
                     </label>
                     <div className="relative">
                       <input
@@ -757,6 +833,7 @@ export default function ClientDashboard() {
                         onChange={(e) =>
                           setFormData({ ...formData, calories: e.target.value })
                         }
+                        required
                         disabled={hasCoach === false}
                         className="w-full px-4 py-2.5 pr-14 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                       />
@@ -766,34 +843,33 @@ export default function ClientDashboard() {
                 </div>
 
                 {/* Perceived Stress - Always Visible if enabled */}
-                {checkInConfig && checkInConfig.enabledPrompts.includes("perceivedStress") && (
-                  <div className="pt-4 border-t border-neutral-100">
-                    <label className="block text-sm font-medium text-neutral-700 mb-3">
-                      Perceived Stress <span className="text-neutral-400 font-normal">(optional, 1-10)</span>
-                    </label>
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="range"
-                        min="1"
-                        max="10"
-                        value={formData.perceivedStress || "5"}
-                        onChange={(e) =>
-                          setFormData({ ...formData, perceivedStress: e.target.value })
-                        }
-                        disabled={hasCoach === false}
-                        className="flex-1 h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
-                      />
-                      <span className="text-lg font-semibold text-neutral-900 min-w-[3rem] text-center">
-                        {formData.perceivedStress || "5"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs text-neutral-500 mt-2">
-                      <span>Not Stressed</span>
-                      <span>Moderate</span>
-                      <span>Extremely Stressed</span>
-                    </div>
+                <div className="pt-4 border-t border-neutral-100">
+                  <label className="block text-sm font-medium text-neutral-700 mb-3">
+                    Perceived Stress <span className="text-neutral-400 font-normal">(1-10)</span>
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={formData.perceivedStress || "5"}
+                      onChange={(e) =>
+                        setFormData({ ...formData, perceivedStress: e.target.value })
+                      }
+                      required
+                      disabled={hasCoach === false}
+                      className="flex-1 h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
+                    />
+                    <span className="text-lg font-semibold text-neutral-900 min-w-[3rem] text-center">
+                      {formData.perceivedStress || "5"}
+                    </span>
                   </div>
-                )}
+                  <div className="flex justify-between text-xs text-neutral-500 mt-2">
+                    <span>Not Stressed</span>
+                    <span>Moderate</span>
+                    <span>Extremely Stressed</span>
+                  </div>
+                </div>
 
                 {/* Notes - Always Visible if enabled */}
                 {checkInConfig && checkInConfig.enabledPrompts.includes("notes") && (
@@ -896,12 +972,14 @@ export default function ClientDashboard() {
                   disabled={
                     submitting ||
                     hasCoach === false ||
-                    (existingEntry !== null && !isEditing) ||
-                    (!formData.weightLbs &&
-                      !formData.steps &&
-                      !formData.calories &&
-                      !formData.perceivedStress &&
-                      !formData.notes)
+                    (entryMode === "add" && existingEntry !== null) ||
+                    (entryMode === "edit" && !existingEntry) ||
+                    !(
+                      formData.weightLbs.toString().trim() !== "" &&
+                      formData.steps.toString().trim() !== "" &&
+                      formData.calories.toString().trim() !== "" &&
+                      formData.perceivedStress.toString().trim() !== ""
+                    )
                   }
                   className="w-full bg-neutral-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-neutral-800 focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >

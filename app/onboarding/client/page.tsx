@@ -51,7 +51,8 @@ export default function ClientOnboarding() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showInterstitial, setShowInterstitial] = useState(false)
   const [calculatedPlan, setCalculatedPlan] = useState<any>(null)
-  const [showPersonalizedPlan, setShowPersonalizedPlan] = useState(true)
+  const [showPersonalizedPlan, setShowPersonalizedPlan] = useState(false)
+  const [configLoading, setConfigLoading] = useState(true)
   const [macroPercents, setMacroPercents] = useState<MacroPercents>({
     ...DEFAULT_PLAN_RANGES.defaultMacroPercents,
   })
@@ -121,6 +122,8 @@ export default function ClientOnboarding() {
         }
       } catch (error) {
         console.error("Failed to preload onboarding config", error)
+      } finally {
+        setConfigLoading(false)
       }
     }
 
@@ -192,6 +195,11 @@ export default function ClientOnboarding() {
     if (!validateStep(step)) return
 
     if (step === BASE_STEPS) {
+      if (configLoading) {
+        setErrors({ submit: "Loading onboarding settings. Please wait a moment." })
+        return
+      }
+
       if (showPersonalizedPlan) {
         setShowInterstitial(true)
         setStep(INTERSTITIAL_STEP)
@@ -715,7 +723,7 @@ export default function ClientOnboarding() {
               <button
                 onClick={handleNext}
                 className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition-colors disabled:opacity-50"
-                disabled={isLoading}
+                disabled={isLoading || (step === BASE_STEPS && configLoading)}
               >
                 {step === BASE_STEPS ? "Continue" : "Next"}
               </button>

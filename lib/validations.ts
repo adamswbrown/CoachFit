@@ -4,11 +4,11 @@ import { z } from "zod"
 export * from "./validations/healthkit"
 
 export const upsertEntrySchema = z.object({
-  weightLbs: z.number().positive("Weight must be greater than 0").max(1000, "Weight must be 1000 lbs or less").optional(),
-  steps: z.number().int("Steps must be an integer").nonnegative("Steps cannot be negative").max(100000, "Steps must be 100,000 or less").optional(),
-  calories: z.number().int("Calories must be an integer").nonnegative("Calories cannot be negative").max(20000, "Calories must be 20,000 or less").optional(),
+  weightLbs: z.number().positive("Weight must be greater than 0").max(1000, "Weight must be 1000 lbs or less"),
+  steps: z.number().int("Steps must be an integer").nonnegative("Steps cannot be negative").max(100000, "Steps must be 100,000 or less"),
+  calories: z.number().int("Calories must be an integer").nonnegative("Calories cannot be negative").max(20000, "Calories must be 20,000 or less"),
   sleepQuality: z.number().int("Sleep quality must be an integer").min(1, "Sleep quality must be between 1 and 10").max(10, "Sleep quality must be between 1 and 10").optional(),
-  perceivedStress: z.number().int("Perceived stress must be an integer").min(1, "Perceived stress must be between 1 and 10").max(10, "Perceived stress must be between 1 and 10").optional(),
+  perceivedStress: z.number().int("Perceived stress must be an integer").min(1, "Perceived stress must be between 1 and 10").max(10, "Perceived stress must be between 1 and 10"),
   notes: z.string().max(2000, "Notes must be 2,000 characters or less").optional(),
   customResponses: z.record(z.string(), z.any()).optional(), // Phase 3: Custom coach prompts
   date: z.string().refine(
@@ -22,13 +22,7 @@ export const upsertEntrySchema = z.object({
       message: "Date must be a valid date and not in the future",
     }
   ),
-}).refine(
-  (data) => data.weightLbs !== undefined || data.steps !== undefined || 
-            data.calories !== undefined || data.sleepQuality !== undefined ||
-            data.perceivedStress !== undefined || data.notes !== undefined ||
-            data.customResponses !== undefined,
-  { message: "At least one field must be provided" }
-)
+})
 
 // Keep createEntrySchema for backward compatibility (deprecated, use upsertEntrySchema)
 export const createEntrySchema = upsertEntrySchema

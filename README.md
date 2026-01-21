@@ -240,6 +240,37 @@ Open [http://localhost:3000](http://localhost:3000) and login with:
 - Coach: `coach@test.local` / `coach123`
 - Client: `client@test.local` / `client123`
 
+### Test Environment Setup (Step-by-Step)
+
+Use this when you want a clean, fully-seeded test environment.
+
+```bash
+# Run migrations (if needed)
+npm run db:migrate
+
+# Reset + seed comprehensive dataset (cohorts, clients, entries, questionnaires)
+npx tsx scripts/reset-and-seed-comprehensive-multi-coach.ts
+
+# Seed database email templates
+npm run db:seed-email-templates
+
+# Seed questionnaire template cohorts
+npm run seed:questionnaire-templates
+
+# Ensure weekly questionnaire reminder template
+npm run questionnaire:setup-email
+
+# Optional: configure Resend templates (requires RESEND_API_KEY)
+npm run email:setup-templates
+```
+
+### Test Environment Setup (Single Command)
+
+```bash
+# WARNING: Resets data and rebuilds a full test dataset
+npm run test:setup
+```
+
 ### Environment Variables
 
 Create `.env.local` with:
@@ -289,6 +320,7 @@ npm run db:seed          # Create basic test users
 npm run test:generate    # Generate full test dataset (15 clients, 5 cohorts, entries)
 npm run test:cleanup     # Remove all test data
 npx tsx scripts/reset-and-seed-comprehensive-multi-coach.ts  # Comprehensive reset + seed (100 clients, ~10 cohorts, questionnaires)
+npm run test:setup       # Full reset + setup (email templates, questionnaire templates, system settings)
 
 # Admin Utilities
 npm run admin:set [email]              # Grant admin role to user
