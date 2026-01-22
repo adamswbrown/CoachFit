@@ -37,12 +37,18 @@ export async function bodyFatRangeToPercentage(range: string): Promise<number> {
  * @param sex "male" or "female"
  * @returns BMR in kcal/day
  */
+/**
+ * Calculate Basal Metabolic Rate using Mifflin-St Jeor equation
+ * BMR = 10*weight_kg + 6.25*height_cm - 5*age + (sex == male ? 5 : -161)
+ * If sex is 'prefer_not_to_say', treat as 'female' for BMR purposes.
+ */
 export function calculateBMR(
   weightKg: number,
   heightCm: number,
   ageYears: number,
-  sex: "male" | "female"
+  sex: "male" | "female" | "prefer_not_to_say"
 ): number {
+  // Treat 'prefer_not_to_say' as 'female' for BMR calculation
   const sexFactor = sex === "male" ? 5 : -161
   const bmr = 10 * weightKg + 6.25 * heightCm - 5 * ageYears + sexFactor
   return bmr
@@ -292,7 +298,7 @@ export async function completeOnboardingCalculation(input: {
   weightKg: number
   heightCm: number
   birthDate: string | Date
-  sex: "male" | "female"
+  sex: "male" | "female" | "prefer_not_to_say"
   activityLevel: "not_much" | "light" | "moderate" | "heavy"
   primaryGoal: "lose_weight" | "maintain_weight" | "gain_weight"
   targetWeightKg: number
@@ -301,6 +307,7 @@ export async function completeOnboardingCalculation(input: {
   customFatPercent?: number
 }) {
   const age = calculateAge(input.birthDate)
+  // Treat 'prefer_not_to_say' as 'female' for BMR
   const bmr = calculateBMR(input.weightKg, input.heightCm, age, input.sex)
   const tdee = calculateTDEE(bmr, input.activityLevel)
   const dailyCalories = calculateCaloricGoal(tdee, input.primaryGoal)

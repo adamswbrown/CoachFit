@@ -37,17 +37,28 @@ export async function POST(request: Request) {
     // Body fat % is no longer collected in onboarding
 
     // Verify calculations are correct (re-calculate to validate)
+    // Map activityLevel to calculation levels
+    function mapActivityLevel(level: string): "not_much" | "light" | "moderate" | "heavy" {
+      switch (level) {
+        case "sedentary":
+          return "not_much"
+        case "lightly_active":
+          return "light"
+        case "active":
+          return "moderate"
+        case "very_active":
+        case "extremely_active":
+          return "heavy"
+        default:
+          return "light"
+      }
+    }
     const calculations = await completeOnboardingCalculation({
       weightKg: data.currentWeightKg,
       heightCm: data.heightCm,
       birthDate: data.birthDate,
       sex: data.sex as "male" | "female" | "prefer_not_to_say",
-      activityLevel: data.activityLevel as
-        | "sedentary"
-        | "lightly_active"
-        | "active"
-        | "very_active"
-        | "extremely_active",
+      activityLevel: mapActivityLevel(data.activityLevel),
       primaryGoal: data.primaryGoal as "lose_weight" | "maintain_weight" | "gain_weight",
       targetWeightKg: data.targetWeightKg,
     })
