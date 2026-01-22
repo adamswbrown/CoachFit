@@ -32,6 +32,7 @@ export async function GET(
         name: true,
         email: true,
         invitedByCoachId: true,
+        onboardingComplete: true,
         User: {
           select: {
             id: true,

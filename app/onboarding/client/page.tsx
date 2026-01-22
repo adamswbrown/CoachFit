@@ -370,7 +370,8 @@ export default function ClientOnboarding() {
     }
   }
 
-  const totalSteps = showPersonalizedPlan ? PLAN_REVIEW_STEP : INTERSTITIAL_STEP
+  // Always hide personalized plan from client onboarding
+  const totalSteps = INTERSTITIAL_STEP
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8">
@@ -669,22 +670,6 @@ export default function ClientOnboarding() {
                   </button>
                 </div>
               </div>
-            </div>
-          ) : step === PLAN_REVIEW_STEP && calculatedPlan ? (
-            // Step 12: Plan Review (handled by separate component)
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Your personalized plan</h2>
-              <PlanReview
-                plan={{
-                  ...calculatedPlan,
-                  weightLbs:
-                    calculatedPlan.weightLbs ?? kgToLbs(calculatedPlan.currentWeightKg ?? 0),
-                }}
-                macroPercents={macroPercents}
-                ranges={DEFAULT_PLAN_RANGES}
-                isSaving={isLoading}
-                onSave={handlePlanSave}
-              />
             </div>
           ) : null}
 

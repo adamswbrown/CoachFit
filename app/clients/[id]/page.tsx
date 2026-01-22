@@ -509,6 +509,13 @@ export default function ClientOverviewPage() {
             <div className="bg-white border border-neutral-200 rounded-lg p-6">
               <h3 className="text-sm font-semibold text-neutral-900 mb-4">Profile</h3>
               <div className="space-y-3 text-sm">
+                                {/* Onboarding Status */}
+                                {client.onboardingComplete === false && (
+                                  <div className="rounded bg-yellow-50 border border-yellow-200 px-3 py-2 mb-2 flex items-center gap-2">
+                                    <span className="text-yellow-600 text-lg">⚠️</span>
+                                    <span className="text-yellow-800 font-medium">Onboarding not completed</span>
+                                  </div>
+                                )
                 <div>
                   <div className="text-neutral-500">Email</div>
                   <div className="text-neutral-900 font-medium">{client.email}</div>
@@ -581,6 +588,9 @@ export default function ClientOverviewPage() {
               )}
             </div>
 
+            {/* Personalized Plan (Coach/Admin only) */}
+            <PersonalizedPlanCard clientId={clientId} />
+
             {/* Notes */}
             <div className="bg-white border border-neutral-200 rounded-lg p-6">
               <h3 className="text-sm font-semibold text-neutral-900 mb-4">Notes</h3>
@@ -603,6 +613,81 @@ export default function ClientOverviewPage() {
                 <div className="text-sm text-neutral-500 italic">No notes yet</div>
               )}
             </div>
+          // Personalized Plan Card (Coach/Admin only)
+          import { useCallback } from "react"
+          function PersonalizedPlanCard({ clientId }: { clientId: string }) {
+            const { data: session } = useSession()
+            const [plan, setPlan] = useState<any>(null)
+            const [loading, setLoading] = useState(true)
+            const [error, setError] = useState<string | null>(null)
+
+            const fetchPlan = useCallback(async () => {
+              setLoading(true)
+              setError(null)
+              try {
+                const res = await fetch(`/api/clients/${clientId}/plan`)
+                if (res.ok) {
+                  const body = await res.json()
+                  setPlan(body.plan)
+                } else {
+                  setError("No personalized plan found.")
+                }
+              } catch (err) {
+                setError("Failed to load plan.")
+              } finally {
+                setLoading(false)
+              }
+            }, [clientId])
+
+            useEffect(() => {
+              if (session?.user && (session.user.roles.includes("COACH") || session.user.roles.includes("ADMIN"))) {
+                fetchPlan()
+              }
+            }, [session, fetchPlan])
+
+            if (!session?.user || (!session.user.roles.includes("COACH") && !session.user.roles.includes("ADMIN"))) {
+              return null
+            }
+
+            return (
+              <div className="bg-white border border-neutral-200 rounded-lg p-6">
+                <h3 className="text-sm font-semibold text-neutral-900 mb-4">Personalized Plan</h3>
+                {loading ? (
+                  <div className="text-sm text-neutral-500">Loading...</div>
+                ) : error ? (
+                  <div className="text-sm text-neutral-500 italic">{error}</div>
+                ) : plan ? (
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-neutral-500">Calories:</span> <span className="font-medium">{plan.dailyCaloriesKcal} kcal</span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-500">Protein:</span> <span className="font-medium">{plan.proteinGrams} g</span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-500">Carbs:</span> <span className="font-medium">{plan.carbGrams} g</span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-500">Fat:</span> <span className="font-medium">{plan.fatGrams} g</span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-500">Water:</span> <span className="font-medium">{plan.waterIntakeMl} ml</span>
+                    </div>
+                    {plan.dailyStepsTarget && (
+                      <div>
+                        <span className="text-neutral-500">Steps Target:</span> <span className="font-medium">{plan.dailyStepsTarget}</span>
+                      </div>
+                    )}
+                    {plan.weeklyWorkoutMinutes && (
+                      <div>
+                        <span className="text-neutral-500">Weekly Workout:</span> <span className="font-medium">{plan.weeklyWorkoutMinutes} min</span>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            )
+          }
           </div>
         </div>
       </div>
