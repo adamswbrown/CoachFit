@@ -660,11 +660,15 @@ export default function ClientOverviewPage() {
             </div>
 
             {/* Onboarding Answers */}
-            <details className="bg-white border border-neutral-200 rounded-lg p-4">
+            <details className="bg-white border border-neutral-200 rounded-lg p-4 group">
               <summary className="cursor-pointer list-none flex items-center justify-between text-sm font-semibold text-neutral-900">
-                <span>Onboarding Answers</span>
-                <span className="text-xs text-neutral-500">
+                <span className="flex items-center gap-2">
+                  Onboarding Answers
+                  <span className="text-xs font-normal text-neutral-500">Click to expand</span>
+                </span>
+                <span className="flex items-center gap-2 text-xs text-neutral-500">
                   {onboardingData?.onboardingComplete === false ? "Incomplete" : onboardingData ? "Complete" : "—"}
+                  <span className="text-base group-open:rotate-180 transition-transform">▾</span>
                 </span>
               </summary>
               <div className="mt-4">
@@ -835,10 +839,16 @@ function PersonalizedPlanCard({
   }
 
   return (
-    <details className="bg-white border border-neutral-200 rounded-lg p-4">
+    <details className="bg-white border border-neutral-200 rounded-lg p-4 group">
       <summary className="cursor-pointer list-none flex items-center justify-between text-sm font-semibold text-neutral-900">
-        <span>Personalized Plan</span>
-        <span className="text-xs text-neutral-500">{plan ? "Ready" : "—"}</span>
+        <span className="flex items-center gap-2">
+          Personalized Plan
+          <span className="text-xs font-normal text-neutral-500">Click to expand</span>
+        </span>
+        <span className="flex items-center gap-2 text-xs text-neutral-500">
+          {plan ? "Ready" : "—"}
+          <span className="text-base group-open:rotate-180 transition-transform">▾</span>
+        </span>
       </summary>
       <div className="mt-4">
         {loading ? (
