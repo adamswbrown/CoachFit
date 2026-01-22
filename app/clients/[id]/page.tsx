@@ -590,7 +590,10 @@ export default function ClientOverviewPage() {
             </div>
 
             {/* Personalized Plan (Coach/Admin only) */}
-            <PersonalizedPlanCard clientId={clientId} />
+            <PersonalizedPlanCard
+              clientId={clientId}
+              onboardingComplete={client.onboardingComplete ?? false}
+            />
 
             {/* Notes */}
             <div className="bg-white border border-neutral-200 rounded-lg p-6">
@@ -621,7 +624,13 @@ export default function ClientOverviewPage() {
   )
 }
 
-function PersonalizedPlanCard({ clientId }: { clientId: string }) {
+function PersonalizedPlanCard({
+  clientId,
+  onboardingComplete,
+}: {
+  clientId: string
+  onboardingComplete: boolean
+}) {
   const { data: session } = useSession()
   const [plan, setPlan] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -632,11 +641,20 @@ function PersonalizedPlanCard({ clientId }: { clientId: string }) {
     setError(null)
     try {
       const res = await fetch(`/api/clients/${clientId}/plan`)
+      const body = await res.json().catch(() => ({}))
       if (res.ok) {
-        const body = await res.json()
         setPlan(body.plan)
       } else {
-        setError("No personalized plan found.")
+        const reason = body?.reason
+        if (reason === "onboarding_incomplete") {
+          setError("Onboarding not completed yet.")
+        } else if (reason === "missing_profile_data") {
+          setError("Missing profile data to calculate the plan.")
+        } else if (reason === "missing_goals") {
+          setError("Onboarding completed, but no goals were recorded.")
+        } else {
+          setError(body?.error || "No personalized plan found.")
+        }
       }
     } catch (err) {
       setError("Failed to load plan.")
@@ -646,10 +664,17 @@ function PersonalizedPlanCard({ clientId }: { clientId: string }) {
   }, [clientId])
 
   useEffect(() => {
+    if (onboardingComplete === false) {
+      setPlan(null)
+      setLoading(false)
+      setError("Onboarding not completed yet.")
+      return
+    }
+
     if (session?.user && (session.user.roles.includes(Role.COACH) || session.user.roles.includes(Role.ADMIN))) {
       fetchPlan()
     }
-  }, [session, fetchPlan])
+  }, [session, fetchPlan, onboardingComplete])
 
   if (!session?.user || (!session.user.roles.includes(Role.COACH) && !session.user.roles.includes(Role.ADMIN))) {
     return null

@@ -9,6 +9,7 @@ import { UnitToggle } from "@/components/onboarding/UnitToggle"
 import { NumericInput } from "@/components/onboarding/NumericInput"
 import { DatePicker } from "@/components/onboarding/DatePicker"
 import { PlanReview, PlanReviewOnSavePayload, PlanReviewRanges } from "@/components/onboarding/PlanReview"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { lbsToKg, inchesToCm, kgToLbs } from "@/lib/utils/unit-conversions"
 
 const BASE_STEPS = 8
@@ -49,6 +50,7 @@ export default function ClientOnboarding() {
   // Personalized plan is now coach-only; never shown to member
     const [showPersonalizedPlan, setShowPersonalizedPlan] = useState(false)
     const [configLoading, setConfigLoading] = useState(true)
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false)
   // macroPercents state removed
 
   const [data, setData] = useState<OnboardingData>({
@@ -70,6 +72,12 @@ export default function ClientOnboarding() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
+    }
+    if (status === "authenticated") {
+      const isOnboardingComplete = (session?.user as any)?.isOnboardingComplete ?? false
+      if (isOnboardingComplete) {
+        router.push("/client-dashboard")
+      }
     }
   }, [router, status])
 
@@ -179,7 +187,16 @@ export default function ClientOnboarding() {
   }
 
   const handleSkip = () => {
+    setShowSkipConfirm(true)
+  }
+
+  const handleConfirmSkip = () => {
+    setShowSkipConfirm(false)
     router.push("/client-dashboard")
+  }
+
+  const handleCancelSkip = () => {
+    setShowSkipConfirm(false)
   }
 
   const calculatePlan = async () => {
@@ -611,6 +628,15 @@ export default function ClientOnboarding() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={showSkipConfirm}
+        title="Skip onboarding?"
+        message='If you skip onboarding now, you can return anytime by selecting "Reset onboarding" in your profile menu.'
+        confirmText="Skip onboarding"
+        cancelText="Continue onboarding"
+        onConfirm={handleConfirmSkip}
+        onCancel={handleCancelSkip}
+      />
     </div>
   )
 }

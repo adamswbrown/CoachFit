@@ -8,9 +8,11 @@ import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { DataSourceBadge } from "@/components/DataSourceBadge"
 import { Role } from "@/lib/types"
 import { isAdminOrCoach } from "@/lib/permissions"
+import { kgToLbs } from "@/lib/utils/unit-conversions"
 import {
   LineChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -18,6 +20,8 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   ReferenceDot,
+  ReferenceArea,
+  Legend,
 } from "recharts"
 
 interface Entry {
@@ -73,11 +77,31 @@ export default function ClientEntriesPage() {
   const [client, setClient] = useState<Client | null>(null)
   const [entries, setEntries] = useState<Entry[]>([])
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
+  const [targetWeightLbs, setTargetWeightLbs] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const filterDate = searchParams.get("date")
   const selectedAnalyticsEntry = filterDate
     ? analytics?.entries.find((entry) => entry.date === filterDate)
     : null
+  const hasBmiSeries = analytics?.entries.some((entry) => entry.bmi !== null) ?? false
+  const latestWeight = analytics?.summary.latestWeight ?? null
+  const goalDelta =
+    targetWeightLbs != null && latestWeight != null ? latestWeight - targetWeightLbs : null
+  const goalStatus =
+    goalDelta == null
+      ? "—"
+      : goalDelta > 0
+      ? `${goalDelta.toFixed(1)} lbs to goal`
+      : goalDelta < 0
+      ? `${Math.abs(goalDelta).toFixed(1)} lbs below goal`
+      : "At goal"
+  const weightLegendPayload = [
+    { value: "Weight", type: "line", color: "#2563eb" },
+    ...(hasBmiSeries ? [{ value: "BMI", type: "line", color: "#8b5cf6" }] : []),
+    ...(targetWeightLbs != null
+      ? [{ value: "Goal range", type: "rect", color: "rgba(37, 99, 235, 0.25)" }]
+      : []),
+  ]
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -96,7 +120,7 @@ export default function ClientEntriesPage() {
       const loadData = async () => {
         setLoading(true)
         try {
-          await Promise.all([fetchClient(), fetchEntries(), fetchAnalytics()])
+          await Promise.all([fetchClient(), fetchEntries(), fetchAnalytics(), fetchPlan()])
         } finally {
           setLoading(false)
         }
@@ -138,6 +162,19 @@ export default function ClientEntriesPage() {
       }
     } catch (err) {
       console.error("Error fetching analytics:", err)
+    }
+  }
+
+  const fetchPlan = async () => {
+    try {
+      const res = await fetch(`/api/clients/${clientId}/plan`)
+      if (res.ok) {
+        const data = await res.json()
+        const targetKg = data?.plan?.targetWeightKg
+        setTargetWeightLbs(typeof targetKg === "number" ? kgToLbs(targetKg) : null)
+      }
+    } catch (err) {
+      console.error("Error fetching plan:", err)
     }
   }
 
@@ -211,19 +248,19 @@ export default function ClientEntriesPage() {
 
         {/* Summary Stats Cards */}
         {analytics && analytics.summary && (
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8">
-            <div className="bg-white rounded-lg border border-neutral-200 p-6 border border-neutral-200">
-              <div className="text-sm text-neutral-600 mb-1">Latest Weight</div>
-              <div className="text-3xl font-bold text-neutral-900">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-6">
+            <div className="bg-white rounded-lg border border-neutral-200 p-4 border border-neutral-200">
+              <div className="text-xs text-neutral-600 mb-1">Latest Weight</div>
+              <div className="text-2xl font-bold text-neutral-900">
                 {analytics.summary.latestWeight !== null
                   ? `${analytics.summary.latestWeight.toFixed(1)} lbs`
                   : "—"}
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-neutral-200 p-6 border border-neutral-200">
-              <div className="text-sm text-neutral-600 mb-1">Weight Change</div>
+            <div className="bg-white rounded-lg border border-neutral-200 p-4 border border-neutral-200">
+              <div className="text-xs text-neutral-600 mb-1">Weight Change</div>
               <div
-                className={`text-3xl font-bold ${
+                className={`text-2xl font-bold ${
                   analytics.summary.weightChange !== null
                     ? analytics.summary.weightChange > 0
                       ? "text-neutral-700"
@@ -238,18 +275,18 @@ export default function ClientEntriesPage() {
                   : "—"}
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-neutral-200 p-6 border border-neutral-200">
-              <div className="text-sm text-neutral-600 mb-1">Latest BMI</div>
-              <div className="text-3xl font-bold text-neutral-900">
+            <div className="bg-white rounded-lg border border-neutral-200 p-4 border border-neutral-200">
+              <div className="text-xs text-neutral-600 mb-1">Latest BMI</div>
+              <div className="text-2xl font-bold text-neutral-900">
                 {analytics.summary.latestBMI !== null
                   ? analytics.summary.latestBMI.toFixed(1)
                   : "—"}
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-neutral-200 p-6 border border-neutral-200">
-              <div className="text-sm text-neutral-600 mb-1">BMI Change</div>
+            <div className="bg-white rounded-lg border border-neutral-200 p-4 border border-neutral-200">
+              <div className="text-xs text-neutral-600 mb-1">BMI Change</div>
               <div
-                className={`text-3xl font-bold ${
+                className={`text-2xl font-bold ${
                   analytics.summary.bmiChange !== null
                     ? analytics.summary.bmiChange > 0
                       ? "text-neutral-700"
@@ -264,17 +301,17 @@ export default function ClientEntriesPage() {
                   : "—"}
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-neutral-200 p-6 border border-neutral-200">
-              <div className="text-sm text-neutral-600 mb-1">Avg Steps (30d)</div>
-              <div className="text-3xl font-bold text-neutral-900">
+            <div className="bg-white rounded-lg border border-neutral-200 p-4 border border-neutral-200">
+              <div className="text-xs text-neutral-600 mb-1">Avg Steps (30d)</div>
+              <div className="text-2xl font-bold text-neutral-900">
                 {analytics.summary.avgSteps30d !== null
                   ? analytics.summary.avgSteps30d.toLocaleString()
                   : "—"}
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-neutral-200 p-6 border border-neutral-200">
-              <div className="text-sm text-neutral-600 mb-1">Avg Calories (30d)</div>
-              <div className="text-3xl font-bold text-neutral-900">
+            <div className="bg-white rounded-lg border border-neutral-200 p-4 border border-neutral-200">
+              <div className="text-xs text-neutral-600 mb-1">Avg Calories (30d)</div>
+              <div className="text-2xl font-bold text-neutral-900">
                 {analytics.summary.avgCalories30d !== null
                   ? analytics.summary.avgCalories30d.toLocaleString()
                   : "—"}
@@ -287,28 +324,82 @@ export default function ClientEntriesPage() {
         {analytics && analytics.entries.length > 0 && (
           <>
             {/* Weight Chart with BMI (if available) */}
-            <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Weight Trend</h2>
+            <div className="bg-white rounded-lg border border-neutral-200 p-4 mb-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="space-y-1">
+                  <h2 className="text-lg font-semibold">Weight Trend</h2>
+                  <p className="text-xs text-neutral-500">
+                    Goal: {targetWeightLbs != null ? `${targetWeightLbs.toFixed(1)} lbs` : "—"} ·{" "}
+                    {goalStatus}
+                  </p>
+                </div>
                 {filterDate && (
                   <span className="text-xs text-neutral-500">
                     Highlighting {filterDate}
                   </span>
                 )}
               </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={analytics.entries.filter(e => e.weightLbs !== null)}>
-                  <CartesianGrid strokeDasharray="3 3" />
+              <ResponsiveContainer width="100%" height={190}>
+                <LineChart
+                  data={analytics.entries.filter(e => e.weightLbs !== null)}
+                  margin={{ top: 4, right: 10, bottom: -6, left: -12 }}
+                >
+                  <defs>
+                    <linearGradient id="weightFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2563eb" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="bmiFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.18} />
+                      <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="2 3" stroke="#e5e7eb" />
                   <XAxis
                     dataKey="date"
                     tickFormatter={(value) => new Date(value).toLocaleDateString()}
+                    tick={{ fontSize: 12 }}
+                    interval="preserveStartEnd"
+                    minTickGap={20}
+                    tickMargin={6}
                   />
-                  <YAxis yAxisId="weight" orientation="left" />
-                  {analytics.entries.some(e => e.bmi !== null) && (
-                    <YAxis yAxisId="bmi" orientation="right" />
+                  <YAxis
+                    yAxisId="weight"
+                    orientation="left"
+                    tick={{ fontSize: 12 }}
+                    width={32}
+                    domain={[
+                      (min: number) => {
+                        const goalMin = targetWeightLbs != null ? targetWeightLbs - 2 : min
+                        return Math.floor(Math.min(min, goalMin) - 3)
+                      },
+                      (max: number) => {
+                        const goalMax = targetWeightLbs != null ? targetWeightLbs + 2 : max
+                        return Math.ceil(Math.max(max, goalMax) + 3)
+                      },
+                    ]}
+                  />
+                  {hasBmiSeries && (
+                    <YAxis
+                      yAxisId="bmi"
+                      orientation="right"
+                      tick={{ fontSize: 12 }}
+                      width={32}
+                      domain={[(min: number) => Math.floor(min - 1), (max: number) => Math.ceil(max + 1)]}
+                    />
                   )}
                   {filterDate && (
                     <ReferenceLine x={filterDate} stroke="#111827" strokeDasharray="3 3" />
+                  )}
+                  {targetWeightLbs != null && (
+                    <ReferenceArea
+                      y1={targetWeightLbs - 2}
+                      y2={targetWeightLbs + 2}
+                      fill="#2563eb"
+                      fillOpacity={0.08}
+                      stroke="none"
+                      ifOverflow="extendDomain"
+                    />
                   )}
                   <Tooltip
                     labelFormatter={(value) => new Date(value).toLocaleDateString()}
@@ -322,13 +413,29 @@ export default function ClientEntriesPage() {
                       return [numValue, label]
                     }}
                   />
+                  <Legend
+                    align="right"
+                    verticalAlign="top"
+                    iconSize={10}
+                    wrapperStyle={{ fontSize: "12px" }}
+                    payload={weightLegendPayload}
+                  />
+                  <Area
+                    yAxisId="weight"
+                    type="monotone"
+                    dataKey="weightLbs"
+                    fill="url(#weightFill)"
+                    stroke="none"
+                    fillOpacity={1}
+                    connectNulls={false}
+                  />
                   <Line
                     yAxisId="weight"
                     type="monotone"
                     dataKey="weightLbs"
                     stroke="#2563eb"
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
+                    strokeWidth={2.5}
+                    dot={{ r: 1.5 }}
                     connectNulls={false}
                   />
                   {filterDate && selectedAnalyticsEntry?.weightLbs !== null && selectedAnalyticsEntry?.weightLbs !== undefined && (
@@ -336,19 +443,30 @@ export default function ClientEntriesPage() {
                       x={filterDate}
                       y={selectedAnalyticsEntry.weightLbs}
                       yAxisId="weight"
-                      r={6}
+                      r={5}
                       fill="#2563eb"
                       stroke="#1f2937"
                     />
                   )}
-                  {analytics.entries.some(e => e.bmi !== null) && (
+                  {hasBmiSeries && (
+                    <Area
+                      yAxisId="bmi"
+                      type="monotone"
+                      dataKey="bmi"
+                      fill="url(#bmiFill)"
+                      stroke="none"
+                      fillOpacity={1}
+                      connectNulls={false}
+                    />
+                  )}
+                  {hasBmiSeries && (
                     <Line
                       yAxisId="bmi"
                       type="monotone"
                       dataKey="bmi"
                       stroke="#8b5cf6"
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
+                      strokeWidth={1.75}
+                      dot={{ r: 1.5 }}
                       connectNulls={false}
                       strokeDasharray="5 5"
                     />
@@ -358,7 +476,7 @@ export default function ClientEntriesPage() {
                       x={filterDate}
                       y={selectedAnalyticsEntry.bmi}
                       yAxisId="bmi"
-                      r={6}
+                      r={5}
                       fill="#8b5cf6"
                       stroke="#1f2937"
                     />
@@ -368,23 +486,36 @@ export default function ClientEntriesPage() {
             </div>
 
             {/* Steps Chart */}
-            <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Steps Trend</h2>
+            <div className="bg-white rounded-lg border border-neutral-200 p-4 mb-5">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold">Steps Trend</h2>
                 {filterDate && (
                   <span className="text-xs text-neutral-500">
                     Highlighting {filterDate}
                   </span>
                 )}
               </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={analytics.entries.filter(e => e.steps !== null)}>
-                  <CartesianGrid strokeDasharray="3 3" />
+              <ResponsiveContainer width="100%" height={210}>
+                <LineChart
+                  data={analytics.entries.filter(e => e.steps !== null)}
+                  margin={{ top: 6, right: 10, bottom: 0, left: -8 }}
+                >
+                  <defs>
+                    <linearGradient id="stepsFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.22} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="2 3" stroke="#e5e7eb" />
                   <XAxis
                     dataKey="date"
                     tickFormatter={(value) => new Date(value).toLocaleDateString()}
+                    tick={{ fontSize: 12 }}
+                    interval="preserveStartEnd"
+                    minTickGap={20}
+                    tickMargin={6}
                   />
-                  <YAxis />
+                  <YAxis tick={{ fontSize: 12 }} width={36} />
                   {filterDate && (
                     <ReferenceLine x={filterDate} stroke="#111827" strokeDasharray="3 3" />
                   )}
@@ -396,19 +527,27 @@ export default function ClientEntriesPage() {
                       return isNaN(numValue) ? [null, "Steps"] : [numValue.toLocaleString(), "Steps"]
                     }}
                   />
+                  <Area
+                    type="monotone"
+                    dataKey="steps"
+                    fill="url(#stepsFill)"
+                    stroke="none"
+                    fillOpacity={1}
+                    connectNulls={false}
+                  />
                   <Line
                     type="monotone"
                     dataKey="steps"
                     stroke="#10b981"
                     strokeWidth={2}
-                    dot={{ r: 4 }}
+                    dot={{ r: 2 }}
                     connectNulls={false}
                   />
                   {filterDate && selectedAnalyticsEntry?.steps !== null && selectedAnalyticsEntry?.steps !== undefined && (
                     <ReferenceDot
                       x={filterDate}
                       y={selectedAnalyticsEntry.steps}
-                      r={6}
+                      r={5}
                       fill="#10b981"
                       stroke="#1f2937"
                     />
@@ -419,23 +558,36 @@ export default function ClientEntriesPage() {
 
             {/* Perceived Stress Chart (if data available) */}
             {analytics.entries.some(e => e.perceivedStress !== null) && (
-              <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold">Perceived Stress Trend</h2>
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 mb-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-semibold">Perceived Stress Trend</h2>
                   {filterDate && (
                     <span className="text-xs text-neutral-500">
                       Highlighting {filterDate}
                     </span>
                   )}
                 </div>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={analytics.entries.filter(e => e.perceivedStress !== null)}>
-                    <CartesianGrid strokeDasharray="3 3" />
+                <ResponsiveContainer width="100%" height={210}>
+                  <LineChart
+                    data={analytics.entries.filter(e => e.perceivedStress !== null)}
+                    margin={{ top: 6, right: 10, bottom: 0, left: -8 }}
+                  >
+                    <defs>
+                      <linearGradient id="stressFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#ef4444" stopOpacity={0.2} />
+                        <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 3" stroke="#e5e7eb" />
                     <XAxis
                       dataKey="date"
                       tickFormatter={(value) => new Date(value).toLocaleDateString()}
+                      tick={{ fontSize: 12 }}
+                      interval="preserveStartEnd"
+                      minTickGap={20}
+                      tickMargin={6}
                     />
-                    <YAxis domain={[0, 10]} />
+                    <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} width={36} />
                     {filterDate && (
                       <ReferenceLine x={filterDate} stroke="#111827" strokeDasharray="3 3" />
                     )}
@@ -447,19 +599,27 @@ export default function ClientEntriesPage() {
                         return isNaN(numValue) ? [null, "Perceived Stress"] : [`${numValue}/10`, "Perceived Stress"]
                       }}
                     />
+                    <Area
+                      type="monotone"
+                      dataKey="perceivedStress"
+                      fill="url(#stressFill)"
+                      stroke="none"
+                      fillOpacity={1}
+                      connectNulls={false}
+                    />
                     <Line
                       type="monotone"
                       dataKey="perceivedStress"
                       stroke="#ef4444"
                       strokeWidth={2}
-                      dot={{ r: 4 }}
+                      dot={{ r: 2 }}
                       connectNulls={false}
                     />
                     {filterDate && selectedAnalyticsEntry?.perceivedStress !== null && selectedAnalyticsEntry?.perceivedStress !== undefined && (
                       <ReferenceDot
                         x={filterDate}
                         y={selectedAnalyticsEntry.perceivedStress}
-                        r={6}
+                        r={5}
                         fill="#ef4444"
                         stroke="#1f2937"
                       />

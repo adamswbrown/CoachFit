@@ -2,7 +2,10 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isClient } from "@/lib/permissions"
 import { onboardingSubmitSchema } from "@/lib/validations"
-import { completeOnboardingCalculation } from "@/lib/calculations/fitness"
+import {
+  calculateMacros,
+  completeOnboardingCalculation,
+} from "@/lib/calculations/fitness"
 import { lbsToKg, inchesToCm } from "@/lib/utils/unit-conversions"
 import { NextResponse } from "next/server"
 
@@ -63,9 +66,16 @@ export async function POST(request: Request) {
       targetWeightKg: data.targetWeightKg,
     })
 
+    const dailyCaloriesKcal = data.dailyCaloriesKcal ?? calculations.dailyCaloriesKcal
+    const macros = await calculateMacros(dailyCaloriesKcal)
     const resolvedPlan = {
-      dailyCaloriesKcal: data.dailyCaloriesKcal ?? calculations.dailyCaloriesKcal,
+      dailyCaloriesKcal,
       dailyStepsTarget: data.dailyStepsTarget ?? calculations.dailyStepsTarget ?? null,
+      proteinGrams: macros.proteinGrams,
+      carbGrams: macros.carbGrams,
+      fatGrams: macros.fatGrams,
+      waterIntakeMl: calculations.waterIntakeMl,
+      weeklyWorkoutMinutes: calculations.weeklyWorkoutMinutes,
     }
 
     // Convert weight and height back to imperial for Entry model (which uses lbs/inches)
@@ -113,6 +123,11 @@ export async function POST(request: Request) {
           heightCm: data.heightCm,
           dailyCaloriesKcal: resolvedPlan.dailyCaloriesKcal,
           dailyStepsTarget: resolvedPlan.dailyStepsTarget,
+          proteinGrams: resolvedPlan.proteinGrams,
+          carbGrams: resolvedPlan.carbGrams,
+          fatGrams: resolvedPlan.fatGrams,
+          waterIntakeMl: resolvedPlan.waterIntakeMl,
+          weeklyWorkoutMinutes: resolvedPlan.weeklyWorkoutMinutes,
         },
         create: {
           userId: session.user.id,
@@ -121,6 +136,11 @@ export async function POST(request: Request) {
           heightCm: data.heightCm,
           dailyCaloriesKcal: resolvedPlan.dailyCaloriesKcal,
           dailyStepsTarget: resolvedPlan.dailyStepsTarget,
+          proteinGrams: resolvedPlan.proteinGrams,
+          carbGrams: resolvedPlan.carbGrams,
+          fatGrams: resolvedPlan.fatGrams,
+          waterIntakeMl: resolvedPlan.waterIntakeMl,
+          weeklyWorkoutMinutes: resolvedPlan.weeklyWorkoutMinutes,
         },
       })
 
