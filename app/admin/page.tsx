@@ -63,6 +63,9 @@ export default function AdminPage() {
   const [showCreateCoach, setShowCreateCoach] = useState(false)
   const [creatingCoach, setCreatingCoach] = useState(false)
   const [newCoachData, setNewCoachData] = useState({ email: "", name: "", password: "" })
+  const [showCreateAdmin, setShowCreateAdmin] = useState(false)
+  const [creatingAdmin, setCreatingAdmin] = useState(false)
+  const [newAdminData, setNewAdminData] = useState({ email: "", name: "", password: "" })
   const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null)
   const [resetPassword, setResetPassword] = useState("")
   const [resettingPassword, setResettingPassword] = useState(false)
@@ -204,6 +207,34 @@ export default function AdminPage() {
       setError("An error occurred. Please try again.")
     } finally {
       setCreatingCoach(false)
+    }
+  }
+
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setCreatingAdmin(true)
+    setError(null)
+    setSuccess(null)
+    try {
+      const res = await fetch("/api/admin/admins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newAdminData),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setSuccess(data.message || "Admin created successfully")
+        setShowCreateAdmin(false)
+        setNewAdminData({ email: "", name: "", password: "" })
+        await loadAllData()
+      } else {
+        const errorData = await res.json()
+        setError(errorData.error || "Failed to create admin")
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.")
+    } finally {
+      setCreatingAdmin(false)
     }
   }
 
@@ -1039,39 +1070,6 @@ export default function AdminPage() {
             </div>
           </div>
         )}
-
-// Add state and handler for Create Admin modal (top-level, not inside any block)
-const [showCreateAdmin, setShowCreateAdmin] = useState(false)
-const [creatingAdmin, setCreatingAdmin] = useState(false)
-const [newAdminData, setNewAdminData] = useState({ email: "", name: "", password: "" })
-
-const handleCreateAdmin = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setCreatingAdmin(true)
-  setError(null)
-  setSuccess(null)
-  try {
-    const res = await fetch("/api/admin/admins", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newAdminData),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      setSuccess(data.message || "Admin created successfully")
-      setShowCreateAdmin(false)
-      setNewAdminData({ email: "", name: "", password: "" })
-      await loadAllData()
-    } else {
-      const errorData = await res.json()
-      setError(errorData.error || "Failed to create admin")
-    }
-  } catch (err) {
-    setError("An error occurred. Please try again.")
-  } finally {
-    setCreatingAdmin(false)
-  }
-}
       </div>
     </CoachLayout>
   )

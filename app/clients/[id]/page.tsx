@@ -14,6 +14,7 @@ interface Client {
   id: string
   name: string | null
   email: string
+  onboardingComplete?: boolean | null
   invitedByCoachId: string | null
   User: {
     id: string
@@ -613,7 +614,12 @@ export default function ClientOverviewPage() {
                 <div className="text-sm text-neutral-500 italic">No notes yet</div>
               )}
             </div>
-// ...existing code...
+          </div>
+        </div>
+      </div>
+    </CoachLayout>
+  )
+}
 
 function PersonalizedPlanCard({ clientId }: { clientId: string }) {
   const { data: session } = useSession()
@@ -640,12 +646,12 @@ function PersonalizedPlanCard({ clientId }: { clientId: string }) {
   }, [clientId])
 
   useEffect(() => {
-    if (session?.user && (session.user.roles.includes("COACH") || session.user.roles.includes("ADMIN"))) {
+    if (session?.user && (session.user.roles.includes(Role.COACH) || session.user.roles.includes(Role.ADMIN))) {
       fetchPlan()
     }
   }, [session, fetchPlan])
 
-  if (!session?.user || (!session.user.roles.includes("COACH") && !session.user.roles.includes("ADMIN"))) {
+  if (!session?.user || (!session.user.roles.includes(Role.COACH) && !session.user.roles.includes(Role.ADMIN))) {
     return null
   }
 
@@ -659,44 +665,39 @@ function PersonalizedPlanCard({ clientId }: { clientId: string }) {
       ) : plan ? (
         <div className="space-y-2 text-sm">
           <div>
-            <span className="text-neutral-500">Calories:</span> <span className="font-medium">{plan.dailyCaloriesKcal} kcal</span>
+            <span className="text-neutral-500">Calories:</span>{" "}
+            <span className="font-medium">{plan.dailyCaloriesKcal} kcal</span>
           </div>
           <div>
-            <span className="text-neutral-500">Protein:</span> <span className="font-medium">{plan.proteinGrams} g</span>
+            <span className="text-neutral-500">Protein:</span>{" "}
+            <span className="font-medium">{plan.proteinGrams} g</span>
           </div>
-          {/* ...other plan fields... */}
+          <div>
+            <span className="text-neutral-500">Carbs:</span>{" "}
+            <span className="font-medium">{plan.carbGrams} g</span>
+          </div>
+          <div>
+            <span className="text-neutral-500">Fat:</span>{" "}
+            <span className="font-medium">{plan.fatGrams} g</span>
+          </div>
+          <div>
+            <span className="text-neutral-500">Water:</span>{" "}
+            <span className="font-medium">{plan.waterIntakeMl} ml</span>
+          </div>
+          {plan.dailyStepsTarget && (
+            <div>
+              <span className="text-neutral-500">Steps Target:</span>{" "}
+              <span className="font-medium">{plan.dailyStepsTarget}</span>
+            </div>
+          )}
+          {plan.weeklyWorkoutMinutes && (
+            <div>
+              <span className="text-neutral-500">Weekly Workout:</span>{" "}
+              <span className="font-medium">{plan.weeklyWorkoutMinutes} min</span>
+            </div>
+          )}
         </div>
       ) : null}
     </div>
-  )
-}
-                    <div>
-                      <span className="text-neutral-500">Carbs:</span> <span className="font-medium">{plan.carbGrams} g</span>
-                    </div>
-                    <div>
-                      <span className="text-neutral-500">Fat:</span> <span className="font-medium">{plan.fatGrams} g</span>
-                    </div>
-                    <div>
-                      <span className="text-neutral-500">Water:</span> <span className="font-medium">{plan.waterIntakeMl} ml</span>
-                    </div>
-                    {plan.dailyStepsTarget && (
-                      <div>
-                        <span className="text-neutral-500">Steps Target:</span> <span className="font-medium">{plan.dailyStepsTarget}</span>
-                      </div>
-                    )}
-                    {plan.weeklyWorkoutMinutes && (
-                      <div>
-                        <span className="text-neutral-500">Weekly Workout:</span> <span className="font-medium">{plan.weeklyWorkoutMinutes} min</span>
-                      </div>
-                    )}
-                  </div>
-                ) : null}
-              </div>
-            )
-          }
-          </div>
-        </div>
-      </div>
-    </CoachLayout>
   )
 }
