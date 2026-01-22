@@ -491,19 +491,20 @@ async function main() {
   console.log(`✅ All ${totalAssigned} clients assigned to ${cohorts.length} cohorts\n`)
 
   // Generate entries
-  console.log("📝 Step 7: Generating health entries...")
+  console.log("📝 Step 7: Generating health entries (batched)...")
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
   let entriesCreated = 0
   let clientsWithEntries = 0
   const entryStats: { [key: string]: number } = { 0: 0, 1: 0, 2: 0, 3: 0 }
-  
+
+  // Collect all entry upserts into a flat array
+  const entryUpserts: Array<{ upsert: any; clientIndex: number }> = []
   for (let i = 0; i < clients.length; i++) {
     const client = clients[i]
     const profile = client.activityProfile
     const daysOfData = Math.floor(Math.random() * 60) + 30
-
     const entryDates: Date[] = []
     for (let j = 0; j < daysOfData; j++) {
       if (Math.random() <= profile.consistency) {
@@ -516,35 +517,37 @@ async function main() {
 
     for (const entryDate of entryDates) {
       const entryData = generateEntryData(profile, 0, client.gender)
-      await db.entry.upsert({
-        where: {
-          userId_date: {
+      entryUpserts.push({
+        upsert: {
+          where: {
+            userId_date: {
+              userId: client.id,
+              date: entryDate,
+            },
+          },
+          update: {
+            weightLbs: entryData.weight,
+            steps: entryData.steps,
+            calories: entryData.calories,
+            heightInches: entryData.heightInches,
+            sleepQuality: entryData.sleepQuality,
+            perceivedStress: entryData.perceivedStress,
+            dataSources: ["manual"],
+          },
+          create: {
             userId: client.id,
             date: entryDate,
+            weightLbs: entryData.weight,
+            steps: entryData.steps,
+            calories: entryData.calories,
+            heightInches: entryData.heightInches,
+            sleepQuality: entryData.sleepQuality,
+            perceivedStress: entryData.perceivedStress,
+            dataSources: ["manual"],
           },
         },
-        update: {
-          weightLbs: entryData.weight,
-          steps: entryData.steps,
-          calories: entryData.calories,
-          heightInches: entryData.heightInches,
-          sleepQuality: entryData.sleepQuality,
-          perceivedStress: entryData.perceivedStress,
-          dataSources: ["manual"],
-        },
-        create: {
-          userId: client.id,
-          date: entryDate,
-          weightLbs: entryData.weight,
-          steps: entryData.steps,
-          calories: entryData.calories,
-          heightInches: entryData.heightInches,
-          sleepQuality: entryData.sleepQuality,
-          perceivedStress: entryData.perceivedStress,
-          dataSources: ["manual"],
-        },
+        clientIndex: i,
       })
-      entriesCreated++
     }
 
     if (entryDates.length > 0) {
@@ -552,11 +555,81 @@ async function main() {
       const levelIndex = activityProfiles.indexOf(profile)
       entryStats[levelIndex]++
     }
+  }
 
-    if ((i + 1) % 25 === 0 || i === clients.length - 1) {
-      const percentComplete = Math.round(((i + 1) / clients.length) * 100)
-      console.log(`   [${i + 1}/${clients.length}] ${entriesCreated} entries (${percentComplete}%)`)
+  // Batch upserts in chunks of 100
+  // --- Best Practice Enhancements ---
+  let BATCH_SIZE = 100
+  const MIN_BATCH_SIZE = 10
+  const MAX_RETRIES = 3
+  const RETRY_BASE_DELAY = 200 // ms
+  const failedBatches: Array<{ batchNum: number; error: any; batch: any[] }> = []
+  let batchNum = 0
+  let totalBatches = Math.ceil(entryUpserts.length / BATCH_SIZE)
+  let startTimeStep7 = Date.now()
+
+  for (let batchStart = 0; batchStart < entryUpserts.length; batchStart += BATCH_SIZE) {
+    batchNum++
+    const batch = entryUpserts.slice(batchStart, batchStart + BATCH_SIZE)
+    let success = false
+    let retries = 0
+    let batchError = null
+    let batchStartTime = Date.now()
+    let currentBatchSize = BATCH_SIZE
+    while (!success && retries <= MAX_RETRIES) {
+      try {
+        await Promise.allSettled(
+          batch.map(({ upsert }) => db.entry.upsert(upsert))
+        )
+        entriesCreated += batch.length
+        success = true
+      } catch (err) {
+        batchError = err
+        retries++
+        if (currentBatchSize > MIN_BATCH_SIZE) {
+          // Reduce batch size for next attempt
+          currentBatchSize = Math.max(MIN_BATCH_SIZE, Math.floor(currentBatchSize / 2))
+          // Re-slice batch for next attempt
+          // (If batch size shrinks, process in smaller sub-batches)
+          for (let subStart = 0; subStart < batch.length; subStart += currentBatchSize) {
+            const subBatch = batch.slice(subStart, subStart + currentBatchSize)
+            try {
+              await Promise.allSettled(
+                subBatch.map(({ upsert }) => db.entry.upsert(upsert))
+              )
+              entriesCreated += subBatch.length
+            } catch (subErr) {
+              failedBatches.push({ batchNum: batchNum, error: subErr, batch: subBatch })
+            }
+          }
+          success = true // Mark as handled (even if some sub-batches failed)
+        } else {
+          // If already at min batch size, just log and break
+          failedBatches.push({ batchNum: batchNum, error: err, batch })
+          break
+        }
+        // Exponential backoff
+        const delay = RETRY_BASE_DELAY * Math.pow(2, retries)
+        await new Promise((resolve) => setTimeout(resolve, delay))
+      }
     }
+    const batchDuration = ((Date.now() - batchStartTime) / 1000).toFixed(2)
+    if (batchNum % 5 === 0 || batchStart + BATCH_SIZE >= entryUpserts.length) {
+      const percentComplete = Math.round((entriesCreated / entryUpserts.length) * 100)
+      const elapsed = ((Date.now() - startTimeStep7) / 1000).toFixed(1)
+      const estTotal = ((Number(elapsed) / batchNum) * totalBatches).toFixed(1)
+      const estRemain = (Number(estTotal) - Number(elapsed)).toFixed(1)
+      console.log(`   [${entriesCreated}/${entryUpserts.length}] entries (${percentComplete}%) | Batch ${batchNum}/${totalBatches} | Last batch: ${batchDuration}s | Elapsed: ${elapsed}s | Est. remain: ${estRemain}s`)
+    }
+    // Delay between batches
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
+  if (failedBatches.length > 0) {
+    console.error(`\n❌ ${failedBatches.length} batch(es) failed during entry upserts. See details below:`)
+    failedBatches.forEach((fb, idx) => {
+      console.error(`  Batch #${fb.batchNum}:`, fb.error)
+      // Optionally, print batch info: console.error(fb.batch)
+    })
   }
   console.log(`✅ Generated ${entriesCreated} entries from ${clientsWithEntries} clients\n`)
 

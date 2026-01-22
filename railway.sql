@@ -1,0 +1,89 @@
+-- Cohort table columns
+ALTER TABLE "Cohort"
+  ADD COLUMN IF NOT EXISTS "cohortStartDate" DATE,
+  ADD COLUMN IF NOT EXISTS "durationConfig" TEXT NOT NULL DEFAULT 'six-week',
+  ADD COLUMN IF NOT EXISTS "durationWeeks" INTEGER;
+
+-- Entry table column
+ALTER TABLE "Entry"
+  ADD COLUMN IF NOT EXISTS "bodyFatPercentage" DOUBLE PRECISION;
+
+-- SystemSettings table columns
+ALTER TABLE "SystemSettings"
+  ADD COLUMN IF NOT EXISTS "bodyFatHighPercent" DOUBLE PRECISION NOT NULL DEFAULT 30.0,
+  ADD COLUMN IF NOT EXISTS "bodyFatLowPercent" DOUBLE PRECISION NOT NULL DEFAULT 12.5,
+  ADD COLUMN IF NOT EXISTS "bodyFatMediumPercent" DOUBLE PRECISION NOT NULL DEFAULT 20.0,
+  ADD COLUMN IF NOT EXISTS "bodyFatVeryHighPercent" DOUBLE PRECISION NOT NULL DEFAULT 37.5,
+  ADD COLUMN IF NOT EXISTS "defaultCarbsPercent" DOUBLE PRECISION NOT NULL DEFAULT 40.0,
+  ADD COLUMN IF NOT EXISTS "defaultFatPercent" DOUBLE PRECISION NOT NULL DEFAULT 30.0,
+  ADD COLUMN IF NOT EXISTS "defaultProteinPercent" DOUBLE PRECISION NOT NULL DEFAULT 30.0,
+  ADD COLUMN IF NOT EXISTS "maxDailyCalories" INTEGER NOT NULL DEFAULT 5000,
+  ADD COLUMN IF NOT EXISTS "maxProteinPerLb" DOUBLE PRECISION NOT NULL DEFAULT 2.0,
+  ADD COLUMN IF NOT EXISTS "minDailyCalories" INTEGER NOT NULL DEFAULT 1000,
+  ADD COLUMN IF NOT EXISTS "minProteinPerLb" DOUBLE PRECISION NOT NULL DEFAULT 0.4,
+  ADD COLUMN IF NOT EXISTS "stepsHeavy" INTEGER NOT NULL DEFAULT 12500,
+  ADD COLUMN IF NOT EXISTS "stepsLight" INTEGER NOT NULL DEFAULT 7500,
+  ADD COLUMN IF NOT EXISTS "stepsModerate" INTEGER NOT NULL DEFAULT 10000,
+  ADD COLUMN IF NOT EXISTS "stepsNotMuch" INTEGER NOT NULL DEFAULT 5000,
+  ADD COLUMN IF NOT EXISTS "workoutHeavy" INTEGER NOT NULL DEFAULT 300,
+  ADD COLUMN IF NOT EXISTS "workoutLight" INTEGER NOT NULL DEFAULT 150,
+  ADD COLUMN IF NOT EXISTS "workoutModerate" INTEGER NOT NULL DEFAULT 225,
+  ADD COLUMN IF NOT EXISTS "workoutNotMuch" INTEGER NOT NULL DEFAULT 75;
+
+-- User table columns
+ALTER TABLE "User"
+  ADD COLUMN IF NOT EXISTS "activityLevel" TEXT,
+  ADD COLUMN IF NOT EXISTS "dateOfBirth" DATE,
+  ADD COLUMN IF NOT EXISTS "gender" TEXT,
+  ADD COLUMN IF NOT EXISTS "primaryGoal" TEXT;
+
+-- UserGoals table
+CREATE TABLE IF NOT EXISTS "UserGoals" (
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "currentWeightKg" DOUBLE PRECISION,
+    "targetWeightKg" DOUBLE PRECISION,
+    "heightCm" DOUBLE PRECISION,
+    "dailyCaloriesKcal" INTEGER,
+    "proteinGrams" DOUBLE PRECISION,
+    "carbGrams" DOUBLE PRECISION,
+    "fatGrams" DOUBLE PRECISION,
+    "waterIntakeMl" INTEGER,
+    "dailyStepsTarget" INTEGER,
+    "weeklyWorkoutMinutes" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
+);
+
+-- UserPreference table
+CREATE TABLE IF NOT EXISTS "UserPreference" (
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "weightUnit" TEXT NOT NULL DEFAULT 'lbs',
+    "measurementUnit" TEXT NOT NULL DEFAULT 'inches',
+    "dateFormat" TEXT NOT NULL DEFAULT 'MM/dd/yyyy',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
+);
+
+-- QuestionnaireBundle table
+CREATE TABLE IF NOT EXISTS "QuestionnaireBundle" (
+    "id" TEXT PRIMARY KEY,
+    "cohortId" TEXT NOT NULL,
+    "bundleJson" JSONB NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
+);
+
+-- WeeklyQuestionnaireResponse table
+CREATE TABLE IF NOT EXISTS "WeeklyQuestionnaireResponse" (
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "cohortId" TEXT NOT NULL,
+    "weekNumber" INTEGER NOT NULL,
+    "responseJson" JSONB NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'in_progress',
+    "submittedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
+);

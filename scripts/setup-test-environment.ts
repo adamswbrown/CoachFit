@@ -1,3 +1,34 @@
+// --- SCHEMA PRE-CHECK (Best Practice) ---
+async function checkSchema() {
+  const prisma = new PrismaClient()
+  try {
+    // Check for required columns in User and Entry tables
+    const userColumns = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'User'`
+    )
+    const entryColumns = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'Entry'`
+    )
+    const requiredUser = ['gender', 'activityLevel', 'dateOfBirth', 'primaryGoal']
+    const requiredEntry = ['dataSources', 'bodyFatPercentage']
+    const userColSet = userColumns.map(c => c.column_name)
+    const entryColSet = entryColumns.map(c => c.column_name)
+    for (const col of requiredUser) {
+      if (!userColSet.includes(col)) {
+        throw new Error(`❌ Database schema missing column: User.${col}.\nRun migrations or patch your DB before running this script.`)
+      }
+    }
+    for (const col of requiredEntry) {
+      if (!entryColSet.includes(col)) {
+        throw new Error(`❌ Database schema missing column: Entry.${col}.\nRun migrations or patch your DB before running this script.`)
+      }
+    }
+    await prisma.$disconnect()
+  } catch (err) {
+    await prisma.$disconnect()
+    throw err
+  }
+}
 import { execSync } from "child_process"
 import { PrismaClient, Role } from "@prisma/client"
 import bcrypt from "bcryptjs"
@@ -37,8 +68,8 @@ const DEFAULT_SYSTEM_SETTINGS = {
   shortTermWindowDays: 7,
   longTermWindowDays: 30,
   adminOverrideEmail: ADMIN_EMAIL,
-  healthkitEnabled: true,
-  iosIntegrationEnabled: true,
+  healthkitEnabled: false,
+  iosIntegrationEnabled: false,
   adherenceGreenMinimum: 6,
   adherenceAmberMinimum: 3,
   bodyFatLowPercent: 12.5,
@@ -159,6 +190,8 @@ async function seedAdminAndCoaches() {
 }
 
 async function main() {
+  // --- Run schema pre-check before anything else ---
+  await checkSchema()
   console.log("\n════════════════════════════════════════════════════════════════")
   console.log("🧪 COACHFIT TEST ENVIRONMENT SETUP")
   console.log("════════════════════════════════════════════════════════════════\n")
