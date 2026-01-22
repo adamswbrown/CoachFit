@@ -615,8 +615,6 @@ export default function ClientOverviewPage() {
             </div>
 // ...existing code...
 
-import { useCallback } from "react"
-
 function PersonalizedPlanCard({ clientId }: { clientId: string }) {
   const { data: session } = useSession()
   const [plan, setPlan] = useState<any>(null)
