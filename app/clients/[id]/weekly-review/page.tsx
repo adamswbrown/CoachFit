@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter, useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { Role } from "@/lib/types"
@@ -113,7 +113,10 @@ export default function WeeklyReviewPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const clientId = params.id as string
+  const fromQueue = searchParams.get("from") === "weekly-review"
+  const queueWeekStart = searchParams.get("weekStart")
 
   const [client, setClient] = useState<Client | null>(null)
   const [weeklySummary, setWeeklySummary] = useState<WeeklySummary | null>(null)
@@ -450,10 +453,14 @@ export default function WeeklyReviewPage() {
         {/* Header with Client Name */}
         <div className="mb-6">
           <Link
-            href="/coach-dashboard"
+            href={
+              fromQueue
+                ? `/coach-dashboard/weekly-review${queueWeekStart ? `?weekStart=${queueWeekStart}` : ""}`
+                : "/coach-dashboard"
+            }
             className="text-sm text-neutral-600 hover:text-neutral-900 mb-2 inline-block"
           >
-            ← Back to Clients
+            ← {fromQueue ? "Back to Weekly Review Queue" : "Back to Clients"}
           </Link>
           <h1 className="text-2xl font-semibold text-neutral-900">
             {client?.name || client?.email || "Client"}

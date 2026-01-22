@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Fragment } from "react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
@@ -11,6 +11,14 @@ type AdherenceThresholds = {
   greenMinimum: number
   amberMinimum: number
 }
+
+type SortKey =
+  | "priority"
+  | "name"
+  | "checkIns"
+  | "score"
+  | "lastCheckIn"
+  | "lastEvaluated"
 
 const DEFAULT_ADHERENCE: AdherenceThresholds = {
   greenMinimum: 6,
@@ -90,6 +98,7 @@ interface ClientAttention {
     score: number
     priority: string // "red" | "amber" | "green"
     reasons: string[]
+    calculatedAt: string
   } | null
   topInsights: Array<{
     id: string
@@ -114,6 +123,22 @@ function formatDate(date: Date): string {
   return date.toISOString().split("T")[0]
 }
 
+function getConfidenceLabel(attention: ClientAttention["attentionScore"] | null): string {
+  if (!attention) return "—"
+  const signalCount = attention.reasons.length
+  if (signalCount >= 3) return "High"
+  if (signalCount === 2) return "Medium"
+  if (signalCount === 1) return "Low"
+  return "—"
+}
+
+function formatDateTime(value: string | null): string {
+  if (!value) return "—"
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return "—"
+  return parsed.toLocaleString()
+}
+
 export default function WeeklyReviewPage() {
   const { data: session } = useSession()
   const isAdmin = session?.user?.roles?.includes(Role.ADMIN) ?? false
@@ -129,6 +154,10 @@ export default function WeeklyReviewPage() {
   const [recalculating, setRecalculating] = useState(false)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [priorityFilter, setPriorityFilter] = useState<"all" | "red" | "amber" | "green">("all")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [sortKey, setSortKey] = useState<SortKey>("priority")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+  const [selectedClientIds, setSelectedClientIds] = useState<string[]>([])
   const [ownerOptions, setOwnerOptions] = useState<OwnerOption[]>([])
   const [cohortOptions, setCohortOptions] = useState<CohortOption[]>([])
   const [selectedOwnerId, setSelectedOwnerId] = useState<string>("")
@@ -141,6 +170,7 @@ export default function WeeklyReviewPage() {
   }[]>>({})
   const [sendingReminder, setSendingReminder] = useState(false)
   const [reminderToast, setReminderToast] = useState<string | null>(null)
+  const [bulkToast, setBulkToast] = useState<string | null>(null)
 
   // Initialize week on mount
   useEffect(() => {
@@ -498,28 +528,118 @@ export default function WeeklyReviewPage() {
     return { ...counts, total: data.clients.length }
   }
 
-  // Filter and sort clients based on the selected priority filter
-  const getFilteredClients = () => {
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))
+      return
+    }
+    setSortKey(key)
+    if (key === "score" || key === "lastCheckIn" || key === "lastEvaluated") {
+      setSortDirection("desc")
+    } else {
+      setSortDirection("asc")
+    }
+  }
+
+  const handleToggleSelection = (clientId: string) => {
+    setSelectedClientIds((prev) =>
+      prev.includes(clientId) ? prev.filter((id) => id !== clientId) : [...prev, clientId]
+    )
+  }
+
+  const handleToggleSelectAll = (clientIds: string[]) => {
+    const allSelected = clientIds.length > 0 && clientIds.every((id) => selectedClientIds.includes(id))
+    if (allSelected) {
+      setSelectedClientIds((prev) => prev.filter((id) => !clientIds.includes(id)))
+    } else {
+      setSelectedClientIds((prev) => Array.from(new Set([...prev, ...clientIds])))
+    }
+  }
+
+  const handleBulkCopyEmailDrafts = async (rows: Array<{ client: ClientSummary }>) => {
+    if (rows.length === 0) return
+    const combined = rows
+      .map(({ client }) =>
+        generateWeeklyEmailDraft({
+          clientName: client.name,
+          weekStart: selectedWeekStart,
+          stats: client.stats,
+          loomUrl: loomUrls[client.clientId],
+        })
+      )
+      .join("\n\n---\n\n")
+    try {
+      await navigator.clipboard.writeText(combined)
+      setBulkToast(`Copied ${rows.length} email draft(s)`)
+      setTimeout(() => setBulkToast(null), 2500)
+    } catch (err) {
+      console.error("Failed to copy bulk email drafts:", err)
+      setBulkToast("Failed to copy email drafts")
+      setTimeout(() => setBulkToast(null), 2500)
+    }
+  }
+
+  const getTableRows = () => {
     if (!data) return []
-
-    const clientsWithPriority = data.clients.map((client) => ({
-      ...client,
-      priority: getClientPriority(client),
-      attentionScore: attentionData.find((att) => att.clientId === client.clientId)?.attentionScore?.score || 0,
-    }))
-
-    const filtered =
-      priorityFilter === "all"
-        ? clientsWithPriority
-        : clientsWithPriority.filter((c) => c.priority === priorityFilter)
-
+    const attentionByClient = new Map(attentionData.map((att) => [att.clientId, att]))
+    const search = searchTerm.trim().toLowerCase()
     const priorityOrder = { red: 0, amber: 1, green: 2 }
 
-    return filtered.sort((a, b) => {
-      if (a.priority !== b.priority) {
-        return priorityOrder[a.priority] - priorityOrder[b.priority]
+    const baseRows = data.clients.map((client) => {
+      const attention = attentionByClient.get(client.clientId)
+      return {
+        client,
+        attention,
+        priority: getDisplayPriority(
+          attention?.attentionScore || null,
+          client.stats.checkInCount,
+          adherence
+        ),
+        score: attention?.attentionScore?.score ?? 0,
+        reasons: attention?.attentionScore?.reasons ?? [],
+        calculatedAt: attention?.attentionScore?.calculatedAt ?? null,
       }
-      return (b.attentionScore || 0) - (a.attentionScore || 0)
+    })
+
+    const filtered = baseRows.filter((row) => {
+      if (priorityFilter !== "all" && row.priority !== priorityFilter) return false
+      if (!search) return true
+      const name = row.client.name?.toLowerCase() || ""
+      const email = row.client.email.toLowerCase()
+      return name.includes(search) || email.includes(search)
+    })
+
+    const direction = sortDirection === "asc" ? 1 : -1
+
+    return filtered.sort((a, b) => {
+      switch (sortKey) {
+        case "name": {
+          const aName = a.client.name || a.client.email
+          const bName = b.client.name || b.client.email
+          return aName.localeCompare(bName) * direction
+        }
+        case "checkIns":
+          return (a.client.stats.checkInCount - b.client.stats.checkInCount) * direction
+        case "score":
+          return (a.score - b.score) * direction
+        case "lastCheckIn": {
+          const aTime = a.client.lastCheckInDate ? new Date(a.client.lastCheckInDate).getTime() : 0
+          const bTime = b.client.lastCheckInDate ? new Date(b.client.lastCheckInDate).getTime() : 0
+          return (aTime - bTime) * direction
+        }
+        case "lastEvaluated": {
+          const aTime = a.calculatedAt ? new Date(a.calculatedAt).getTime() : 0
+          const bTime = b.calculatedAt ? new Date(b.calculatedAt).getTime() : 0
+          return (aTime - bTime) * direction
+        }
+        case "priority":
+        default: {
+          if (a.priority !== b.priority) {
+            return (priorityOrder[a.priority] - priorityOrder[b.priority]) * direction
+          }
+          return (b.score - a.score) * direction
+        }
+      }
     })
   }
 
@@ -532,6 +652,13 @@ export default function WeeklyReviewPage() {
       </CoachLayout>
     )
   }
+
+  const tableRows = getTableRows()
+  const visibleClientIds = tableRows.map((row) => row.client.clientId)
+  const selectedRows = tableRows.filter((row) => selectedClientIds.includes(row.client.clientId))
+  const allVisibleSelected =
+    visibleClientIds.length > 0 &&
+    visibleClientIds.every((id) => selectedClientIds.includes(id))
 
   return (
     <CoachLayout>
@@ -561,6 +688,11 @@ export default function WeeklyReviewPage() {
         {reminderToast && (
           <div className="fixed top-4 right-4 z-50 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">
             {reminderToast}
+          </div>
+        )}
+        {bulkToast && (
+          <div className="fixed top-16 right-4 z-50 bg-neutral-900 text-white px-6 py-3 rounded-lg shadow-lg">
+            {bulkToast}
           </div>
         )}
 
@@ -733,8 +865,25 @@ export default function WeeklyReviewPage() {
           </div>
         )}
 
+        {data && (
+          <div className="mb-6 flex flex-col md:flex-row md:items-center gap-3">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search clients by name or email..."
+                className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm"
+              />
+            </div>
+            <div className="text-xs text-neutral-500">
+              Sort by clicking table headers
+            </div>
+          </div>
+        )}
+
         {/* Client List */}
-        {data && getFilteredClients().length === 0 ? (
+        {data && tableRows.length === 0 ? (
           <div className="bg-white rounded-lg border border-neutral-200 p-8 text-center">
             <p className="text-neutral-600">
               {priorityFilter === "all"
@@ -744,262 +893,311 @@ export default function WeeklyReviewPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {data?.clients
-              .sort((a, b) => {
-                // Sort by attention priority
-                const aAttention = attentionData.find((att) => att.clientId === a.clientId)
-                const bAttention = attentionData.find((att) => att.clientId === b.clientId)
-
-                const priorityOrder: Record<string, number> = {
-                  red: 0,
-                  amber: 1,
-                  green: 2,
-                }
-
-                // Use display priority which considers adherence
-                const aPriority = priorityOrder[
-                  getDisplayPriority(aAttention?.attentionScore || null, a.stats.checkInCount, adherence)
-                ]
-                const bPriority = priorityOrder[
-                  getDisplayPriority(bAttention?.attentionScore || null, b.stats.checkInCount, adherence)
-                ]
-
-                if (aPriority !== bPriority) {
-                  return aPriority - bPriority
-                }
-
-                // Then by attention score (higher first)
-                const aScore = aAttention?.attentionScore?.score || 0
-                const bScore = bAttention?.attentionScore?.score || 0
-                return bScore - aScore
-              })
-              .map((client) => {
-                const attention = attentionData.find(
-                  (att) => att.clientId === client.clientId
-                )
-
-                // Use the display priority function for consistency
-                const priorityColor = getDisplayPriority(
-                  attention?.attentionScore || null,
-                  client.stats.checkInCount,
-                  adherence
-                )
-
-                const isExpanded = expandedClient === client.clientId
-
-                return (
-                  <div
-                    key={client.clientId}
-                    className={`bg-white rounded-lg border-2 transition-all ${
-                      priorityColor === "red"
-                        ? "border-red-300 bg-red-50"
-                        : priorityColor === "amber"
-                        ? "border-amber-300 bg-amber-50"
-                        : "border-neutral-200"
-                    }`}
+            {selectedRows.length > 0 && (
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div className="text-sm text-neutral-700">
+                  Selected {selectedRows.length} client{selectedRows.length === 1 ? "" : "s"}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => handleBulkCopyEmailDrafts(selectedRows)}
+                    className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                   >
-                    {/* Compact Header - Always Visible */}
-                    <div
-                      className="p-4 cursor-pointer"
-                      onClick={() =>
-                        setExpandedClient(isExpanded ? null : client.clientId)
-                      }
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          {/* Priority Badge + Name */}
-                          <div className="flex items-center gap-3 mb-2">
-                            <div
-                              className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ${
-                                priorityColor === "red"
-                                  ? "bg-red-200 text-red-900"
-                                  : priorityColor === "amber"
-                                  ? "bg-amber-200 text-amber-900"
-                                  : "bg-green-200 text-green-900"
-                              }`}
-                            >
-                              {priorityColor === "red"
-                                ? "🔴 PRIORITY"
+                    Copy Email Drafts
+                  </button>
+                  <button
+                    onClick={() => setSelectedClientIds([])}
+                    className="px-3 py-2 text-sm font-medium text-neutral-600 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-neutral-50 text-neutral-600">
+                    <tr>
+                      <th className="text-left px-4 py-3 font-medium">
+                        <input
+                          type="checkbox"
+                          checked={allVisibleSelected}
+                          onChange={() => handleToggleSelectAll(visibleClientIds)}
+                        />
+                      </th>
+                      <th
+                        className="text-left px-4 py-3 font-medium cursor-pointer"
+                        onClick={() => handleSort("name")}
+                      >
+                        Client
+                      </th>
+                      <th
+                        className="text-left px-4 py-3 font-medium cursor-pointer"
+                        onClick={() => handleSort("priority")}
+                      >
+                        RAG
+                      </th>
+                      <th
+                        className="text-left px-4 py-3 font-medium cursor-pointer"
+                        onClick={() => handleSort("score")}
+                      >
+                        Severity
+                      </th>
+                      <th className="text-left px-4 py-3 font-medium">Confidence</th>
+                      <th className="text-left px-4 py-3 font-medium">Reasons</th>
+                      <th
+                        className="text-left px-4 py-3 font-medium cursor-pointer"
+                        onClick={() => handleSort("checkIns")}
+                      >
+                        Check-ins
+                      </th>
+                      <th
+                        className="text-left px-4 py-3 font-medium cursor-pointer"
+                        onClick={() => handleSort("lastCheckIn")}
+                      >
+                        Last check-in
+                      </th>
+                      <th
+                        className="text-left px-4 py-3 font-medium cursor-pointer"
+                        onClick={() => handleSort("lastEvaluated")}
+                      >
+                        Last evaluated
+                      </th>
+                      <th className="text-left px-4 py-3 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tableRows.map((row) => {
+                      const client = row.client
+                      const attention = row.attention
+                      const priorityColor = row.priority
+                      const isExpanded = expandedClient === client.clientId
+                      const ragClass =
+                        priorityColor === "red"
+                          ? "bg-red-100 text-red-800"
+                          : priorityColor === "amber"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-green-100 text-green-800"
+
+                      return (
+                        <Fragment key={client.clientId}>
+                          <tr
+                            className={`border-t border-neutral-100 ${
+                              priorityColor === "red"
+                                ? "bg-red-50/40"
                                 : priorityColor === "amber"
-                                ? "🟡 ATTENTION"
-                                : "✅ ON TRACK"}
-                            </div>
-                            <h3 className="text-lg font-semibold text-neutral-900">
-                              {client.name || client.email}
-                            </h3>
-                          </div>
-
-                          {/* Check-in Count Summary */}
-                          <div className="text-sm text-neutral-600 mb-2">
-                            Check-ins: {client.stats.checkInCount}/7 ({Math.round(client.stats.checkInRate * 100)}%)
-                          </div>
-
-                          {/* Questionnaire Status */}
-                          {questionnaireStatus[client.clientId] && questionnaireStatus[client.clientId].length > 0 && (
-                            <div className="text-sm text-neutral-600 mb-2">
-                              Questionnaires: {questionnaireStatus[client.clientId].map((q) => {
-                                const hoursSinceUpdate = Math.floor(
-                                  (Date.now() - new Date(q.updatedAt).getTime()) / (1000 * 60 * 60)
-                                )
-                                const submittedLabel = q.submittedAt
-                                  ? `Submitted ${new Date(q.submittedAt).toLocaleString()}`
-                                  : "Submitted"
-                                return (
-                                  <span key={q.weekNumber} className="mr-2">
-                                    W{q.weekNumber}:{" "}
-                                    {q.status === "completed" ? (
-                                      <span
-                                        className="text-green-600 cursor-help"
-                                        title={submittedLabel}
-                                      >
-                                        ✓
-                                      </span>
-                                    ) : q.status === "in_progress" ? (
-                                      <span
-                                        className="text-red-600 cursor-help"
-                                        title={`Last saved ${hoursSinceUpdate} hours ago`}
-                                      >
-                                        ◐
-                                      </span>
-                                    ) : (
-                                      <span className="text-neutral-400">✗</span>
-                                    )}
-                                  </span>
-                                )
-                              })}
-                            </div>
-                          )}
-
-                          {/* Key Insights Row */}
-                          <div className="flex items-start gap-2 mt-2 flex-wrap">
-                            {attention?.topInsights.slice(0, 2).map((insight) => (
-                              <div
-                                key={insight.id}
-                                className="text-xs bg-white px-2 py-1 rounded border border-neutral-200"
+                                ? "bg-amber-50/40"
+                                : "bg-white"
+                            }`}
+                          >
+                            <td className="px-4 py-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedClientIds.includes(client.clientId)}
+                                onChange={() => handleToggleSelection(client.clientId)}
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-neutral-900">
+                              <div className="font-medium">{client.name || client.email}</div>
+                              <div className="text-xs text-neutral-500">{client.email}</div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${ragClass}`}
                               >
-                                <span className="font-semibold">
-                                  {insight.icon} {insight.title}:
-                                </span>{" "}
-                                {insight.description.substring(0, 40)}
-                                {insight.description.length > 40 ? "..." : ""}
+                                {priorityColor.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-neutral-700">
+                              {attention?.attentionScore ? row.score : "—"}
+                            </td>
+                            <td className="px-4 py-3 text-neutral-700">
+                              {getConfidenceLabel(attention?.attentionScore || null)}
+                            </td>
+                            <td className="px-4 py-3 text-neutral-600">
+                              {row.reasons.length > 0 ? row.reasons.join(" • ") : "—"}
+                            </td>
+                            <td className="px-4 py-3 text-neutral-700">
+                              {client.stats.checkInCount}/7 ({Math.round(client.stats.checkInRate * 100)}%)
+                            </td>
+                            <td className="px-4 py-3 text-neutral-700">
+                              {client.lastCheckInDate
+                                ? new Date(client.lastCheckInDate).toLocaleDateString()
+                                : "—"}
+                            </td>
+                            <td className="px-4 py-3 text-neutral-700">
+                              {formatDateTime(row.calculatedAt)}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <Link
+                                  href={`/clients/${client.clientId}/weekly-review?weekStart=${selectedWeekStart}&from=weekly-review`}
+                                  className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors whitespace-nowrap"
+                                >
+                                  Full Review
+                                </Link>
+                                <button
+                                  onClick={() =>
+                                    setExpandedClient(isExpanded ? null : client.clientId)
+                                  }
+                                  className="px-3 py-1 text-xs font-medium text-neutral-600 bg-neutral-100 rounded hover:bg-neutral-200 transition-colors"
+                                >
+                                  {isExpanded ? "Hide" : "Expand"}
+                                </button>
                               </div>
-                            ))}
-                          </div>
-                        </div>
+                            </td>
+                          </tr>
+                          {isExpanded && (
+                            <tr className="border-t border-neutral-100">
+                              <td colSpan={10} className="p-4 bg-white">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                  <div className="lg:col-span-2 space-y-4">
+                                    <div>
+                                      <div className="text-sm font-semibold text-neutral-900 mb-1">
+                                        Check-ins: {client.stats.checkInCount}/7{" "}
+                                        <span className="text-xs text-neutral-600">
+                                          ({Math.round(client.stats.checkInRate * 100)}%)
+                                        </span>
+                                      </div>
+                                      <div className="w-full bg-neutral-200 rounded-full h-2">
+                                        <div
+                                          className={`h-2 rounded-full ${
+                                            client.stats.checkInCount >= adherence.greenMinimum
+                                              ? "bg-green-500"
+                                              : client.stats.checkInCount >= adherence.amberMinimum
+                                              ? "bg-amber-500"
+                                              : "bg-red-500"
+                                          }`}
+                                          style={{
+                                            width: `${(client.stats.checkInRate * 100).toFixed(0)}%`,
+                                          }}
+                                        ></div>
+                                      </div>
+                                    </div>
 
-                        {/* Quick Actions */}
-                        <div className="flex items-center gap-2 ml-4">
-                          <Link
-                            href={`/clients/${client.clientId}/weekly-review?weekStart=${selectedWeekStart}`}
-                            className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors whitespace-nowrap"
-                          >
-                            Full Review
-                          </Link>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setExpandedClient(isExpanded ? null : client.clientId)
-                            }}
-                            className="px-3 py-1 text-xs font-medium text-neutral-600 bg-neutral-100 rounded hover:bg-neutral-200 transition-colors"
-                          >
-                            {isExpanded ? "▼" : "▶"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                                    {questionnaireStatus[client.clientId] &&
+                                      questionnaireStatus[client.clientId].length > 0 && (
+                                        <div className="text-sm text-neutral-600">
+                                          Questionnaires:{" "}
+                                          {questionnaireStatus[client.clientId].map((q) => {
+                                            const hoursSinceUpdate = Math.floor(
+                                              (Date.now() - new Date(q.updatedAt).getTime()) /
+                                                (1000 * 60 * 60)
+                                            )
+                                            const submittedLabel = q.submittedAt
+                                              ? `Submitted ${new Date(q.submittedAt).toLocaleString()}`
+                                              : "Submitted"
+                                            return (
+                                              <span key={q.weekNumber} className="mr-2">
+                                                W{q.weekNumber}:{" "}
+                                                {q.status === "completed" ? (
+                                                  <span
+                                                    className="text-green-600 cursor-help"
+                                                    title={submittedLabel}
+                                                  >
+                                                    ✓
+                                                  </span>
+                                                ) : q.status === "in_progress" ? (
+                                                  <span
+                                                    className="text-red-600 cursor-help"
+                                                    title={`Last saved ${hoursSinceUpdate} hours ago`}
+                                                  >
+                                                    ◐
+                                                  </span>
+                                                ) : (
+                                                  <span className="text-neutral-400">✗</span>
+                                                )}
+                                              </span>
+                                            )
+                                          })}
+                                        </div>
+                                      )}
 
-                    {/* Expanded Content - Hidden by Default */}
-                    {isExpanded && (
-                      <div className="border-t-2 border-neutral-200 p-4 bg-white">
-                        {/* Check-in Status */}
-                        <div className="mb-4 pb-4 border-b border-neutral-200">
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1">
-                              <div className="text-sm font-semibold text-neutral-900 mb-1">
-                                Check-ins: {client.stats.checkInCount}/7{" "}
-                                <span className="text-xs text-neutral-600">
-                                  ({Math.round(client.stats.checkInRate * 100)}%)
-                                </span>
-                              </div>
-                              <div className="w-full bg-neutral-200 rounded-full h-2">
-                                <div
-                                  className={`h-2 rounded-full ${
-                                    client.stats.checkInCount >= adherence.greenMinimum
-                                      ? "bg-green-500"
-                                      : client.stats.checkInCount >= adherence.amberMinimum
-                                      ? "bg-amber-500"
-                                      : "bg-red-500"
-                                  }`}
-                                  style={{
-                                    width: `${(client.stats.checkInRate * 100).toFixed(0)}%`,
-                                  }}
-                                ></div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                                    {attention?.topInsights.length ? (
+                                      <div className="flex flex-wrap gap-2">
+                                        {attention.topInsights.map((insight) => (
+                                          <div
+                                            key={insight.id}
+                                            className="text-xs bg-white px-2 py-1 rounded border border-neutral-200"
+                                          >
+                                            <span className="font-semibold">
+                                              {insight.icon} {insight.title}:
+                                            </span>{" "}
+                                            {insight.description}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : null}
+                                  </div>
 
-                        {/* Loom Video URL */}
-                        <div className="mb-4">
-                          <label className="block text-sm font-medium text-neutral-700 mb-2">
-                            Loom Video URL
-                          </label>
-                          <input
-                            type="text"
-                            value={loomUrls[client.clientId] || ""}
-                            onChange={(e) =>
-                              setLoomUrls((prev) => ({
-                                ...prev,
-                                [client.clientId]: e.target.value,
-                              }))
-                            }
-                            placeholder="https://www.loom.com/share/..."
-                            className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                          />
-                        </div>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                        Loom Video URL
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={loomUrls[client.clientId] || ""}
+                                        onChange={(e) =>
+                                          setLoomUrls((prev) => ({
+                                            ...prev,
+                                            [client.clientId]: e.target.value,
+                                          }))
+                                        }
+                                        placeholder="https://www.loom.com/share/..."
+                                        className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                      />
+                                    </div>
 
-                        {/* Notes */}
-                        <div className="mb-4">
-                          <label className="block text-sm font-medium text-neutral-700 mb-2">
-                            Notes (optional)
-                          </label>
-                          <textarea
-                            value={notes[client.clientId] || ""}
-                            onChange={(e) =>
-                              setNotes((prev) => ({
-                                ...prev,
-                                [client.clientId]: e.target.value,
-                              }))
-                            }
-                            placeholder="Add private notes for this week..."
-                            rows={2}
-                            className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
-                          />
-                        </div>
+                                    <div>
+                                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                        Notes (optional)
+                                      </label>
+                                      <textarea
+                                        value={notes[client.clientId] || ""}
+                                        onChange={(e) =>
+                                          setNotes((prev) => ({
+                                            ...prev,
+                                            [client.clientId]: e.target.value,
+                                          }))
+                                        }
+                                        placeholder="Add private notes for this week..."
+                                        rows={3}
+                                        className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                                      />
+                                    </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleSaveResponse(client.clientId)}
-                            disabled={savingClient === client.clientId}
-                            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50"
-                          >
-                            {savingClient === client.clientId ? "Saving..." : "💾 Save"}
-                          </button>
-                          <button
-                            onClick={() => handleCopyEmail(client)}
-                            className="flex-1 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                          >
-                            {copiedClient === client.clientId
-                              ? "✓ Copied!"
-                              : "📋 Email Draft"}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => handleSaveResponse(client.clientId)}
+                                        disabled={savingClient === client.clientId}
+                                        className="flex-1 px-4 py-2 text-sm font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                                      >
+                                        {savingClient === client.clientId ? "Saving..." : "💾 Save"}
+                                      </button>
+                                      <button
+                                        onClick={() => handleCopyEmail(client)}
+                                        className="flex-1 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                                      >
+                                        {copiedClient === client.clientId
+                                          ? "✓ Copied!"
+                                          : "📋 Email Draft"}
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </div>

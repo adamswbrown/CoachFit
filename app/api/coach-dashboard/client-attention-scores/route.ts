@@ -11,6 +11,7 @@ interface ClientAttentionData {
     score: number
     priority: string // "red" | "amber" | "green"
     reasons: string[]
+    calculatedAt: string
   } | null
   topInsights: Array<{
     id: string
@@ -123,6 +124,7 @@ export async function GET(req: Request) {
                 score: score.score,
                 priority: score.priority,
                 reasons: score.reasons,
+                calculatedAt: score.calculatedAt.toISOString(),
               }
             : null,
           topInsights: clientInsights.slice(0, 3).map((insight) => ({
