@@ -44,6 +44,12 @@ const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || "adamswbrown@gmail.com"
 const DEFAULT_PASSWORD = process.env.TEST_DEFAULT_PASSWORD || "TestPassword123!"
 const MODE = process.argv.find((arg) => arg.startsWith("--mode="))?.split("=")[1] || "full"
 
+const DEFAULT_ADMINS = [
+  { name: "Adam Brown", email: ADMIN_EMAIL },
+  { name: "Vic", email: "victoria.denstedt@gmail.com" },
+  { name: "Gav", email: "coachgav@gcgyms.com" },
+]
+
 const COACHES = [
   { name: "Alex Thompson", email: "alex.thompson@test.local" },
   { name: "Jordan Martinez", email: "jordan.martinez@test.local" },
@@ -51,6 +57,8 @@ const COACHES = [
   { name: "Casey Williams", email: "casey.williams@test.local" },
   { name: "Morgan Davis", email: "morgan.davis@test.local" },
 ]
+
+const PRESERVED_USER_EMAILS = new Set(DEFAULT_ADMINS.map((admin) => admin.email))
 
 const ADMIN_COACH_EMAILS = new Set([
   "alex.thompson@test.local",
@@ -136,31 +144,41 @@ async function resetDatabase() {
   await db.cohortCheckInConfig.deleteMany({})
   await db.cohort.deleteMany({})
   await db.coachInvite.deleteMany({})
-  await db.user.deleteMany({ where: { email: { not: ADMIN_EMAIL } } })
+  await db.user.deleteMany({ where: { email: { notIn: Array.from(PRESERVED_USER_EMAILS) } } })
 }
 
 async function seedAdminAndCoaches() {
-  const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10)
+  const defaultPasswordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10)
+  const getPasswordHash = async (email: string) => {
+    const existing = await db.user.findUnique({
+      where: { email },
+      select: { passwordHash: true },
+    })
+    return existing?.passwordHash || defaultPasswordHash
+  }
 
-  await db.user.upsert({
-    where: { email: ADMIN_EMAIL },
-    update: {
-      name: "Adam Brown",
-      roles: [Role.ADMIN, Role.COACH],
-      isTestUser: true,
-      passwordHash,
-      onboardingComplete: true,
-    },
-    create: {
-      id: randomUUID(),
-      email: ADMIN_EMAIL,
-      name: "Adam Brown",
-      roles: [Role.ADMIN, Role.COACH],
-      isTestUser: true,
-      passwordHash,
-      onboardingComplete: true,
-    },
-  })
+  for (const admin of DEFAULT_ADMINS) {
+    const passwordHash = await getPasswordHash(admin.email)
+    await db.user.upsert({
+      where: { email: admin.email },
+      update: {
+        name: admin.name,
+        roles: [Role.ADMIN, Role.COACH],
+        isTestUser: true,
+        passwordHash,
+        onboardingComplete: true,
+      },
+      create: {
+        id: randomUUID(),
+        email: admin.email,
+        name: admin.name,
+        roles: [Role.ADMIN, Role.COACH],
+        isTestUser: true,
+        passwordHash,
+        onboardingComplete: true,
+      },
+    })
+  }
 
   for (const coach of COACHES) {
     const roles = ADMIN_COACH_EMAILS.has(coach.email)
@@ -173,7 +191,7 @@ async function seedAdminAndCoaches() {
         name: coach.name,
         roles,
         isTestUser: true,
-        passwordHash,
+        passwordHash: defaultPasswordHash,
         onboardingComplete: true,
       },
       create: {
@@ -182,7 +200,7 @@ async function seedAdminAndCoaches() {
         name: coach.name,
         roles,
         isTestUser: true,
-        passwordHash,
+        passwordHash: defaultPasswordHash,
         onboardingComplete: true,
       },
     })
