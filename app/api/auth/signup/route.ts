@@ -23,6 +23,19 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const [coachInvites, cohortInvites] = await Promise.all([
+      db.coachInvite.findMany({
+        where: { email: validated.email },
+        select: { id: true },
+      }),
+      db.cohortInvite.findMany({
+        where: { email: validated.email },
+        select: { id: true },
+      }),
+    ])
+
+    const hasInvite = coachInvites.length > 0 || cohortInvites.length > 0
+
     // Hash password
     const passwordHash = await bcrypt.hash(validated.password, 10)
 
@@ -33,6 +46,7 @@ export async function POST(req: NextRequest) {
         name: validated.name || null,
         passwordHash,
         roles: [Role.CLIENT],
+        mustChangePassword: hasInvite,
       },
       select: {
         id: true,

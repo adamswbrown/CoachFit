@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
-import { AttentionCard } from "@/components/admin/AttentionCard"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import type { AttentionQueueItem } from "@/lib/admin/attention"
@@ -70,12 +69,6 @@ export default function AttentionQueuePage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleAction = async (item: AttentionQueueItem, action: string) => {
-    // TODO: Implement action handling
-    console.log("Action:", action, "Item:", item)
-    // This will be connected to the admin actions API
   }
 
   const getFilteredItems = () => {
@@ -158,6 +151,19 @@ export default function AttentionQueuePage() {
 
   const filteredItems = getFilteredItems()
 
+  const priorityBadgeClass = (priority: string) => {
+    switch (priority) {
+      case "red":
+        return "bg-red-100 text-red-800"
+      case "amber":
+        return "bg-amber-100 text-amber-800"
+      case "green":
+        return "bg-green-100 text-green-800"
+      default:
+        return "bg-neutral-100 text-neutral-700"
+    }
+  }
+
   return (
     <CoachLayout>
       <div className="max-w-7xl mx-auto">
@@ -235,7 +241,7 @@ export default function AttentionQueuePage() {
           </button>
         </div>
 
-        {/* Attention Queue Items */}
+        {/* Attention Queue Table */}
         {filteredItems.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
             <p className="text-gray-600">
@@ -245,10 +251,42 @@ export default function AttentionQueuePage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredItems.map((item, idx) => (
-              <AttentionCard key={`${item.entityType}-${item.entityId}-${idx}`} item={item} onAction={handleAction} />
-            ))}
+          <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-neutral-50 text-neutral-600">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-medium">Name</th>
+                    <th className="text-left px-4 py-3 font-medium">Type</th>
+                    <th className="text-left px-4 py-3 font-medium">RAG</th>
+                    <th className="text-left px-4 py-3 font-medium">Score</th>
+                    <th className="text-left px-4 py-3 font-medium">Reasons</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredItems.map((item) => (
+                    <tr key={`${item.entityType}-${item.entityId}`} className="border-t border-neutral-100">
+                      <td className="px-4 py-3 text-neutral-900">
+                        <div className="font-medium">{item.entityName}</div>
+                        {item.entityEmail && (
+                          <div className="text-xs text-neutral-500">{item.entityEmail}</div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-neutral-700 capitalize">{item.entityType}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${priorityBadgeClass(item.priority)}`}>
+                          {item.priority.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-neutral-700">{item.score}</td>
+                      <td className="px-4 py-3 text-neutral-600">
+                        {item.reasons.length > 0 ? item.reasons.join(" • ") : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

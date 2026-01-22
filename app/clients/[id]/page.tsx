@@ -582,9 +582,9 @@ export default function ClientOverviewPage() {
           </div>
 
           {/* Right Column - Sidebar Cards */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Profile */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-6">
+            <div className="bg-white border border-neutral-200 rounded-lg p-4">
               <h3 className="text-sm font-semibold text-neutral-900 mb-4">Profile</h3>
               <div className="space-y-3 text-sm">
                 {/* Onboarding Status */}
@@ -720,7 +720,7 @@ export default function ClientOverviewPage() {
             </div>
 
             {/* Updates */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-6">
+            <div className="bg-white border border-neutral-200 rounded-lg p-4">
               <h3 className="text-sm font-semibold text-neutral-900 mb-4">Updates</h3>
               {recentEntries.length > 0 ? (
                 <div className="space-y-3">
@@ -743,14 +743,8 @@ export default function ClientOverviewPage() {
               )}
             </div>
 
-            {/* Personalized Plan (Coach/Admin only) */}
-            <PersonalizedPlanCard
-              clientId={clientId}
-              onboardingComplete={client.onboardingComplete ?? false}
-            />
-
             {/* Notes */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-6">
+            <div className="bg-white border border-neutral-200 rounded-lg p-4">
               <h3 className="text-sm font-semibold text-neutral-900 mb-4">Notes</h3>
               {coachNotes.length > 0 ? (
                 <div className="space-y-3">
@@ -771,6 +765,96 @@ export default function ClientOverviewPage() {
                 <div className="text-sm text-neutral-500 italic">No notes yet</div>
               )}
             </div>
+
+            {/* Onboarding Answers */}
+            <details className="bg-white border border-neutral-200 rounded-lg p-4">
+              <summary className="cursor-pointer list-none flex items-center justify-between text-sm font-semibold text-neutral-900">
+                <span>Onboarding Answers</span>
+                <span className="text-xs text-neutral-500">
+                  {onboardingData?.onboardingComplete === false ? "Incomplete" : onboardingData ? "Complete" : "—"}
+                </span>
+              </summary>
+              <div className="mt-4">
+                {onboardingError && (
+                  <div className="text-sm text-neutral-500 italic">{onboardingError}</div>
+                )}
+                {!onboardingError && !onboardingData && (
+                  <div className="text-sm text-neutral-500">Loading...</div>
+                )}
+                {!onboardingError && onboardingData && (
+                  <div className="space-y-3 text-sm">
+                    {onboardingData.onboardingComplete === false && (
+                      <div className="rounded bg-yellow-50 border border-yellow-200 px-3 py-2 flex items-center gap-2">
+                        <span className="text-yellow-600 text-lg">⚠️</span>
+                        <span className="text-yellow-800 font-medium">Onboarding not completed</span>
+                      </div>
+                    )}
+                    <div>
+                      <div className="text-neutral-500">Sex</div>
+                      <div className="text-neutral-900 font-medium">{formatSex(onboardingData.gender)}</div>
+                    </div>
+                    <div>
+                      <div className="text-neutral-500">Date of birth</div>
+                      <div className="text-neutral-900 font-medium">
+                        {onboardingData.dateOfBirth ? new Date(onboardingData.dateOfBirth).toLocaleDateString() : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-neutral-500">Primary goal</div>
+                      <div className="text-neutral-900 font-medium">{formatPrimaryGoal(onboardingData.primaryGoal)}</div>
+                    </div>
+                    <div>
+                      <div className="text-neutral-500">Activity level</div>
+                      <div className="text-neutral-900 font-medium">{formatActivityLevel(onboardingData.activityLevel)}</div>
+                    </div>
+                    <div>
+                      <div className="text-neutral-500">Current weight</div>
+                      <div className="text-neutral-900 font-medium">
+                        {onboardingData.UserGoals?.currentWeightKg != null
+                          ? `${kgToLbs(onboardingData.UserGoals.currentWeightKg).toFixed(1)} lbs`
+                          : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-neutral-500">Target weight</div>
+                      <div className="text-neutral-900 font-medium">
+                        {onboardingData.UserGoals?.targetWeightKg != null
+                          ? `${kgToLbs(onboardingData.UserGoals.targetWeightKg).toFixed(1)} lbs`
+                          : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-neutral-500">Height</div>
+                      <div className="text-neutral-900 font-medium">
+                        {onboardingData.UserGoals?.heightCm != null
+                          ? `${cmToInches(onboardingData.UserGoals.heightCm).toFixed(1)} in`
+                          : "—"}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 pt-2">
+                      <div>
+                        <div className="text-neutral-500 text-xs">Weight unit</div>
+                        <div className="text-neutral-900 font-medium">{onboardingData.UserPreference?.weightUnit || "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-neutral-500 text-xs">Height unit</div>
+                        <div className="text-neutral-900 font-medium">{onboardingData.UserPreference?.measurementUnit || "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-neutral-500 text-xs">Date format</div>
+                        <div className="text-neutral-900 font-medium">{onboardingData.UserPreference?.dateFormat || "—"}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </details>
+
+            {/* Personalized Plan (Coach/Admin only) */}
+            <PersonalizedPlanCard
+              clientId={clientId}
+              onboardingComplete={client.onboardingComplete ?? false}
+            />
           </div>
         </div>
       </div>
@@ -835,14 +919,18 @@ function PersonalizedPlanCard({
   }
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-lg p-6">
-      <h3 className="text-sm font-semibold text-neutral-900 mb-4">Personalized Plan</h3>
-      {loading ? (
-        <div className="text-sm text-neutral-500">Loading...</div>
-      ) : error ? (
-        <div className="text-sm text-neutral-500 italic">{error}</div>
-      ) : plan ? (
-        <div className="space-y-2 text-sm">
+    <details className="bg-white border border-neutral-200 rounded-lg p-4">
+      <summary className="cursor-pointer list-none flex items-center justify-between text-sm font-semibold text-neutral-900">
+        <span>Personalized Plan</span>
+        <span className="text-xs text-neutral-500">{plan ? "Ready" : "—"}</span>
+      </summary>
+      <div className="mt-4">
+        {loading ? (
+          <div className="text-sm text-neutral-500">Loading...</div>
+        ) : error ? (
+          <div className="text-sm text-neutral-500 italic">{error}</div>
+        ) : plan ? (
+          <div className="space-y-2 text-sm">
           <div>
             <span className="text-neutral-500">Calories:</span>{" "}
             <span className="font-medium">{plan.dailyCaloriesKcal} kcal</span>
@@ -875,8 +963,9 @@ function PersonalizedPlanCard({
               <span className="font-medium">{plan.weeklyWorkoutMinutes} min</span>
             </div>
           )}
-        </div>
-      ) : null}
-    </div>
+          </div>
+        ) : null}
+      </div>
+    </details>
   )
 }
