@@ -23,6 +23,7 @@ const DEFAULT_SETTINGS = {
   iosIntegrationEnabled: false,
   adherenceGreenMinimum: 7,
   adherenceAmberMinimum: 6,
+  attentionMissedCheckinsPolicy: "option_a",
   bodyFatLowPercent: 12.5,
   bodyFatMediumPercent: 20.0,
   bodyFatHighPercent: 30.0,
@@ -55,6 +56,7 @@ const settingsSchema = z.object({
   iosIntegrationEnabled: z.boolean().optional(),
   adherenceGreenMinimum: z.number().int().min(1).max(7).optional(),
   adherenceAmberMinimum: z.number().int().min(0).max(6).optional(),
+  attentionMissedCheckinsPolicy: z.enum(["option_a", "option_b"]).optional(),
   bodyFatLowPercent: z.number().min(5).max(30).optional(),
   bodyFatMediumPercent: z.number().min(10).max(40).optional(),
   bodyFatHighPercent: z.number().min(15).max(50).optional(),
@@ -203,6 +205,9 @@ export async function PUT(req: NextRequest) {
             iosIntegrationEnabled: validationResult.data.iosIntegrationEnabled ?? DEFAULT_SETTINGS.iosIntegrationEnabled,
             adherenceGreenMinimum: validationResult.data.adherenceGreenMinimum ?? DEFAULT_SETTINGS.adherenceGreenMinimum,
             adherenceAmberMinimum: validationResult.data.adherenceAmberMinimum ?? DEFAULT_SETTINGS.adherenceAmberMinimum,
+            attentionMissedCheckinsPolicy:
+              validationResult.data.attentionMissedCheckinsPolicy ??
+              DEFAULT_SETTINGS.attentionMissedCheckinsPolicy,
             minDailyCalories: validationResult.data.minDailyCalories ?? DEFAULT_SETTINGS.minDailyCalories,
             maxDailyCalories: validationResult.data.maxDailyCalories ?? DEFAULT_SETTINGS.maxDailyCalories,
             minProteinPerLb: validationResult.data.minProteinPerLb ?? DEFAULT_SETTINGS.minProteinPerLb,

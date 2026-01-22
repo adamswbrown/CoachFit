@@ -42,6 +42,13 @@ Admin users can now modify customer-facing configuration values through the Sett
 - Triggers RED alert (critical intervention needed)
 - Adjustable from 10-365 days
 
+### Attention Policy (Weekly Missed Check-ins)
+
+**Missed Check-in Severity** (Default: option_a)
+- Option A: missed 2+ = red, missed 1 = amber, missed 0 = green
+- Option B: missed 1+ = red, missed 0 = green
+- Controls how weekly missed check-ins affect attention priority
+
 ### Analytics Time Windows
 
 **Short-Term Window** (Default: 7)
@@ -110,6 +117,7 @@ model SystemSettings {
   lowEngagementEntries Int @default(7)
   noActivityDays Int @default(14)
   criticalNoActivityDays Int @default(30)
+  attentionMissedCheckinsPolicy String @default("option_a")
   shortTermWindowDays Int @default(7)
   longTermWindowDays Int @default(30)
   createdAt DateTime @default(now())

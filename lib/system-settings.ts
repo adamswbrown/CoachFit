@@ -24,6 +24,7 @@ export interface SystemSettings {
   iosIntegrationEnabled: boolean
   adherenceGreenMinimum: number
   adherenceAmberMinimum: number
+  attentionMissedCheckinsPolicy: "option_a" | "option_b"
   bodyFatLowPercent: number
   bodyFatMediumPercent: number
   bodyFatHighPercent: number
@@ -64,6 +65,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
   iosIntegrationEnabled: true,
   adherenceGreenMinimum: 7,
   adherenceAmberMinimum: 6,
+  attentionMissedCheckinsPolicy: "option_a",
   bodyFatLowPercent: 12.5,
   bodyFatMediumPercent: 20.0,
   bodyFatHighPercent: 30.0,
@@ -96,7 +98,10 @@ const DEFAULT_SETTINGS: SystemSettings = {
 export async function getSystemSettings(): Promise<SystemSettings> {
   try {
     const settings = await db.systemSettings.findFirst()
-    const result = settings || DEFAULT_SETTINGS
+    const result = {
+      ...DEFAULT_SETTINGS,
+      ...(settings || {}),
+    } as SystemSettings & { attentionMissedCheckinsPolicy: string }
 
     // Runtime validation for required onboarding/plan settings
     const requiredKeys: (keyof SystemSettings)[] = [
@@ -110,7 +115,14 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       }
     }
 
-    return result
+    if (
+      result.attentionMissedCheckinsPolicy !== "option_a" &&
+      result.attentionMissedCheckinsPolicy !== "option_b"
+    ) {
+      result.attentionMissedCheckinsPolicy = DEFAULT_SETTINGS.attentionMissedCheckinsPolicy
+    }
+
+    return result as SystemSettings
   } catch (error) {
     console.error("Error fetching system settings, using defaults:", error)
     return DEFAULT_SETTINGS

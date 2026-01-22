@@ -356,6 +356,7 @@ model SystemSettings {
   iosIntegrationEnabled    Boolean  @default(true)
   adherenceGreenMinimum    Int      @default(6)
   adherenceAmberMinimum    Int      @default(3)
+  attentionMissedCheckinsPolicy String @default("option_a")
   bodyFatLowPercent        Float    @default(12.5)
   bodyFatMediumPercent     Float    @default(20.0)
   bodyFatHighPercent       Float    @default(30.0)

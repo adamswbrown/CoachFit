@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { getSystemSettings } from "@/lib/system-settings"
 import { Role } from "@/lib/types"
 import type { Priority } from "./insights"
 
@@ -121,7 +122,10 @@ export class AttentionScoreCalculator {
       memberships: Array<{ cohortId: string }>
     },
     recentEntries: Date[],
-    lastEntryDate: Date | null
+    lastEntryDate: Date | null,
+    options?: {
+      missedCheckinsPolicy?: "option_a" | "option_b"
+    }
   ): AttentionScore {
     let score = 0
     const reasons: string[] = []
@@ -177,8 +181,17 @@ export class AttentionScoreCalculator {
     }
 
     if (lastEntryDate && entriesLast7Days < 7) {
-      score = Math.max(score, 60)
       const missedDays = 7 - entriesLast7Days
+      const policy = options?.missedCheckinsPolicy ?? "option_a"
+      if (policy === "option_a") {
+        if (missedDays >= 2) {
+          score = Math.max(score, 60)
+        } else if (missedDays === 1) {
+          score = Math.max(score, 30)
+        }
+      } else {
+        score = Math.max(score, 60)
+      }
       reasons.push(`Missed ${missedDays} check-in${missedDays === 1 ? "" : "s"} this week`)
       suggestedActions.push("Check in with client")
       metadata.entriesLast7Days = entriesLast7Days
@@ -428,6 +441,7 @@ export class AttentionScoreCalculator {
     }
 
     // If no cache, calculate fresh scores with optimized batch queries
+    const settings = await getSystemSettings()
     const queue: AttentionQueueItem[] = []
     const now = new Date()
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
@@ -505,7 +519,11 @@ export class AttentionScoreCalculator {
     const batches = this.chunkIds(clientIds, batchSize)
 
     for (const batch of batches) {
-      const batchScores = await this.calculateClientScoresBatch(batch, fourteenDaysAgo)
+      const batchScores = await this.calculateClientScoresBatch(
+        batch,
+        fourteenDaysAgo,
+        settings.attentionMissedCheckinsPolicy
+      )
       if (batchScores.length > 0) {
         queue.push(...batchScores)
         await this.storeAttentionScores(batchScores)
@@ -566,11 +584,16 @@ export class AttentionScoreCalculator {
     if (clientIds.length === 0) return
     const uniqueIds = Array.from(new Set(clientIds))
     const batches = this.chunkIds(uniqueIds, batchSize)
+    const settings = await getSystemSettings()
     const now = new Date()
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
 
     for (const batch of batches) {
-      const batchScores = await this.calculateClientScoresBatch(batch, fourteenDaysAgo)
+      const batchScores = await this.calculateClientScoresBatch(
+        batch,
+        fourteenDaysAgo,
+        settings.attentionMissedCheckinsPolicy
+      )
       if (batchScores.length > 0) {
         await this.storeAttentionScores(batchScores)
       }
@@ -579,7 +602,8 @@ export class AttentionScoreCalculator {
 
   private async calculateClientScoresBatch(
     clientIds: string[],
-    fourteenDaysAgo: Date
+    fourteenDaysAgo: Date,
+    missedCheckinsPolicy: "option_a" | "option_b"
   ): Promise<AttentionQueueItem[]> {
     if (clientIds.length === 0) return []
 
@@ -653,7 +677,10 @@ export class AttentionScoreCalculator {
           memberships: client.CohortMembership.map((m) => ({ cohortId: m.cohortId })),
         },
         recent,
-        lastEntryDate
+        lastEntryDate,
+        {
+          missedCheckinsPolicy,
+        }
       )
       if (score.score > 0) {
         scores.push({

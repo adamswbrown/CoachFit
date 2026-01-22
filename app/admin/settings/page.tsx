@@ -27,6 +27,7 @@ const DEFAULT_SETTINGS: Omit<SystemSettings, "id"> = {
   iosIntegrationEnabled: true,
   adherenceGreenMinimum: 6,
   adherenceAmberMinimum: 3,
+  attentionMissedCheckinsPolicy: "option_a",
   bodyFatLowPercent: 12.5,
   bodyFatMediumPercent: 20.0,
   bodyFatHighPercent: 30.0,
@@ -67,6 +68,7 @@ interface SystemSettings {
   iosIntegrationEnabled: boolean
   adherenceGreenMinimum: number
   adherenceAmberMinimum: number
+  attentionMissedCheckinsPolicy: "option_a" | "option_b"
   bodyFatLowPercent: number
   bodyFatMediumPercent: number
   bodyFatHighPercent: number
@@ -251,6 +253,14 @@ export default function AdminSettingsPage() {
     setFormData((prev) => ({
       ...prev,
       [name]: value === "" ? undefined : parseFloat(value),
+    }))
+  }
+
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
     }))
   }
 
@@ -511,6 +521,33 @@ export default function AdminSettingsPage() {
                     />
                     <p className="text-xs text-neutral-500 mt-1">Minimum check-ins before dropping to 🔴 PRIORITY</p>
                     <p className="text-xs text-amber-600 mt-1">Amber minimum must be less than Green minimum</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Attention Policy */}
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Attention Policy (Weekly Missed Check-ins)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      Missed Check-in Severity
+                    </label>
+                    <select
+                      name="attentionMissedCheckinsPolicy"
+                      value={formData.attentionMissedCheckinsPolicy ?? "option_a"}
+                      onChange={handleSelectChange}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="option_a">Option A (Default)</option>
+                      <option value="option_b">Option B (Strict)</option>
+                    </select>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Option A: missed 2+ = red, missed 1 = amber, missed 0 = green.
+                    </p>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Option B: missed 1+ = red, missed 0 = green.
+                    </p>
                   </div>
                 </div>
               </div>

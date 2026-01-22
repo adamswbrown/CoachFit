@@ -283,7 +283,15 @@ Sets the color-coding thresholds for client adherence metrics.
 | `adherenceGreenMinimum` | integer | 6 | Minimum entries per week for green (good) adherence |
 | `adherenceAmberMinimum` | integer | 3 | Minimum entries per week for amber (warning) adherence; below triggers red |
 
-### 4. Analytics Windows
+### 4. Attention Policy (Weekly Missed Check-ins)
+
+Controls how missed weekly check-ins map to attention severity.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `attentionMissedCheckinsPolicy` | string | `option_a` | Option A: missed 2+ = red, missed 1 = amber, missed 0 = green. Option B: missed 1+ = red, missed 0 = green. |
+
+### 5. Analytics Windows
 
 Defines time windows used for trend calculations and historical analysis.
 
