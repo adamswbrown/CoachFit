@@ -8,6 +8,7 @@ import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import { isAdmin, isAdminOrCoach } from "@/lib/permissions"
 import { Role } from "@/lib/types"
+import { cmToInches, kgToLbs } from "@/lib/utils/unit-conversions"
 import type { AttentionQueueItem } from "@/lib/admin/attention"
 
 interface Client {
@@ -67,6 +68,67 @@ interface CoachNote {
   createdAt: string
 }
 
+interface OnboardingData {
+  onboardingComplete?: boolean | null
+  gender: string | null
+  dateOfBirth: string | null
+  activityLevel: string | null
+  primaryGoal: string | null
+  UserGoals: {
+    currentWeightKg: number | null
+    targetWeightKg: number | null
+    heightCm: number | null
+  } | null
+  UserPreference: {
+    weightUnit: string | null
+    measurementUnit: string | null
+    dateFormat: string | null
+  } | null
+}
+
+const formatActivityLevel = (value: string | null) => {
+  switch (value) {
+    case "sedentary":
+      return "Sedentary"
+    case "lightly_active":
+      return "Lightly Active"
+    case "active":
+      return "Active"
+    case "very_active":
+      return "Very Active"
+    case "extremely_active":
+      return "Extremely Active"
+    default:
+      return "—"
+  }
+}
+
+const formatPrimaryGoal = (value: string | null) => {
+  switch (value) {
+    case "lose_weight":
+      return "Lose Weight"
+    case "maintain_weight":
+      return "Maintain Weight"
+    case "gain_weight":
+      return "Gain Weight"
+    default:
+      return "—"
+  }
+}
+
+const formatSex = (value: string | null) => {
+  switch (value) {
+    case "male":
+      return "Male"
+    case "female":
+      return "Female"
+    case "prefer_not_to_say":
+      return "Prefer not to say"
+    default:
+      return "—"
+  }
+}
+
 export default function ClientOverviewPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -81,6 +143,8 @@ export default function ClientOverviewPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [attentionItem, setAttentionItem] = useState<AttentionQueueItem | null>(null)
+  const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null)
+  const [onboardingError, setOnboardingError] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -136,6 +200,7 @@ export default function ClientOverviewPage() {
         fetchAnalytics(),
         fetchEntries(),
         fetchCoachNotes(),
+        fetchOnboarding(),
       ])
     } catch (err) {
       console.error("Error loading client overview data:", err)
@@ -167,6 +232,18 @@ export default function ClientOverviewPage() {
     } catch (err) {
       // Coach notes are optional, don't fail if they don't exist
       setCoachNotes([])
+    }
+  }
+
+  const fetchOnboarding = async () => {
+    try {
+      const data = await fetchWithRetry<OnboardingData>(`/api/clients/${clientId}/onboarding`)
+      setOnboardingData(data)
+      setOnboardingError(null)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load onboarding answers."
+      setOnboardingError(message)
+      setOnboardingData(null)
     }
   }
 
@@ -321,12 +398,6 @@ export default function ClientOverviewPage() {
               className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap"
             >
               Weekly Review
-            </Link>
-            <Link
-              href={`/clients/${clientId}/onboarding`}
-              className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap"
-            >
-              Onboarding
             </Link>
             <span className="px-1 py-3 text-sm font-medium text-neutral-400 -mb-px whitespace-nowrap">
               Training
@@ -569,6 +640,83 @@ export default function ClientOverviewPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Onboarding Answers */}
+            <div className="bg-white border border-neutral-200 rounded-lg p-6">
+              <h3 className="text-sm font-semibold text-neutral-900 mb-4">Onboarding Answers</h3>
+              {onboardingError && (
+                <div className="text-sm text-neutral-500 italic">{onboardingError}</div>
+              )}
+              {!onboardingError && !onboardingData && (
+                <div className="text-sm text-neutral-500">Loading...</div>
+              )}
+              {!onboardingError && onboardingData && (
+                <div className="space-y-3 text-sm">
+                  {onboardingData.onboardingComplete === false && (
+                    <div className="rounded bg-yellow-50 border border-yellow-200 px-3 py-2 flex items-center gap-2">
+                      <span className="text-yellow-600 text-lg">⚠️</span>
+                      <span className="text-yellow-800 font-medium">Onboarding not completed</span>
+                    </div>
+                  )}
+                  <div>
+                    <div className="text-neutral-500">Sex</div>
+                    <div className="text-neutral-900 font-medium">{formatSex(onboardingData.gender)}</div>
+                  </div>
+                  <div>
+                    <div className="text-neutral-500">Date of birth</div>
+                    <div className="text-neutral-900 font-medium">
+                      {onboardingData.dateOfBirth ? new Date(onboardingData.dateOfBirth).toLocaleDateString() : "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-neutral-500">Primary goal</div>
+                    <div className="text-neutral-900 font-medium">{formatPrimaryGoal(onboardingData.primaryGoal)}</div>
+                  </div>
+                  <div>
+                    <div className="text-neutral-500">Activity level</div>
+                    <div className="text-neutral-900 font-medium">{formatActivityLevel(onboardingData.activityLevel)}</div>
+                  </div>
+                  <div>
+                    <div className="text-neutral-500">Current weight</div>
+                    <div className="text-neutral-900 font-medium">
+                      {onboardingData.UserGoals?.currentWeightKg != null
+                        ? `${kgToLbs(onboardingData.UserGoals.currentWeightKg).toFixed(1)} lbs`
+                        : "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-neutral-500">Target weight</div>
+                    <div className="text-neutral-900 font-medium">
+                      {onboardingData.UserGoals?.targetWeightKg != null
+                        ? `${kgToLbs(onboardingData.UserGoals.targetWeightKg).toFixed(1)} lbs`
+                        : "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-neutral-500">Height</div>
+                    <div className="text-neutral-900 font-medium">
+                      {onboardingData.UserGoals?.heightCm != null
+                        ? `${cmToInches(onboardingData.UserGoals.heightCm).toFixed(1)} in`
+                        : "—"}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 pt-2">
+                    <div>
+                      <div className="text-neutral-500 text-xs">Weight unit</div>
+                      <div className="text-neutral-900 font-medium">{onboardingData.UserPreference?.weightUnit || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-neutral-500 text-xs">Height unit</div>
+                      <div className="text-neutral-900 font-medium">{onboardingData.UserPreference?.measurementUnit || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-neutral-500 text-xs">Date format</div>
+                      <div className="text-neutral-900 font-medium">{onboardingData.UserPreference?.dateFormat || "—"}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Updates */}
