@@ -11,7 +11,7 @@ import { DatePicker } from "@/components/onboarding/DatePicker"
 import { PlanReview, PlanReviewOnSavePayload, PlanReviewRanges } from "@/components/onboarding/PlanReview"
 import { lbsToKg, inchesToCm, kgToLbs } from "@/lib/utils/unit-conversions"
 
-const BASE_STEPS = 10
+const BASE_STEPS = 8
 const INTERSTITIAL_STEP = BASE_STEPS + 1
 const PLAN_REVIEW_STEP = BASE_STEPS + 2
 
@@ -141,16 +141,13 @@ export default function ClientOnboarding() {
         if (!data.birthDate) newErrors.birthDate = "Please select a birth date"
         break
       case 7:
-        if (!data.bodyFatRange) newErrors.bodyFatRange = "Please select a body fat range"
-        break
-      case 8:
         if (!data.targetWeight || Number(data.targetWeight) <= 0)
           newErrors.targetWeight = "Please enter a valid target weight"
         break
-      case 9:
+      case 8:
         if (!data.activityLevel) newErrors.activityLevel = "Please select an activity level"
         break
-      case 10:
+      case 9:
         // No validation needed for boolean toggle
         break
     }
@@ -497,28 +494,7 @@ export default function ClientOnboarding() {
               </div>
             </div>
           ) : step === 7 ? (
-            // Step 7: Target Weight (now step 7)
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Target Weight</h2>
-                <p className="text-gray-600 mb-4">
-                  What is your target weight?
-                </p>
-                <input
-                  type="number"
-                  className="input input-bordered w-full"
-                  value={data.targetWeight}
-                  onChange={e => updateData("targetWeight", e.target.value)}
-                  min={1}
-                  max={1000}
-                />
-                {errors.targetWeight && (
-                  <p className="text-red-600 text-sm">{errors.targetWeight}</p>
-                )}
-              </div>
-            </div>
-          ) : step === 8 ? (
-            // Step 8: Target Weight
+            // Step 7: Target Weight
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Target weight</h2>
@@ -534,8 +510,8 @@ export default function ClientOnboarding() {
                 />
               </div>
             </div>
-          ) : step === 9 ? (
-            // Step 9: Activity Level
+          ) : step === 8 ? (
+            // Step 8: Activity Level
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Activity level</h2>

@@ -2,7 +2,9 @@
 const nextConfig = {
   // Use Turbopack (default in Next.js 16)
   // Browser extension errors are handled by ErrorBoundary component
-  turbopack: {},
+  turbopack: {
+    root: __dirname,
+  },
   // Disable dev overlay in production
   devIndicators: {
     buildActivity: false,
@@ -14,6 +16,7 @@ const nextConfig = {
       fullUrl: true,
     },
   },
+  outputFileTracingRoot: __dirname,
 }
 
 module.exports = nextConfig
