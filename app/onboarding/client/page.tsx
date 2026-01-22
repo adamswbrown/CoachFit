@@ -518,24 +518,29 @@ export default function ClientOnboarding() {
                 <SelectionGrid
                   options={[
                     {
-                      id: "not_much",
-                      label: "Not Much",
-                      description: "Sedentary",
+                      id: "sedentary",
+                      label: "Sedentary",
+                      description: "Desk based job, no long walks during the week",
                     },
                     {
-                      id: "light",
-                      label: "Light",
-                      description: "1–2 days/week",
+                      id: "lightly_active",
+                      label: "Lightly Active",
+                      description: "Desk based job but daily walks/hard workouts 2+ per week",
                     },
                     {
-                      id: "moderate",
-                      label: "Moderate",
-                      description: "3–5 days/week",
+                      id: "active",
+                      label: "Active",
+                      description: "A job mostly on feet (e.g. teacher, retail worker, postman) but no exercise",
                     },
                     {
-                      id: "heavy",
-                      label: "Heavy",
-                      description: "6–7 days/week",
+                      id: "very_active",
+                      label: "Very Active",
+                      description: "A job mostly on feet and exercises hard 3+ times per week or a manual labor job with no other exercise",
+                    },
+                    {
+                      id: "extremely_active",
+                      label: "Extremely Active",
+                      description: "A manual labor job + hard exercise 3+ times a week or athlete training 10+ times per week",
                     },
                   ]}
                   value={data.activityLevel}

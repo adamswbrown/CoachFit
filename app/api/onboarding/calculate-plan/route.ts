@@ -14,7 +14,13 @@ const calculatePlanSchema = z.object({
   heightCm: z.number().positive(),
   birthDate: z.string(),
   sex: z.enum(["male", "female"]),
-  activityLevel: z.enum(["not_much", "light", "moderate", "heavy"]),
+  activityLevel: z.enum([
+    "sedentary",
+    "lightly_active",
+    "active",
+    "very_active",
+    "extremely_active",
+  ]),
   primaryGoal: z.enum(["lose_weight", "maintain_weight", "gain_weight"]),
   targetWeightKg: z.number().positive(),
 })
@@ -43,13 +49,31 @@ export async function POST(request: Request) {
 
     const data = parsed.data
 
+    const mapActivityLevel = (
+      level: z.infer<typeof calculatePlanSchema>["activityLevel"]
+    ): "not_much" | "light" | "moderate" | "heavy" => {
+      switch (level) {
+        case "sedentary":
+          return "not_much"
+        case "lightly_active":
+          return "light"
+        case "active":
+          return "moderate"
+        case "very_active":
+        case "extremely_active":
+          return "heavy"
+        default:
+          return "light"
+      }
+    }
+
     // Calculate plan server-side (has access to system settings via Prisma)
     const plan = await completeOnboardingCalculation({
       weightKg: data.weightKg,
       heightCm: data.heightCm,
       birthDate: data.birthDate,
       sex: data.sex,
-      activityLevel: data.activityLevel,
+      activityLevel: mapActivityLevel(data.activityLevel),
       primaryGoal: data.primaryGoal,
       targetWeightKg: data.targetWeightKg,
     })
