@@ -12,11 +12,11 @@ Implemented **configurable adherence thresholds** with a smart priority function
 
 ```typescript
 const ADHERENCE_THRESHOLDS = {
-  // Green (✅ ON TRACK): 6+ check-ins out of 7
-  greenMinimum: 6,
+  // Green (✅ ON TRACK): 7 check-ins out of 7
+  greenMinimum: 7,
 
-  // Amber (🟡 ATTENTION): 3-5 check-ins
-  amberMinimum: 3,
+  // Amber (🟡 ATTENTION): 6 check-ins
+  amberMinimum: 6,
 
   // Red (🔴 PRIORITY): 0-2 check-ins (automatically red)
 }
@@ -59,14 +59,14 @@ function getDisplayPriority(
 - ✅ A client with 0 check-ins → 🔴 PRIORITY (red), never green
 - ✅ A client with 2 check-ins → 🔴 PRIORITY (red), never green  
 - ✅ A client with 4 check-ins → 🟡 ATTENTION (amber), never green
-- ✅ A client with 6+ check-ins → Can be ✅ ON TRACK (green) if attention also good
+- ✅ A client with 7 check-ins → Can be ✅ ON TRACK (green) if attention also good
 
 ### 3. **Display of Thresholds** 
 
 On the Weekly Review page, there's now a blue info box showing the current thresholds:
 
 ```
-Adherence Thresholds: Green ✅ (6+ check-ins) • Amber 🟡 (3-5 check-ins) • Red 🔴 (0-2 check-ins)
+Adherence Thresholds: Green ✅ (7 check-ins) • Amber 🟡 (6 check-ins) • Red 🔴 (0-5 check-ins)
 To modify these thresholds, edit ADHERENCE_THRESHOLDS at the top of the page component
 ```
 

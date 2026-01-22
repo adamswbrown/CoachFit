@@ -47,7 +47,6 @@ The 11-step Sparky Fitness-style onboarding flow has been fully implemented and 
 5. `calculateWaterGoal(weightKg)` → Hydration (kg × 35 ml)
 6. `validateCalories(calories, settings)` → Check against admin min/max bounds
 7. `validateProtein(proteinGrams, weightLbs, settings)` → Check per-lb ratio against bounds
-8. `bodyFatRangeToPercentage(range, settings)` → "low"/"medium"/"high"/"very_high" → percent (with fallback defaults)
 9. `completeOnboardingCalculation(input)` → Orchestrates all calculations, returns plan object
 10. + 2 additional helper functions for BMR averaging and conversions
 
@@ -110,15 +109,13 @@ The 11-step Sparky Fitness-style onboarding flow has been fully implemented and 
 
 **10 Step Schemas + Submission Schema**:
 - `onboardingStep1Schema`: name (required)
-- `onboardingStep2Schema`: sex (male/female), unit selection
+- `onboardingStep2Schema`: sex (male/female/prefer_not_to_say), unit selection
 - `onboardingStep3Schema`: primaryGoal (lose/maintain/gain)
 - `onboardingStep4Schema`: currentWeight (positive, ≤1000)
 - `onboardingStep5Schema`: height (positive, ≤300)
 - `onboardingStep6Schema`: birthDate (valid date, not future)
-- `onboardingStep7Schema`: bodyFatRange (low/medium/high/very_high)
 - `onboardingStep8Schema`: targetWeight (positive, ≤1000)
 - `onboardingStep9Schema`: activityLevel (not_much/light/moderate/heavy)
-- `onboardingStep10Schema`: addBurnedCalories (boolean)
 - `onboardingSubmitSchema`: All fields combined with dependencies (plan fields optional when plan review is disabled)
 - `userPreferenceSchema`: Unit and date format enums
 
@@ -151,7 +148,7 @@ The 11-step Sparky Fitness-style onboarding flow has been fully implemented and 
    - Features: Prevents future dates
 
 5. **SelectionGrid** ([SelectionGrid.tsx](../../components/onboarding/SelectionGrid.tsx))
-   - Multi-option grid selector (gender, goals, body fat, activity)
+   - Multi-option grid selector (gender, goals, activity)
    - Props: options, selected, onChange, label
    - Styling: Card grid with selection highlight
 
@@ -163,7 +160,7 @@ The 11-step Sparky Fitness-style onboarding flow has been fully implemented and 
 **File**: [app/onboarding/client/page.tsx](../../app/onboarding/client/page.tsx)
 
 **Features**:
-- 11-step state machine with progress bar
+- 8-step state machine with progress bar
 - Form validation per step
 - Automatic calculation of fitness plan (Step 11)
 - Plan submission to API
@@ -391,22 +388,16 @@ if (!session.user.isOnboardingComplete) {
 6. **Step 5: Birth Date** (4 tests)
    - Required, valid date, future date rejection, age calculation
 
-7. **Step 6: Body Fat Range** (4 tests)
-   - Required, low/medium/high/very_high selection
-
-8. **Step 7: Primary Goal** (4 tests)
+7. **Step 6: Primary Goal** (4 tests)
    - Required, lose/maintain/gain with calorie adjustments
 
-9. **Step 8: Target Weight** (4 tests)
+8. **Step 7: Target Weight** (4 tests)
    - Required, valid input, boundary testing
 
-10. **Step 9: Activity Level** (5 tests)
+9. **Step 8: Activity Level** (5 tests)
     - Required, 1.2/1.375/1.55/1.725 multiplier verification
 
-11. **Step 10: Burned Calories Toggle** (2 tests)
-    - Toggle on/off behavior
-
-12. **Step 11: Plan Review & Edits** (8 tests)
+10. **Step 9: Plan Review & Edits** (8 tests)
     - Plan calculation accuracy
     - Macro percent editing and validation
     - Calorie/protein range validation
@@ -432,7 +423,7 @@ if (!session.user.isOnboardingComplete) {
     - Full happy path, unit consistency, entry creation, multi-client isolation
 
 19. **Admin Settings Integration** (4 tests)
-    - Custom body fat %, calorie range, protein range, macro defaults
+    - Custom calorie range, protein range, macro defaults
 
 20. **Browser & Device Testing** (4 tests)
     - Chrome, Safari, mobile iPhone, mobile Android

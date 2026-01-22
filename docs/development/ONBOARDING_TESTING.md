@@ -1,6 +1,7 @@
 # Onboarding Flow Testing Guide
 
-This document provides a comprehensive testing checklist for the 11-step client onboarding flow. Use this to validate all functionality end-to-end.
+This document provides a comprehensive testing checklist for the 9-step client onboarding flow. Use this to validate all functionality end-to-end.
+Note: Body fat range and burned calories steps have been removed; any older test cases referencing them are obsolete.
 
 ## Test Environment Setup
 
@@ -21,7 +22,7 @@ Before testing, ensure:
 
 3. **Admin settings configured** (optional):
    - Navigate to `/admin/settings` as an admin user
-   - Review onboarding settings (body fat %, calorie ranges, protein ranges, macro defaults)
+  - Review onboarding settings (calorie ranges, protein ranges, macro defaults)
    - Note: Tests use defaults if not customized
 
 ### Test Accounts
@@ -248,39 +249,7 @@ Before testing, ensure:
 
 ---
 
-## 7. Step 6: Body Fat Range Selection
-
-### Test 7.1: Body Fat Selection Required
-- **Steps**:
-  1. Load Step 6
-  2. Click Next without selecting body fat
-- **Expected**: Error "Body fat range is required"
-- **Pass/Fail**: ___
-
-### Test 7.2: Select "Low"
-- **Steps**:
-  1. Click "Low" button
-  2. Click Next
-- **Expected**: Selection is saved; body fat value used in calculations
-- **Pass/Fail**: ___
-
-### Test 7.3: Select "Medium"
-- **Steps**:
-  1. Go back, click "Medium"
-  2. Click Next
-- **Expected**: Selection saved and used in plan
-- **Pass/Fail**: ___
-
-### Test 7.4: Select "High" and "Very High"
-- **Steps**:
-  1. Test "High"
-  2. Test "Very High"
-- **Expected**: Both selections work; corresponding body fat % applied
-- **Pass/Fail**: ___
-
----
-
-## 8. Step 7: Primary Goal Selection
+## 7. Step 6: Primary Goal Selection
 
 ### Test 8.1: Goal Required
 - **Steps**:
@@ -387,26 +356,7 @@ Before testing, ensure:
 
 ---
 
-## 11. Step 10: Burned Calories Toggle
-
-### Test 11.1: Toggle On/Off
-- **Steps**:
-  1. Load Step 10
-  2. Toggle "Add Burned Calories" on
-  3. Click Next
-- **Expected**: Advances; toggle state saved
-- **Pass/Fail**: ___
-
-### Test 11.2: Toggle Off (Default)
-- **Steps**:
-  1. Go back, toggle off
-  2. Click Next
-- **Expected**: Advances without burned calorie adjustment
-- **Pass/Fail**: ___
-
----
-
-## 12. Step 11: Plan Review & Edits
+## 11. Step 10: Plan Review & Edits
 
 ### Test 12.1: Plan Displays Correctly
 - **Steps**:
@@ -492,7 +442,7 @@ Before testing, ensure:
   - UserGoals created with metric values (kg, cm, kcal, grams)
   - UserPreference created with unit selections
   - User.onboardingComplete = true
-  - Baseline Entry created with weight, height, body fat %
+  - Baseline Entry created with weight and height
   - Redirected to /client-dashboard
 - **Pass/Fail**: ___
 
@@ -716,16 +666,7 @@ Before testing, ensure:
 
 ## 19. Admin Settings Integration
 
-### Test 19.1: Custom Body Fat Percentages
-- **Setup**: Admin changes bodyFatLowPercent to 15 (from 12.5)
-- **Steps**:
-  1. New client selects "Low" body fat
-  2. Complete onboarding
-  3. Check Entry.bodyFatPercentage = 15
-- **Expected**: Admin setting used in calculation
-- **Pass/Fail**: ___
-
-### Test 19.2: Custom Calorie Range Enforcement
+### Test 19.1: Custom Calorie Range Enforcement
 - **Setup**: Admin sets minDailyCalories = 1500, maxDailyCalories = 3000
 - **Steps**:
   1. Create client that calculates to 1200 calories
@@ -733,7 +674,7 @@ Before testing, ensure:
 - **Expected**: Validation error shown
 - **Pass/Fail**: ___
 
-### Test 19.3: Custom Protein Range Enforcement
+### Test 19.2: Custom Protein Range Enforcement
 - **Setup**: Admin sets minProteinPerLb = 1.0, maxProteinPerLb = 2.0
 - **Steps**:
   1. Create 150 lb client
@@ -742,7 +683,7 @@ Before testing, ensure:
 - **Expected**: Error "Protein must be between 1.0-2.0g per pound"
 - **Pass/Fail**: ___
 
-### Test 19.4: Custom Macro Defaults
+### Test 19.3: Custom Macro Defaults
 - **Setup**: Admin changes defaultCarbsPercent = 30, defaultProteinPercent = 40, defaultFatPercent = 30
 - **Steps**:
   1. New client reaches Plan Review step

@@ -228,6 +228,12 @@ export default function ClientEntriesPage() {
             >
               Weekly Review
             </Link>
+            <Link
+              href={`/clients/${clientId}/onboarding`}
+              className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap"
+            >
+              Onboarding
+            </Link>
             <span className="px-1 py-3 text-sm font-medium text-neutral-400 -mb-px whitespace-nowrap">
               Training
             </span>
@@ -370,12 +376,12 @@ export default function ClientEntriesPage() {
                     width={32}
                     domain={[
                       (min: number) => {
-                        const goalMin = targetWeightLbs != null ? targetWeightLbs - 2 : min
-                        return Math.floor(Math.min(min, goalMin) - 3)
+                        const goalMin = targetWeightLbs != null ? targetWeightLbs - 1 : min
+                        return Math.floor(Math.min(min, goalMin) - 1)
                       },
                       (max: number) => {
-                        const goalMax = targetWeightLbs != null ? targetWeightLbs + 2 : max
-                        return Math.ceil(Math.max(max, goalMax) + 3)
+                        const goalMax = targetWeightLbs != null ? targetWeightLbs + 1 : max
+                        return Math.ceil(Math.max(max, goalMax) + 1)
                       },
                     ]}
                   />
@@ -393,8 +399,8 @@ export default function ClientEntriesPage() {
                   )}
                   {targetWeightLbs != null && (
                     <ReferenceArea
-                      y1={targetWeightLbs - 2}
-                      y2={targetWeightLbs + 2}
+                      y1={targetWeightLbs - 1}
+                      y2={targetWeightLbs + 1}
                       fill="#2563eb"
                       fillOpacity={0.08}
                       stroke="none"

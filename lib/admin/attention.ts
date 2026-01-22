@@ -109,10 +109,10 @@ export class AttentionScoreCalculator {
       id: string
       name: string | null
       email: string
-      entries: Array<{ date: Date }>
       memberships: Array<{ cohortId: string }>
     },
-    fourteenDaysAgo: Date
+    recentEntries: Date[],
+    lastEntryDate: Date | null
   ): AttentionScore {
     let score = 0
     const reasons: string[] = []
@@ -120,13 +120,14 @@ export class AttentionScoreCalculator {
     const metadata: Record<string, any> = {}
 
     const now = new Date()
-    const lastEntry = user.entries[0]
-    const lastEntryDate = lastEntry ? new Date(lastEntry.date) : null
     const daysSinceLastEntry = lastEntryDate
       ? Math.floor((now.getTime() - lastEntryDate.getTime()) / (24 * 60 * 60 * 1000))
       : null
 
-    if (!lastEntry || (lastEntryDate && lastEntryDate < fourteenDaysAgo)) {
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+
+    if (!lastEntryDate || lastEntryDate < fourteenDaysAgo) {
       const daysSinceLastEntryValue = lastEntryDate
         ? daysSinceLastEntry ?? 0
         : 999
@@ -151,9 +152,8 @@ export class AttentionScoreCalculator {
       metadata.daysSinceLastEntry = daysSinceLastEntry
     }
 
-    const entriesLast14Days = user.entries.filter(
-      (e) => new Date(e.date) >= fourteenDaysAgo
-    ).length
+    const entriesLast14Days = recentEntries.length
+    const entriesLast7Days = recentEntries.filter((date) => date >= sevenDaysAgo).length
 
     if (entriesLast14Days === 0) {
       score += 30
@@ -165,6 +165,14 @@ export class AttentionScoreCalculator {
       reasons.push(`Only ${entriesLast14Days} entries in last 14 days (low engagement)`)
       suggestedActions.push("Review client engagement")
       metadata.entriesLast14Days = entriesLast14Days
+    }
+
+    if (lastEntryDate && entriesLast7Days < 7) {
+      score = Math.max(score, 30)
+      const missedDays = 7 - entriesLast7Days
+      reasons.push(`Missed ${missedDays} check-in${missedDays === 1 ? "" : "s"} this week`)
+      suggestedActions.push("Check in with client")
+      metadata.entriesLast7Days = entriesLast7Days
     }
 
     if (user.memberships.length === 0) {
@@ -491,9 +499,13 @@ export class AttentionScoreCalculator {
 
     // Build a map of client entry counts for engagement calculations
     const clientEntryCounts = new Map<string, number>()
+    const clientRecentEntryDates = new Map<string, Date[]>()
     for (const entry of allEntries) {
       const count = clientEntryCounts.get(entry.userId) || 0
       clientEntryCounts.set(entry.userId, count + 1)
+      const dates = clientRecentEntryDates.get(entry.userId) || []
+      dates.push(entry.date)
+      clientRecentEntryDates.set(entry.userId, dates)
     }
 
     // Get all latest entries for all clients in one batch query
@@ -523,15 +535,17 @@ export class AttentionScoreCalculator {
     for (const client of clients) {
       const latestEntry = latestEntryMap.get(client.id)
       // The Entry relation is included in the query, access it safely
-      const clientWithEntries = {
-        id: client.id,
-        name: client.name,
-        email: client.email,
-        entries: latestEntry ? [{ date: latestEntry.date }] : [],
-        memberships: (client as any).CohortMembership?.map((m: any) => ({ cohortId: m.cohortId })) || [],
-      }
-
-      const score = this.calculateUserScoreFromData(clientWithEntries, fourteenDaysAgo)
+      const recentEntries = clientRecentEntryDates.get(client.id) || []
+      const score = this.calculateUserScoreFromData(
+        {
+          id: client.id,
+          name: client.name,
+          email: client.email,
+          memberships: (client as any).CohortMembership?.map((m: any) => ({ cohortId: m.cohortId })) || [],
+        },
+        recentEntries,
+        latestEntry ? latestEntry.date : null
+      )
       if (score.score > 0) {
         queue.push({
           ...score,
@@ -677,15 +691,18 @@ export class AttentionScoreCalculator {
     const fourteenDaysAgo = new Date()
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
 
+    const recentEntries = user.Entry.filter((entry) => entry.date >= fourteenDaysAgo).map((entry) => entry.date)
+    const lastEntryDate = user.Entry[0]?.date ?? null
+
     return this.calculateUserScoreFromData(
       {
         id: user.id,
         name: user.name,
         email: user.email,
-        entries: user.Entry,
         memberships: user.CohortMembership,
       },
-      fourteenDaysAgo
+      recentEntries,
+      lastEntryDate
     )
   }
 

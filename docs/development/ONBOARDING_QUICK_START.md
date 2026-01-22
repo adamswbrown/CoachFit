@@ -30,7 +30,7 @@ npm run password:set client@test.local client123  # Enable email login
 
 ## The Flow
 
-### 11 Steps (5-10 minutes to complete)
+### 9 Steps (5-10 minutes to complete)
 
 | Step | Input | Purpose |
 |------|-------|---------|
@@ -39,12 +39,10 @@ npm run password:set client@test.local client123  # Enable email login
 | 3 | Current Weight | Starting point for plan |
 | 4 | Height | For BMR calculation |
 | 5 | Birth Date | For age in BMR formula |
-| 6 | Body Fat Range | For category-based body fat % |
-| 7 | Primary Goal | lose/maintain/gain (affects calorie adjustment) |
-| 8 | Target Weight | Goal weight |
-| 9 | Activity Level | not_much/light/moderate/heavy (TDEE multiplier) |
-| 10 | Burned Calories | Toggle to add exercise calorie burn |
-| 11 | Plan Review | See calculated nutrition plan; edit macros if desired |
+| 6 | Primary Goal | lose/maintain/gain (affects calorie adjustment) |
+| 7 | Target Weight | Goal weight |
+| 8 | Activity Level | not_much/light/moderate/heavy (TDEE multiplier) |
+| 9 | Plan Review | See calculated nutrition plan; edit macros if desired |
 
 ### Plan Review (Step 11)
 
@@ -150,10 +148,6 @@ See [docs/development/ONBOARDING_TESTING.md](./ONBOARDING_TESTING.md) for compre
 ### "Admin settings don't affect onboarding"
 - **Cause**: Changed settings AFTER user started onboarding
 - **Solution**: Settings apply to new onboardings only; reset and re-do
-
-### "Can't see body fat percentage in entry form"
-- **Cause**: Feature might be in Entry column but not displayed
-- **Solution**: Check Prisma Studio for Entry.bodyFatPercentage value
 
 ### "Units don't match my preferences"
 - **Cause**: Preferences cached in session

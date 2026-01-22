@@ -80,7 +80,7 @@ export const onboardingStep1Schema = z.object({
 })
 
 export const onboardingStep2Schema = z.object({
-  sex: z.enum(["male", "female"], { message: "Sex must be either male or female" }),
+  sex: z.enum(["male", "female", "prefer_not_to_say"], { message: "Sex must be male, female, or prefer_not_to_say" }),
   weightUnit: z.enum(["lbs", "kg"]).default("lbs"),
   measurementUnit: z.enum(["inches", "cm"]).default("inches"),
 })
@@ -110,12 +110,6 @@ export const onboardingStep6Schema = z.object({
   dateFormat: z.enum(["MM/dd/yyyy", "dd/MM/yyyy", "dd-MMM-yyyy", "yyyy-MM-dd", "MMM dd, yyyy"]).default("MM/dd/yyyy"),
 })
 
-export const onboardingStep7Schema = z.object({
-  bodyFatRange: z.enum(["low", "medium", "high", "very_high"], {
-    message: "Body fat range must be low, medium, high, or very_high",
-  }),
-})
-
 export const onboardingStep8Schema = z.object({
   targetWeight: z.number().positive("Target weight must be greater than 0").max(1000, "Target weight must be 1000 or less"),
 })
@@ -130,10 +124,6 @@ export const onboardingStep9Schema = z.object({
   ], {
     message: "Activity level must be one of: sedentary, lightly_active, active, very_active, extremely_active",
   }),
-})
-
-export const onboardingStep10Schema = z.object({
-  addBurnedCalories: z.boolean().default(false),
 })
 
 export const onboardingPlanReviewSchema = z.object({

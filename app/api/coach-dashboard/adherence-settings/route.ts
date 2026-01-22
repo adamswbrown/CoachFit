@@ -4,8 +4,8 @@ import { db } from "@/lib/db"
 import { isAdminOrCoach } from "@/lib/permissions"
 
 const DEFAULT_ADHERENCE = {
-  adherenceGreenMinimum: 6,
-  adherenceAmberMinimum: 3,
+  adherenceGreenMinimum: 7,
+  adherenceAmberMinimum: 6,
 }
 
 export async function GET() {

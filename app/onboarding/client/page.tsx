@@ -33,7 +33,6 @@ interface OnboardingData {
   currentWeight: number | string
   height: number | string
   birthDate: string
-  bodyFatRange: string
   targetWeight: number | string
   activityLevel: string
   // addBurnedCalories removed
@@ -63,7 +62,6 @@ export default function ClientOnboarding() {
     currentWeight: "",
     height: "",
     birthDate: "",
-    bodyFatRange: "",
     targetWeight: "",
     activityLevel: "",
     // addBurnedCalories removed
@@ -299,7 +297,6 @@ export default function ClientOnboarding() {
         currentWeightKg,
         heightCm,
         birthDate: data.birthDate,
-        // bodyFatRange removed
         targetWeightKg,
         activityLevel: data.activityLevel,
         // addBurnedCalories removed
