@@ -16,7 +16,8 @@ export async function GET(req: NextRequest) {
     }
 
     const calculator = new AttentionScoreCalculator()
-    const attentionQueue = await calculator.calculateAttentionQueue()
+    const refresh = req.nextUrl.searchParams.get("refresh") === "1"
+    const attentionQueue = await calculator.calculateAttentionQueue({ forceRefresh: refresh })
 
     return NextResponse.json(
       {

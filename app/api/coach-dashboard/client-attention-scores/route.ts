@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isCoach } from "@/lib/permissions"
+import { AttentionScoreCalculator } from "@/lib/admin/attention"
 import { NextResponse } from "next/server"
 
 interface ClientAttentionData {
@@ -62,6 +63,13 @@ export async function GET(req: Request) {
 
     if (clientIds.length === 0) {
       return NextResponse.json({ data: [] })
+    }
+
+    const { searchParams } = new URL(req.url)
+    const refresh = searchParams.get("refresh") === "1"
+    if (refresh) {
+      const calculator = new AttentionScoreCalculator()
+      await calculator.recalculateClientAttention(clientIds)
     }
 
     // Get attention scores for these clients

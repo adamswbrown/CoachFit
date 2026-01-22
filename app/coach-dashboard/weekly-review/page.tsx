@@ -408,7 +408,7 @@ export default function WeeklyReviewPage() {
 
       // Fetch attention scores
       const attentionRes = await fetch(
-        `/api/coach-dashboard/client-attention-scores`
+        `/api/coach-dashboard/client-attention-scores?refresh=1`
       )
       let attention: ClientAttention[] = []
       if (attentionRes.ok) {

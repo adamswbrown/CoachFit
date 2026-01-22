@@ -25,6 +25,15 @@ export interface AttentionQueueItem {
 }
 
 export class AttentionScoreCalculator {
+  private chunkIds<T>(items: T[], size: number): T[][] {
+    if (size <= 0) return [items]
+    const chunks: T[][] = []
+    for (let i = 0; i < items.length; i += size) {
+      chunks.push(items.slice(i, i + size))
+    }
+    return chunks
+  }
+
   /**
    * Check if we can use cached attention scores
    */
@@ -399,14 +408,19 @@ export class AttentionScoreCalculator {
   /**
    * Calculate attention queue for all entities - OPTIMIZED VERSION
    */
-  async calculateAttentionQueue(): Promise<{
+  async calculateAttentionQueue(options: {
+    forceRefresh?: boolean
+    batchSize?: number
+  } = {}): Promise<{
     red: AttentionQueueItem[]
     amber: AttentionQueueItem[]
     green: AttentionQueueItem[]
   }> {
+    const forceRefresh = options.forceRefresh ?? false
+    const batchSize = options.batchSize ?? 200
     // First, try to use cached scores if available
-    const cachedScores = await this.getCachedScores()
-    if (cachedScores && cachedScores.length > 0) {
+    const cachedScores = forceRefresh ? null : await this.getCachedScores()
+    if (!forceRefresh && cachedScores && cachedScores.length > 0) {
       const red = cachedScores.filter((item) => item.priority === "red")
       const amber = cachedScores.filter((item) => item.priority === "amber")
       const green = cachedScores.filter((item) => item.priority === "green")
@@ -418,26 +432,17 @@ export class AttentionScoreCalculator {
     const now = new Date()
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
 
-    // Batch load all data upfront
-    const [clients, coaches, cohorts, allEntries, allMemberships] = await Promise.all([
-      // Load all clients with their latest entries and memberships
+    const [allClientIds, coaches, cohorts, allEntries] = await Promise.all([
       db.user.findMany({
-      where: {
-        roles: {
-          has: Role.CLIENT,
-        },
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        CohortMembership: {
-          select: {
-            cohortId: true,
+        where: {
+          roles: {
+            has: Role.CLIENT,
           },
         },
-      },
-    }),
+        select: {
+          id: true,
+        },
+      }),
 
       // Load all coaches with their cohorts and memberships
       db.user.findMany({
@@ -487,75 +492,27 @@ export class AttentionScoreCalculator {
           date: true,
         },
       }),
-
-      // Load all memberships for cohort calculations
-      db.cohortMembership.findMany({
-        select: {
-          userId: true,
-          cohortId: true,
-        },
-      }),
     ])
 
     // Build a map of client entry counts for engagement calculations
     const clientEntryCounts = new Map<string, number>()
-    const clientRecentEntryDates = new Map<string, Date[]>()
     for (const entry of allEntries) {
       const count = clientEntryCounts.get(entry.userId) || 0
       clientEntryCounts.set(entry.userId, count + 1)
-      const dates = clientRecentEntryDates.get(entry.userId) || []
-      dates.push(entry.date)
-      clientRecentEntryDates.set(entry.userId, dates)
     }
 
-    // Get all latest entries for all clients in one batch query
-    const clientIds = clients.map((c: { id: string }) => c.id)
-    const allClientEntries = await db.entry.findMany({
-      where: {
-        userId: { in: clientIds },
-      },
-      select: {
-        userId: true,
-        date: true,
-      },
-      orderBy: {
-        date: "desc",
-      },
-    })
+    const clientIds = allClientIds.map((client) => client.id)
+    const batches = this.chunkIds(clientIds, batchSize)
 
-    // Group by userId and take the first (latest) entry for each
-    const latestEntryMap = new Map<string, { userId: string; date: Date }>()
-    for (const entry of allClientEntries) {
-      if (!latestEntryMap.has(entry.userId)) {
-        latestEntryMap.set(entry.userId, entry)
+    for (const batch of batches) {
+      const batchScores = await this.calculateClientScoresBatch(batch, fourteenDaysAgo)
+      if (batchScores.length > 0) {
+        queue.push(...batchScores)
+        await this.storeAttentionScores(batchScores)
       }
     }
 
-    // Calculate scores for all clients (in memory, no additional queries)
-    for (const client of clients) {
-      const latestEntry = latestEntryMap.get(client.id)
-      // The Entry relation is included in the query, access it safely
-      const recentEntries = clientRecentEntryDates.get(client.id) || []
-      const score = this.calculateUserScoreFromData(
-        {
-          id: client.id,
-          name: client.name,
-          email: client.email,
-          memberships: (client as any).CohortMembership?.map((m: any) => ({ cohortId: m.cohortId })) || [],
-        },
-        recentEntries,
-        latestEntry ? latestEntry.date : null
-      )
-      if (score.score > 0) {
-        queue.push({
-          ...score,
-          entityName: client.name || client.email,
-          entityEmail: client.email,
-        })
-      }
-    }
-
-    // Calculate scores for all coaches (in memory)
+    const coachScores: AttentionQueueItem[] = []
     for (const coach of coaches) {
       const score = this.calculateCoachScoreFromData(
         {
@@ -567,7 +524,7 @@ export class AttentionScoreCalculator {
         clientEntryCounts
       )
       if (score.score > 0) {
-        queue.push({
+        coachScores.push({
           ...score,
           entityName: coach.name || coach.email,
           entityEmail: coach.email,
@@ -575,15 +532,24 @@ export class AttentionScoreCalculator {
       }
     }
 
-    // Calculate scores for all cohorts (in memory)
+    const cohortScores: AttentionQueueItem[] = []
     for (const cohort of cohorts) {
       const score = this.calculateCohortScoreFromData(cohort, clientEntryCounts)
       if (score.score > 0) {
-        queue.push({
+        cohortScores.push({
           ...score,
           entityName: cohort.name,
         })
       }
+    }
+
+    if (coachScores.length > 0) {
+      await this.storeAttentionScores(coachScores)
+      queue.push(...coachScores)
+    }
+    if (cohortScores.length > 0) {
+      await this.storeAttentionScores(cohortScores)
+      queue.push(...cohortScores)
     }
 
     // Sort by score (highest first) and group by priority
@@ -593,12 +559,112 @@ export class AttentionScoreCalculator {
     const amber = queue.filter((item) => item.priority === "amber")
     const green = queue.filter((item) => item.priority === "green")
 
-    // Store attention scores in database (async, don't wait)
-    this.storeAttentionScores(queue).catch((err) => {
-      console.error("Error storing attention scores:", err)
-    })
-
     return { red, amber, green }
+  }
+
+  async recalculateClientAttention(clientIds: string[], batchSize = 200): Promise<void> {
+    if (clientIds.length === 0) return
+    const uniqueIds = Array.from(new Set(clientIds))
+    const batches = this.chunkIds(uniqueIds, batchSize)
+    const now = new Date()
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
+
+    for (const batch of batches) {
+      const batchScores = await this.calculateClientScoresBatch(batch, fourteenDaysAgo)
+      if (batchScores.length > 0) {
+        await this.storeAttentionScores(batchScores)
+      }
+    }
+  }
+
+  private async calculateClientScoresBatch(
+    clientIds: string[],
+    fourteenDaysAgo: Date
+  ): Promise<AttentionQueueItem[]> {
+    if (clientIds.length === 0) return []
+
+    const [clients, recentEntries, latestEntries] = await Promise.all([
+      db.user.findMany({
+        where: {
+          id: { in: clientIds },
+          roles: {
+            has: Role.CLIENT,
+          },
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          CohortMembership: {
+            select: {
+              cohortId: true,
+            },
+          },
+        },
+      }),
+      db.entry.findMany({
+        where: {
+          userId: { in: clientIds },
+          date: { gte: fourteenDaysAgo },
+        },
+        select: {
+          userId: true,
+          date: true,
+        },
+      }),
+      db.entry.findMany({
+        where: {
+          userId: { in: clientIds },
+        },
+        select: {
+          userId: true,
+          date: true,
+        },
+        orderBy: {
+          date: "desc",
+        },
+        distinct: ["userId"],
+      }),
+    ])
+
+    const recentEntriesByUser = new Map<string, Date[]>()
+    for (const entry of recentEntries) {
+      const dates = recentEntriesByUser.get(entry.userId) || []
+      dates.push(entry.date)
+      recentEntriesByUser.set(entry.userId, dates)
+    }
+
+    const latestEntryMap = new Map<string, Date>()
+    for (const entry of latestEntries) {
+      if (!latestEntryMap.has(entry.userId)) {
+        latestEntryMap.set(entry.userId, entry.date)
+      }
+    }
+
+    const scores: AttentionQueueItem[] = []
+    for (const client of clients) {
+      const recent = recentEntriesByUser.get(client.id) || []
+      const lastEntryDate = latestEntryMap.get(client.id) || null
+      const score = this.calculateUserScoreFromData(
+        {
+          id: client.id,
+          name: client.name,
+          email: client.email,
+          memberships: client.CohortMembership.map((m) => ({ cohortId: m.cohortId })),
+        },
+        recent,
+        lastEntryDate
+      )
+      if (score.score > 0) {
+        scores.push({
+          ...score,
+          entityName: client.name || client.email,
+          entityEmail: client.email,
+        })
+      }
+    }
+
+    return scores
   }
 
   /**
