@@ -587,13 +587,6 @@ export default function ClientOverviewPage() {
             <div className="bg-white border border-neutral-200 rounded-lg p-4">
               <h3 className="text-sm font-semibold text-neutral-900 mb-4">Profile</h3>
               <div className="space-y-3 text-sm">
-                {/* Onboarding Status */}
-                {client.onboardingComplete === false && (
-                  <div className="rounded bg-yellow-50 border border-yellow-200 px-3 py-2 mb-2 flex items-center gap-2">
-                    <span className="text-yellow-600 text-lg">⚠️</span>
-                    <span className="text-yellow-800 font-medium">Onboarding not completed</span>
-                  </div>
-                )}
                 <div>
                   <div className="text-neutral-500">Email</div>
                   <div className="text-neutral-900 font-medium">{client.email}</div>
@@ -642,83 +635,6 @@ export default function ClientOverviewPage() {
               </div>
             </div>
 
-            {/* Onboarding Answers */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-6">
-              <h3 className="text-sm font-semibold text-neutral-900 mb-4">Onboarding Answers</h3>
-              {onboardingError && (
-                <div className="text-sm text-neutral-500 italic">{onboardingError}</div>
-              )}
-              {!onboardingError && !onboardingData && (
-                <div className="text-sm text-neutral-500">Loading...</div>
-              )}
-              {!onboardingError && onboardingData && (
-                <div className="space-y-3 text-sm">
-                  {onboardingData.onboardingComplete === false && (
-                    <div className="rounded bg-yellow-50 border border-yellow-200 px-3 py-2 flex items-center gap-2">
-                      <span className="text-yellow-600 text-lg">⚠️</span>
-                      <span className="text-yellow-800 font-medium">Onboarding not completed</span>
-                    </div>
-                  )}
-                  <div>
-                    <div className="text-neutral-500">Sex</div>
-                    <div className="text-neutral-900 font-medium">{formatSex(onboardingData.gender)}</div>
-                  </div>
-                  <div>
-                    <div className="text-neutral-500">Date of birth</div>
-                    <div className="text-neutral-900 font-medium">
-                      {onboardingData.dateOfBirth ? new Date(onboardingData.dateOfBirth).toLocaleDateString() : "—"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-neutral-500">Primary goal</div>
-                    <div className="text-neutral-900 font-medium">{formatPrimaryGoal(onboardingData.primaryGoal)}</div>
-                  </div>
-                  <div>
-                    <div className="text-neutral-500">Activity level</div>
-                    <div className="text-neutral-900 font-medium">{formatActivityLevel(onboardingData.activityLevel)}</div>
-                  </div>
-                  <div>
-                    <div className="text-neutral-500">Current weight</div>
-                    <div className="text-neutral-900 font-medium">
-                      {onboardingData.UserGoals?.currentWeightKg != null
-                        ? `${kgToLbs(onboardingData.UserGoals.currentWeightKg).toFixed(1)} lbs`
-                        : "—"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-neutral-500">Target weight</div>
-                    <div className="text-neutral-900 font-medium">
-                      {onboardingData.UserGoals?.targetWeightKg != null
-                        ? `${kgToLbs(onboardingData.UserGoals.targetWeightKg).toFixed(1)} lbs`
-                        : "—"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-neutral-500">Height</div>
-                    <div className="text-neutral-900 font-medium">
-                      {onboardingData.UserGoals?.heightCm != null
-                        ? `${cmToInches(onboardingData.UserGoals.heightCm).toFixed(1)} in`
-                        : "—"}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 pt-2">
-                    <div>
-                      <div className="text-neutral-500 text-xs">Weight unit</div>
-                      <div className="text-neutral-900 font-medium">{onboardingData.UserPreference?.weightUnit || "—"}</div>
-                    </div>
-                    <div>
-                      <div className="text-neutral-500 text-xs">Height unit</div>
-                      <div className="text-neutral-900 font-medium">{onboardingData.UserPreference?.measurementUnit || "—"}</div>
-                    </div>
-                    <div>
-                      <div className="text-neutral-500 text-xs">Date format</div>
-                      <div className="text-neutral-900 font-medium">{onboardingData.UserPreference?.dateFormat || "—"}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Updates */}
             <div className="bg-white border border-neutral-200 rounded-lg p-4">
               <h3 className="text-sm font-semibold text-neutral-900 mb-4">Updates</h3>
@@ -740,29 +656,6 @@ export default function ClientOverviewPage() {
                 </div>
               ) : (
                 <div className="text-sm text-neutral-500">No recent updates</div>
-              )}
-            </div>
-
-            {/* Notes */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-neutral-900 mb-4">Notes</h3>
-              {coachNotes.length > 0 ? (
-                <div className="space-y-3">
-                  {coachNotes.slice(0, 3).map((note) => (
-                    <div key={note.id} className="text-sm">
-                      <div className="text-neutral-900">{note.note}</div>
-                      <div className="text-xs text-neutral-500 mt-1">
-                        {new Date(note.noteDate || note.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric"
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-sm text-neutral-500 italic">No notes yet</div>
               )}
             </div>
 
@@ -855,6 +748,29 @@ export default function ClientOverviewPage() {
               clientId={clientId}
               onboardingComplete={client.onboardingComplete ?? false}
             />
+
+            {/* Notes */}
+            <div className="bg-white border border-neutral-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-neutral-900 mb-4">Notes</h3>
+              {coachNotes.length > 0 ? (
+                <div className="space-y-3">
+                  {coachNotes.slice(0, 3).map((note) => (
+                    <div key={note.id} className="text-sm">
+                      <div className="text-neutral-900">{note.note}</div>
+                      <div className="text-xs text-neutral-500 mt-1">
+                        {new Date(note.noteDate || note.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric"
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-neutral-500 italic">No notes yet</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
