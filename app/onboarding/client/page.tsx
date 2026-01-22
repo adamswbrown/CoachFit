@@ -8,7 +8,7 @@ import { SelectionGrid } from "@/components/onboarding/SelectionGrid"
 import { UnitToggle } from "@/components/onboarding/UnitToggle"
 import { NumericInput } from "@/components/onboarding/NumericInput"
 import { DatePicker } from "@/components/onboarding/DatePicker"
-import { PlanReview, MacroPercents, PlanReviewOnSavePayload, PlanReviewRanges } from "@/components/onboarding/PlanReview"
+import { PlanReview, PlanReviewOnSavePayload, PlanReviewRanges } from "@/components/onboarding/PlanReview"
 import { lbsToKg, inchesToCm, kgToLbs } from "@/lib/utils/unit-conversions"
 
 const BASE_STEPS = 10
@@ -20,11 +20,6 @@ const DEFAULT_PLAN_RANGES: PlanReviewRanges = {
   maxDailyCalories: 5000,
   minProteinPerLb: 0.4,
   maxProteinPerLb: 2.0,
-  defaultMacroPercents: {
-    proteinPercent: 30,
-    carbPercent: 40,
-    fatPercent: 30,
-  },
 }
 
 interface OnboardingData {
@@ -52,11 +47,9 @@ export default function ClientOnboarding() {
   const [showInterstitial, setShowInterstitial] = useState(false)
   const [calculatedPlan, setCalculatedPlan] = useState<any>(null)
   // Personalized plan is now coach-only; never shown to member
-  const [showPersonalizedPlan, setShowPersonalizedPlan] = useState(false)
-  const [configLoading, setConfigLoading] = useState(true)
-  const [macroPercents, setMacroPercents] = useState<MacroPercents>({
-    ...DEFAULT_PLAN_RANGES.defaultMacroPercents,
-  })
+    const [showPersonalizedPlan, setShowPersonalizedPlan] = useState(false)
+    const [configLoading, setConfigLoading] = useState(true)
+  // macroPercents state removed
 
   const [data, setData] = useState<OnboardingData>({
     name: "",
@@ -121,18 +114,7 @@ export default function ClientOnboarding() {
     setErrors((prev) => ({ ...prev, [field]: "" }))
   }
 
-  const deriveMacroPercents = (plan: any): MacroPercents => {
-    if (!plan?.dailyCaloriesKcal || plan.dailyCaloriesKcal === 0) {
-      return DEFAULT_PLAN_RANGES.defaultMacroPercents
-    }
-
-    const calories = plan.dailyCaloriesKcal
-    return {
-      proteinPercent: Math.round(((plan.proteinGrams * 4) / calories) * 100),
-      carbPercent: Math.round(((plan.carbGrams * 4) / calories) * 100),
-      fatPercent: Math.round(((plan.fatGrams * 9) / calories) * 100),
-    }
-  }
+  // deriveMacroPercents removed
 
   const validateStep = (currentStep: number): boolean => {
     const newErrors: Record<string, string> = {}
@@ -258,7 +240,7 @@ export default function ClientOnboarding() {
         targetWeightKg,
         weightLbs: kgToLbs(currentWeightKg),
       })
-      setMacroPercents(deriveMacroPercents(plan))
+      // setMacroPercents removed
       setStep(PLAN_REVIEW_STEP)
     } catch (error) {
       console.error("Error calculating plan:", error)
@@ -272,17 +254,10 @@ export default function ClientOnboarding() {
         ? {
             ...prev,
             dailyCaloriesKcal: payload.dailyCaloriesKcal,
-            proteinGrams: payload.proteinGrams,
-            carbGrams: payload.carbGrams,
-            fatGrams: payload.fatGrams,
-            waterIntakeMl: payload.waterIntakeMl,
             dailyStepsTarget: payload.dailyStepsTarget,
-            weeklyWorkoutMinutes: payload.weeklyWorkoutMinutes,
           }
         : prev
     )
-
-    setMacroPercents(payload.macroPercents)
   }
 
   const handleSubmit = async () => {
@@ -310,7 +285,7 @@ export default function ClientOnboarding() {
         currentWeightKg,
         heightCm,
         birthDate: data.birthDate,
-        bodyFatRange: data.bodyFatRange,
+        // bodyFatRange removed
         targetWeightKg,
         activityLevel: data.activityLevel,
         // addBurnedCalories removed
@@ -318,10 +293,6 @@ export default function ClientOnboarding() {
         measurementUnit: data.measurementUnit,
         dateFormat: data.dateFormat,
         dailyCaloriesKcal: calculatedPlan?.dailyCaloriesKcal,
-        proteinGrams: calculatedPlan?.proteinGrams,
-        carbGrams: calculatedPlan?.carbGrams,
-        fatGrams: calculatedPlan?.fatGrams,
-        waterIntakeMl: calculatedPlan?.waterIntakeMl,
       }
 
       const response = await fetch("/api/onboarding/submit", {
@@ -600,41 +571,9 @@ export default function ClientOnboarding() {
                 <p className="text-red-600 text-sm">{errors.activityLevel}</p>
               )}
             </div>
-          ) : step === 10 ? (
-            // Step 10: Burned Calories Toggle
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Add burned calories back?
-                </h2>
-                <p className="text-gray-600 mb-4">
-                  If you want to consume extra calories on exercise days
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => updateData("addBurnedCalories", true)}
-                    className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
-                      data.addBurnedCalories
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    }`}
-                  >
-                    Yes
-                  </button>
-                  <button
-                    onClick={() => updateData("addBurnedCalories", false)}
-                    className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
-                      !data.addBurnedCalories
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    }`}
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-            </div>
           ) : null}
+          {/* PlanReview usage (coach-facing only, not shown in client onboarding) would go here, e.g.: */}
+          {/* <PlanReview plan={calculatedPlan} isSaving={isLoading} onSave={handlePlanSave} ranges={DEFAULT_PLAN_RANGES} /> */}
 
           {/* Error Messages */}
           {errors.submit && (

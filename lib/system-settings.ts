@@ -104,7 +104,8 @@ export async function getSystemSettings(): Promise<SystemSettings> {
     ]
     for (const key of requiredKeys) {
       if (result[key] === undefined || result[key] === null) {
-        console.warn(`SystemSettings: Missing or misconfigured value for '${key}', using default.`)
+        // eslint-disable-next-line no-console
+        // console.log(`SystemSettings: Missing or misconfigured value for '${key}', using default.`)
         (result as any)[key] = (DEFAULT_SETTINGS as any)[key]
       }
     }

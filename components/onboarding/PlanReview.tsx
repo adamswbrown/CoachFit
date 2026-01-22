@@ -2,26 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react"
 
-const KCAL_PER_GRAM = {
-  carb: 4,
-  protein: 4,
-  fat: 9,
-}
-
-export type MacroPercents = {
-  proteinPercent: number
-  carbPercent: number
-  fatPercent: number
-}
-
 export type PlanReviewRanges = {
   minDailyCalories: number
   maxDailyCalories: number
   minProteinPerLb: number
   maxProteinPerLb: number
-  defaultMacroPercents: MacroPercents
 }
-
 // NOTE: PlanReviewPlan is now simplified for coach-facing use only
 export type PlanReviewPlan = {
   bmr: number
@@ -41,6 +27,7 @@ interface PlanReviewProps {
   plan: PlanReviewPlan | null
   isSaving?: boolean
   onSave: (payload: PlanReviewOnSavePayload) => void
+  ranges: PlanReviewRanges
 }
 
 /**
@@ -48,29 +35,11 @@ interface PlanReviewProps {
  * Presentational plan review component for onboarding.
  * Only shows daily calories and steps. Plan is for coach, not member.
  */
-export function PlanReview({ plan, isSaving = false, onSave }: PlanReviewProps) {
+export function PlanReview({ plan, isSaving = false, onSave, ranges }: PlanReviewProps) {
   const [editMode, setEditMode] = useState(false)
   const [localCalories, setLocalCalories] = useState<number>(plan?.dailyCaloriesKcal ?? 0)
   const [localSteps, setLocalSteps] = useState<number | undefined>(plan?.dailyStepsTarget)
   const [errors, setErrors] = useState<Record<string, string>>({})
-
-  useEffect(() => {
-    if (plan) {
-      setLocalCalories(plan.dailyCaloriesKcal)
-      setLocalWater(plan.waterIntakeMl)
-      setLocalSteps(plan.dailyStepsTarget)
-      setLocalWorkoutMinutes(plan.weeklyWorkoutMinutes)
-    }
-  }, [plan])
-
-  useEffect(() => {
-    setLocalPercents(macroPercents)
-  }, [macroPercents])
-
-  const macroSum = useMemo(
-    () => localPercents.carbPercent + localPercents.proteinPercent + localPercents.fatPercent,
-    [localPercents]
-  )
 
   if (!plan) {
     return (
@@ -83,35 +52,12 @@ export function PlanReview({ plan, isSaving = false, onSave }: PlanReviewProps) 
 
   const handleValidate = (): boolean => {
     const nextErrors: Record<string, string> = {}
-
     if (localCalories < ranges.minDailyCalories || localCalories > ranges.maxDailyCalories) {
       nextErrors.calories = `Calories must be between ${ranges.minDailyCalories} and ${ranges.maxDailyCalories} kcal`
-    }
-
-    if (Math.abs(macroSum - 100) > 0.1) {
-      nextErrors.macros = "Macro percentages must total 100%"
-    }
-
-    // Compute protein per lb from percents to validate against per-lb range
-    const derivedProteinGrams = Math.round((localCalories * (localPercents.proteinPercent / 100)) / KCAL_PER_GRAM.protein)
-    const proteinPerLb = plan.weightLbs > 0 ? derivedProteinGrams / plan.weightLbs : 0
-    if (proteinPerLb < ranges.minProteinPerLb) {
-      nextErrors.protein = `Protein must be at least ${(ranges.minProteinPerLb * plan.weightLbs).toFixed(1)}g (${ranges.minProteinPerLb}g/lb)`
-    }
-    if (proteinPerLb > ranges.maxProteinPerLb) {
-      nextErrors.protein = `Protein must not exceed ${(ranges.maxProteinPerLb * plan.weightLbs).toFixed(1)}g (${ranges.maxProteinPerLb}g/lb)`
-    }
-
-    if (localWater < 0) {
-      nextErrors.water = "Water cannot be negative"
     }
     if (localSteps !== undefined && localSteps < 0) {
       nextErrors.steps = "Steps cannot be negative"
     }
-    if (localWorkoutMinutes !== undefined && localWorkoutMinutes < 0) {
-      nextErrors.workouts = "Workout minutes cannot be negative"
-    }
-
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
@@ -120,66 +66,39 @@ export function PlanReview({ plan, isSaving = false, onSave }: PlanReviewProps) 
     if (isSaving) return
     if (!handleValidate()) return
 
-    const proteinGrams = Math.round((localCalories * (localPercents.proteinPercent / 100)) / KCAL_PER_GRAM.protein)
-    const carbGrams = Math.round((localCalories * (localPercents.carbPercent / 100)) / KCAL_PER_GRAM.carb)
-    const fatGrams = Math.round((localCalories * (localPercents.fatPercent / 100)) / KCAL_PER_GRAM.fat)
-
     onSave({
       dailyCaloriesKcal: localCalories,
-      proteinGrams,
-      carbGrams,
-      fatGrams,
-      waterIntakeMl: localWater,
       dailyStepsTarget: localSteps,
-      weeklyWorkoutMinutes: localWorkoutMinutes,
-      macroPercents: { ...localPercents },
     })
-
-    setEditMode(false)
   }
 
   const resetToDefaults = () => {
-    setLocalPercents(ranges.defaultMacroPercents)
+    // No macro percents to reset
   }
 
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <SummaryCard label="BMR" value={plan.bmr} helper="kcal/day" color="blue" />
         <SummaryCard label="TDEE" value={plan.tdee} helper="kcal/day" color="green" />
         <SummaryCard label="Daily Goal" value={localCalories} helper="kcal/day" color="purple" />
-        <SummaryCard label="Water" value={localWater} helper="ml/day" color="orange" />
       </div>
 
       <div className="bg-gray-50 p-4 sm:p-6 rounded-lg space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Daily Macro Targets</h3>
-            <p className="text-sm text-gray-600">Adjust percents; we convert to grams</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={resetToDefaults}
-              className="text-sm text-neutral-600 hover:text-neutral-900 underline-offset-4 hover:underline"
-              disabled={isSaving}
-            >
-              Reset to defaults
-            </button>
-            <button
-              onClick={() => {
-                setEditMode((prev) => !prev)
-                setErrors({})
-              }}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-              disabled={isSaving}
-            >
-              {editMode ? "Cancel" : "Edit"}
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              setEditMode((prev) => !prev)
+              setErrors({})
+            }}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            disabled={isSaving}
+          >
+            {editMode ? "Cancel" : "Edit"}
+          </button>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
           <LabeledNumber
             label="Daily calories"
             value={localCalories}
@@ -190,44 +109,8 @@ export function PlanReview({ plan, isSaving = false, onSave }: PlanReviewProps) 
             min={ranges.minDailyCalories}
             max={ranges.maxDailyCalories}
           />
-          <LabeledNumber
-            label="Water"
-            value={localWater}
-            onChange={(v) => setLocalWater(isNaN(v) ? 0 : v)}
-            suffix="ml"
-            disabled={!editMode || isSaving}
-            error={errors.water}
-            min={0}
-          />
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <MacroInput
-            label="Protein"
-            percent={localPercents.proteinPercent}
-            onChange={(v) => setLocalPercents((p) => ({ ...p, proteinPercent: v }))}
-            disabled={!editMode || isSaving}
-            color="red"
-          />
-          <MacroInput
-            label="Carbs"
-            percent={localPercents.carbPercent}
-            onChange={(v) => setLocalPercents((p) => ({ ...p, carbPercent: v }))}
-            disabled={!editMode || isSaving}
-            color="yellow"
-          />
-          <MacroInput
-            label="Fat"
-            percent={localPercents.fatPercent}
-            onChange={(v) => setLocalPercents((p) => ({ ...p, fatPercent: v }))}
-            disabled={!editMode || isSaving}
-            color="amber"
-          />
-        </div>
-        {errors.macros && <p className="text-sm text-red-600">{errors.macros}</p>}
-        {errors.protein && <p className="text-sm text-red-600">{errors.protein}</p>}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
           <LabeledNumber
             label="Daily steps target"
             value={localSteps ?? 0}
@@ -237,17 +120,8 @@ export function PlanReview({ plan, isSaving = false, onSave }: PlanReviewProps) 
             error={errors.steps}
             min={0}
           />
-          <LabeledNumber
-            label="Weekly workout minutes"
-            value={localWorkoutMinutes ?? 0}
-            onChange={(v) => setLocalWorkoutMinutes(isNaN(v) ? undefined : v)}
-            suffix="min"
-            disabled={!editMode || isSaving}
-            error={errors.workouts}
-            min={0}
-          />
         </div>
-      </div>
+        </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <p className="text-sm text-blue-900">
