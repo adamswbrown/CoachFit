@@ -416,9 +416,35 @@ export default function ClientEntriesPage() {
                   <Legend
                     align="right"
                     verticalAlign="top"
-                    iconSize={10}
                     wrapperStyle={{ fontSize: "12px" }}
-                    payload={weightLegendPayload}
+                    content={() => (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
+                        {weightLegendPayload.map((item) => (
+                          <div
+                            key={item.value}
+                            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                          >
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: item.type === "rect" ? 12 : 14,
+                                height: item.type === "rect" ? 10 : 0,
+                                borderTop:
+                                  item.type === "line" ? `2px solid ${item.color}` : undefined,
+                                backgroundColor: item.type === "rect" ? item.color : undefined,
+                              }}
+                            />
+                            <span>{item.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   />
                   <Area
                     yAxisId="weight"
