@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isClient } from "@/lib/permissions"
 import { onboardingSubmitSchema } from "@/lib/validations"
-import { bodyFatRangeToPercentage, completeOnboardingCalculation } from "@/lib/calculations/fitness"
+import { completeOnboardingCalculation } from "@/lib/calculations/fitness"
 import { lbsToKg, inchesToCm } from "@/lib/utils/unit-conversions"
 import { NextResponse } from "next/server"
 
@@ -34,28 +34,27 @@ export async function POST(request: Request) {
 
     const data = parsed.data
 
-    // Get body fat percentage from range
-    const bodyFatPercentage = await bodyFatRangeToPercentage(data.bodyFatRange)
+    // Body fat % is no longer collected in onboarding
 
     // Verify calculations are correct (re-calculate to validate)
     const calculations = await completeOnboardingCalculation({
       weightKg: data.currentWeightKg,
       heightCm: data.heightCm,
       birthDate: data.birthDate,
-      sex: data.sex as "male" | "female",
-      activityLevel: data.activityLevel as "not_much" | "light" | "moderate" | "heavy",
+      sex: data.sex as "male" | "female" | "prefer_not_to_say",
+      activityLevel: data.activityLevel as
+        | "sedentary"
+        | "lightly_active"
+        | "active"
+        | "very_active"
+        | "extremely_active",
       primaryGoal: data.primaryGoal as "lose_weight" | "maintain_weight" | "gain_weight",
       targetWeightKg: data.targetWeightKg,
     })
 
     const resolvedPlan = {
       dailyCaloriesKcal: data.dailyCaloriesKcal ?? calculations.dailyCaloriesKcal,
-      proteinGrams: data.proteinGrams ?? calculations.proteinGrams,
-      carbGrams: data.carbGrams ?? calculations.carbGrams,
-      fatGrams: data.fatGrams ?? calculations.fatGrams,
-      waterIntakeMl: data.waterIntakeMl ?? calculations.waterIntakeMl,
       dailyStepsTarget: data.dailyStepsTarget ?? calculations.dailyStepsTarget ?? null,
-      weeklyWorkoutMinutes: data.weeklyWorkoutMinutes ?? calculations.weeklyWorkoutMinutes ?? null,
     }
 
     // Convert weight and height back to imperial for Entry model (which uses lbs/inches)
@@ -102,12 +101,7 @@ export async function POST(request: Request) {
           targetWeightKg: data.targetWeightKg,
           heightCm: data.heightCm,
           dailyCaloriesKcal: resolvedPlan.dailyCaloriesKcal,
-          proteinGrams: resolvedPlan.proteinGrams,
-          carbGrams: resolvedPlan.carbGrams,
-          fatGrams: resolvedPlan.fatGrams,
-          waterIntakeMl: resolvedPlan.waterIntakeMl,
           dailyStepsTarget: resolvedPlan.dailyStepsTarget,
-          weeklyWorkoutMinutes: resolvedPlan.weeklyWorkoutMinutes,
         },
         create: {
           userId: session.user.id,
@@ -115,12 +109,7 @@ export async function POST(request: Request) {
           targetWeightKg: data.targetWeightKg,
           heightCm: data.heightCm,
           dailyCaloriesKcal: resolvedPlan.dailyCaloriesKcal,
-          proteinGrams: resolvedPlan.proteinGrams,
-          carbGrams: resolvedPlan.carbGrams,
-          fatGrams: resolvedPlan.fatGrams,
-          waterIntakeMl: resolvedPlan.waterIntakeMl,
           dailyStepsTarget: resolvedPlan.dailyStepsTarget,
-          weeklyWorkoutMinutes: resolvedPlan.weeklyWorkoutMinutes,
         },
       })
 
@@ -138,13 +127,10 @@ export async function POST(request: Request) {
         update: {
           weightLbs,
           heightInches,
-          bodyFatPercentage,
           customResponses: {
             onboardingData: {
               activityLevel: data.activityLevel,
               primaryGoal: data.primaryGoal,
-              bodyFatRange: data.bodyFatRange,
-              addBurnedCalories: data.addBurnedCalories,
             },
           },
           dataSources: ["onboarding"],
@@ -154,13 +140,10 @@ export async function POST(request: Request) {
           date: today,
           weightLbs,
           heightInches,
-          bodyFatPercentage,
           customResponses: {
             onboardingData: {
               activityLevel: data.activityLevel,
               primaryGoal: data.primaryGoal,
-              bodyFatRange: data.bodyFatRange,
-              addBurnedCalories: data.addBurnedCalories,
             },
           },
           dataSources: ["onboarding"],
