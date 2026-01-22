@@ -72,7 +72,7 @@ export async function POST(
     // Update the client's password
     await db.user.update({
       where: { id: clientId },
-      data: { passwordHash },
+      data: { passwordHash, mustChangePassword: true },
     })
 
     return NextResponse.json({

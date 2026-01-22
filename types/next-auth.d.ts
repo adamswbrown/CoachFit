@@ -9,6 +9,7 @@ declare module "next-auth" {
       name?: string | null
       roles: Role[]
       isTestUser: boolean
+      mustChangePassword?: boolean
     }
   }
 
@@ -16,6 +17,7 @@ declare module "next-auth" {
     id: string
     roles: Role[]
     isTestUser?: boolean
+    mustChangePassword?: boolean
   }
 }
 
@@ -25,5 +27,6 @@ declare module "next-auth/jwt" {
     roles: Role[]
     isTestUser: boolean
     adminOverride?: boolean
+    mustChangePassword?: boolean
   }
 }

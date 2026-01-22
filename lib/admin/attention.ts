@@ -121,23 +121,34 @@ export class AttentionScoreCalculator {
 
     const now = new Date()
     const lastEntry = user.entries[0]
+    const lastEntryDate = lastEntry ? new Date(lastEntry.date) : null
+    const daysSinceLastEntry = lastEntryDate
+      ? Math.floor((now.getTime() - lastEntryDate.getTime()) / (24 * 60 * 60 * 1000))
+      : null
 
-    if (!lastEntry || new Date(lastEntry.date) < fourteenDaysAgo) {
-      const daysSinceLastEntry = lastEntry
-        ? Math.floor((now.getTime() - new Date(lastEntry.date).getTime()) / (24 * 60 * 60 * 1000))
+    if (!lastEntry || (lastEntryDate && lastEntryDate < fourteenDaysAgo)) {
+      const daysSinceLastEntryValue = lastEntryDate
+        ? daysSinceLastEntry ?? 0
         : 999
 
-      if (daysSinceLastEntry >= 30) {
+      if (daysSinceLastEntryValue >= 30) {
         score += 40
-        reasons.push(`No entries for ${daysSinceLastEntry} days`)
+        reasons.push(`No entries for ${daysSinceLastEntryValue} days`)
         suggestedActions.push("Contact client to check engagement")
-        metadata.daysSinceLastEntry = daysSinceLastEntry
-      } else if (daysSinceLastEntry >= 14) {
+        metadata.daysSinceLastEntry = daysSinceLastEntryValue
+      } else if (daysSinceLastEntryValue >= 14) {
         score += 25
-        reasons.push(`No entries for ${daysSinceLastEntry} days`)
+        reasons.push(`No entries for ${daysSinceLastEntryValue} days`)
         suggestedActions.push("Send reminder to client")
-        metadata.daysSinceLastEntry = daysSinceLastEntry
+        metadata.daysSinceLastEntry = daysSinceLastEntryValue
       }
+    }
+
+    if (daysSinceLastEntry !== null && daysSinceLastEntry >= 1 && daysSinceLastEntry < 14) {
+      score = Math.max(score, 30)
+      reasons.push("No entry in the last day")
+      suggestedActions.push("Check in with client")
+      metadata.daysSinceLastEntry = daysSinceLastEntry
     }
 
     const entriesLast14Days = user.entries.filter(

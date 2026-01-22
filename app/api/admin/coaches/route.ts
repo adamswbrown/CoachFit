@@ -87,6 +87,7 @@ export async function POST(req: NextRequest) {
         email,
         name,
         passwordHash,
+        mustChangePassword: true,
         roles: [Role.COACH],
       },
       select: {

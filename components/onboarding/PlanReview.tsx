@@ -22,51 +22,36 @@ export type PlanReviewRanges = {
   defaultMacroPercents: MacroPercents
 }
 
+// NOTE: PlanReviewPlan is now simplified for coach-facing use only
 export type PlanReviewPlan = {
   bmr: number
   tdee: number
   dailyCaloriesKcal: number
-  proteinGrams: number
-  carbGrams: number
-  fatGrams: number
-  waterIntakeMl: number
   currentWeightKg: number
   weightLbs: number
   dailyStepsTarget?: number
-  weeklyWorkoutMinutes?: number
 }
 
 export type PlanReviewOnSavePayload = {
   dailyCaloriesKcal: number
-  proteinGrams: number
-  carbGrams: number
-  fatGrams: number
-  waterIntakeMl: number
   dailyStepsTarget?: number
-  weeklyWorkoutMinutes?: number
-  macroPercents: MacroPercents
 }
 
 interface PlanReviewProps {
   plan: PlanReviewPlan | null
-  macroPercents: MacroPercents
-  ranges: PlanReviewRanges
   isSaving?: boolean
   onSave: (payload: PlanReviewOnSavePayload) => void
 }
 
 /**
+/**
  * Presentational plan review component for onboarding.
- * Edits macro percents (percent-only), water, and activity targets.
- * Validates against provided ranges; converts percents to grams on save.
+ * Only shows daily calories and steps. Plan is for coach, not member.
  */
-export function PlanReview({ plan, macroPercents, ranges, isSaving = false, onSave }: PlanReviewProps) {
+export function PlanReview({ plan, isSaving = false, onSave }: PlanReviewProps) {
   const [editMode, setEditMode] = useState(false)
   const [localCalories, setLocalCalories] = useState<number>(plan?.dailyCaloriesKcal ?? 0)
-  const [localWater, setLocalWater] = useState<number>(plan?.waterIntakeMl ?? 0)
   const [localSteps, setLocalSteps] = useState<number | undefined>(plan?.dailyStepsTarget)
-  const [localWorkoutMinutes, setLocalWorkoutMinutes] = useState<number | undefined>(plan?.weeklyWorkoutMinutes)
-  const [localPercents, setLocalPercents] = useState<MacroPercents>(macroPercents)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {

@@ -323,6 +323,15 @@ function CoachDashboardContent() {
   const unassignedClients = data?.clients.filter(c => c.status === "unassigned") || []
   const invitedClients = data?.clients.filter(c => c.status === "invited") || []
 
+  const isOneDayBehind = (lastCheckInDate?: string | null) => {
+    if (!lastCheckInDate) return true
+    const lastCheckIn = new Date(lastCheckInDate)
+    const today = new Date()
+    lastCheckIn.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
+    return lastCheckIn < today
+  }
+
   // Apply filter based on sidebar selection
   const getFilteredClients = () => {
     switch (currentFilter) {
@@ -341,8 +350,7 @@ function CoachDashboardContent() {
         return activeClients.filter((client) => {
           const adherenceRate = client.adherenceRate ?? 0
           const checkInCount = client.checkInCount ?? 0
-          return adherenceRate < 0.6 || checkInCount < 5 || !client.lastCheckInDate || 
-                 (client.lastCheckInDate && new Date(client.lastCheckInDate) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+          return adherenceRate < 0.6 || checkInCount < 5 || isOneDayBehind(client.lastCheckInDate)
         })
       case "offline":
         // Offline = active clients who haven't checked in recently
@@ -773,6 +781,7 @@ function CoachDashboardContent() {
                                   )}
                                   {client.latestWeight !== null && client.latestWeight !== undefined && (
                                     <span className="ml-2 text-sm text-neutral-600">
+                                      {/* All coach-facing weights are shown in lbs per product requirement */}
                                       ({client.latestWeight.toFixed(1)} lbs)
                                     </span>
                                   )}

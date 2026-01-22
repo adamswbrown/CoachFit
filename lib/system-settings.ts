@@ -96,12 +96,20 @@ const DEFAULT_SETTINGS: SystemSettings = {
 export async function getSystemSettings(): Promise<SystemSettings> {
   try {
     const settings = await db.systemSettings.findFirst()
-    if (!settings) {
-      // Create default settings if they don't exist
-      await db.systemSettings.create({ data: DEFAULT_SETTINGS })
-      return DEFAULT_SETTINGS
+    const result = settings || DEFAULT_SETTINGS
+
+    // Runtime validation for required onboarding/plan settings
+    const requiredKeys: (keyof SystemSettings)[] = [
+      'minDailyCalories', 'maxDailyCalories', 'stepsNotMuch', 'stepsLight', 'stepsModerate', 'stepsHeavy'
+    ]
+    for (const key of requiredKeys) {
+      if (result[key] === undefined || result[key] === null) {
+        console.warn(`SystemSettings: Missing or misconfigured value for '${key}', using default.`)
+        (result as any)[key] = (DEFAULT_SETTINGS as any)[key]
+      }
     }
-    return settings
+
+    return result
   } catch (error) {
     console.error("Error fetching system settings, using defaults:", error)
     return DEFAULT_SETTINGS

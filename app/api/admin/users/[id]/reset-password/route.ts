@@ -50,7 +50,7 @@ export async function POST(
     // Update user's password
     await db.user.update({
       where: { id: userId },
-      data: { passwordHash },
+      data: { passwordHash, mustChangePassword: true },
     })
 
     // Send email notification if requested

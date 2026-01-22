@@ -23,6 +23,14 @@ export async function POST(req: NextRequest) {
     // Convert date string to Date object and normalize to start of day
     const date = new Date(validated.date)
     date.setHours(0, 0, 0, 0)
+    const isQuestionnaireDay = date.getDay() === 0
+
+    if (!isQuestionnaireDay && (validated.steps === undefined || validated.calories === undefined)) {
+      return NextResponse.json(
+        { error: "Steps and calories are required on non-questionnaire days." },
+        { status: 400 }
+      )
+    }
 
     // Check for existing entry
     const existing = await db.entry.findUnique({

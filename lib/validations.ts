@@ -5,8 +5,8 @@ export * from "./validations/healthkit"
 
 export const upsertEntrySchema = z.object({
   weightLbs: z.number().positive("Weight must be greater than 0").max(1000, "Weight must be 1000 lbs or less"),
-  steps: z.number().int("Steps must be an integer").nonnegative("Steps cannot be negative").max(100000, "Steps must be 100,000 or less"),
-  calories: z.number().int("Calories must be an integer").nonnegative("Calories cannot be negative").max(20000, "Calories must be 20,000 or less"),
+  steps: z.number().int("Steps must be an integer").nonnegative("Steps cannot be negative").max(100000, "Steps must be 100,000 or less").optional(),
+  calories: z.number().int("Calories must be an integer").nonnegative("Calories cannot be negative").max(20000, "Calories must be 20,000 or less").optional(),
   sleepQuality: z.number().int("Sleep quality must be an integer").min(1, "Sleep quality must be between 1 and 10").max(10, "Sleep quality must be between 1 and 10").optional(),
   perceivedStress: z.number().int("Perceived stress must be an integer").min(1, "Perceived stress must be between 1 and 10").max(10, "Perceived stress must be between 1 and 10"),
   notes: z.string().max(2000, "Notes must be 2,000 characters or less").optional(),
@@ -121,8 +121,14 @@ export const onboardingStep8Schema = z.object({
 })
 
 export const onboardingStep9Schema = z.object({
-  activityLevel: z.enum(["not_much", "light", "moderate", "heavy"], {
-    message: "Activity level must be not_much, light, moderate, or heavy",
+  activityLevel: z.enum([
+    "sedentary",         // Level 1: Sedentary (Desk based job, no long walks during the week)
+    "lightly_active",    // Level 2: Lightly Active (Desk based job but daily walks/ hard workouts 2+ per week)
+    "active",            // Level 3: Active (A job mostly on feet e.g teacher, retail worker, postman but no exercise)
+    "very_active",       // Level 4: Very Active (A job mostly on feet e.g teacher, retail worker, postman and exercises hard 3+ times per week or a manual labour job with no other exercise)
+    "extremely_active"   // Level 5: Extremely Active (A manual labour job + Hard exercise 3+ times a week or athlete training 10+ times per week)
+  ], {
+    message: "Activity level must be one of: sedentary, lightly_active, active, very_active, extremely_active",
   }),
 })
 
@@ -132,35 +138,32 @@ export const onboardingStep10Schema = z.object({
 
 export const onboardingPlanReviewSchema = z.object({
   dailyCaloriesKcal: z.number().int().min(500, "Daily calories must be at least 500 kcal").max(10000, "Daily calories must not exceed 10,000 kcal"),
-  proteinGrams: z.number().positive("Protein must be greater than 0").max(500, "Protein must not exceed 500g"),
-  carbGrams: z.number().nonnegative("Carbs must be 0 or greater").max(1000, "Carbs must not exceed 1,000g"),
-  fatGrams: z.number().nonnegative("Fat must be 0 or greater").max(500, "Fat must not exceed 500g"),
-  waterIntakeMl: z.number().positive("Water intake must be greater than 0").max(10000, "Water intake must not exceed 10,000 ml"),
   dailyStepsTarget: z.number().int().nonnegative().optional(),
-  weeklyWorkoutMinutes: z.number().int().nonnegative().optional(),
 })
 
 export const onboardingSubmitSchema = z.object({
   name: z.string().min(1),
-  sex: z.enum(["male", "female"]),
+  sex: z.enum(["male", "female", "prefer_not_to_say"]),
   primaryGoal: z.enum(["lose_weight", "maintain_weight", "gain_weight"]),
   currentWeightKg: z.number().positive(),
   heightCm: z.number().positive(),
   birthDate: z.string(),
-  bodyFatRange: z.enum(["low", "medium", "high", "very_high"]),
+  // bodyFatRange removed per requirements
   targetWeightKg: z.number().positive(),
-  activityLevel: z.enum(["not_much", "light", "moderate", "heavy"]),
-  addBurnedCalories: z.boolean(),
+  activityLevel: z.enum([
+    "sedentary",
+    "lightly_active",
+    "active",
+    "very_active",
+    "extremely_active"
+  ]),
+  // addBurnedCalories removed per requirements
   weightUnit: z.enum(["lbs", "kg"]).default("lbs"),
   measurementUnit: z.enum(["inches", "cm"]).default("inches"),
   dateFormat: z.enum(["MM/dd/yyyy", "dd/MM/yyyy", "dd-MMM-yyyy", "yyyy-MM-dd", "MMM dd, yyyy"]).default("MM/dd/yyyy"),
   dailyCaloriesKcal: z.number().int().optional(),
-  proteinGrams: z.number().optional(),
-  carbGrams: z.number().optional(),
-  fatGrams: z.number().optional(),
-  waterIntakeMl: z.number().int().optional(),
+  // proteinGrams, carbGrams, fatGrams, waterIntakeMl, weeklyWorkoutMinutes removed per requirements
   dailyStepsTarget: z.number().int().optional(),
-  weeklyWorkoutMinutes: z.number().int().optional(),
 })
 
 export const userPreferenceSchema = z.object({

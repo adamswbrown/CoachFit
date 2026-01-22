@@ -58,6 +58,12 @@ export default function ClientSettingsPage() {
   const [oauthLoading, setOauthLoading] = useState(false)
   const [oauthError, setOauthError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if ((session?.user as any)?.mustChangePassword) {
+      setShowPasswordChange(true)
+    }
+  }, [session])
+
   // GDPR Data export/delete state
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletePassword, setDeletePassword] = useState("")
@@ -521,6 +527,12 @@ export default function ClientSettingsPage() {
           {/* Password Change */}
           <div className="bg-white border border-neutral-200 rounded-lg p-6">
             <h2 className="text-lg font-semibold text-neutral-900 mb-4">Change Password</h2>
+
+            {(session?.user as any)?.mustChangePassword && (
+              <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Please change your temporary password to continue.
+              </div>
+            )}
 
             {!showPasswordChange ? (
               <div>
