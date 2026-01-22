@@ -613,57 +613,65 @@ export default function ClientOverviewPage() {
                 <div className="text-sm text-neutral-500 italic">No notes yet</div>
               )}
             </div>
-          // Personalized Plan Card (Coach/Admin only)
-          import { useCallback } from "react"
-          function PersonalizedPlanCard({ clientId }: { clientId: string }) {
-            const { data: session } = useSession()
-            const [plan, setPlan] = useState<any>(null)
-            const [loading, setLoading] = useState(true)
-            const [error, setError] = useState<string | null>(null)
+// ...existing code...
 
-            const fetchPlan = useCallback(async () => {
-              setLoading(true)
-              setError(null)
-              try {
-                const res = await fetch(`/api/clients/${clientId}/plan`)
-                if (res.ok) {
-                  const body = await res.json()
-                  setPlan(body.plan)
-                } else {
-                  setError("No personalized plan found.")
-                }
-              } catch (err) {
-                setError("Failed to load plan.")
-              } finally {
-                setLoading(false)
-              }
-            }, [clientId])
+import { useCallback } from "react"
 
-            useEffect(() => {
-              if (session?.user && (session.user.roles.includes("COACH") || session.user.roles.includes("ADMIN"))) {
-                fetchPlan()
-              }
-            }, [session, fetchPlan])
+function PersonalizedPlanCard({ clientId }: { clientId: string }) {
+  const { data: session } = useSession()
+  const [plan, setPlan] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-            if (!session?.user || (!session.user.roles.includes("COACH") && !session.user.roles.includes("ADMIN"))) {
-              return null
-            }
+  const fetchPlan = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/clients/${clientId}/plan`)
+      if (res.ok) {
+        const body = await res.json()
+        setPlan(body.plan)
+      } else {
+        setError("No personalized plan found.")
+      }
+    } catch (err) {
+      setError("Failed to load plan.")
+    } finally {
+      setLoading(false)
+    }
+  }, [clientId])
 
-            return (
-              <div className="bg-white border border-neutral-200 rounded-lg p-6">
-                <h3 className="text-sm font-semibold text-neutral-900 mb-4">Personalized Plan</h3>
-                {loading ? (
-                  <div className="text-sm text-neutral-500">Loading...</div>
-                ) : error ? (
-                  <div className="text-sm text-neutral-500 italic">{error}</div>
-                ) : plan ? (
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="text-neutral-500">Calories:</span> <span className="font-medium">{plan.dailyCaloriesKcal} kcal</span>
-                    </div>
-                    <div>
-                      <span className="text-neutral-500">Protein:</span> <span className="font-medium">{plan.proteinGrams} g</span>
-                    </div>
+  useEffect(() => {
+    if (session?.user && (session.user.roles.includes("COACH") || session.user.roles.includes("ADMIN"))) {
+      fetchPlan()
+    }
+  }, [session, fetchPlan])
+
+  if (!session?.user || (!session.user.roles.includes("COACH") && !session.user.roles.includes("ADMIN"))) {
+    return null
+  }
+
+  return (
+    <div className="bg-white border border-neutral-200 rounded-lg p-6">
+      <h3 className="text-sm font-semibold text-neutral-900 mb-4">Personalized Plan</h3>
+      {loading ? (
+        <div className="text-sm text-neutral-500">Loading...</div>
+      ) : error ? (
+        <div className="text-sm text-neutral-500 italic">{error}</div>
+      ) : plan ? (
+        <div className="space-y-2 text-sm">
+          <div>
+            <span className="text-neutral-500">Calories:</span> <span className="font-medium">{plan.dailyCaloriesKcal} kcal</span>
+          </div>
+          <div>
+            <span className="text-neutral-500">Protein:</span> <span className="font-medium">{plan.proteinGrams} g</span>
+          </div>
+          {/* ...other plan fields... */}
+        </div>
+      ) : null}
+    </div>
+  )
+}
                     <div>
                       <span className="text-neutral-500">Carbs:</span> <span className="font-medium">{plan.carbGrams} g</span>
                     </div>
