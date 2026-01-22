@@ -717,6 +717,15 @@ export default function AdminPage() {
         {/* Admins Tab */}
         {activeTab === "admins" && (
           <div className="bg-white border border-neutral-200 rounded-lg">
+            <div className="flex justify-between items-center p-4 border-b border-neutral-200">
+              <h2 className="text-lg font-semibold">Admins</h2>
+              <button
+                onClick={() => setShowCreateAdmin(true)}
+                className="bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 text-sm"
+              >
+                + Create Admin
+              </button>
+            </div>
             {adminUsers.length === 0 ? (
               <div className="p-8 text-center text-neutral-500">No admins found.</div>
             ) : (
@@ -958,6 +967,110 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* Create Admin Modal */}
+        {showCreateAdmin && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowCreateAdmin(false)}>
+            <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold">Create New Admin</h2>
+                <button
+                  onClick={() => setShowCreateAdmin(false)}
+                  className="text-neutral-400 hover:text-neutral-600"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-neutral-600 text-sm mb-4">
+                Create a new admin-only account. This user will have only the ADMIN role and no coach or client permissions.
+              </p>
+              <form onSubmit={handleCreateAdmin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={newAdminData.name}
+                    onChange={(e) => setNewAdminData({ ...newAdminData, name: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                    placeholder="Admin Name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={newAdminData.email}
+                    onChange={(e) => setNewAdminData({ ...newAdminData, email: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                    placeholder="admin@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={newAdminData.password}
+                    onChange={(e) => setNewAdminData({ ...newAdminData, password: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                    placeholder="Min 8 characters"
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateAdmin(false)}
+                    className="flex-1 px-4 py-2 border border-neutral-300 rounded-md hover:bg-neutral-50 text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creatingAdmin}
+                    className="flex-1 bg-neutral-900 text-white px-4 py-2 rounded-md hover:bg-neutral-800 disabled:opacity-50 text-sm"
+                  >
+                    {creatingAdmin ? "Creating..." : "Create Admin"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      // Add state and handler for Create Admin modal
+      const [showCreateAdmin, setShowCreateAdmin] = useState(false)
+      const [creatingAdmin, setCreatingAdmin] = useState(false)
+      const [newAdminData, setNewAdminData] = useState({ email: "", name: "", password: "" })
+
+      const handleCreateAdmin = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setCreatingAdmin(true)
+        setError(null)
+        setSuccess(null)
+        try {
+          const res = await fetch("/api/admin/admins", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newAdminData),
+          })
+          if (res.ok) {
+            const data = await res.json()
+            setSuccess(data.message || "Admin created successfully")
+            setShowCreateAdmin(false)
+            setNewAdminData({ email: "", name: "", password: "" })
+            await loadAllData()
+          } else {
+            const errorData = await res.json()
+            setError(errorData.error || "Failed to create admin")
+          }
+        } catch (err) {
+          setError("An error occurred. Please try again.")
+        } finally {
+          setCreatingAdmin(false)
+        }
+      }
       </div>
     </CoachLayout>
   )

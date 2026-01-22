@@ -72,6 +72,7 @@ The Users tab shows all users in the system with:
 - Results update in real-time as you type
 - Search is case-insensitive and matches partial strings
 
+
 ### Managing Roles
 
 #### Adding Roles
@@ -83,7 +84,7 @@ To grant a user additional roles:
 3. Confirm the action
 4. The user will immediately have access to that role's features
 
-**Important**: Users can have multiple roles (e.g., COACH + ADMIN)
+**Important**: Users can have multiple roles (e.g., COACH + ADMIN). The ADMIN role does NOT imply COACH permissions. Admins can be created with only the ADMIN role and will not have access to coach features unless the COACH role is also assigned.
 
 #### Removing Roles
 
@@ -95,6 +96,22 @@ To remove a role from a user:
 4. The user will lose access to that role's features
 
 **Warning**: Be careful when removing roles, especially ADMIN roles.
+
+### Creating Admin-Only Users
+
+To create a new admin-only user (no coach or client permissions):
+
+1. Click the "+ Create Admin" button at the top of the dashboard (visible only to admins)
+2. Fill in the form:
+    - **Email** - Admin's email address (required)
+    - **Name** - Admin's display name (optional)
+    - **Password** - Initial password (required, minimum 8 characters)
+3. Select **ADMIN** as the only role (do not select COACH or CLIENT)
+4. Click "Create Admin"
+5. The user will be created with only the ADMIN role
+6. They can log in immediately with the provided password
+
+**Note:** Only users with the ADMIN role can create admin-only users. Admin-only users cannot manage cohorts or clients unless given additional roles.
 
 ### Creating Coaches
 
