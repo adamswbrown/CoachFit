@@ -265,6 +265,19 @@ async function main() {
   console.log("\n════════════════════════════════════════════════════════════════")
   console.log("🌱 COMPREHENSIVE TEST DATA GENERATION (MULTI-COACH AWARE)")
   console.log("════════════════════════════════════════════════════════════════\n")
+    // --- Optional: Skip Resend template setup if SKIP_RESEND is set ---
+    if (!process.env.SKIP_RESEND) {
+      try {
+        // Place your Resend template setup code here
+        // Example:
+        // await setupResendTemplates();
+        // console.log("✅ Resend templates configured");
+      } catch (err) {
+        console.error("⚠️  Resend template setup failed, skipping.", err)
+      }
+    } else {
+      console.log("⏩ SKIP_RESEND is set, skipping Resend template setup.")
+    }
   console.log("📊 Generation Plan:")
   console.log("   • 100 clients")
   console.log("   • 5 coaches")
