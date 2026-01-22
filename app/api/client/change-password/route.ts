@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     // Update the user's password
     await db.user.update({
       where: { id: session.user.id },
-      data: { passwordHash: newPasswordHash },
+      data: { passwordHash: newPasswordHash, mustChangePassword: false },
     })
 
     return NextResponse.json({

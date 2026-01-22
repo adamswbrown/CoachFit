@@ -40,7 +40,7 @@ interface OnboardingData {
   bodyFatRange: string
   targetWeight: number | string
   activityLevel: string
-  addBurnedCalories: boolean
+  // addBurnedCalories removed
 }
 
 export default function ClientOnboarding() {
@@ -51,6 +51,7 @@ export default function ClientOnboarding() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showInterstitial, setShowInterstitial] = useState(false)
   const [calculatedPlan, setCalculatedPlan] = useState<any>(null)
+  // Personalized plan is now coach-only; never shown to member
   const [showPersonalizedPlan, setShowPersonalizedPlan] = useState(false)
   const [configLoading, setConfigLoading] = useState(true)
   const [macroPercents, setMacroPercents] = useState<MacroPercents>({
@@ -70,7 +71,7 @@ export default function ClientOnboarding() {
     bodyFatRange: "",
     targetWeight: "",
     activityLevel: "",
-    addBurnedCalories: false,
+    // addBurnedCalories removed
   })
 
   useEffect(() => {
@@ -109,25 +110,10 @@ export default function ClientOnboarding() {
     loadPreferences()
   }, [])
 
+  // No longer load showPersonalizedPlan from config; always false
   useEffect(() => {
-    const loadConfig = async () => {
-      try {
-        const res = await fetch("/api/onboarding/config")
-        if (res.status === 401) return
-        if (!res.ok) return
-        const body = await res.json()
-        const flag = body?.data?.showPersonalizedPlan
-        if (typeof flag === "boolean") {
-          setShowPersonalizedPlan(flag)
-        }
-      } catch (error) {
-        console.error("Failed to preload onboarding config", error)
-      } finally {
-        setConfigLoading(false)
-      }
-    }
-
-    loadConfig()
+    setShowPersonalizedPlan(false)
+    setConfigLoading(false)
   }, [])
 
   const updateData = (field: string, value: any) => {
@@ -200,16 +186,8 @@ export default function ClientOnboarding() {
         return
       }
 
-      if (showPersonalizedPlan) {
-        setShowInterstitial(true)
-        setStep(INTERSTITIAL_STEP)
-        setTimeout(() => {
-          setShowInterstitial(false)
-          calculatePlan()
-        }, 1000)
-      } else {
-        setStep(INTERSTITIAL_STEP)
-      }
+      // Plan is not shown to member; skip plan step
+      setStep(INTERSTITIAL_STEP)
     } else if (step < BASE_STEPS) {
       setStep(step + 1)
     }
@@ -335,7 +313,7 @@ export default function ClientOnboarding() {
         bodyFatRange: data.bodyFatRange,
         targetWeightKg,
         activityLevel: data.activityLevel,
-        addBurnedCalories: data.addBurnedCalories,
+        // addBurnedCalories removed
         weightUnit: data.weightUnit,
         measurementUnit: data.measurementUnit,
         dateFormat: data.dateFormat,
@@ -439,6 +417,7 @@ export default function ClientOnboarding() {
                   options={[
                     { id: "male", label: "Male" },
                     { id: "female", label: "Female" },
+                    { id: "prefer_not_to_say", label: "Prefer not to say" },
                   ]}
                   value={data.sex}
                   onChange={(value) => updateData("sex", value)}
@@ -449,6 +428,9 @@ export default function ClientOnboarding() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Measurement units
                 </h3>
+                <p className="text-xs text-blue-700 mb-2">
+                  <strong>Note:</strong> Coaches always work in pounds (lbs) and inches. All data is converted for coach-facing features.
+                </p>
                 <div className="space-y-3">
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Weight</p>
@@ -544,44 +526,25 @@ export default function ClientOnboarding() {
               </div>
             </div>
           ) : step === 7 ? (
-            // Step 7: Body Fat Range
+            // Step 7: Target Weight (now step 7)
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Body fat estimate</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Target Weight</h2>
                 <p className="text-gray-600 mb-4">
-                  If unsure, start with Medium
+                  What is your target weight?
                 </p>
-                <SelectionGrid
-                  options={[
-                    {
-                      id: "low",
-                      label: "Low",
-                      description: "&lt;15%",
-                    },
-                    {
-                      id: "medium",
-                      label: "Medium",
-                      description: "15–25%",
-                    },
-                    {
-                      id: "high",
-                      label: "High",
-                      description: "25–35%",
-                    },
-                    {
-                      id: "very_high",
-                      label: "Very High",
-                      description: "&gt;35%",
-                    },
-                  ]}
-                  value={data.bodyFatRange}
-                  onChange={(value) => updateData("bodyFatRange", value)}
-                  columns={2}
+                <input
+                  type="number"
+                  className="input input-bordered w-full"
+                  value={data.targetWeight}
+                  onChange={e => updateData("targetWeight", e.target.value)}
+                  min={1}
+                  max={1000}
                 />
+                {errors.targetWeight && (
+                  <p className="text-red-600 text-sm">{errors.targetWeight}</p>
+                )}
               </div>
-              {errors.bodyFatRange && (
-                <p className="text-red-600 text-sm">{errors.bodyFatRange}</p>
-              )}
             </div>
           ) : step === 8 ? (
             // Step 8: Target Weight

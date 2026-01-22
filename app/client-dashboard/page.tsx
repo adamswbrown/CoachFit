@@ -273,6 +273,11 @@ export default function ClientDashboard() {
     }
   }
 
+  const isQuestionnaireDay = (dateValue?: string) => {
+    const target = dateValue ? new Date(`${dateValue}T00:00:00`) : new Date()
+    return target.getDay() === 0
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
@@ -295,25 +300,32 @@ export default function ClientDashboard() {
       const hasValue = (value: string | number) =>
         value !== null && value !== undefined && value.toString().trim() !== ""
 
+      const isQuestionnaireDayEntry = isQuestionnaireDay(formData.date)
+
       if (
         !hasValue(formData.weightLbs) ||
-        !hasValue(formData.steps) ||
-        !hasValue(formData.calories) ||
+        (!isQuestionnaireDayEntry && !hasValue(formData.steps)) ||
+        (!isQuestionnaireDayEntry && !hasValue(formData.calories)) ||
         !hasValue(formData.perceivedStress)
       ) {
-        setError("Weight, steps, calories, and perceived stress are required.")
+        setError(
+          isQuestionnaireDayEntry
+            ? "Weight and perceived stress are required."
+            : "Weight, steps, calories, and perceived stress are required."
+        )
         setSubmitting(false)
         return
       }
 
       const weightParsed = parseFloat(formData.weightLbs.toString())
-      const stepsParsed = parseInt(formData.steps.toString(), 10)
-      const caloriesParsed = parseInt(formData.calories.toString(), 10)
+      const stepsParsed = formData.steps.toString().trim() !== "" ? parseInt(formData.steps.toString(), 10) : null
+      const caloriesParsed = formData.calories.toString().trim() !== "" ? parseInt(formData.calories.toString(), 10) : null
       const stressParsed = parseInt(formData.perceivedStress.toString(), 10)
 
-      if (
-        [weightParsed, stepsParsed, caloriesParsed, stressParsed].some((value) => isNaN(value))
-      ) {
+      const requiredNumbers = [weightParsed, stressParsed]
+      const optionalNumbers = [stepsParsed, caloriesParsed].filter((value) => value !== null)
+
+      if (requiredNumbers.some((value) => isNaN(value)) || optionalNumbers.some((value) => isNaN(value as number))) {
         setError("Please enter valid values for all required fields.")
         setSubmitting(false)
         return
@@ -322,10 +334,11 @@ export default function ClientDashboard() {
       const body: any = {
         date: formData.date,
         weightLbs: weightParsed,
-        steps: stepsParsed,
-        calories: caloriesParsed,
         perceivedStress: stressParsed,
       }
+
+      if (stepsParsed !== null) body.steps = stepsParsed
+      if (caloriesParsed !== null) body.calories = caloriesParsed
 
       if (formData.sleepQuality && formData.sleepQuality.toString().trim() !== "") {
         const parsed = parseInt(formData.sleepQuality.toString(), 10)
@@ -550,8 +563,8 @@ export default function ClientDashboard() {
           </div>
         )}
 
-        {/* Weekly Questionnaire Card */}
-        {hasCoach !== false && selectedCohortId && (
+        {/* Weekly Questionnaire Card (Sundays only) */}
+        {hasCoach !== false && selectedCohortId && isQuestionnaireDay() && (
           <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <div>
@@ -797,49 +810,53 @@ export default function ClientDashboard() {
                     </div>
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Steps
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100000"
-                        placeholder="0"
-                        value={formData.steps}
-                        onChange={(e) =>
-                          setFormData({ ...formData, steps: e.target.value })
-                        }
-                        required
-                        disabled={hasCoach === false}
-                        className="w-full px-4 py-2.5 pr-16 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">steps</span>
+                  {!isQuestionnaireDay(formData.date) && (
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        Steps
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100000"
+                          placeholder="0"
+                          value={formData.steps}
+                          onChange={(e) =>
+                            setFormData({ ...formData, steps: e.target.value })
+                          }
+                          required={!isQuestionnaireDay(formData.date)}
+                          disabled={hasCoach === false}
+                          className="w-full px-4 py-2.5 pr-16 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">steps</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Calories
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        max="20000"
-                        placeholder="0"
-                        value={formData.calories}
-                        onChange={(e) =>
-                          setFormData({ ...formData, calories: e.target.value })
-                        }
-                        required
-                        disabled={hasCoach === false}
-                        className="w-full px-4 py-2.5 pr-14 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">kcal</span>
+                  {!isQuestionnaireDay(formData.date) && (
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        Calories
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          max="20000"
+                          placeholder="0"
+                          value={formData.calories}
+                          onChange={(e) =>
+                            setFormData({ ...formData, calories: e.target.value })
+                          }
+                          required={!isQuestionnaireDay(formData.date)}
+                          disabled={hasCoach === false}
+                          className="w-full px-4 py-2.5 pr-14 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">kcal</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Perceived Stress - Always Visible if enabled */}
@@ -976,8 +993,8 @@ export default function ClientDashboard() {
                     (entryMode === "edit" && !existingEntry) ||
                     !(
                       formData.weightLbs.toString().trim() !== "" &&
-                      formData.steps.toString().trim() !== "" &&
-                      formData.calories.toString().trim() !== "" &&
+                      (isQuestionnaireDay(formData.date) || formData.steps.toString().trim() !== "") &&
+                      (isQuestionnaireDay(formData.date) || formData.calories.toString().trim() !== "") &&
                       formData.perceivedStress.toString().trim() !== ""
                     )
                   }

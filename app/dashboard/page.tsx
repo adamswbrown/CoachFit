@@ -17,6 +17,11 @@ export default function DashboardPage() {
       return
     }
 
+    if ((session.user as any).mustChangePassword) {
+      router.push("/client-dashboard/settings")
+      return
+    }
+
     // Redirect based on role (COACH takes priority over ADMIN)
     const userRoles = session.user.roles || []
 

@@ -66,6 +66,7 @@ export const authOptions: NextAuthConfig = {
             passwordHash: true,
             roles: true,
             isTestUser: true,
+            mustChangePassword: true,
           },
         })
 
@@ -80,6 +81,7 @@ export const authOptions: NextAuthConfig = {
           name: user.name,
           roles: user.roles as Role[],
           isTestUser: user.isTestUser,
+          mustChangePassword: user.mustChangePassword,
         }
       },
     }),
@@ -252,6 +254,7 @@ export const authOptions: NextAuthConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
+        token.mustChangePassword = (user as any).mustChangePassword ?? false
 
         if (Array.isArray(user.roles) && user.roles.length > 0) {
           token.roles = user.roles
@@ -261,12 +264,13 @@ export const authOptions: NextAuthConfig = {
         } else {
           const dbUser = await db.user.findUnique({
             where: { id: user.id },
-            select: { roles: true, isTestUser: true, onboardingComplete: true },
+            select: { roles: true, isTestUser: true, onboardingComplete: true, mustChangePassword: true },
           })
 
           token.roles = dbUser?.roles ?? [Role.CLIENT]
           token.isTestUser = dbUser?.isTestUser ?? false
           token.isOnboardingComplete = dbUser?.onboardingComplete ?? false
+          token.mustChangePassword = dbUser?.mustChangePassword ?? token.mustChangePassword ?? false
         }
       }
 
@@ -285,6 +289,14 @@ export const authOptions: NextAuthConfig = {
         token.roles = [...(token.roles as Role[]), Role.ADMIN]
       }
 
+      if (token.id && (token.mustChangePassword === undefined || token.mustChangePassword === true)) {
+        const dbUser = await db.user.findUnique({
+          where: { id: token.id as string },
+          select: { mustChangePassword: true },
+        })
+        token.mustChangePassword = dbUser?.mustChangePassword ?? false
+      }
+
       return token
     },
 
@@ -294,6 +306,7 @@ export const authOptions: NextAuthConfig = {
         session.user.roles = (token.roles as Role[]) ?? [Role.CLIENT]
         session.user.isTestUser = token.isTestUser as boolean
         ;(session.user as any).isOnboardingComplete = token.isOnboardingComplete as boolean
+        ;(session.user as any).mustChangePassword = token.mustChangePassword as boolean
       }
 
       return session
