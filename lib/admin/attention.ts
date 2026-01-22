@@ -168,7 +168,7 @@ export class AttentionScoreCalculator {
     }
 
     if (lastEntryDate && entriesLast7Days < 7) {
-      score = Math.max(score, 30)
+      score = Math.max(score, 60)
       const missedDays = 7 - entriesLast7Days
       reasons.push(`Missed ${missedDays} check-in${missedDays === 1 ? "" : "s"} this week`)
       suggestedActions.push("Check in with client")
