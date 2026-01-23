@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/permissions"
+import { logAuditAction } from "@/lib/audit-log"
 import {
   DEFAULT_DATA_PROCESSING_HTML,
   DEFAULT_PRIVACY_HTML,
@@ -54,7 +55,10 @@ const settingsSchema = z.object({
   shortTermWindowDays: z.number().int().min(1).max(30).optional(),
   longTermWindowDays: z.number().int().min(7).max(365).optional(),
   defaultCheckInFrequencyDays: z.number().int().min(1).max(365).optional(),
-  notificationTimeUtc: z.string().regex(/^([01]\\d|2[0-3]):[0-5]\\d$/, "Use HH:mm in 24-hour UTC").optional(),
+  notificationTimeUtc: z
+    .string()
+    .regex(/^([01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/, "Use HH:mm in 24-hour UTC")
+    .optional(),
   adminOverrideEmail: z.string().email().nullable().optional(),
   healthkitEnabled: z.boolean().optional(),
   iosIntegrationEnabled: z.boolean().optional(),
@@ -151,6 +155,22 @@ export async function PUT(req: NextRequest) {
     }
 
     // Additional validation: min < max
+    const normalizeNotificationTimeUtc = (value?: string | null) => {
+      if (!value) return value ?? null
+      const trimmed = value.trim()
+      const withoutSeconds = trimmed.length === 8 ? trimmed.slice(0, 5) : trimmed
+      const parts = withoutSeconds.split(":")
+      if (parts.length < 2) return withoutSeconds
+      const hour = parts[0].padStart(2, "0")
+      const minute = parts[1].padStart(2, "0")
+      return `${hour}:${minute}`
+    }
+
+    const normalizedData = {
+      ...validationResult.data,
+      notificationTimeUtc: normalizeNotificationTimeUtc(validationResult.data.notificationTimeUtc),
+    }
+
     const {
       maxClientsPerCoach,
       minClientsPerCoach,
@@ -163,7 +183,7 @@ export async function PUT(req: NextRequest) {
       defaultCarbsPercent,
       defaultProteinPercent,
       defaultFatPercent,
-    } = validationResult.data
+    } = normalizedData
     if (
       maxClientsPerCoach !== undefined &&
       minClientsPerCoach !== undefined &&
@@ -197,42 +217,42 @@ export async function PUT(req: NextRequest) {
             ...validationResult.data,
             maxClientsPerCoach: maxClientsPerCoach ?? DEFAULT_SETTINGS.maxClientsPerCoach,
             minClientsPerCoach: minClientsPerCoach ?? DEFAULT_SETTINGS.minClientsPerCoach,
-            recentActivityDays: validationResult.data.recentActivityDays ?? DEFAULT_SETTINGS.recentActivityDays,
-            lowEngagementEntries: validationResult.data.lowEngagementEntries ?? DEFAULT_SETTINGS.lowEngagementEntries,
-            noActivityDays: validationResult.data.noActivityDays ?? DEFAULT_SETTINGS.noActivityDays,
+            recentActivityDays: normalizedData.recentActivityDays ?? DEFAULT_SETTINGS.recentActivityDays,
+            lowEngagementEntries: normalizedData.lowEngagementEntries ?? DEFAULT_SETTINGS.lowEngagementEntries,
+            noActivityDays: normalizedData.noActivityDays ?? DEFAULT_SETTINGS.noActivityDays,
             criticalNoActivityDays:
-              validationResult.data.criticalNoActivityDays ?? DEFAULT_SETTINGS.criticalNoActivityDays,
-            shortTermWindowDays: validationResult.data.shortTermWindowDays ?? DEFAULT_SETTINGS.shortTermWindowDays,
-            longTermWindowDays: validationResult.data.longTermWindowDays ?? DEFAULT_SETTINGS.longTermWindowDays,
+              normalizedData.criticalNoActivityDays ?? DEFAULT_SETTINGS.criticalNoActivityDays,
+            shortTermWindowDays: normalizedData.shortTermWindowDays ?? DEFAULT_SETTINGS.shortTermWindowDays,
+            longTermWindowDays: normalizedData.longTermWindowDays ?? DEFAULT_SETTINGS.longTermWindowDays,
             defaultCheckInFrequencyDays:
-              validationResult.data.defaultCheckInFrequencyDays ?? DEFAULT_SETTINGS.defaultCheckInFrequencyDays,
+              normalizedData.defaultCheckInFrequencyDays ?? DEFAULT_SETTINGS.defaultCheckInFrequencyDays,
             notificationTimeUtc:
-              validationResult.data.notificationTimeUtc ?? DEFAULT_SETTINGS.notificationTimeUtc,
-            adminOverrideEmail: validationResult.data.adminOverrideEmail ?? DEFAULT_SETTINGS.adminOverrideEmail,
-            healthkitEnabled: validationResult.data.healthkitEnabled ?? DEFAULT_SETTINGS.healthkitEnabled,
-            iosIntegrationEnabled: validationResult.data.iosIntegrationEnabled ?? DEFAULT_SETTINGS.iosIntegrationEnabled,
-            adherenceGreenMinimum: validationResult.data.adherenceGreenMinimum ?? DEFAULT_SETTINGS.adherenceGreenMinimum,
-            adherenceAmberMinimum: validationResult.data.adherenceAmberMinimum ?? DEFAULT_SETTINGS.adherenceAmberMinimum,
+              normalizedData.notificationTimeUtc ?? DEFAULT_SETTINGS.notificationTimeUtc,
+            adminOverrideEmail: normalizedData.adminOverrideEmail ?? DEFAULT_SETTINGS.adminOverrideEmail,
+            healthkitEnabled: normalizedData.healthkitEnabled ?? DEFAULT_SETTINGS.healthkitEnabled,
+            iosIntegrationEnabled: normalizedData.iosIntegrationEnabled ?? DEFAULT_SETTINGS.iosIntegrationEnabled,
+            adherenceGreenMinimum: normalizedData.adherenceGreenMinimum ?? DEFAULT_SETTINGS.adherenceGreenMinimum,
+            adherenceAmberMinimum: normalizedData.adherenceAmberMinimum ?? DEFAULT_SETTINGS.adherenceAmberMinimum,
             attentionMissedCheckinsPolicy:
-              validationResult.data.attentionMissedCheckinsPolicy ??
+              normalizedData.attentionMissedCheckinsPolicy ??
               DEFAULT_SETTINGS.attentionMissedCheckinsPolicy,
-            minDailyCalories: validationResult.data.minDailyCalories ?? DEFAULT_SETTINGS.minDailyCalories,
-            maxDailyCalories: validationResult.data.maxDailyCalories ?? DEFAULT_SETTINGS.maxDailyCalories,
-            minProteinPerLb: validationResult.data.minProteinPerLb ?? DEFAULT_SETTINGS.minProteinPerLb,
-            maxProteinPerLb: validationResult.data.maxProteinPerLb ?? DEFAULT_SETTINGS.maxProteinPerLb,
-            defaultCarbsPercent: validationResult.data.defaultCarbsPercent ?? DEFAULT_SETTINGS.defaultCarbsPercent,
-            defaultProteinPercent: validationResult.data.defaultProteinPercent ?? DEFAULT_SETTINGS.defaultProteinPercent,
-            defaultFatPercent: validationResult.data.defaultFatPercent ?? DEFAULT_SETTINGS.defaultFatPercent,
-            showPersonalizedPlan: validationResult.data.showPersonalizedPlan ?? DEFAULT_SETTINGS.showPersonalizedPlan,
-            termsContentHtml: validationResult.data.termsContentHtml ?? DEFAULT_SETTINGS.termsContentHtml,
-            privacyContentHtml: validationResult.data.privacyContentHtml ?? DEFAULT_SETTINGS.privacyContentHtml,
-            dataProcessingContentHtml: validationResult.data.dataProcessingContentHtml ?? DEFAULT_SETTINGS.dataProcessingContentHtml,
+            minDailyCalories: normalizedData.minDailyCalories ?? DEFAULT_SETTINGS.minDailyCalories,
+            maxDailyCalories: normalizedData.maxDailyCalories ?? DEFAULT_SETTINGS.maxDailyCalories,
+            minProteinPerLb: normalizedData.minProteinPerLb ?? DEFAULT_SETTINGS.minProteinPerLb,
+            maxProteinPerLb: normalizedData.maxProteinPerLb ?? DEFAULT_SETTINGS.maxProteinPerLb,
+            defaultCarbsPercent: normalizedData.defaultCarbsPercent ?? DEFAULT_SETTINGS.defaultCarbsPercent,
+            defaultProteinPercent: normalizedData.defaultProteinPercent ?? DEFAULT_SETTINGS.defaultProteinPercent,
+            defaultFatPercent: normalizedData.defaultFatPercent ?? DEFAULT_SETTINGS.defaultFatPercent,
+            showPersonalizedPlan: normalizedData.showPersonalizedPlan ?? DEFAULT_SETTINGS.showPersonalizedPlan,
+            termsContentHtml: normalizedData.termsContentHtml ?? DEFAULT_SETTINGS.termsContentHtml,
+            privacyContentHtml: normalizedData.privacyContentHtml ?? DEFAULT_SETTINGS.privacyContentHtml,
+            dataProcessingContentHtml: normalizedData.dataProcessingContentHtml ?? DEFAULT_SETTINGS.dataProcessingContentHtml,
           },
         })
       } else {
         settings = await db.systemSettings.update({
           where: { id: settings.id },
-          data: validationResult.data,
+          data: normalizedData,
         })
       }
 
@@ -242,12 +262,13 @@ export async function PUT(req: NextRequest) {
       console.error("Database error updating settings:", dbError?.message)
       
       // Return merged defaults + valid data
-      const merged = { ...DEFAULT_SETTINGS, ...validationResult.data }
+      const merged = { ...DEFAULT_SETTINGS, ...normalizedData }
       return NextResponse.json({ 
         data: merged,
         warning: "Settings not persisted - database may need migration"
       }, { status: 200 })
     }
+
   } catch (error) {
     console.error("Error updating system settings:", error)
     return NextResponse.json(

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
 import { isAdmin } from "@/lib/permissions"
+import { logAuditAction } from "@/lib/audit-log"
 import { z } from "zod"
 
 const addCoachSchema = z.object({
@@ -170,6 +171,17 @@ export async function POST(
       }
     })
 
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COHORT_ADD_COACH",
+      targetType: "cohort",
+      targetId: id,
+      details: {
+        coachId: user.id,
+        coachEmail: user.email,
+      },
+    })
+
     return NextResponse.json({
       success: true,
       coach: {
@@ -253,6 +265,16 @@ export async function DELETE(
         { status: 404 }
       )
     }
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COHORT_REMOVE_COACH",
+      targetType: "cohort",
+      targetId: id,
+      details: {
+        coachId,
+      },
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { isAdmin } from "@/lib/permissions"
 import { db } from "@/lib/db"
 import { AttentionScoreCalculator } from "@/lib/admin/attention"
+import { logAuditAction } from "@/lib/audit-log"
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,6 +34,16 @@ export async function POST(req: NextRequest) {
     const ids = clients.map((client) => client.id)
     const calculator = new AttentionScoreCalculator()
     await calculator.recalculateClientAttention(ids, batchSize)
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "ADMIN_REFRESH_ATTENTION",
+      targetType: "attention_scores",
+      details: {
+        totalClients: ids.length,
+        batchSize,
+      },
+    })
 
     return NextResponse.json(
       { updated: ids.length, batchSize },

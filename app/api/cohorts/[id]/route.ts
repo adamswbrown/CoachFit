@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
 import { isAdmin } from "@/lib/permissions"
+import { logAuditAction } from "@/lib/audit-log"
 import { z } from "zod"
 
 export async function GET(
@@ -217,6 +218,16 @@ export async function PATCH(
       },
     })
 
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COHORT_UPDATE",
+      targetType: "cohort",
+      targetId: updated.id,
+      details: {
+        updates: updateData,
+      },
+    })
+
     return NextResponse.json(updated, { status: 200 })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -280,6 +291,17 @@ export async function DELETE(
       await tx.cohort.delete({
         where: { id },
       })
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COHORT_DELETE",
+      targetType: "cohort",
+      targetId: cohort.id,
+      details: {
+        name: cohort.name,
+        coachId: cohort.coachId,
+      },
     })
 
     return new NextResponse(null, { status: 204 })

@@ -6,6 +6,7 @@ import {
   updateEmailTemplate,
   previewEmailTemplate,
 } from "@/lib/email-templates"
+import { logAuditAction } from "@/lib/audit-log"
 import { z } from "zod"
 
 const updateTemplateSchema = z.object({
@@ -68,6 +69,16 @@ export async function PUT(
     const data = updateTemplateSchema.parse(body)
 
     const template = await updateEmailTemplate(key, data)
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "ADMIN_UPDATE_EMAIL_TEMPLATE",
+      targetType: "email_template",
+      targetId: key,
+      details: {
+        name: template?.name,
+      },
+    })
 
     return NextResponse.json({ template }, { status: 200 })
   } catch (error) {

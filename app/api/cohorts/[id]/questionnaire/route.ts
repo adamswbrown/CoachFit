@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { questionnaireBundleSchema } from "@/lib/validations"
 import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
+import { logAuditAction } from "@/lib/audit-log"
 
 // GET /api/cohorts/[id]/questionnaire - Fetch bundle JSON schema
 export async function GET(
@@ -110,6 +111,16 @@ export async function POST(
       },
       update: {
         bundleJson: validated.bundleJson,
+      },
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COHORT_UPDATE_QUESTIONNAIRE",
+      targetType: "questionnaire_bundle",
+      targetId: bundle.id,
+      details: {
+        cohortId,
       },
     })
 

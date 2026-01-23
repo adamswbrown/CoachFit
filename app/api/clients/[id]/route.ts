@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
 import { isAdmin } from "@/lib/permissions"
+import { logAuditAction } from "@/lib/audit-log"
 import { z } from "zod"
 
 export async function GET(
@@ -148,6 +149,16 @@ export async function PATCH(
       select: {
         id: true,
         checkInFrequencyDays: true,
+      },
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "CLIENT_UPDATE",
+      targetType: "client",
+      targetId: updated.id,
+      details: {
+        checkInFrequencyDays: updated.checkInFrequencyDays,
       },
     })
 

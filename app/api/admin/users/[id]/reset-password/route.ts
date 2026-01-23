@@ -6,6 +6,7 @@ import { z } from "zod"
 import bcrypt from "bcryptjs"
 import { sendSystemEmail } from "@/lib/email"
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
+import { logAuditAction } from "@/lib/audit-log"
 
 const resetPasswordSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -126,6 +127,13 @@ export async function POST(
     }
 
     const actionWord = isFirstPassword ? "set" : "reset"
+    await logAuditAction({
+      actor: session.user,
+      actionType: "ADMIN_RESET_PASSWORD",
+      targetType: "user",
+      targetId: user.id,
+      details: { isFirstPassword, sendEmail },
+    })
     return NextResponse.json(
       { 
         message: `Password ${actionWord} successfully${sendEmail && !user.isTestUser ? ". Notification email sent." : "."}`,

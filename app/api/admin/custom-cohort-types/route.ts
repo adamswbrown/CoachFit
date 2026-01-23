@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { isAdmin } from "@/lib/permissions"
 import { db } from "@/lib/db"
+import { logAuditAction } from "@/lib/audit-log"
 import { z } from "zod"
 
 const createSchema = z.object({
@@ -78,16 +79,14 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    await db.adminAction.create({
-      data: {
-        adminId: session.user.id,
-        actionType: "custom_cohort_type_created",
-        targetType: "custom_cohort_type",
-        targetId: created.id,
-        details: {
-          label: created.label,
-          description: created.description,
-        },
+    await logAuditAction({
+      actor: session.user,
+      actionType: "custom_cohort_type_created",
+      targetType: "custom_cohort_type",
+      targetId: created.id,
+      details: {
+        label: created.label,
+        description: created.description,
       },
     })
 

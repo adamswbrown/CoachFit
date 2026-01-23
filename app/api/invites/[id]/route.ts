@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { isAdmin, isAdminOrCoach } from "@/lib/permissions"
 import { sendSystemEmail } from "@/lib/email"
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
+import { logAuditAction } from "@/lib/audit-log"
 
 // DELETE /api/invites/[id] - Cancel/delete an invite
 export async function DELETE(
@@ -37,6 +38,14 @@ export async function DELETE(
 
     await db.coachInvite.delete({
       where: { id },
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COACH_DELETE_INVITE",
+      targetType: "coach_invite",
+      targetId: invite.id,
+      details: { email: invite.email },
     })
 
     return NextResponse.json({ message: "Invite cancelled" }, { status: 200 })
@@ -111,6 +120,14 @@ export async function POST(
       `,
       fallbackText: `You've been invited to CoachSync\n\n${coachName} has invited you to join CoachSync to track your fitness progress.\n\nSign in to get started: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
       isTestUser: isTestUserEmail,
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COACH_RESEND_INVITE",
+      targetType: "coach_invite",
+      targetId: invite.id,
+      details: { email: invite.email },
     })
 
     return NextResponse.json({ message: "Invite resent" }, { status: 200 })

@@ -87,6 +87,10 @@ export async function GET(req: NextRequest) {
     const targetType = searchParams.get("targetType")
     const targetId = searchParams.get("targetId")
     const actionType = searchParams.get("actionType")
+    const errorType = searchParams.get("errorType")
+    const startDate = searchParams.get("startDate")
+    const endDate = searchParams.get("endDate")
+    const format = searchParams.get("format")
     const limit = parseInt(searchParams.get("limit") || "100")
 
     const where: any = {}
@@ -98,6 +102,22 @@ export async function GET(req: NextRequest) {
     }
     if (actionType) {
       where.actionType = actionType
+    }
+    if (errorType) {
+      where.details = {
+        path: ["errorType"],
+        equals: errorType,
+      }
+    }
+    if (startDate || endDate) {
+      const createdAt: { gte?: Date; lte?: Date } = {}
+      if (startDate) {
+        createdAt.gte = new Date(`${startDate}T00:00:00.000Z`)
+      }
+      if (endDate) {
+        createdAt.lte = new Date(`${endDate}T23:59:59.999Z`)
+      }
+      where.createdAt = createdAt
     }
 
     const actions = await db.adminAction.findMany({
@@ -116,6 +136,49 @@ export async function GET(req: NextRequest) {
       },
       take: limit,
     })
+    if (format === "csv") {
+      const headers = [
+        "Time",
+        "Action",
+        "Target Type",
+        "Target ID",
+        "Admin Name",
+        "Admin Email",
+        "Reason",
+        "Error Type",
+        "Details",
+      ]
+      const rows = actions.map((action) => {
+        const details = action.details ? JSON.stringify(action.details) : ""
+        const errorTypeValue =
+          typeof action.details === "object" && action.details
+            ? (action.details as Record<string, any>).errorType ?? ""
+            : ""
+        return [
+          action.createdAt.toISOString(),
+          action.actionType,
+          action.targetType,
+          action.targetId ?? "",
+          action.admin.name ?? "",
+          action.admin.email ?? "",
+          action.reason ?? "",
+          errorTypeValue ?? "",
+          details,
+        ]
+      })
+      const escape = (value: string) => `"${value.replace(/"/g, "\"\"")}"`
+      const csv = [headers, ...rows]
+        .map((row) => row.map((value) => escape(String(value ?? ""))).join(","))
+        .join("\n")
+
+      return new NextResponse(csv, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": "attachment; filename=\"audit-log.csv\"",
+        },
+      })
+    }
 
     return NextResponse.json({ actions }, { status: 200 })
   } catch (error) {

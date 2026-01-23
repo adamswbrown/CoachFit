@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
+import { logAuditAction } from "@/lib/audit-log"
 
 export async function DELETE(
   req: NextRequest,
@@ -52,6 +53,16 @@ export async function DELETE(
           userId: clientId,
           cohortId,
         },
+      },
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COHORT_REMOVE_CLIENT",
+      targetType: "client",
+      targetId: clientId,
+      details: {
+        cohortId,
       },
     })
 

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
+import { logAuditAction } from "@/lib/audit-log"
 
 // Helper to get random date in range
 function randomDateInRange(daysAgo: number, variance: number = 0): Date {
@@ -155,6 +156,16 @@ export async function POST(req: NextRequest) {
       await createEntriesForClient(shuffled[index].id, "offline")
       index++
     }
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "ADMIN_RANDOMIZE_CHECKINS",
+      targetType: "client_entries",
+      details: {
+        totalClients: clients.length,
+        distribution,
+      },
+    })
 
     return NextResponse.json({
       success: true,

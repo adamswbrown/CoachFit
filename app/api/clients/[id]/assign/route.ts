@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
 import { z } from "zod"
+import { logAuditAction } from "@/lib/audit-log"
 
 const assignClientSchema = z.object({
   cohortId: z.string().min(1, "Cohort ID is required"),
@@ -97,6 +98,14 @@ export async function POST(
         userId: clientId,
         cohortId: cohortId,
       },
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COHORT_ASSIGN_CLIENT",
+      targetType: "cohort_membership",
+      targetId: `${clientId}:${cohortId}`,
+      details: { clientId, cohortId },
     })
 
     return NextResponse.json(

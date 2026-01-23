@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
+import { logAuditAction } from "@/lib/audit-log"
 import { z } from "zod"
 
 const updateCheckInConfigSchema = z.object({
@@ -125,6 +126,17 @@ export async function PUT(
         enabledPrompts: allEnabledPrompts,
         customPrompt1: validated.customPrompt1 ?? null,
         customPrompt1Type: validated.customPrompt1Type ?? null,
+      },
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COHORT_UPDATE_CHECKIN_CONFIG",
+      targetType: "cohort_checkin_config",
+      targetId: config.id,
+      details: {
+        cohortId: id,
+        enabledPrompts: allEnabledPrompts,
       },
     })
 

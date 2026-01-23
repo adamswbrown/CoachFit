@@ -6,6 +6,7 @@ import { Role } from "@/lib/types"
 import { sendSystemEmail } from "@/lib/email"
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
 import { isAdmin } from "@/lib/permissions"
+import { logAuditAction } from "@/lib/audit-log"
 
 export async function GET(
   req: NextRequest,
@@ -223,6 +224,17 @@ export async function POST(
           cohortId: id,
         },
       })
+
+      await logAuditAction({
+        actor: session.user,
+        actionType: "COHORT_ADD_CLIENT",
+        targetType: "client",
+        targetId: user.id,
+        details: {
+          cohortId: id,
+          email: user.email,
+        },
+      })
     } else {
       // User doesn't exist - check if invite already exists
       const existingInvite = await db.cohortInvite.findUnique({
@@ -242,7 +254,7 @@ export async function POST(
       }
 
       // Create invite
-      await db.cohortInvite.create({
+      const invite = await db.cohortInvite.create({
         data: {
           email: validated.email,
           cohortId: id,
@@ -302,6 +314,17 @@ export async function POST(
         // Log error but don't block the API response
         console.error("Error sending invite email:", emailError)
       }
+
+      await logAuditAction({
+        actor: session.user,
+        actionType: "COHORT_INVITE_CLIENT",
+        targetType: "cohort_invite",
+        targetId: invite.id,
+        details: {
+          cohortId: id,
+          email: invite.email,
+        },
+      })
     }
 
     // Return updated list of members and invites

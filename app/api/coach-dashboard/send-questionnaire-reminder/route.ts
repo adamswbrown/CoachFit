@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
 import { sendSystemEmail } from "@/lib/email"
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
+import { logAuditAction } from "@/lib/audit-log"
 
 export async function POST(req: NextRequest) {
   try {
@@ -170,6 +171,14 @@ ${coachName}`,
         console.error(`Failed to send reminder to ${client.email}:`, error)
       }
     }
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COACH_SEND_QUESTIONNAIRE_REMINDER",
+      targetType: "cohort",
+      targetId: cohortId,
+      details: { weekNumber, sent: sentCount, total: clientsNeedingReminder.length },
+    })
 
     return NextResponse.json({
       message: `Sent ${sentCount} reminder emails`,

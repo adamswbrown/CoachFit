@@ -5,6 +5,7 @@ import { isAdminOrCoach } from "@/lib/permissions"
 import { z } from "zod"
 import { sendSystemEmail } from "@/lib/email"
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
+import { logAuditAction } from "@/lib/audit-log"
 
 const createInviteSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -63,6 +64,13 @@ export async function POST(req: NextRequest) {
         await db.user.update({
           where: { id: existingUser.id },
           data: { invitedByCoachId: session.user.id },
+        })
+        await logAuditAction({
+          actor: session.user,
+          actionType: "COACH_LINK_EXISTING_CLIENT",
+          targetType: "user",
+          targetId: existingUser.id,
+          details: { email },
         })
         return NextResponse.json(
           { message: "User already exists and has been linked to you", userId: existingUser.id },
@@ -141,6 +149,14 @@ export async function POST(req: NextRequest) {
       `,
       fallbackText: `You've been invited to CoachSync\n\n${coachName} has invited you to join CoachSync to track your fitness progress.\n\nSign in to get started: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
       isTestUser: isTestUserEmail,
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COACH_CREATE_INVITE",
+      targetType: "coach_invite",
+      targetId: invite.id,
+      details: { email },
     })
 
     return NextResponse.json({ invite }, { status: 201 })

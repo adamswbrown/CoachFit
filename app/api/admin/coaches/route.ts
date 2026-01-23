@@ -7,6 +7,7 @@ import { z } from "zod"
 import bcrypt from "bcryptjs"
 import { sendSystemEmail } from "@/lib/email"
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
+import { logAuditAction } from "@/lib/audit-log"
 
 const createCoachSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -133,6 +134,13 @@ export async function POST(req: NextRequest) {
       isTestUser: isTestUserEmail,
     })
 
+    await logAuditAction({
+      actor: session.user,
+      actionType: "ADMIN_CREATE_COACH",
+      targetType: "user",
+      targetId: newCoach.id,
+      details: { email: newCoach.email, name: newCoach.name, roles: newCoach.roles },
+    })
     return NextResponse.json(
       {
         coach: newCoach,

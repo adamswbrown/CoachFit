@@ -6,6 +6,7 @@ import { Role } from "@/lib/types"
 import { isAdminOrCoach } from "@/lib/permissions"
 import { DEFAULT_TEMPLATES } from "@/lib/default-questionnaire-templates"
 import { z } from "zod"
+import { logAuditAction } from "@/lib/audit-log"
 
 export async function GET(req: NextRequest) {
   try {
@@ -242,6 +243,13 @@ export async function POST(req: NextRequest) {
       return newCohort
     })
 
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COHORT_CREATE",
+      targetType: "cohort",
+      targetId: cohort.id,
+      details: { name: cohort.name, coachId: cohort.coachId },
+    })
     return NextResponse.json(cohort, { status: 201 })
   } catch (error: any) {
     if (error instanceof z.ZodError) {

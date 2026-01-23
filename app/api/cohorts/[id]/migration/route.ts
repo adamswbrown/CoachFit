@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { isAdmin } from "@/lib/permissions"
 import { db } from "@/lib/db"
 import { getSystemSetting } from "@/lib/system-settings"
+import { logAuditAction } from "@/lib/audit-log"
 import { z } from "zod"
 
 const migrationSchema = z.object({
@@ -39,15 +40,13 @@ export async function POST(
     }
 
     if (validated.action === "cancel") {
-      await db.adminAction.create({
-        data: {
-          adminId: session.user.id,
-          actionType: "cohort_migration_cancelled",
-          targetType: "cohort",
-          targetId: cohort.id,
-          details: {
-            name: cohort.name,
-          },
+      await logAuditAction({
+        actor: session.user,
+        actionType: "cohort_migration_cancelled",
+        targetType: "cohort",
+        targetId: cohort.id,
+        details: {
+          name: cohort.name,
         },
       })
       return NextResponse.json({ message: "Migration cancelled" }, { status: 200 })
@@ -105,27 +104,25 @@ export async function POST(
       data: updateData,
     })
 
-    await db.adminAction.create({
-      data: {
-        adminId: session.user.id,
-        actionType:
-          validated.action === "skip" ? "cohort_migration_skipped" : "cohort_migration_updated",
-        targetType: "cohort",
-        targetId: cohort.id,
-        details: {
-          name: cohort.name,
-          previous: {
-            type: cohort.type,
-            customCohortTypeId: cohort.customCohortTypeId,
-            customTypeLabel: cohort.customTypeLabel,
-            checkInFrequencyDays: cohort.checkInFrequencyDays,
-          },
-          next: {
-            type: updated.type,
-            customCohortTypeId: updated.customCohortTypeId,
-            customTypeLabel: updated.customTypeLabel,
-            checkInFrequencyDays: updated.checkInFrequencyDays,
-          },
+    await logAuditAction({
+      actor: session.user,
+      actionType:
+        validated.action === "skip" ? "cohort_migration_skipped" : "cohort_migration_updated",
+      targetType: "cohort",
+      targetId: cohort.id,
+      details: {
+        name: cohort.name,
+        previous: {
+          type: cohort.type,
+          customCohortTypeId: cohort.customCohortTypeId,
+          customTypeLabel: cohort.customTypeLabel,
+          checkInFrequencyDays: cohort.checkInFrequencyDays,
+        },
+        next: {
+          type: updated.type,
+          customCohortTypeId: updated.customCohortTypeId,
+          customTypeLabel: updated.customTypeLabel,
+          checkInFrequencyDays: updated.checkInFrequencyDays,
         },
       },
     })

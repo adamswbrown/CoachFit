@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin, isCoach } from "@/lib/permissions"
 import { Role } from "@/lib/types"
+import { logAuditAction } from "@/lib/audit-log"
 
 export async function PATCH(
   req: NextRequest,
@@ -85,6 +86,17 @@ export async function PATCH(
         id: true,
         name: true,
         email: true,
+      },
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "ADMIN_ASSIGN_COHORT_COACH",
+      targetType: "cohort",
+      targetId: updatedCohort.id,
+      details: {
+        previousCoachId: cohort.coachId,
+        newCoachId: coachId,
       },
     })
 

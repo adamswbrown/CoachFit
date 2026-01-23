@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
+import { logAuditAction } from "@/lib/audit-log"
 import { isAdmin } from "@/lib/permissions"
 import { z } from "zod"
 
@@ -102,6 +103,13 @@ export async function GET(
         },
       })
 
+      await logAuditAction({
+        actor: session.user,
+        actionType: "COACH_UPDATE_NOTE",
+        targetType: "coach_note",
+        targetId: note.id,
+        details: { clientId: id, weekStart: weekStart.toISOString() },
+      })
       return NextResponse.json(note, { status: 200 })
     } else if (noteDateParam) {
       // Fetch note for specific date
@@ -247,6 +255,13 @@ export async function POST(
         },
       })
 
+      await logAuditAction({
+        actor: session.user,
+        actionType: "COACH_CREATE_NOTE",
+        targetType: "coach_note",
+        targetId: note.id,
+        details: { clientId: id, weekStart: weekStart.toISOString() },
+      })
       return NextResponse.json(note, { status: 201 })
     }
   } catch (error: any) {

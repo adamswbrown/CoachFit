@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth"
 import { createPairingCode, regeneratePairingCode, getActiveCodesForCoach } from "@/lib/healthkit/pairing"
 import { isCoach, isAdmin } from "@/lib/permissions"
 import { generatePairingCodeSchema } from "@/lib/validations/healthkit"
+import { logAuditAction } from "@/lib/audit-log"
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,6 +40,16 @@ export async function POST(req: NextRequest) {
     const pairingCode = validated.regenerate
       ? await regeneratePairingCode(session.user.id, validated.client_id, isAdminUser)
       : await createPairingCode(session.user.id, validated.client_id, isAdminUser)
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: validated.regenerate ? "PAIRING_CODE_REGENERATE" : "PAIRING_CODE_CREATE",
+      targetType: "pairing_code",
+      targetId: pairingCode.id,
+      details: {
+        clientId: pairingCode.clientId,
+      },
+    })
 
     return NextResponse.json({
       success: true,

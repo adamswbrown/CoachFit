@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { isAdmin } from "@/lib/permissions"
 import { db } from "@/lib/db"
+import { logAuditAction } from "@/lib/audit-log"
 import { z } from "zod"
 
 const updateSchema = z.object({
@@ -47,16 +48,14 @@ export async function PATCH(
       },
     })
 
-    await db.adminAction.create({
-      data: {
-        adminId: session.user.id,
-        actionType: "custom_cohort_type_updated",
-        targetType: "custom_cohort_type",
-        targetId: updated.id,
-        details: {
-          label: updated.label,
-          description: updated.description,
-        },
+    await logAuditAction({
+      actor: session.user,
+      actionType: "custom_cohort_type_updated",
+      targetType: "custom_cohort_type",
+      targetId: updated.id,
+      details: {
+        label: updated.label,
+        description: updated.description,
       },
     })
 
@@ -102,16 +101,14 @@ export async function DELETE(
       where: { id },
     })
 
-    await db.adminAction.create({
-      data: {
-        adminId: session.user.id,
-        actionType: "custom_cohort_type_deleted",
-        targetType: "custom_cohort_type",
-        targetId: deleted.id,
-        details: {
-          label: deleted.label,
-          description: deleted.description,
-        },
+    await logAuditAction({
+      actor: session.user,
+      actionType: "custom_cohort_type_deleted",
+      targetType: "custom_cohort_type",
+      targetId: deleted.id,
+      details: {
+        label: deleted.label,
+        description: deleted.description,
       },
     })
 

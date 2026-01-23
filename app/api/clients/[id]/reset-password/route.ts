@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdminOrCoach } from "@/lib/permissions"
 import { Role } from "@/lib/types"
+import { logAuditAction } from "@/lib/audit-log"
 import bcrypt from "bcryptjs"
 
 export async function POST(
@@ -73,6 +74,16 @@ export async function POST(
     await db.user.update({
       where: { id: clientId },
       data: { passwordHash, mustChangePassword: true },
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "CLIENT_RESET_PASSWORD",
+      targetType: "client",
+      targetId: clientId,
+      details: {
+        mustChangePassword: true,
+      },
     })
 
     return NextResponse.json({

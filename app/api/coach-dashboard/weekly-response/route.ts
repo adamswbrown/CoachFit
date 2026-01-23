@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
 import { isAdmin, isCoach } from "@/lib/permissions"
+import { logAuditAction } from "@/lib/audit-log"
 import { z } from "zod"
 
 /**
@@ -278,6 +279,13 @@ export async function POST(req: NextRequest) {
       response = rows[0] ?? null
     }
 
+    await logAuditAction({
+      actor: session.user,
+      actionType: "COACH_UPSERT_WEEKLY_RESPONSE",
+      targetType: "weekly_coach_response",
+      targetId: response?.id ?? null,
+      details: { clientId: validated.clientId, weekStart: weekStartStr },
+    })
     return NextResponse.json(response, { status: 200 })
   } catch (error: any) {
     if (error.name === "ZodError") {

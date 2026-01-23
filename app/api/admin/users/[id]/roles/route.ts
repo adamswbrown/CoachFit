@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
+import { logAuditAction } from "@/lib/audit-log"
 import { z } from "zod"
 
 const updateRolesSchema = z.object({
@@ -128,6 +129,14 @@ export async function PATCH(
           },
         },
       },
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "ADMIN_UPDATE_USER_ROLES",
+      targetType: "user",
+      targetId: updatedUser.id,
+      details: { action, role, roles: updatedUser.roles },
     })
 
     return NextResponse.json(
