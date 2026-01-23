@@ -346,6 +346,9 @@ export async function GET(req: NextRequest) {
       lastCheckInDate?: string | null
       checkInCount?: number
       adherenceRate?: number
+      expectedCheckIns?: number
+      checkInWindowDays?: number
+      effectiveCheckInFrequencyDays?: number
       weightTrend?: string | null
       latestWeight?: number | null
     }
