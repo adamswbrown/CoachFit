@@ -48,6 +48,7 @@ model Cohort {
   cohortStartDate           DateTime?                      @db.Date // Week 1 start date for questionnaire tracking
   durationConfig            String                         @default("six-week") // "six-week" or "custom"
   durationWeeks             Int?                           // Weeks duration (6 for six-week, or custom value)
+  membershipDurationMonths  Int?                           // Ongoing membership duration in months (e.g., 6 or 12)
   checkInFrequencyDays      Int?
   coachMemberships          CoachCohortMembership[]
   User                      User                           @relation(fields: [coachId], references: [id], onDelete: Cascade)

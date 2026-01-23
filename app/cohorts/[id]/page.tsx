@@ -16,6 +16,9 @@ interface Cohort {
   createdAt: string
   coachId: string
   cohortStartDate?: string | null
+  durationConfig?: string | null
+  durationWeeks?: number | null
+  membershipDurationMonths?: number | null
   type?: "TIMED" | "ONGOING" | "CHALLENGE" | "CUSTOM" | null
   customTypeLabel?: string | null
   customCohortType?: {
@@ -91,6 +94,8 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
     customCohortTypeId: "",
     customTypeLabel: "",
     checkInFrequencyDays: "" as string,
+    durationWeeks: "" as string,
+    membershipDurationMonths: "" as string,
   })
   const [settingsSaving, setSettingsSaving] = useState(false)
   const [settingsError, setSettingsError] = useState<string | null>(null)
@@ -189,11 +194,26 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
         setStartDateInput(
           data.cohortStartDate ? new Date(data.cohortStartDate).toISOString().split("T")[0] : ""
         )
+        const resolvedType = (data.type || "TIMED") as "TIMED" | "ONGOING" | "CHALLENGE" | "CUSTOM"
         setSettingsForm({
-          type: (data.type || "TIMED") as "TIMED" | "ONGOING" | "CHALLENGE" | "CUSTOM",
+          type: resolvedType,
           customCohortTypeId: data.customCohortType?.id || "",
           customTypeLabel: data.customTypeLabel || "",
           checkInFrequencyDays: data.checkInFrequencyDays ? String(data.checkInFrequencyDays) : "",
+          durationWeeks:
+            data.durationWeeks !== null && data.durationWeeks !== undefined
+              ? String(data.durationWeeks)
+              : resolvedType === "CHALLENGE"
+                ? "6"
+                : resolvedType === "ONGOING"
+                  ? ""
+                  : "6",
+          membershipDurationMonths:
+            data.membershipDurationMonths !== null && data.membershipDurationMonths !== undefined
+              ? String(data.membershipDurationMonths)
+              : resolvedType === "ONGOING"
+                ? "6"
+                : "",
         })
         setShowMigrationModal(Boolean(data.requiresMigration))
       } else {
@@ -309,6 +329,31 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
       return
     }
 
+    const durationWeeksValue = settingsForm.durationWeeks.trim()
+    const durationWeeksNumber = durationWeeksValue ? Number(durationWeeksValue) : null
+    const membershipMonthsValue = settingsForm.membershipDurationMonths.trim()
+    const membershipMonthsNumber = membershipMonthsValue ? Number(membershipMonthsValue) : null
+
+    if (settingsForm.type === "ONGOING") {
+      if (membershipMonthsNumber !== 6 && membershipMonthsNumber !== 12) {
+        setSettingsError("Ongoing cohorts must select a 6- or 12-month membership.")
+        setSettingsSaving(false)
+        return
+      }
+    } else if (settingsForm.type === "CHALLENGE") {
+      if (![6, 8, 12].includes(durationWeeksNumber ?? -1)) {
+        setSettingsError("Challenge cohorts must be 6, 8, or 12 weeks.")
+        setSettingsSaving(false)
+        return
+      }
+    } else {
+      if (!durationWeeksNumber || durationWeeksNumber < 1 || durationWeeksNumber > 52) {
+        setSettingsError("Timed and custom cohorts must specify a duration between 1 and 52 weeks.")
+        setSettingsSaving(false)
+        return
+      }
+    }
+
     try {
       const res = await fetch(`/api/cohorts/${cohortId}`, {
         method: "PATCH",
@@ -318,6 +363,9 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
           customCohortTypeId: settingsForm.customCohortTypeId || undefined,
           customTypeLabel: settingsForm.customTypeLabel.trim() || undefined,
           checkInFrequencyDays: frequencyNumber ?? undefined,
+          durationConfig: settingsForm.type.toLowerCase(),
+          durationWeeks: settingsForm.type === "ONGOING" ? undefined : durationWeeksNumber ?? undefined,
+          membershipDurationMonths: settingsForm.type === "ONGOING" ? membershipMonthsNumber ?? undefined : undefined,
         }),
       })
 
@@ -337,6 +385,9 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                 ? customTypes.find((type) => type.id === settingsForm.customCohortTypeId) || prev.customCohortType
                 : null,
               checkInFrequencyDays: data.checkInFrequencyDays ?? prev.checkInFrequencyDays,
+              durationConfig: data.durationConfig ?? prev.durationConfig,
+              durationWeeks: data.durationWeeks ?? prev.durationWeeks,
+              membershipDurationMonths: data.membershipDurationMonths ?? prev.membershipDurationMonths,
               requiresMigration: false,
             }
           : prev
@@ -795,6 +846,14 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
   const checkInFrequencyDisplay = cohort.checkInFrequencyDays
     ? `${cohort.checkInFrequencyDays} days`
     : "Defaults apply"
+  const durationDisplay =
+    cohort.type === "ONGOING"
+      ? cohort.membershipDurationMonths
+        ? `${cohort.membershipDurationMonths}-month membership`
+        : "Membership duration not set"
+      : cohort.durationWeeks
+        ? `${cohort.durationWeeks} weeks`
+        : "Program duration not set"
 
   return (
     <CoachLayout>
@@ -823,18 +882,25 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">Type</label>
-                      <select
-                        value={settingsForm.type}
-                        onChange={(e) =>
-                          setSettingsForm({
-                            ...settingsForm,
-                            type: e.target.value as typeof settingsForm.type,
-                            customCohortTypeId: "",
-                            customTypeLabel: "",
-                          })
-                        }
-                        className="w-full border rounded-md px-3 py-2 text-sm"
-                      >
+                    <select
+                      value={settingsForm.type}
+                      onChange={(e) =>
+                        setSettingsForm({
+                          ...settingsForm,
+                          type: e.target.value as typeof settingsForm.type,
+                          customCohortTypeId: "",
+                          customTypeLabel: "",
+                          durationWeeks:
+                            e.target.value === "CHALLENGE"
+                              ? "6"
+                              : e.target.value === "ONGOING"
+                                ? settingsForm.durationWeeks
+                                : "6",
+                          membershipDurationMonths: e.target.value === "ONGOING" ? "6" : "",
+                        })
+                      }
+                      className="w-full border rounded-md px-3 py-2 text-sm"
+                    >
                         <option value="TIMED">Timed</option>
                         <option value="ONGOING">Ongoing</option>
                         <option value="CHALLENGE">Challenge</option>
@@ -957,6 +1023,10 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                 Check-in frequency:{" "}
                 <span className="text-neutral-900">{checkInFrequencyDisplay}</span>
               </div>
+              <div className="text-sm text-neutral-600">
+                Program duration:{" "}
+                <span className="text-neutral-900">{durationDisplay}</span>
+              </div>
               {canEditStartDate && (
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <label htmlFor="cohort-start-date" className="text-neutral-600">
@@ -1039,6 +1109,13 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                       type: e.target.value as typeof settingsForm.type,
                       customCohortTypeId: "",
                       customTypeLabel: "",
+                      durationWeeks:
+                        e.target.value === "CHALLENGE"
+                          ? "6"
+                          : e.target.value === "ONGOING"
+                            ? settingsForm.durationWeeks
+                            : "6",
+                      membershipDurationMonths: e.target.value === "ONGOING" ? "6" : "",
                     })
                   }
                   className="w-full border rounded-md px-3 py-2 text-sm"
@@ -1048,6 +1125,54 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                   <option value="CHALLENGE">Challenge</option>
                   <option value="CUSTOM">Custom</option>
                 </select>
+
+                <div className="mt-4 border-t border-neutral-200 pt-4">
+                  {settingsForm.type === "ONGOING" ? (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Membership Type</label>
+                      <select
+                        value={settingsForm.membershipDurationMonths}
+                        onChange={(e) =>
+                          setSettingsForm({ ...settingsForm, membershipDurationMonths: e.target.value })
+                        }
+                        className="w-full border rounded-md px-3 py-2 text-sm"
+                      >
+                        <option value="6">6-month membership</option>
+                        <option value="12">12-month membership</option>
+                      </select>
+                    </div>
+                  ) : settingsForm.type === "CHALLENGE" ? (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Challenge Length</label>
+                      <select
+                        value={settingsForm.durationWeeks}
+                        onChange={(e) =>
+                          setSettingsForm({ ...settingsForm, durationWeeks: e.target.value })
+                        }
+                        className="w-full border rounded-md px-3 py-2 text-sm"
+                      >
+                        <option value="6">6 weeks</option>
+                        <option value="8">8 weeks</option>
+                        <option value="12">12 weeks</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Duration (weeks)</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={52}
+                        value={settingsForm.durationWeeks}
+                        onChange={(e) =>
+                          setSettingsForm({ ...settingsForm, durationWeeks: e.target.value })
+                        }
+                        className="w-full border rounded-md px-3 py-2 text-sm"
+                        placeholder="Enter number of weeks"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="md:col-span-2">

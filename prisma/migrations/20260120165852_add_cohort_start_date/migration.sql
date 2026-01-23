@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE "Cohort" ADD COLUMN     "cohortStartDate" DATE,
+ALTER TABLE "Cohort" ADD COLUMN IF NOT EXISTS "cohortStartDate" DATE,
 ADD COLUMN     "durationConfig" TEXT NOT NULL DEFAULT 'six-week',
 ADD COLUMN     "durationWeeks" INTEGER;
 

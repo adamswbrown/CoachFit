@@ -116,6 +116,9 @@ const updateCohortSchema = z.object({
   customCohortTypeId: z.string().uuid().optional().nullable(),
   customTypeLabel: z.string().max(80).optional().nullable(),
   checkInFrequencyDays: z.number().int().min(1).max(365).optional().nullable(),
+  durationConfig: z.enum(["timed", "ongoing", "challenge", "custom"]).optional().nullable(),
+  durationWeeks: z.number().int().min(1).max(52).optional().nullable(),
+  membershipDurationMonths: z.union([z.literal(6), z.literal(12)]).optional().nullable(),
 })
 
 export async function PATCH(
@@ -201,6 +204,62 @@ export async function PATCH(
           ? validated.customTypeLabel?.trim() || customCohortType?.label || null
           : null
     }
+
+    const effectiveType = nextType ?? cohort.type ?? null
+    if (effectiveType) {
+      if (effectiveType === "ONGOING") {
+        if (validated.durationWeeks !== undefined) {
+          return NextResponse.json(
+            { error: "Ongoing cohorts do not support week-based durations" },
+            { status: 400 }
+          )
+        }
+        if (nextType === "ONGOING" && validated.membershipDurationMonths === undefined) {
+          return NextResponse.json(
+            { error: "Ongoing cohorts must select a 6- or 12-month membership" },
+            { status: 400 }
+          )
+        }
+      } else {
+        if (validated.membershipDurationMonths !== undefined) {
+          return NextResponse.json(
+            { error: "Membership duration only applies to ongoing cohorts" },
+            { status: 400 }
+          )
+        }
+        if (effectiveType === "CHALLENGE" && validated.durationWeeks !== undefined) {
+          if (![6, 8, 12].includes(validated.durationWeeks)) {
+            return NextResponse.json(
+              { error: "Challenge cohorts must be 6, 8, or 12 weeks" },
+              { status: 400 }
+            )
+          }
+        }
+        if (
+          (effectiveType === "TIMED" || effectiveType === "CUSTOM") &&
+          nextType &&
+          validated.durationWeeks === undefined
+        ) {
+          return NextResponse.json(
+            { error: "Timed and custom cohorts must specify a duration in weeks" },
+            { status: 400 }
+          )
+        }
+      }
+    }
+
+    if (validated.durationConfig !== undefined) {
+      updateData.durationConfig = validated.durationConfig
+    } else if (nextType) {
+      updateData.durationConfig = nextType.toLowerCase()
+    }
+
+    if (validated.durationWeeks !== undefined) {
+      updateData.durationWeeks = validated.durationWeeks
+    }
+    if (validated.membershipDurationMonths !== undefined) {
+      updateData.membershipDurationMonths = validated.membershipDurationMonths
+    }
     if (validated.checkInFrequencyDays !== undefined) {
       updateData.checkInFrequencyDays = validated.checkInFrequencyDays
     }
@@ -215,6 +274,9 @@ export async function PATCH(
         customTypeLabel: true,
         customCohortTypeId: true,
         checkInFrequencyDays: true,
+        durationConfig: true,
+        durationWeeks: true,
+        membershipDurationMonths: true,
       },
     })
 

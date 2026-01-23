@@ -45,28 +45,63 @@ export const createCohortSchema = z.object({
   // coCoaches is an array of coach emails to add as co-coaches
   coCoaches: z.array(z.string().email()).optional(),
   // Duration configuration
-  durationConfig: z.enum(["six-week", "custom"]).default("six-week"),
+  durationConfig: z.enum(["timed", "ongoing", "challenge", "custom"]).default("timed"),
   durationWeeks: z.number().int("Duration must be a whole number").min(1, "Duration must be at least 1 week").max(52, "Duration must be at most 52 weeks").optional(),
+  membershipDurationMonths: z.union([z.literal(6), z.literal(12)]).optional(),
   // Check-in configuration (optional)
   checkInConfig: z.object({
     enabledPrompts: z.array(z.string()).optional(),
     customPrompt1: z.string().optional(),
     customPrompt1Type: z.enum(["scale", "text", "number"]).optional(),
   }).optional(),
-}).refine(
-  (data) => {
-    // If custom, durationWeeks is required
-    if (data.durationConfig === "custom") {
-      return data.durationWeeks !== undefined && data.durationWeeks > 0
+}).superRefine((data, ctx) => {
+  if (data.type === "ONGOING") {
+    if (data.membershipDurationMonths !== 6 && data.membershipDurationMonths !== 12) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ongoing cohorts must select a 6- or 12-month membership",
+        path: ["membershipDurationMonths"],
+      })
     }
-    // If six-week, durationWeeks should be 6
-    return true
-  },
-  {
-    message: "Custom cohorts must specify a duration in weeks",
-    path: ["durationWeeks"],
+    if (data.durationWeeks !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ongoing cohorts should not include a week-based duration",
+        path: ["durationWeeks"],
+      })
+    }
+    return
   }
-).refine(
+
+  if (data.membershipDurationMonths !== undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Membership duration only applies to ongoing cohorts",
+      path: ["membershipDurationMonths"],
+    })
+  }
+
+  if (data.type === "CHALLENGE") {
+    if (![6, 8, 12].includes(data.durationWeeks ?? -1)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Challenge cohorts must be 6, 8, or 12 weeks",
+        path: ["durationWeeks"],
+      })
+    }
+    return
+  }
+
+  if (data.type === "TIMED" || data.type === "CUSTOM") {
+    if (data.durationWeeks === undefined || data.durationWeeks <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Timed and custom cohorts must specify a duration in weeks",
+        path: ["durationWeeks"],
+      })
+    }
+  }
+}).refine(
   (data) => {
     if (data.type === "CUSTOM") {
       return Boolean(data.customCohortTypeId || data.customTypeLabel?.trim())

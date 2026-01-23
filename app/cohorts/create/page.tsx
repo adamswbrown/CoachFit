@@ -31,8 +31,8 @@ export default function CreateCohortPage() {
     cohortStartDate: today,
     ownerCoachId: "",
     coCoaches: [] as string[],
-    durationConfig: "six-week" as "six-week" | "custom",
     durationWeeks: 6,
+    membershipDurationMonths: "" as string,
     type: "TIMED" as "TIMED" | "ONGOING" | "CHALLENGE" | "CUSTOM",
     customCohortTypeId: "",
     customTypeLabel: "",
@@ -109,12 +109,15 @@ export default function CreateCohortPage() {
       const requestBody: any = {
         name: formData.name,
         cohortStartDate: formData.cohortStartDate,
-        durationConfig: formData.durationConfig,
+        durationConfig: formData.type.toLowerCase(),
         type: formData.type,
       }
 
-      // Add duration weeks if custom
-      if (formData.durationConfig === "custom") {
+      if (formData.type === "ONGOING") {
+        if (formData.membershipDurationMonths.trim()) {
+          requestBody.membershipDurationMonths = Number(formData.membershipDurationMonths)
+        }
+      } else {
         requestBody.durationWeeks = formData.durationWeeks
       }
 
@@ -282,6 +285,14 @@ export default function CreateCohortPage() {
                     type: e.target.value as typeof formData.type,
                     customCohortTypeId: "",
                     customTypeLabel: "",
+                    durationWeeks:
+                      e.target.value === "CHALLENGE"
+                        ? 6
+                        : e.target.value === "ONGOING"
+                          ? formData.durationWeeks
+                          : 6,
+                    membershipDurationMonths:
+                      e.target.value === "ONGOING" ? "6" : "",
                   })
                 }
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -340,6 +351,63 @@ export default function CreateCohortPage() {
                   </div>
                 </div>
               )}
+
+              <div className="mt-6 border-t border-neutral-200 pt-4">
+                <p className="text-sm font-semibold mb-3">Program Duration *</p>
+                {formData.type === "ONGOING" ? (
+                  <div>
+                    <label htmlFor="membershipDurationMonths" className="block text-sm font-medium text-neutral-900 mb-2">
+                      Membership Type
+                    </label>
+                    <select
+                      id="membershipDurationMonths"
+                      value={formData.membershipDurationMonths}
+                      onChange={(e) => setFormData({ ...formData, membershipDurationMonths: e.target.value })}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    >
+                      <option value="6">6-month membership</option>
+                      <option value="12">12-month membership</option>
+                    </select>
+                  </div>
+                ) : formData.type === "CHALLENGE" ? (
+                  <div>
+                    <label htmlFor="challengeDurationWeeks" className="block text-sm font-medium text-neutral-900 mb-2">
+                      Challenge Length
+                    </label>
+                    <select
+                      id="challengeDurationWeeks"
+                      value={String(formData.durationWeeks)}
+                      onChange={(e) =>
+                        setFormData({ ...formData, durationWeeks: parseInt(e.target.value, 10) || 6 })
+                      }
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    >
+                      <option value="6">6 weeks</option>
+                      <option value="8">8 weeks</option>
+                      <option value="12">12 weeks</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label htmlFor="durationWeeks" className="block text-sm font-medium text-neutral-900 mb-2">
+                      Duration (weeks)
+                    </label>
+                    <input
+                      id="durationWeeks"
+                      type="number"
+                      min="1"
+                      max="52"
+                      required={formData.type !== "ONGOING"}
+                      value={formData.durationWeeks}
+                      onChange={(e) =>
+                        setFormData({ ...formData, durationWeeks: parseInt(e.target.value, 10) || 0 })
+                      }
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      placeholder="Enter number of weeks"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Check-in Frequency */}
@@ -421,65 +489,6 @@ export default function CreateCohortPage() {
               </div>
             )}
 
-            {/* Cohort Duration */}
-            <div className="bg-white rounded-lg border border-neutral-200 p-6">
-              <label className="block text-sm font-semibold mb-3">Program Duration *</label>
-              <div className="space-y-3">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    name="duration"
-                    value="six-week"
-                    checked={formData.durationConfig === "six-week"}
-                    onChange={() => {
-                      setFormData({ ...formData, durationConfig: "six-week", durationWeeks: 6 })
-                    }}
-                    className="w-4 h-4 text-blue-600 cursor-pointer"
-                  />
-                  <span className="ml-3">
-                    <span className="text-sm font-medium text-neutral-900">6-Week Program</span>
-                    <p className="text-xs text-neutral-600">Standard cohort duration</p>
-                  </span>
-                </label>
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    name="duration"
-                    value="custom"
-                    checked={formData.durationConfig === "custom"}
-                    onChange={() => {
-                      setFormData({ ...formData, durationConfig: "custom" })
-                    }}
-                    className="w-4 h-4 text-blue-600 cursor-pointer"
-                  />
-                  <span className="ml-3">
-                    <span className="text-sm font-medium text-neutral-900">Custom Duration</span>
-                    <p className="text-xs text-neutral-600">Specify weeks (1-52)</p>
-                  </span>
-                </label>
-              </div>
-
-              {formData.durationConfig === "custom" && (
-                <div className="mt-4 pt-4 border-t border-neutral-200">
-                  <label htmlFor="durationWeeks" className="block text-sm font-medium text-neutral-900 mb-2">
-                    Duration (weeks) *
-                  </label>
-                  <input
-                    id="durationWeeks"
-                    type="number"
-                    min="1"
-                    max="52"
-                    required={formData.durationConfig === "custom"}
-                    value={formData.durationWeeks}
-                    onChange={(e) =>
-                      setFormData({ ...formData, durationWeeks: parseInt(e.target.value) || 0 })
-                    }
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    placeholder="Enter number of weeks"
-                  />
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Middle Column: Co-Coaches */}

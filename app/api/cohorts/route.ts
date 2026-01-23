@@ -90,6 +90,9 @@ export async function GET(req: NextRequest) {
       customTypeLabel: cohort.customTypeLabel,
       customCohortType: cohort.customCohortType,
       checkInFrequencyDays: cohort.checkInFrequencyDays,
+      durationConfig: cohort.durationConfig,
+      durationWeeks: cohort.durationWeeks,
+      membershipDurationMonths: cohort.membershipDurationMonths,
       requiresMigration: !cohort.type,
     }))
 
@@ -147,8 +150,9 @@ export async function POST(req: NextRequest) {
     // Create cohort with check-in config and co-coaches in a transaction
     // Mandatory prompts (weightLbs, steps, calories) are always included
     const cohort = await db.$transaction(async (tx: any) => {
-      // Determine duration weeks based on config
-      const durationWeeks = validated.durationConfig === "six-week" ? 6 : validated.durationWeeks
+      const durationWeeks = validated.type === "ONGOING" ? null : validated.durationWeeks ?? null
+      const membershipDurationMonths =
+        validated.type === "ONGOING" ? validated.membershipDurationMonths ?? null : null
       const customCohortType = validated.customCohortTypeId
         ? await tx.customCohortType.findUnique({
             where: { id: validated.customCohortTypeId },
@@ -166,8 +170,9 @@ export async function POST(req: NextRequest) {
           name: validated.name,
           coachId: coachId,
           cohortStartDate: new Date(validated.cohortStartDate),
-          durationConfig: validated.durationConfig,
-          durationWeeks: durationWeeks,
+          durationConfig: validated.durationConfig ?? validated.type.toLowerCase(),
+          durationWeeks,
+          membershipDurationMonths,
           type: validated.type,
           customCohortTypeId: validated.type === "CUSTOM" ? customCohortType?.id || null : null,
           customTypeLabel:
