@@ -232,8 +232,8 @@ npm run test:generate
 npm run password:set coach@test.local coach123
 npm run password:set client@test.local client123
 
-# Start development server
-npm run dev
+# Start development server (auto-starts local Postgres if needed)
+npm run dev:local
 ```
 
 Open [http://localhost:3000](http://localhost:3000) and login with:
