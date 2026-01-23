@@ -4,7 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CoachSync is a fitness tracking platform connecting coaches and clients. Built with Next.js 16 (App Router), TypeScript, Prisma ORM, PostgreSQL, and NextAuth.js v5. The app enables coaches to manage cohorts, invite clients, and track client fitness data (weight, steps, calories, sleep quality, perceived effort, and custom prompts).
+CoachFit (previously CoachSync) is a comprehensive fitness tracking and coaching platform connecting coaches with clients for real-time health tracking. Built with Next.js 16 (App Router), TypeScript, Prisma ORM, PostgreSQL, and NextAuth.js v5.
+
+**Core capabilities:**
+- **Client tracking**: Daily fitness entries (weight, steps, calories, sleep, effort), HealthKit integration, workout tracking, sleep records
+- **Coach management**: Cohort creation with custom types, client invitations (global + cohort-specific), weekly reviews, questionnaire analytics
+- **Admin operations**: User management, system overview, audit trails, attention scoring, email template management
+- **Data integrations**: HealthKit sync, pairing codes for mobile apps, custom questionnaire bundles
 
 ---
 
@@ -163,15 +169,27 @@ npm run test:generate-comprehensive   # Generate comprehensive test data (200 cl
 
 ### Admin Utilities
 ```bash
-npm run admin:set        # Set admin role for a user: npm run admin:set <email>
-npm run password:set     # Set password for a user: npm run password:set <email> <password>
+npm run admin:set <email>              # Set admin role for a user
+npm run grant:role <email> <role>      # Grant specific role (CLIENT, COACH, ADMIN)
+npm run password:set <email> <password> # Set password for a user
 ```
 
 ### Email Setup (Resend)
 ```bash
-npm run email:setup-templates  # Setup email templates in Resend
-npm run email:verify           # Verify Resend API key
-npm run email:setup-audience   # Setup broadcast audience
+npm run email:setup-templates         # Setup email templates in Resend
+npm run email:verify                  # Verify Resend API key
+npm run email:setup-audience          # Setup broadcast audience
+npm run questionnaire:setup-email     # Setup questionnaire email template
+```
+
+### Questionnaire Management
+```bash
+npm run seed:questionnaire-templates  # Seed example questionnaire templates
+```
+
+### HealthKit Data Cleanup
+```bash
+npm run test:cleanup-healthkit        # Remove HealthKit demo data
 ```
 
 ## Architecture & Key Concepts
@@ -255,6 +273,87 @@ npm run email:setup-audience   # Setup broadcast audience
     - Tracks all admin actions with target type and details
     - Optional reference to insight that triggered action
 
+12. **Workout**: HealthKit workout data
+    - Tracks workouts with type, duration, calories, distance, heart rate
+    - `sourceDevice` tracks where data came from
+    - Indexed by userId and startTime for efficient queries
+
+13. **SleepRecord**: HealthKit sleep tracking
+    - One record per user per day (unique constraint: `[userId, date]`)
+    - Detailed sleep stages: core, deep, REM, awake minutes
+    - `sourceDevices` (JSON array) tracks multiple HealthKit sources
+
+14. **PairingCode**: Mobile app pairing system
+    - Coaches generate codes for clients to pair mobile apps
+    - Codes expire after set duration
+    - Links coach to client via `coachId` and `clientId`
+
+15. **QuestionnaireBundle**: SurveyJS questionnaire configuration
+    - Links to cohorts for weekly questionnaires
+    - `questionnaireJson` stores SurveyJS model
+    - `schedule` array defines when questionnaires are sent (e.g., ["week1", "week3", "week6"])
+
+16. **WeeklyQuestionnaireResponse**: Client responses to questionnaires
+    - `weekNumber`: Which week of the cohort (1-based)
+    - `responseJson`: Complete SurveyJS response data
+    - Unique constraint: `[userId, cohortId, weekNumber]`
+
+17. **CustomCohortType**: Admin-defined cohort types
+    - Global templates for cohort configuration
+    - `isPublic`: Whether visible to all coaches or admin-only
+    - Used by Cohort model via `customCohortTypeId`
+
+### HealthKit Integration
+
+**Data Flow**:
+1. Mobile app (iOS) connects via pairing code
+2. Coach generates code: POST /api/pairing-codes
+3. Client validates code: POST /api/pair (links clientId to coachId)
+4. Mobile app syncs HealthKit data: POST /api/healthkit (batch upload)
+5. Backend merges HealthKit data with manual entries
+
+**Supported Data Types**:
+- **Workouts**: type, duration, calories, distance, heart rate (Workout model)
+- **Sleep**: total sleep, sleep stages (core/deep/REM), in-bed time (SleepRecord model)
+- **Daily metrics**: steps, calories (merged into Entry model via dataSources)
+
+**Data Source Tracking**:
+- `dataSources` field (JSON array) on Entry model tracks all sources
+- Examples: `["manual"]`, `["healthkit"]`, `["manual", "healthkit"]`
+- Prevents data conflicts and shows data provenance
+
+**HealthKit Data Endpoints**:
+- POST /api/healthkit - Batch ingest (requires pairing code validation)
+- GET /api/ingest/workouts - Fetch workout data for date range
+- GET /api/ingest/sleep - Fetch sleep data for date range
+
+### Questionnaire System (SurveyJS)
+
+**Architecture**:
+- Built on SurveyJS library (survey-core, survey-react-ui, survey-creator-react)
+- Questionnaires defined as JSON models (SurveyJS format)
+- Stored in `QuestionnaireBundle` model, linked to cohorts
+- Responses stored in `WeeklyQuestionnaireResponse` model
+
+**Questionnaire Flow**:
+1. Admin/Coach creates questionnaire template using SurveyJS Creator
+2. Template saved to `QuestionnaireBundle` with schedule (e.g., `["week1", "week3", "week6"]`)
+3. At scheduled times, clients receive email notification with link
+4. Client completes questionnaire, response saved as JSON
+5. Coach views analytics at `/coach-dashboard/questionnaire-analytics`
+
+**Questionnaire Features**:
+- Multiple question types: text, numeric, rating, multiple choice, matrix, etc.
+- Conditional logic (skip patterns, visibility rules)
+- Custom validation rules
+- Response analytics and visualizations (survey-analytics library)
+
+**Key Files**:
+- QuestionnaireBundle.questionnaireJson - SurveyJS model (JSON)
+- QuestionnaireBundle.schedule - Array of week identifiers (e.g., `["week1", "week6"]`)
+- WeeklyQuestionnaireResponse.responseJson - Complete SurveyJS response data
+- WeeklyQuestionnaireResponse.weekNumber - Which week of cohort (1-based)
+
 ### Invitation Flow
 
 **Two-tier invitation system:**
@@ -276,18 +375,47 @@ npm run email:setup-audience   # Setup broadcast audience
 - Multiple cohort invites can be processed simultaneously
 - Only one coach invite is processed (first one)
 
+### Custom Cohort Types
+
+**Purpose**: Reusable templates for cohort configuration.
+
+**Model** (CustomCohortType):
+- `name`: Display name (e.g., "6-Week Transformation")
+- `description`: Template description
+- `defaultConfig`: JSON object with default settings (duration, check-in frequency, etc.)
+- `isPublic`: Whether visible to all coaches (true) or admin-only (false)
+- `createdByAdminId`: Admin who created the template
+
+**Usage Pattern**:
+1. Admin creates custom cohort type at `/admin/cohort-types`
+2. Coach creates cohort and selects custom type
+3. Cohort inherits default configuration from template
+4. Coach can override settings as needed
+
+**Cohort Type Selection**:
+- Built-in types: Defined in code as enum (e.g., "SIXWEEK", "ONGOING")
+- Custom types: Admin-defined, referenced via `customCohortTypeId`
+- If custom type selected, `type` field is null and `customCohortTypeId` is set
+- `customTypeLabel` stores display name for UI
+
 ### Email Service (lib/email.ts)
 
 **Resend Integration**:
 - Lazy initialization (only loads when API key is present)
 - Test user suppression: Emails for `isTestUser: true` are logged, not sent
 - Graceful degradation: Missing API key doesn't block user flows
-- Default sender: `CoachSync <onboarding@resend.dev>` (should be updated to custom domain)
+- Default sender: `CoachFit <onboarding@resend.dev>` (update to custom domain in production)
 
 **Email Types**:
 - Welcome emails (sent on user creation)
 - Cohort invitations (sent when coach invites client)
 - Global coach invitations (sent when coach invites client globally)
+- Weekly questionnaire notifications (sent based on cohort schedule)
+
+**Email Template Management**:
+- Use `npm run email:setup-templates` to initialize Resend templates
+- Admin dashboard allows editing templates at `/admin/email-templates`
+- Templates support variable substitution (e.g., `{{coachName}}`, `{{cohortName}}`)
 
 ### API Route Patterns
 
@@ -353,20 +481,33 @@ if (!parsed.success) {
 **App Router Structure** (app/):
 ```
 app/
-├── client-dashboard/       # Client views (entry logging, history)
-├── coach-dashboard/        # Coach views (cohort management, analytics)
-├── admin/                  # Admin views (user management, system overview)
+├── client-dashboard/       # Client views (entry logging, history, pairing)
+├── coach-dashboard/        # Coach views (cohort management, analytics, weekly review, healthkit data, questionnaire analytics)
+├── admin/                  # Admin views (users, cohorts, attention scoring, audit log, email templates, system settings)
 ├── cohorts/[id]/          # Cohort details and analytics
+│   └── analytics/         # Advanced cohort analytics
 ├── clients/[id]/          # Individual client views (coach perspective)
+│   ├── entries/           # Client entry history
+│   ├── settings/          # Client settings
+│   └── weekly-review/     # Weekly review for specific client
 ├── api/                   # API routes organized by resource
-│   ├── admin/            # Admin API endpoints
+│   ├── admin/            # Admin API endpoints (users, insights, actions, audit, email templates, cohort types)
 │   ├── auth/             # Authentication routes
 │   ├── client/           # Client-specific APIs
 │   ├── clients/          # Client management APIs (coach perspective)
+│   ├── coach/            # Coach-specific APIs (notes)
 │   ├── coach-dashboard/  # Coach dashboard APIs
 │   ├── cohorts/          # Cohort management APIs
+│   ├── consent/          # User consent tracking
+│   ├── custom-cohort-types/ # Custom cohort type management
 │   ├── entries/          # Entry logging APIs
-│   └── invites/          # Invitation APIs
+│   ├── healthkit/        # HealthKit data ingestion
+│   ├── ingest/           # Data ingestion endpoints (workouts, sleep)
+│   ├── invites/          # Invitation APIs
+│   ├── onboarding/       # Onboarding flow APIs
+│   ├── pair/             # Pairing code validation
+│   ├── pairing-codes/    # Pairing code generation
+│   └── public/           # Public APIs (no auth required)
 ├── login/                 # Login page
 ├── signup/                # Signup page
 ├── dashboard/             # Root dashboard redirect
@@ -384,16 +525,32 @@ lib/
 ├── utils.ts              # Helper functions
 └── validations.ts        # Zod validation schemas
 
+components/
+├── ui/                   # Reusable UI components (buttons, inputs, cards)
+├── charts/               # Chart components (Recharts wrappers)
+├── forms/                # Form components
+├── navigation/           # Navigation components (navbar, sidebar)
+└── SessionProvider.tsx   # NextAuth session provider wrapper
+
 prisma/
 ├── schema.prisma         # Prisma schema definition
 ├── migrations/           # Database migrations
 └── seed.ts               # Seed script for test users
 
 scripts/
-├── generate-test-data.ts
-├── set-admin.ts
-├── set-password.ts
-└── setup-email-templates.ts
+├── generate-test-data.ts                # Generate basic test data (15 clients, 5 cohorts)
+├── generate-comprehensive-test-data.ts  # Generate comprehensive test data (200 clients)
+├── cleanup-test-data.ts                 # Remove all test users and data
+├── cleanup-healthkit-demo-data.ts       # Remove HealthKit demo data
+├── set-admin.ts                         # Grant admin role to user
+├── grant-role.ts                        # Grant specific role to user
+├── set-password.ts                      # Set user password
+├── setup-email-templates.ts             # Initialize Resend email templates
+├── verify-resend-setup.ts               # Verify Resend API key
+├── setup-broadcast-audience.ts          # Setup Resend broadcast audience
+├── setup-test-environment.ts            # Full test environment setup
+├── seed-questionnaire-templates.ts      # Seed questionnaire templates
+└── setup-questionnaire-email-template.ts # Setup questionnaire email template
 ```
 
 **Server vs Client Components**:
@@ -410,6 +567,40 @@ scripts/
   - COACH → `/coach-dashboard`
   - CLIENT → `/client-dashboard`
 
+### Admin Dashboard Features
+
+**Attention Scoring System** (/admin/attention):
+- Calculates 0-100 attention scores for users, coaches, and cohorts
+- Prioritizes entities needing admin attention
+- `AttentionScore` model stores scores with reasons array
+- Automated insights suggest actions (AdminInsight model)
+
+**Audit Log** (/admin/audit-log):
+- Tracks all admin actions via AdminAction model
+- Links actions to insights that triggered them
+- Filterable by date, admin, action type, target entity
+
+**Email Template Management** (/admin/email-templates):
+- CRUD operations for Resend email templates
+- Variable substitution preview (e.g., `{{coachName}}`)
+- Template types: welcome, invitation, questionnaire notification
+
+**System Overview** (/admin/system):
+- Platform-wide metrics and health checks
+- User growth, cohort statistics, engagement metrics
+- System-level insights (AdminInsight with entityType: "system")
+
+**User Management** (/admin/users/[id]):
+- View/edit user details
+- Grant/revoke roles
+- Reset passwords
+- View user activity and engagement
+
+**Cohort Type Management** (/admin/cohort-types):
+- Create/edit custom cohort types
+- Set default configurations
+- Control visibility (public vs admin-only)
+
 **Related files are always created together:**
 - Adding a feature = frontend component + API route + data model + tests
 - Never create frontend without backend
@@ -421,10 +612,10 @@ scripts/
 **Test User Email Suppression**:
 - Users with `isTestUser: true` don't receive emails
 - Emails are logged to console instead
-- All seed script users are test users by default
+- All seed script users are test users by default (emails ending in `.local`)
 
 **Password Authentication**:
-- Seed script users don't have passwords set
+- Seed script users don't have passwords set by default
 - Use `npm run password:set <email> <password>` to enable email/password login
 - OAuth users can have passwordHash, allowing both login methods
 
@@ -436,17 +627,40 @@ scripts/
 - Creates new entry or updates existing entry for the same date
 - Uses Prisma `upsert` with unique constraint `[userId, date]`
 - At least one field must be provided (validated in Zod schema)
+- `dataSources` field tracks whether data came from HealthKit or manual entry
+
+**HealthKit Data Ingestion**:
+- POST /api/healthkit endpoint accepts batch data from mobile apps
+- Requires pairing code validation (links client to coach)
+- Automatically merges HealthKit data with manual entries
+- `dataSources` array tracks all sources (e.g., `["healthkit", "manual"]`)
 
 **Cohort Membership Assignment**:
-- Clients can be in multiple cohorts simultaneously
-- Assigning client to cohort creates CohortMembership (doesn't affect other memberships)
-- Removing from cohort deletes CohortMembership
+- **CRITICAL CONSTRAINT**: Each user can only be in ONE cohort at a time
+- CohortMembership has `@@unique([userId])` database constraint
+- Assigning client to a new cohort will FAIL if they're already in another cohort
+- Must remove from current cohort before assigning to new one
+- Removing from cohort: DELETE CohortMembership where userId and cohortId match
 
 **Admin Permissions**:
 - Admins can view ALL cohorts (regardless of coachId)
 - Admins can assign coaches to cohorts they don't own
 - Admins can change user roles and reset passwords
 - Admins do NOT automatically have COACH or CLIENT privileges
+- Admin dashboard includes attention scoring, audit logs, and system insights
+
+**Pairing Code System**:
+- Coaches generate codes via POST /api/pairing-codes
+- Clients validate codes via POST /api/pair
+- Codes expire after set duration (default: 24 hours)
+- Used to link mobile apps to coach accounts
+
+**Questionnaire System**:
+- Questionnaires are built using SurveyJS library
+- `QuestionnaireBundle` stores SurveyJS JSON model
+- `schedule` array defines when questionnaires are sent (e.g., `["week1", "week3", "week6"]`)
+- Responses stored in `WeeklyQuestionnaireResponse` with full SurveyJS response data
+- Analytics available at `/coach-dashboard/questionnaire-analytics`
 
 ### Common Patterns
 
@@ -492,8 +706,62 @@ const entry = await db.entry.upsert({
       date: new Date(parsedDate)
     }
   },
-  update: { weightLbs, steps, calories },
-  create: { userId: session.user.id, date: new Date(parsedDate), weightLbs, steps, calories }
+  update: {
+    weightLbs,
+    steps,
+    calories,
+    dataSources: existingDataSources // Preserve data sources when updating
+  },
+  create: {
+    userId: session.user.id,
+    date: new Date(parsedDate),
+    weightLbs,
+    steps,
+    calories,
+    dataSources: ["manual"] // Default to manual for new entries
+  }
+})
+```
+
+**Fetching HealthKit Data (Workouts)**:
+```typescript
+const workouts = await db.workout.findMany({
+  where: {
+    userId: clientId,
+    startTime: {
+      gte: startDate,
+      lte: endDate
+    }
+  },
+  orderBy: { startTime: 'desc' }
+})
+```
+
+**Fetching Sleep Records**:
+```typescript
+const sleepRecords = await db.sleepRecord.findMany({
+  where: {
+    userId: clientId,
+    date: {
+      gte: startDate,
+      lte: endDate
+    }
+  },
+  orderBy: { date: 'desc' }
+})
+```
+
+**Generating Pairing Code**:
+```typescript
+const code = generateRandomCode(6) // Helper function in lib/utils.ts
+const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
+const pairingCode = await db.pairingCode.create({
+  data: {
+    code,
+    coachId: session.user.id,
+    expiresAt
+  }
 })
 ```
 
@@ -550,10 +818,15 @@ npm run test:generate     # Full test dataset with entries
 
 **Location patterns:**
 ```
-app/api/[resource]/route.test.ts     # API route tests
-lib/[module].test.ts                 # Utility/service tests
-components/[component].test.tsx      # Component tests
+app/api/[resource]/route.test.ts     # API route tests (when implemented)
+lib/[module].test.ts                 # Utility/service tests (when implemented)
+components/[component].test.tsx      # Component tests (when implemented)
 ```
+
+**Current test infrastructure:**
+- Playwright configured for E2E testing (playwright.config.js)
+- Test data generation scripts for development testing
+- No unit tests implemented yet - rely on manual testing with seed data
 
 ---
 
@@ -930,11 +1203,17 @@ Each feature may log (in comments or this doc):
 **No essays. Just future leverage.**
 
 **Key learnings for this project:**
-- Lightweight middleware = manual JWT parsing
-- Invitation flow = auto-process on sign-in via callbacks
-- Test users = suppress emails with isTestUser flag
+- Lightweight middleware = manual JWT parsing (avoid NextAuth imports in middleware.ts to stay under 1MB Edge Function limit)
+- Invitation flow = auto-process on sign-in via callbacks in lib/auth.ts
+- Test users = suppress emails with isTestUser flag (or emails ending in `.local`)
 - Role collapse = ADMIN doesn't replace COACH, users can have multiple roles
-- Entry upsert = one entry per user per day via unique constraint
+- Entry upsert = one entry per user per day via unique constraint `[userId, date]`
+- HealthKit integration = batch ingest via POST /api/healthkit, merge with manual entries
+- Pairing codes = time-limited codes for mobile app linking (24-hour expiry)
+- Questionnaires = SurveyJS models stored as JSON, scheduled per cohort week
+- Custom cohort types = reusable templates for cohort configuration
+- Attention scoring = admin dashboard feature for prioritizing coach/client attention
+- **CohortMembership unique constraint**: Each user can only be in ONE cohort (@@unique([userId]))
 
 ---
 

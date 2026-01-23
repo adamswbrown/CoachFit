@@ -66,32 +66,6 @@ CREATE TABLE "UserPreference" (
     CONSTRAINT "UserPreference_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "QuestionnaireBundle" (
-    "id" TEXT NOT NULL,
-    "cohortId" TEXT NOT NULL,
-    "bundleJson" JSONB NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "QuestionnaireBundle_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "WeeklyQuestionnaireResponse" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "cohortId" TEXT NOT NULL,
-    "weekNumber" INTEGER NOT NULL,
-    "responseJson" JSONB NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'in_progress',
-    "submittedAt" TIMESTAMP(3),
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "WeeklyQuestionnaireResponse_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "UserGoals_userId_key" ON "UserGoals"("userId");
 
@@ -103,27 +77,6 @@ CREATE UNIQUE INDEX "UserPreference_userId_key" ON "UserPreference"("userId");
 
 -- CreateIndex
 CREATE INDEX "UserPreference_userId_idx" ON "UserPreference"("userId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "QuestionnaireBundle_cohortId_key" ON "QuestionnaireBundle"("cohortId");
-
--- CreateIndex
-CREATE INDEX "QuestionnaireBundle_cohortId_idx" ON "QuestionnaireBundle"("cohortId");
-
--- CreateIndex
-CREATE INDEX "WeeklyQuestionnaireResponse_userId_idx" ON "WeeklyQuestionnaireResponse"("userId");
-
--- CreateIndex
-CREATE INDEX "WeeklyQuestionnaireResponse_cohortId_idx" ON "WeeklyQuestionnaireResponse"("cohortId");
-
--- CreateIndex
-CREATE INDEX "WeeklyQuestionnaireResponse_cohortId_weekNumber_idx" ON "WeeklyQuestionnaireResponse"("cohortId", "weekNumber");
-
--- CreateIndex
-CREATE INDEX "WeeklyQuestionnaireResponse_status_idx" ON "WeeklyQuestionnaireResponse"("status");
-
--- CreateIndex
-CREATE UNIQUE INDEX "WeeklyQuestionnaireResponse_userId_cohortId_weekNumber_key" ON "WeeklyQuestionnaireResponse"("userId", "cohortId", "weekNumber");
 
 -- CreateIndex
 CREATE INDEX "CoachInvite_coachId_idx" ON "CoachInvite"("coachId");
@@ -157,12 +110,3 @@ ALTER TABLE "UserGoals" ADD CONSTRAINT "UserGoals_userId_fkey" FOREIGN KEY ("use
 
 -- AddForeignKey
 ALTER TABLE "UserPreference" ADD CONSTRAINT "UserPreference_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "QuestionnaireBundle" ADD CONSTRAINT "QuestionnaireBundle_cohortId_fkey" FOREIGN KEY ("cohortId") REFERENCES "Cohort"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "WeeklyQuestionnaireResponse" ADD CONSTRAINT "WeeklyQuestionnaireResponse_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "WeeklyQuestionnaireResponse" ADD CONSTRAINT "WeeklyQuestionnaireResponse_cohortId_fkey" FOREIGN KEY ("cohortId") REFERENCES "Cohort"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -397,7 +397,7 @@ export default function CreateCohortPage() {
                       type="number"
                       min="1"
                       max="52"
-                      required={formData.type !== "ONGOING"}
+                      required
                       value={formData.durationWeeks}
                       onChange={(e) =>
                         setFormData({ ...formData, durationWeeks: parseInt(e.target.value, 10) || 0 })

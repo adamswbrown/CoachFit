@@ -141,7 +141,7 @@ export async function PATCH(
 
     const cohort = await db.cohort.findUnique({
       where: { id },
-      select: { id: true, coachId: true },
+      select: { id: true, coachId: true, type: true },
     })
 
     if (!cohort) {
