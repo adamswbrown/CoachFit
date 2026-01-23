@@ -104,17 +104,39 @@ export async function GET(req: NextRequest) {
       where.actionType = actionType
     }
     if (errorType) {
-      where.details = {
-        path: ["errorType"],
-        equals: errorType,
-      }
+      where.OR = [
+        {
+          details: {
+            path: ["errorType"],
+            equals: errorType,
+          },
+        },
+        {
+          details: {
+            path: ["error", "type"],
+            equals: errorType,
+          },
+        },
+        {
+          details: {
+            path: ["error", "name"],
+            equals: errorType,
+          },
+        },
+        {
+          details: {
+            path: ["errorName"],
+            equals: errorType,
+          },
+        },
+      ]
     }
     if (startDate || endDate) {
       const createdAt: { gte?: Date; lte?: Date } = {}
-      if (startDate) {
+      if (startDate && !Number.isNaN(Date.parse(startDate))) {
         createdAt.gte = new Date(`${startDate}T00:00:00.000Z`)
       }
-      if (endDate) {
+      if (endDate && !Number.isNaN(Date.parse(endDate))) {
         createdAt.lte = new Date(`${endDate}T23:59:59.999Z`)
       }
       where.createdAt = createdAt
@@ -137,6 +159,24 @@ export async function GET(req: NextRequest) {
       take: limit,
     })
     if (format === "csv") {
+      const getErrorType = (details: unknown): string => {
+        if (!details || typeof details !== "object") return ""
+        const record = details as Record<string, any>
+        if (typeof record.errorType === "string" && record.errorType) {
+          return record.errorType
+        }
+        const nestedError = record.error
+        if (nestedError && typeof nestedError === "object") {
+          const nestedType = (nestedError as Record<string, any>).type
+          if (typeof nestedType === "string" && nestedType) return nestedType
+          const nestedName = (nestedError as Record<string, any>).name
+          if (typeof nestedName === "string" && nestedName) return nestedName
+        }
+        if (typeof record.errorName === "string" && record.errorName) {
+          return record.errorName
+        }
+        return ""
+      }
       const headers = [
         "Time",
         "Action",
@@ -150,10 +190,7 @@ export async function GET(req: NextRequest) {
       ]
       const rows = actions.map((action) => {
         const details = action.details ? JSON.stringify(action.details) : ""
-        const errorTypeValue =
-          typeof action.details === "object" && action.details
-            ? (action.details as Record<string, any>).errorType ?? ""
-            : ""
+        const errorTypeValue = getErrorType(action.details)
         return [
           action.createdAt.toISOString(),
           action.actionType,

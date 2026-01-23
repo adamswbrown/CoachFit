@@ -252,12 +252,26 @@ export default function AdminSettingsPage() {
     }
   }
 
+  const normalizeTimeUtc = (raw: string) => {
+    if (!raw) return undefined
+    const trimmed = raw.trim()
+    const withSeconds = trimmed.length === 8 ? trimmed.slice(0, 5) : trimmed
+    if (/^\d:\d{2}$/.test(withSeconds)) {
+      return `0${withSeconds}`
+    }
+    if (/^\d{2}:\d{2}$/.test(withSeconds)) {
+      return withSeconds
+    }
+    return withSeconds
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     if (name === "notificationTimeUtc") {
+      const normalized = normalizeTimeUtc(value)
       setFormData((prev) => ({
         ...prev,
-        [name]: value,
+        [name]: normalized,
       }))
       return
     }
@@ -280,10 +294,14 @@ export default function AdminSettingsPage() {
     setMessage(null)
 
     try {
+      const payload = {
+        ...formData,
+        notificationTimeUtc: normalizeTimeUtc(formData.notificationTimeUtc || ""),
+      }
       const response = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {

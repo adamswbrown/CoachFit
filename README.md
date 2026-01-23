@@ -86,13 +86,17 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 - ✅ **Coach Management**: Invite new coaches, assign coaches to cohorts via co-coach system
 - ✅ **Attention Dashboard**: Auto-generated insights and attention scores with priority-based filtering
 - ✅ **System Overview**: Platform-wide metrics and health monitoring
-- ✅ **Audit Trail**: Complete action history for compliance and accountability
 - ✅ **Feature Flags**: Toggle HealthKit and iOS integration features via system settings
 - ✅ **Onboarding Controls**: Toggle personalized plan review display
 - ✅ **Legal Content Editor**: WYSIWYG editors for Terms, Privacy, and Data Processing consent
 - ✅ **Admin Override**: Emergency admin access via configurable email override
 - ✅ **Test Data Tools**: Randomize client check-in status for realistic testing
 - ✅ **Email Template Management**: Configure all system email templates through admin UI
+
+#### Reporting
+- ✅ **Audit Logs**: Track administrative, coach, and system actions across cohorts, users, invitations, check-ins, and templates.
+- ✅ **How it works**: Each audit entry captures who did it (actor), what happened (action + target), when it happened (timestamp), and supporting context (details/reason).
+- ✅ **Why it exists**: Provides compliance-grade traceability, operational accountability, and a verifiable history for debugging and support.
 
 #### System Features
 - ✅ **Multi-Provider Auth**: Google OAuth, Apple Sign-In, Email/Password
