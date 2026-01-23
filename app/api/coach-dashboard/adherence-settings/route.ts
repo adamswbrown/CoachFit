@@ -6,6 +6,7 @@ import { isAdminOrCoach } from "@/lib/permissions"
 const DEFAULT_ADHERENCE = {
   adherenceGreenMinimum: 7,
   adherenceAmberMinimum: 6,
+  attentionMissedCheckinsPolicy: "option_a" as const,
 }
 
 export async function GET() {
@@ -24,6 +25,7 @@ export async function GET() {
       select: {
         adherenceGreenMinimum: true,
         adherenceAmberMinimum: true,
+        attentionMissedCheckinsPolicy: true,
       } as any,
     })
 
@@ -32,10 +34,12 @@ export async function GET() {
         data: {
           adherenceGreenMinimum: DEFAULT_ADHERENCE.adherenceGreenMinimum,
           adherenceAmberMinimum: DEFAULT_ADHERENCE.adherenceAmberMinimum,
+          attentionMissedCheckinsPolicy: DEFAULT_ADHERENCE.attentionMissedCheckinsPolicy,
         } as any,
         select: {
           adherenceGreenMinimum: true,
           adherenceAmberMinimum: true,
+          attentionMissedCheckinsPolicy: true,
         } as any,
       })
     }

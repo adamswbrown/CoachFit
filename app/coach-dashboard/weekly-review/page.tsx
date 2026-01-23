@@ -12,6 +12,8 @@ type AdherenceThresholds = {
   amberMinimum: number
 }
 
+type AttentionMissedCheckinsPolicy = "option_a" | "option_b"
+
 type SortKey =
   | "priority"
   | "name"
@@ -32,11 +34,25 @@ const DEFAULT_ADHERENCE: AdherenceThresholds = {
 function getDisplayPriority(
   attention: { score: number; priority: string } | null,
   checkInCount: number,
-  thresholds: AdherenceThresholds
+  thresholds: AdherenceThresholds,
+  missedCheckinsPolicy: AttentionMissedCheckinsPolicy
 ): "red" | "amber" | "green" {
   // If adherence is critically low, always red (overrides attention)
   if (checkInCount < thresholds.amberMinimum) {
     return "red"
+  }
+
+  const missedCheckIns = Math.max(0, 7 - checkInCount)
+  if (missedCheckinsPolicy === "option_b" && missedCheckIns >= 1) {
+    return "red"
+  }
+
+  if (missedCheckinsPolicy === "option_a") {
+    if (missedCheckIns >= 2) return "red"
+    if (missedCheckIns === 1) {
+      if (attention?.priority === "red") return "red"
+      return "amber"
+    }
   }
 
   // If no attention score, use adherence check
@@ -146,6 +162,8 @@ export default function WeeklyReviewPage() {
   const [data, setData] = useState<WeeklySummariesResponse | null>(null)
   const [attentionData, setAttentionData] = useState<ClientAttention[]>([])
   const [adherence, setAdherence] = useState<AdherenceThresholds>(DEFAULT_ADHERENCE)
+  const [missedCheckinsPolicy, setMissedCheckinsPolicy] =
+    useState<AttentionMissedCheckinsPolicy>("option_a")
   const [selectedWeekStart, setSelectedWeekStart] = useState<string>("")
   const [loomUrls, setLoomUrls] = useState<Record<string, string>>({})
   const [notes, setNotes] = useState<Record<string, string>>({})
@@ -225,12 +243,16 @@ export default function WeeklyReviewPage() {
         const data = await res.json()
         const green = data?.data?.adherenceGreenMinimum
         const amber = data?.data?.adherenceAmberMinimum
+        const policy = data?.data?.attentionMissedCheckinsPolicy
 
         if (typeof green === "number" && typeof amber === "number") {
           setAdherence({
             greenMinimum: green,
             amberMinimum: amber,
           })
+        }
+        if (policy === "option_a" || policy === "option_b") {
+          setMissedCheckinsPolicy(policy)
         }
       } catch (err) {
         console.error("Failed to fetch adherence settings", err)
@@ -512,7 +534,12 @@ export default function WeeklyReviewPage() {
   // Derive a display priority for a client using attention (if available) and adherence thresholds
   const getClientPriority = (client: ClientSummary): "red" | "amber" | "green" => {
     const attention = attentionData.find((att) => att.clientId === client.clientId)
-    return getDisplayPriority(attention?.attentionScore || null, client.stats.checkInCount, adherence)
+    return getDisplayPriority(
+      attention?.attentionScore || null,
+      client.stats.checkInCount,
+      adherence,
+      missedCheckinsPolicy
+    )
   }
 
   // Summaries for the priority cards
@@ -581,25 +608,26 @@ export default function WeeklyReviewPage() {
 
   const getTableRows = () => {
     if (!data) return []
-    const attentionByClient = new Map(attentionData.map((att) => [att.clientId, att]))
-    const search = searchTerm.trim().toLowerCase()
-    const priorityOrder = { red: 0, amber: 1, green: 2 }
+        const attentionByClient = new Map(attentionData.map((att) => [att.clientId, att]))
+        const search = searchTerm.trim().toLowerCase()
+        const priorityOrder = { red: 0, amber: 1, green: 2 }
 
     const baseRows = data.clients.map((client) => {
       const attention = attentionByClient.get(client.clientId)
-      return {
-        client,
-        attention,
-        priority: getDisplayPriority(
-          attention?.attentionScore || null,
-          client.stats.checkInCount,
-          adherence
-        ),
-        score: attention?.attentionScore?.score ?? 0,
-        reasons: attention?.attentionScore?.reasons ?? [],
-        calculatedAt: attention?.attentionScore?.calculatedAt ?? null,
-      }
-    })
+        return {
+          client,
+          attention,
+          priority: getDisplayPriority(
+            attention?.attentionScore || null,
+            client.stats.checkInCount,
+            adherence,
+            missedCheckinsPolicy
+          ),
+          score: attention?.attentionScore?.score ?? 0,
+          reasons: attention?.attentionScore?.reasons ?? [],
+          calculatedAt: attention?.attentionScore?.calculatedAt ?? null,
+        }
+      })
 
     const filtered = baseRows.filter((row) => {
       if (priorityFilter !== "all" && row.priority !== priorityFilter) return false
