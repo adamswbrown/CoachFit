@@ -27,6 +27,12 @@ export async function GET(req: NextRequest) {
             id: true,
             name: true,
             cohortStartDate: true,
+            type: true,
+            customTypeLabel: true,
+            customCohortType: {
+              select: { id: true, label: true },
+            },
+            checkInFrequencyDays: true,
           },
         },
       },
@@ -36,6 +42,10 @@ export async function GET(req: NextRequest) {
       id: membership.Cohort.id,
       name: membership.Cohort.name,
       cohortStartDate: membership.Cohort.cohortStartDate,
+      type: membership.Cohort.type,
+      customTypeLabel: membership.Cohort.customTypeLabel,
+      customCohortType: membership.Cohort.customCohortType,
+      checkInFrequencyDays: membership.Cohort.checkInFrequencyDays,
     }))
 
     return NextResponse.json({ cohorts })

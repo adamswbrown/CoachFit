@@ -32,6 +32,9 @@ interface Client {
   lastCheckInDate?: string | null
   checkInCount?: number
   adherenceRate?: number
+  expectedCheckIns?: number
+  checkInWindowDays?: number
+  effectiveCheckInFrequencyDays?: number
   weightTrend?: "up" | "down" | "stable" | null
   latestWeight?: number | null
 }
@@ -42,6 +45,11 @@ interface Cohort {
   activeClients: number
   pendingInvites: number
   createdAt: string
+  type?: "TIMED" | "ONGOING" | "CHALLENGE" | "CUSTOM" | null
+  customTypeLabel?: string | null
+  customCohortType?: { id: string; label: string } | null
+  checkInFrequencyDays?: number | null
+  requiresMigration?: boolean
 }
 
 interface GlobalInvite {
@@ -350,15 +358,18 @@ function CoachDashboardContent() {
         return activeClients.filter((client) => {
           const adherenceRate = client.adherenceRate ?? 0
           const checkInCount = client.checkInCount ?? 0
-          return adherenceRate < 0.6 || checkInCount < 5 || isOneDayBehind(client.lastCheckInDate)
+          const expected = client.expectedCheckIns ?? 7
+          const minimumExpected = Math.max(1, expected - 1)
+          return adherenceRate < 0.6 || checkInCount < minimumExpected || isOneDayBehind(client.lastCheckInDate)
         })
       case "offline":
         // Offline = active clients who haven't checked in recently
         return activeClients.filter((client) => {
           if (!client.lastCheckInDate) return true
           const lastCheckIn = new Date(client.lastCheckInDate)
-          const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-          return lastCheckIn < weekAgo
+          const windowDays = client.checkInWindowDays ?? 7
+          const windowStart = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000)
+          return lastCheckIn < windowStart
         })
       default:
         return data?.clients || []
@@ -516,6 +527,69 @@ function CoachDashboardContent() {
                 <div className="text-2xl sm:text-3xl font-bold text-neutral-900">{data.stats.totalCohorts}</div>
               </div>
             </div>
+
+            {data.cohorts.length > 0 && (
+              <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold">Cohorts</h2>
+                  <Link href="/cohorts" className="text-sm text-neutral-600 hover:underline">
+                    View all
+                  </Link>
+                </div>
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full min-w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Name</th>
+                        <th className="hidden md:table-cell text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Type</th>
+                        <th className="hidden md:table-cell text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Check-in</th>
+                        <th className="hidden sm:table-cell text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Active</th>
+                        <th className="hidden sm:table-cell text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Invites</th>
+                        <th className="text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.cohorts.map((cohort) => (
+                        <tr key={cohort.id} className="border-b hover:bg-neutral-50">
+                          <td className="p-2 sm:p-3 text-sm">
+                            <Link href={`/cohorts/${cohort.id}`} className="font-medium text-neutral-900 hover:underline">
+                              {cohort.name}
+                            </Link>
+                          </td>
+                          <td className="hidden md:table-cell p-2 sm:p-3 text-sm text-neutral-600">
+                            {cohort.requiresMigration ? (
+                              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                                Migration required
+                              </span>
+                            ) : (
+                              cohort.type === "TIMED"
+                                ? "Timed"
+                                : cohort.type === "ONGOING"
+                                  ? "Ongoing"
+                                  : cohort.type === "CHALLENGE"
+                                    ? "Challenge"
+                                    : cohort.type === "CUSTOM"
+                                      ? `Custom${cohort.customTypeLabel ? ` — ${cohort.customTypeLabel}` : ""}`
+                                      : "—"
+                            )}
+                          </td>
+                          <td className="hidden md:table-cell p-2 sm:p-3 text-sm text-neutral-600">
+                            {cohort.checkInFrequencyDays ? `${cohort.checkInFrequencyDays} days` : "Defaults"}
+                          </td>
+                          <td className="hidden sm:table-cell p-2 sm:p-3 text-sm text-neutral-600">{cohort.activeClients}</td>
+                          <td className="hidden sm:table-cell p-2 sm:p-3 text-sm text-neutral-600">{cohort.pendingInvites}</td>
+                          <td className="p-2 sm:p-3 text-sm">
+                            <Link href={`/cohorts/${cohort.id}`} className="text-neutral-700 hover:underline">
+                              Manage
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {/* Pending Invites - Only show if filter is all, pending, or invited */}
             {(currentFilter === "all" || currentFilter === "pending" || currentFilter === "invited") && invitedClients.length > 0 && (
@@ -714,6 +788,7 @@ function CoachDashboardContent() {
                       {filteredClients.map((client) => {
                         const adherenceRate = client.adherenceRate ?? 0
                         const checkInCount = client.checkInCount ?? 0
+                        const expectedCheckIns = client.expectedCheckIns ?? 7
                         const adherenceColor =
                           adherenceRate >= 0.8
                             ? "green"
@@ -759,7 +834,7 @@ function CoachDashboardContent() {
                                           : "bg-red-100 text-red-700"
                                       }`}
                                     >
-                                      {checkInCount}/7
+                                      {checkInCount}/{expectedCheckIns}
                                     </span>
                                     <span className="text-xs text-neutral-500">
                                       {Math.round(adherenceRate * 100)}%

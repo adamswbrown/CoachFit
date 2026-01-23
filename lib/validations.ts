@@ -36,6 +36,10 @@ export const createCohortSchema = z.object({
     },
     { message: "Start date must be a valid date" }
   ),
+  type: z.enum(["TIMED", "ONGOING", "CHALLENGE", "CUSTOM"]).default("TIMED"),
+  customTypeLabel: z.string().max(80, "Custom type label must be 80 characters or less").optional(),
+  customCohortTypeId: z.string().uuid().optional(),
+  checkInFrequencyDays: z.number().int("Check-in frequency must be a whole number").min(1, "Check-in frequency must be at least 1 day").max(365, "Check-in frequency must be 365 days or less").optional(),
   // ownerCoachId is for admins to assign a specific coach as owner
   ownerCoachId: z.string().uuid().optional(),
   // coCoaches is an array of coach emails to add as co-coaches
@@ -61,6 +65,17 @@ export const createCohortSchema = z.object({
   {
     message: "Custom cohorts must specify a duration in weeks",
     path: ["durationWeeks"],
+  }
+).refine(
+  (data) => {
+    if (data.type === "CUSTOM") {
+      return Boolean(data.customCohortTypeId || data.customTypeLabel?.trim())
+    }
+    return true
+  },
+  {
+    message: "Custom cohorts must include a custom type",
+    path: ["customCohortTypeId"],
   }
 )
 

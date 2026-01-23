@@ -22,6 +22,8 @@ const DEFAULT_SETTINGS: Omit<SystemSettings, "id"> = {
   criticalNoActivityDays: 30,
   shortTermWindowDays: 7,
   longTermWindowDays: 30,
+  defaultCheckInFrequencyDays: 7,
+  notificationTimeUtc: "09:00",
   adminOverrideEmail: null,
   healthkitEnabled: true,
   iosIntegrationEnabled: true,
@@ -63,6 +65,8 @@ interface SystemSettings {
   criticalNoActivityDays: number
   shortTermWindowDays: number
   longTermWindowDays: number
+  defaultCheckInFrequencyDays: number
+  notificationTimeUtc: string
   adminOverrideEmail: string | null
   healthkitEnabled: boolean
   iosIntegrationEnabled: boolean
@@ -250,6 +254,13 @@ export default function AdminSettingsPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
+    if (name === "notificationTimeUtc") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }))
+      return
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: value === "" ? undefined : parseFloat(value),
@@ -483,6 +494,41 @@ export default function AdminSettingsPage() {
                       className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <p className="text-xs text-neutral-500 mt-1">Days without entries triggers critical alert</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Check-in Defaults */}
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Check-in Defaults & Reminders</h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      Default Check-in Frequency (Days)
+                    </label>
+                    <input
+                      type="number"
+                      name="defaultCheckInFrequencyDays"
+                      min={1}
+                      max={365}
+                      value={formData.defaultCheckInFrequencyDays || ""}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-neutral-500 mt-1">Used when no user or cohort override is set</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      Reminder Send Time (UTC)
+                    </label>
+                    <input
+                      type="time"
+                      name="notificationTimeUtc"
+                      value={formData.notificationTimeUtc || "09:00"}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-neutral-500 mt-1">All reminders send at this UTC time</p>
                   </div>
                 </div>
               </div>

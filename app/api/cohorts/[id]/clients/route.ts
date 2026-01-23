@@ -179,6 +179,18 @@ export async function POST(
     })
 
     if (user) {
+      const existingMembershipForUser = await db.cohortMembership.findFirst({
+        where: { userId: user.id },
+        select: { cohortId: true },
+      })
+
+      if (existingMembershipForUser && existingMembershipForUser.cohortId !== id) {
+        return NextResponse.json(
+          { error: "Client is already assigned to another cohort" },
+          { status: 409 }
+        )
+      }
+
       // User exists - check if already in cohort
       const existingMembership = await db.cohortMembership.findUnique({
         where: {

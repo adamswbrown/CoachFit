@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
 import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
+import { getSystemSetting } from "@/lib/system-settings"
 
 export async function GET(req: NextRequest) {
   try {
@@ -47,6 +48,9 @@ export async function GET(req: NextRequest) {
             email: true,
             createdAt: true,
           },
+        },
+        customCohortType: {
+          select: { id: true, label: true },
         },
       },
       orderBy: {
@@ -112,6 +116,7 @@ export async function GET(req: NextRequest) {
         email: string
         status: "active" | "invited" | "unassigned"
         cohorts: string[]
+        cohortFrequencyDays?: number | null
         inviteId?: string
         inviteType?: "global" | "cohort"
         inviteCohortId?: string
@@ -119,6 +124,9 @@ export async function GET(req: NextRequest) {
         lastCheckInDate?: string | null
         checkInCount?: number
         adherenceRate?: number
+        expectedCheckIns?: number
+        checkInWindowDays?: number
+        effectiveCheckInFrequencyDays?: number
         weightTrend?: "up" | "down" | "stable" | null
         latestWeight?: number | null
       }
@@ -142,6 +150,7 @@ export async function GET(req: NextRequest) {
             existing.id = membership.user.id
             existing.name = membership.user.name
           }
+          existing.cohortFrequencyDays = cohort.checkInFrequencyDays ?? existing.cohortFrequencyDays ?? null
         } else {
           // New client entry
           clientMap.set(email, {
@@ -150,6 +159,7 @@ export async function GET(req: NextRequest) {
             email: email,
             status: "active",
             cohorts: [cohort.name],
+            cohortFrequencyDays: cohort.checkInFrequencyDays ?? null,
           })
         }
         if (membership.user.id) {
@@ -160,11 +170,7 @@ export async function GET(req: NextRequest) {
 
     // Batch fetch entry stats for all active clients - OPTIMIZED
     if (activeClientIds.length > 0) {
-      const weekAgo = new Date()
-      weekAgo.setDate(weekAgo.getDate() - 7)
-
       // Single optimized query to fetch all needed entries
-      // Fetch entries for last 7 days AND the 2 most recent entries per user (for weight trend)
       const allEntries = await db.entry.findMany({
         where: {
           userId: { in: activeClientIds },
@@ -180,22 +186,25 @@ export async function GET(req: NextRequest) {
       })
 
       // Process all entries in a single pass
-      const weekEntriesByUser = new Map<string, number>()
       const entriesByUserId = new Map<string, Array<{ date: Date; weightLbs: number | null }>>()
       
       // Group all entries by user and count week entries
       for (const entry of allEntries) {
-        // Count week entries
-        if (entry.date >= weekAgo) {
-          const count = weekEntriesByUser.get(entry.userId) || 0
-          weekEntriesByUser.set(entry.userId, count + 1)
-        }
-
         // Group by user for trend calculation
         if (!entriesByUserId.has(entry.userId)) {
           entriesByUserId.set(entry.userId, [])
         }
         entriesByUserId.get(entry.userId)!.push({ date: entry.date, weightLbs: entry.weightLbs })
+      }
+
+      const defaultFrequencyDays = await getSystemSetting("defaultCheckInFrequencyDays")
+      const userFrequencyRows = await db.user.findMany({
+        where: { id: { in: activeClientIds } },
+        select: { id: true, checkInFrequencyDays: true },
+      })
+      const userFrequencyMap = new Map<string, number | null>()
+      for (const row of userFrequencyRows) {
+        userFrequencyMap.set(row.id, row.checkInFrequencyDays ?? null)
       }
 
       // Calculate weight trends and latest data for each user
@@ -225,8 +234,16 @@ export async function GET(req: NextRequest) {
         const client = clientMap.get(email)!
         if (client.status === "active" && client.id) {
           const lastEntry = entriesByUser.get(client.id)?.[0]
-          const checkInCount = weekEntriesByUser.get(client.id) || 0
-          const adherenceRate = checkInCount / 7
+          const cohortFrequency = client.cohortFrequencyDays ?? null
+          const userFrequency = userFrequencyMap.get(client.id) ?? null
+          const effectiveFrequencyDays = cohortFrequency ?? userFrequency ?? defaultFrequencyDays
+          const windowDays = Math.max(7, effectiveFrequencyDays)
+          const windowStart = new Date()
+          windowStart.setDate(windowStart.getDate() - windowDays)
+          const entriesInWindow =
+            entriesByUserId.get(client.id)?.filter((entry) => entry.date >= windowStart).length || 0
+          const expectedCheckIns = Math.max(1, Math.ceil(windowDays / effectiveFrequencyDays))
+          const adherenceRate = expectedCheckIns > 0 ? entriesInWindow / expectedCheckIns : 0
 
           // Calculate weight trend using previousEntriesMap from batch query
           let weightTrend: "up" | "down" | "stable" | null = null
@@ -245,8 +262,11 @@ export async function GET(req: NextRequest) {
           }
 
           client.lastCheckInDate = lastEntry?.date.toISOString().split("T")[0] || null
-          client.checkInCount = checkInCount
+          client.checkInCount = entriesInWindow
           client.adherenceRate = adherenceRate
+          client.expectedCheckIns = expectedCheckIns
+          client.checkInWindowDays = windowDays
+          client.effectiveCheckInFrequencyDays = effectiveFrequencyDays
           client.weightTrend = weightTrend
           client.latestWeight = lastEntry?.weightLbs || null
         }
@@ -342,6 +362,9 @@ export async function GET(req: NextRequest) {
       lastCheckInDate: client.lastCheckInDate ?? undefined,
       checkInCount: client.checkInCount,
       adherenceRate: client.adherenceRate,
+      expectedCheckIns: client.expectedCheckIns,
+      checkInWindowDays: client.checkInWindowDays,
+      effectiveCheckInFrequencyDays: client.effectiveCheckInFrequencyDays,
       weightTrend: client.weightTrend ?? undefined,
       latestWeight: client.latestWeight ?? undefined,
     }))
@@ -359,6 +382,11 @@ export async function GET(req: NextRequest) {
       activeClients: cohort.memberships.length,
       pendingInvites: cohort.invites.length,
       createdAt: cohort.createdAt.toISOString(),
+      type: cohort.type,
+      customTypeLabel: cohort.customTypeLabel,
+      customCohortType: cohort.customCohortType,
+      checkInFrequencyDays: cohort.checkInFrequencyDays,
+      requiresMigration: !cohort.type,
     }))
 
     return NextResponse.json(

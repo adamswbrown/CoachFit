@@ -7,3 +7,10 @@ export enum Role {
 }
 
 export type CohortDurationConfig = "six-week" | "custom"
+
+export enum CohortType {
+  TIMED = "TIMED",
+  ONGOING = "ONGOING",
+  CHALLENGE = "CHALLENGE",
+  CUSTOM = "CUSTOM",
+}

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
 import { isAdmin } from "@/lib/permissions"
+import { z } from "zod"
 
 export async function GET(
   req: NextRequest,
@@ -35,6 +36,13 @@ export async function GET(
                 email: true,
               },
             },
+          },
+        },
+        customCohortType: {
+          select: {
+            id: true,
+            label: true,
+            description: true,
           },
         },
       },
@@ -85,7 +93,13 @@ export async function GET(
       }
     }
 
-    return NextResponse.json(cohort, { status: 200 })
+    return NextResponse.json(
+      {
+        ...cohort,
+        requiresMigration: !cohort.type,
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error("Error fetching cohort:", error)
     return NextResponse.json(
@@ -94,6 +108,14 @@ export async function GET(
     )
   }
 }
+
+const updateCohortSchema = z.object({
+  cohortStartDate: z.string().optional().nullable(),
+  type: z.enum(["TIMED", "ONGOING", "CHALLENGE", "CUSTOM"]).optional().nullable(),
+  customCohortTypeId: z.string().uuid().optional().nullable(),
+  customTypeLabel: z.string().max(80).optional().nullable(),
+  checkInFrequencyDays: z.number().int().min(1).max(365).optional().nullable(),
+})
 
 export async function PATCH(
   req: NextRequest,
@@ -127,7 +149,8 @@ export async function PATCH(
     }
 
     const body = await req.json()
-    const startDateValue = body.cohortStartDate
+    const validated = updateCohortSchema.parse(body)
+    const startDateValue = validated.cohortStartDate ?? undefined
     let cohortStartDate: Date | null = null
 
     if (startDateValue) {
@@ -138,19 +161,70 @@ export async function PATCH(
       cohortStartDate = parsed
     }
 
+    const nextType = validated.type ?? undefined
+    const customCohortType = validated.customCohortTypeId
+      ? await db.customCohortType.findUnique({
+          where: { id: validated.customCohortTypeId },
+          select: { id: true, label: true },
+        })
+      : null
+
+    if (validated.customCohortTypeId && !customCohortType) {
+      return NextResponse.json({ error: "Custom cohort type not found" }, { status: 400 })
+    }
+
+    if (nextType && nextType !== "CUSTOM" && (validated.customCohortTypeId || validated.customTypeLabel)) {
+      return NextResponse.json(
+        { error: "Custom type is only allowed when cohort type is CUSTOM" },
+        { status: 400 }
+      )
+    }
+
+    if (nextType === "CUSTOM" && !(validated.customCohortTypeId || validated.customTypeLabel)) {
+      return NextResponse.json(
+        { error: "Custom cohorts must include a custom type" },
+        { status: 400 }
+      )
+    }
+
+    const updateData: Record<string, any> = {}
+    if (startDateValue !== undefined) {
+      updateData.cohortStartDate = cohortStartDate
+    }
+    if (nextType !== undefined) {
+      updateData.type = nextType
+      updateData.customCohortTypeId =
+        nextType === "CUSTOM" ? customCohortType?.id || null : null
+      updateData.customTypeLabel =
+        nextType === "CUSTOM"
+          ? validated.customTypeLabel?.trim() || customCohortType?.label || null
+          : null
+    }
+    if (validated.checkInFrequencyDays !== undefined) {
+      updateData.checkInFrequencyDays = validated.checkInFrequencyDays
+    }
+
     const updated = await db.cohort.update({
       where: { id },
-      data: {
-        cohortStartDate,
-      },
+      data: updateData,
       select: {
         id: true,
         cohortStartDate: true,
+        type: true,
+        customTypeLabel: true,
+        customCohortTypeId: true,
+        checkInFrequencyDays: true,
       },
     })
 
     return NextResponse.json(updated, { status: 200 })
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation error", details: error.flatten() },
+        { status: 400 }
+      )
+    }
     console.error("Error updating cohort:", error)
     return NextResponse.json(
       { error: "Internal server error" },

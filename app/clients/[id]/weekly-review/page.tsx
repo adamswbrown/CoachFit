@@ -27,6 +27,8 @@ interface WeeklySummary {
   summary: {
     checkInCount: number
     checkInRate: number
+    expectedCheckIns?: number
+    effectiveCheckInFrequencyDays?: number
     avgWeight: number | null
     weightTrend: number | null
     avgSteps: number | null
@@ -39,6 +41,8 @@ interface WeeklySummary {
     weekEnd: string
     checkInCount: number
     checkInRate: number
+    expectedCheckIns?: number
+    effectiveCheckInFrequencyDays?: number
     avgWeight: number | null
     avgSteps: number | null
   } | null
@@ -583,7 +587,7 @@ export default function WeeklyReviewPage() {
                   : "text-red-600"
               }`}
             >
-              {weeklySummary.summary.checkInCount}/7
+              {weeklySummary.summary.checkInCount}/{weeklySummary.summary.expectedCheckIns ?? 7}
             </div>
             <div className="text-xs text-neutral-500 mt-1">
               {Math.round(weeklySummary.summary.checkInRate * 100)}% completion
@@ -740,7 +744,7 @@ export default function WeeklyReviewPage() {
                   <div>
                     <span className="text-neutral-600">Check-ins:</span>{" "}
                     <span className="font-medium">
-                      {weeklySummary.previousWeek.checkInCount}/7 (
+                      {weeklySummary.previousWeek.checkInCount}/{weeklySummary.previousWeek.expectedCheckIns ?? 7} (
                       {Math.round(weeklySummary.previousWeek.checkInRate * 100)}%)
                     </span>
                   </div>
@@ -770,7 +774,7 @@ export default function WeeklyReviewPage() {
                   <div>
                     <span className="text-neutral-600">Check-ins:</span>{" "}
                     <span className="font-medium">
-                      {weeklySummary.summary.checkInCount}/7 (
+                      {weeklySummary.summary.checkInCount}/{weeklySummary.summary.expectedCheckIns ?? 7} (
                       {Math.round(weeklySummary.summary.checkInRate * 100)}%)
                     </span>
                     {weeklySummary.summary.checkInRate >

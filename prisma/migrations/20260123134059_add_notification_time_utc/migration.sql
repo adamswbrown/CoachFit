@@ -1,0 +1,1 @@
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "notificationTimeUtc" TEXT NOT NULL DEFAULT '09:00';

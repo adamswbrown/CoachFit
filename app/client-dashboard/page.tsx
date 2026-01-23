@@ -73,15 +73,30 @@ export default function ClientDashboard() {
     enabledPrompts: string[]
     customPrompt1: string | null
     customPrompt1Type: string | null
+    effectiveCheckInFrequencyDays?: number
+    lastCheckInDate?: string | null
+    nextExpectedCheckInDate?: string | null
+    checkInMissed?: boolean
   } | null>(null)
 
   // Questionnaire state
   const [showQuestionnaireModal, setShowQuestionnaireModal] = useState(false)
   const [selectedWeek, setSelectedWeek] = useState<WeekNumber>(1)
-  const [userCohorts, setUserCohorts] = useState<Array<{ id: string; name: string; cohortStartDate: string | null }>>([])
+  const [userCohorts, setUserCohorts] = useState<Array<{
+    id: string
+    name: string
+    cohortStartDate: string | null
+    type?: "TIMED" | "ONGOING" | "CHALLENGE" | "CUSTOM" | null
+    customTypeLabel?: string | null
+    customCohortType?: { id: string; label: string } | null
+    checkInFrequencyDays?: number | null
+  }>>([])
   const [selectedCohortId, setSelectedCohortId] = useState<string | null>(null)
   const [selectedCohortStartDate, setSelectedCohortStartDate] = useState<string | null>(null)
   const [selectedCohortName, setSelectedCohortName] = useState<string | null>(null)
+  const [selectedCohortType, setSelectedCohortType] = useState<string | null>(null)
+  const [selectedCohortTypeLabel, setSelectedCohortTypeLabel] = useState<string | null>(null)
+  const [selectedCohortFrequency, setSelectedCohortFrequency] = useState<number | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -121,10 +136,16 @@ export default function ClientDashboard() {
           setSelectedCohortId(cohorts[0].id)
           setSelectedCohortStartDate(cohorts[0].cohortStartDate || null)
           setSelectedCohortName(cohorts[0].name)
+          setSelectedCohortType(cohorts[0].type || null)
+          setSelectedCohortTypeLabel(cohorts[0].customTypeLabel || cohorts[0].customCohortType?.label || null)
+          setSelectedCohortFrequency(cohorts[0].checkInFrequencyDays || null)
         } else {
           setSelectedCohortId(null)
           setSelectedCohortStartDate(null)
           setSelectedCohortName(null)
+          setSelectedCohortType(null)
+          setSelectedCohortTypeLabel(null)
+          setSelectedCohortFrequency(null)
         }
       }
     } catch (err) {
@@ -137,6 +158,9 @@ export default function ClientDashboard() {
     const selected = userCohorts.find((cohort) => cohort.id === cohortId) || null
     setSelectedCohortStartDate(selected?.cohortStartDate || null)
     setSelectedCohortName(selected?.name || null)
+    setSelectedCohortType(selected?.type || null)
+    setSelectedCohortTypeLabel(selected?.customTypeLabel || selected?.customCohortType?.label || null)
+    setSelectedCohortFrequency(selected?.checkInFrequencyDays || null)
   }
 
   const handleWeekClick = (weekNumber: WeekNumber) => {
@@ -153,6 +177,10 @@ export default function ClientDashboard() {
           enabledPrompts: data.enabledPrompts || [],
           customPrompt1: data.customPrompt1 || null,
           customPrompt1Type: data.customPrompt1Type || null,
+          effectiveCheckInFrequencyDays: data.effectiveCheckInFrequencyDays,
+          lastCheckInDate: data.lastCheckInDate ?? null,
+          nextExpectedCheckInDate: data.nextExpectedCheckInDate ?? null,
+          checkInMissed: data.checkInMissed ?? false,
         })
       }
     } catch (err) {
@@ -162,6 +190,10 @@ export default function ClientDashboard() {
         enabledPrompts: ["sleepQuality", "perceivedStress", "notes"],
         customPrompt1: null,
         customPrompt1Type: null,
+        effectiveCheckInFrequencyDays: undefined,
+        lastCheckInDate: null,
+        nextExpectedCheckInDate: null,
+        checkInMissed: false,
       })
     }
   }
@@ -532,6 +564,59 @@ export default function ClientDashboard() {
                   You're all signed up! Your coach will add you to their cohort soon. 
                   Once connected, you'll be able to log your daily entries here.
                 </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {hasCoach !== false && selectedCohortId && (
+          <div className="mb-6 bg-white border border-neutral-200 rounded-lg p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-neutral-400">Cohort</p>
+                <p className="text-lg font-semibold text-neutral-900">{selectedCohortName || "—"}</p>
+              </div>
+              <div className="flex flex-wrap gap-3 text-sm text-neutral-600">
+                <span>
+                  Type:{" "}
+                  <span className="text-neutral-900">
+                    {selectedCohortType === "TIMED"
+                      ? "Timed"
+                      : selectedCohortType === "ONGOING"
+                        ? "Ongoing"
+                        : selectedCohortType === "CHALLENGE"
+                          ? "Challenge"
+                          : selectedCohortType === "CUSTOM"
+                            ? `Custom${selectedCohortTypeLabel ? ` — ${selectedCohortTypeLabel}` : ""}`
+                            : "—"}
+                  </span>
+                </span>
+                <span>
+                  Frequency:{" "}
+                  <span className="text-neutral-900">
+                    {checkInConfig?.effectiveCheckInFrequencyDays
+                      ? `${checkInConfig.effectiveCheckInFrequencyDays} days`
+                      : selectedCohortFrequency
+                        ? `${selectedCohortFrequency} days`
+                        : "Defaults"}
+                  </span>
+                </span>
+                <span>
+                  Last check-in:{" "}
+                  <span className="text-neutral-900">
+                    {checkInConfig?.lastCheckInDate
+                      ? new Date(checkInConfig.lastCheckInDate).toLocaleDateString()
+                      : "—"}
+                  </span>
+                </span>
+                <span>
+                  Next expected:{" "}
+                  <span className={checkInConfig?.checkInMissed ? "text-red-600 font-medium" : "text-neutral-900"}>
+                    {checkInConfig?.nextExpectedCheckInDate
+                      ? new Date(checkInConfig.nextExpectedCheckInDate).toLocaleDateString()
+                      : "—"}
+                  </span>
+                </span>
               </div>
             </div>
           </div>

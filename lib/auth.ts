@@ -219,30 +219,31 @@ export const authOptions: NextAuthConfig = {
           where: { email: user.email },
         })
 
-        for (const invite of cohortInvites) {
-          await db.$transaction(async (tx) => {
-            const existing = await tx.cohortMembership.findUnique({
-              where: {
-                userId_cohortId: {
-                  userId: user.id!,
-                  cohortId: invite.cohortId,
-                },
-              },
-            })
+        if (cohortInvites.length > 0) {
+          const existingMembership = await db.cohortMembership.findFirst({
+            where: { userId: user.id! },
+            select: { cohortId: true },
+          })
 
-            if (!existing) {
+          if (existingMembership) {
+            await db.cohortInvite.deleteMany({
+              where: { email: user.email },
+            })
+          } else {
+            const invite = cohortInvites[0]
+            await db.$transaction(async (tx) => {
               await tx.cohortMembership.create({
                 data: {
                   userId: user.id!,
                   cohortId: invite.cohortId,
                 },
               })
-            }
 
-            await tx.cohortInvite.delete({
-              where: { id: invite.id },
+              await tx.cohortInvite.deleteMany({
+                where: { email: user.email },
+              })
             })
-          })
+          }
         }
       } catch (error) {
         console.error("Error processing invites on sign-in:", error)

@@ -18,6 +18,8 @@ const DEFAULT_SETTINGS = {
   criticalNoActivityDays: 30,
   shortTermWindowDays: 7,
   longTermWindowDays: 30,
+  defaultCheckInFrequencyDays: 7,
+  notificationTimeUtc: "09:00",
   adminOverrideEmail: null,
   healthkitEnabled: false,
   iosIntegrationEnabled: false,
@@ -51,6 +53,8 @@ const settingsSchema = z.object({
   criticalNoActivityDays: z.number().int().min(10).max(365).optional(),
   shortTermWindowDays: z.number().int().min(1).max(30).optional(),
   longTermWindowDays: z.number().int().min(7).max(365).optional(),
+  defaultCheckInFrequencyDays: z.number().int().min(1).max(365).optional(),
+  notificationTimeUtc: z.string().regex(/^([01]\\d|2[0-3]):[0-5]\\d$/, "Use HH:mm in 24-hour UTC").optional(),
   adminOverrideEmail: z.string().email().nullable().optional(),
   healthkitEnabled: z.boolean().optional(),
   iosIntegrationEnabled: z.boolean().optional(),
@@ -200,6 +204,10 @@ export async function PUT(req: NextRequest) {
               validationResult.data.criticalNoActivityDays ?? DEFAULT_SETTINGS.criticalNoActivityDays,
             shortTermWindowDays: validationResult.data.shortTermWindowDays ?? DEFAULT_SETTINGS.shortTermWindowDays,
             longTermWindowDays: validationResult.data.longTermWindowDays ?? DEFAULT_SETTINGS.longTermWindowDays,
+            defaultCheckInFrequencyDays:
+              validationResult.data.defaultCheckInFrequencyDays ?? DEFAULT_SETTINGS.defaultCheckInFrequencyDays,
+            notificationTimeUtc:
+              validationResult.data.notificationTimeUtc ?? DEFAULT_SETTINGS.notificationTimeUtc,
             adminOverrideEmail: validationResult.data.adminOverrideEmail ?? DEFAULT_SETTINGS.adminOverrideEmail,
             healthkitEnabled: validationResult.data.healthkitEnabled ?? DEFAULT_SETTINGS.healthkitEnabled,
             iosIntegrationEnabled: validationResult.data.iosIntegrationEnabled ?? DEFAULT_SETTINGS.iosIntegrationEnabled,

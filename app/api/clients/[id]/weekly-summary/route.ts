@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
 import { isAdmin } from "@/lib/permissions"
 import { calculateBMI } from "@/lib/bmi"
+import { getSystemSetting } from "@/lib/system-settings"
 
 /**
  * Get Monday of a given date (start of week)
@@ -159,11 +160,30 @@ export async function GET(
       })
     }
 
+    const membership = await db.cohortMembership.findFirst({
+      where: { userId: id },
+      select: {
+        Cohort: {
+          select: { checkInFrequencyDays: true },
+        },
+      },
+    })
+    const userSettings = await db.user.findUnique({
+      where: { id },
+      select: { checkInFrequencyDays: true },
+    })
+    const defaultFrequency = await getSystemSetting("defaultCheckInFrequencyDays")
+    const effectiveFrequencyDays =
+      membership?.Cohort?.checkInFrequencyDays ??
+      userSettings?.checkInFrequencyDays ??
+      defaultFrequency
+
     // Calculate summary stats
     type WeekEntry = { date: string; weightLbs: number | null; steps: number | null; calories: number | null; sleepQuality: number | null; perceivedStress: number | null; notes?: string | null; bmi: number | null; hasEntry: boolean }
     const entriesWithData = weekEntries.filter((e: WeekEntry) => e.hasEntry)
     const checkInCount = entriesWithData.length
-    const checkInRate = checkInCount / 7
+    const expectedCheckIns = Math.max(1, Math.ceil(7 / effectiveFrequencyDays))
+    const checkInRate = checkInCount / expectedCheckIns
 
     // Weight stats (only if all days have weight)
     const weightsWithValues = weekEntries
@@ -287,7 +307,7 @@ export async function GET(
 
     // Calculate previous week summary (simplified)
     const prevCheckInCount = prevWeekEntries.length
-    const prevCheckInRate = prevCheckInCount / 7
+    const prevCheckInRate = prevCheckInCount / expectedCheckIns
     const prevWeights = prevWeekEntries
       .filter((e) => e.weightLbs !== null)
       .map((e) => e.weightLbs!)
@@ -311,6 +331,8 @@ export async function GET(
         summary: {
           checkInCount,
           checkInRate,
+          expectedCheckIns,
+          effectiveCheckInFrequencyDays: effectiveFrequencyDays,
           avgWeight,
           weightTrend,
           avgSteps: avgSteps ? Math.round(avgSteps) : null,
@@ -325,6 +347,8 @@ export async function GET(
           weekEnd: formatDate(prevWeekEnd),
           checkInCount: prevCheckInCount,
           checkInRate: prevCheckInRate,
+          expectedCheckIns,
+          effectiveCheckInFrequencyDays: effectiveFrequencyDays,
           avgWeight: prevAvgWeight,
           avgSteps: prevAvgSteps ? Math.round(prevAvgSteps) : null,
         },

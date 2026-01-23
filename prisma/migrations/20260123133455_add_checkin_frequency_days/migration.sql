@@ -1,0 +1,2 @@
+ALTER TABLE "Cohort" ADD COLUMN IF NOT EXISTS "checkInFrequencyDays" INTEGER;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "checkInFrequencyDays" INTEGER;

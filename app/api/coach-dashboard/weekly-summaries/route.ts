@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
 import { isAdmin, isCoach } from "@/lib/permissions"
+import { getSystemSetting } from "@/lib/system-settings"
 
 /**
  * Get Monday of a given date (start of week)
@@ -70,6 +71,7 @@ export async function GET(req: NextRequest) {
 
     let cohortIds: string[] | null = null
     let clients
+    const cohortFrequencyByUser = new Map<string, number | null>()
 
     if (cohortIdParam) {
       const cohort = await db.cohort.findUnique({
@@ -137,6 +139,12 @@ export async function GET(req: NextRequest) {
               email: true,
             },
           },
+          Cohort: {
+            select: {
+              id: true,
+              checkInFrequencyDays: true,
+            },
+          },
         },
       })
 
@@ -144,6 +152,7 @@ export async function GET(req: NextRequest) {
       cohortMemberships.forEach((membership) => {
         if (!clientsMap.has(membership.user.id)) {
           clientsMap.set(membership.user.id, membership.user)
+          cohortFrequencyByUser.set(membership.user.id, membership.Cohort?.checkInFrequencyDays ?? null)
         }
       })
 
@@ -175,6 +184,18 @@ export async function GET(req: NextRequest) {
         },
         { status: 200 }
       )
+    }
+
+    const [userSettings, defaultFrequency] = await Promise.all([
+      db.user.findMany({
+        where: { id: { in: clientIds } },
+        select: { id: true, checkInFrequencyDays: true },
+      }),
+      getSystemSetting("defaultCheckInFrequencyDays"),
+    ])
+    const userFrequencyById = new Map<string, number | null>()
+    for (const user of userSettings) {
+      userFrequencyById.set(user.id, user.checkInFrequencyDays ?? null)
     }
     const allEntries = await db.entry.findMany({
       where: {
@@ -234,7 +255,12 @@ export async function GET(req: NextRequest) {
       const sleepRecords = sleepByClient.get(client.id) || []
 
       const checkInCount = entries.length
-      const checkInRate = checkInCount / 7
+      const cohortFrequency = cohortFrequencyByUser.get(client.id) ?? null
+      const userFrequency = userFrequencyById.get(client.id) ?? null
+      const effectiveFrequencyDays =
+        cohortFrequency ?? userFrequency ?? defaultFrequency
+      const expectedCheckIns = Math.max(1, Math.ceil(7 / effectiveFrequencyDays))
+      const checkInRate = checkInCount / expectedCheckIns
 
       // Weight stats - filter entries with weight and sort by date
       const entriesWithWeight = entries
@@ -306,6 +332,8 @@ export async function GET(req: NextRequest) {
         stats: {
           checkInCount,
           checkInRate: Math.round(checkInRate * 100) / 100,
+          expectedCheckIns,
+          effectiveCheckInFrequencyDays: effectiveFrequencyDays,
           avgWeight: avgWeight ? Math.round(avgWeight * 10) / 10 : null,
           weightTrend: weightTrend ? Math.round(weightTrend * 10) / 10 : null,
           avgSteps,

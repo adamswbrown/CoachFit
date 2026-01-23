@@ -19,6 +19,8 @@ export interface SystemSettings {
   criticalNoActivityDays: number
   shortTermWindowDays: number
   longTermWindowDays: number
+  defaultCheckInFrequencyDays: number
+  notificationTimeUtc: string
   adminOverrideEmail: string | null
   healthkitEnabled: boolean
   iosIntegrationEnabled: boolean
@@ -60,6 +62,8 @@ const DEFAULT_SETTINGS: SystemSettings = {
   criticalNoActivityDays: 30,
   shortTermWindowDays: 7,
   longTermWindowDays: 30,
+  defaultCheckInFrequencyDays: 7,
+  notificationTimeUtc: "09:00",
   adminOverrideEmail: null,
   healthkitEnabled: true,
   iosIntegrationEnabled: true,
@@ -105,7 +109,14 @@ export async function getSystemSettings(): Promise<SystemSettings> {
 
     // Runtime validation for required onboarding/plan settings
     const requiredKeys: (keyof SystemSettings)[] = [
-      'minDailyCalories', 'maxDailyCalories', 'stepsNotMuch', 'stepsLight', 'stepsModerate', 'stepsHeavy'
+      'minDailyCalories',
+      'maxDailyCalories',
+      'stepsNotMuch',
+      'stepsLight',
+      'stepsModerate',
+      'stepsHeavy',
+      'defaultCheckInFrequencyDays',
+      'notificationTimeUtc',
     ]
     for (const key of requiredKeys) {
       if (result[key] === undefined || result[key] === null) {

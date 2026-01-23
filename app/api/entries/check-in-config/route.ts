@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
+import { getSystemSetting } from "@/lib/system-settings"
+import { getNextExpectedCheckInDate, isCheckInMissed } from "@/lib/check-in-frequency"
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,10 +22,22 @@ export async function GET(req: NextRequest) {
       where: { userId: session.user.id },
       select: {
         cohortId: true,
+        Cohort: {
+          select: {
+            checkInFrequencyDays: true,
+          },
+        },
       },
     })
 
     if (!membership || !membership.cohortId) {
+      const defaultFrequency = await getSystemSetting("defaultCheckInFrequencyDays")
+      const lastEntry = await db.entry.findFirst({
+        where: { userId: session.user.id },
+        orderBy: { date: "desc" },
+        select: { date: true },
+      })
+      const nextExpected = getNextExpectedCheckInDate(lastEntry?.date ?? null, defaultFrequency)
       // Client not in any cohort - return default config (all fields enabled)
       return NextResponse.json(
         {
@@ -32,10 +46,34 @@ export async function GET(req: NextRequest) {
           enabledPrompts: ["sleepQuality", "perceivedStress", "notes"], // Default enabled
           customPrompt1: null,
           customPrompt1Type: null,
+          effectiveCheckInFrequencyDays: defaultFrequency,
+          lastCheckInDate: lastEntry?.date?.toISOString() || null,
+          nextExpectedCheckInDate: nextExpected.toISOString(),
+          checkInMissed: isCheckInMissed(nextExpected),
         },
         { status: 200 }
       )
     }
+
+    const [userSettings, systemDefaultFrequency] = await Promise.all([
+      db.user.findUnique({
+        where: { id: session.user.id },
+        select: { checkInFrequencyDays: true },
+      }),
+      getSystemSetting("defaultCheckInFrequencyDays"),
+    ])
+
+    const effectiveCheckInFrequencyDays =
+      membership.Cohort?.checkInFrequencyDays ??
+      userSettings?.checkInFrequencyDays ??
+      systemDefaultFrequency
+
+    const lastEntry = await db.entry.findFirst({
+      where: { userId: session.user.id },
+      orderBy: { date: "desc" },
+      select: { date: true },
+    })
+    const nextExpected = getNextExpectedCheckInDate(lastEntry?.date ?? null, effectiveCheckInFrequencyDays)
 
     // Fetch check-in config directly using cohort ID
     // Use findUnique with proper error handling
@@ -57,6 +95,10 @@ export async function GET(req: NextRequest) {
         enabledPrompts: config?.enabledPrompts || ["sleepQuality", "perceivedStress", "notes"],
         customPrompt1: config?.customPrompt1 || null,
         customPrompt1Type: config?.customPrompt1Type || null,
+        effectiveCheckInFrequencyDays,
+        lastCheckInDate: lastEntry?.date?.toISOString() || null,
+        nextExpectedCheckInDate: nextExpected.toISOString(),
+        checkInMissed: isCheckInMissed(nextExpected),
       },
       { status: 200 }
     )

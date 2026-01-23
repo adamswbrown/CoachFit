@@ -125,6 +125,7 @@ export class AttentionScoreCalculator {
     lastEntryDate: Date | null,
     options?: {
       missedCheckinsPolicy?: "option_a" | "option_b"
+      checkInFrequencyDays?: number
     }
   ): AttentionScore {
     let score = 0
@@ -137,8 +138,10 @@ export class AttentionScoreCalculator {
       ? Math.floor((now.getTime() - lastEntryDate.getTime()) / (24 * 60 * 60 * 1000))
       : null
 
+    const frequencyDays = options?.checkInFrequencyDays ?? 1
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const windowDays = Math.max(7, frequencyDays)
+    const windowStart = new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000)
 
     if (!lastEntryDate || lastEntryDate < fourteenDaysAgo) {
       const daysSinceLastEntryValue = lastEntryDate
@@ -158,30 +161,32 @@ export class AttentionScoreCalculator {
       }
     }
 
-    if (daysSinceLastEntry !== null && daysSinceLastEntry >= 1 && daysSinceLastEntry < 14) {
+    if (daysSinceLastEntry !== null && daysSinceLastEntry >= Math.max(1, frequencyDays) && daysSinceLastEntry < 14) {
       score = Math.max(score, 30)
-      reasons.push("No entry in the last day")
+      reasons.push(`No entry in the last ${Math.max(1, frequencyDays)} day${frequencyDays === 1 ? "" : "s"}`)
       suggestedActions.push("Check in with client")
       metadata.daysSinceLastEntry = daysSinceLastEntry
     }
 
     const entriesLast14Days = recentEntries.length
-    const entriesLast7Days = recentEntries.filter((date) => date >= sevenDaysAgo).length
+    const entriesLastWindow = recentEntries.filter((date) => date >= windowStart).length
+    const expectedIn14Days = Math.max(1, Math.ceil(14 / frequencyDays))
+    const expectedInWindow = Math.max(1, Math.ceil(windowDays / frequencyDays))
 
     if (entriesLast14Days === 0) {
       score += 30
       reasons.push("No entries in last 14 days")
       suggestedActions.push("Send engagement reminder")
       metadata.entriesLast14Days = 0
-    } else if (entriesLast14Days < 7) {
+    } else if (entriesLast14Days < expectedIn14Days) {
       score += 15
       reasons.push(`Only ${entriesLast14Days} entries in last 14 days (low engagement)`)
       suggestedActions.push("Review client engagement")
       metadata.entriesLast14Days = entriesLast14Days
     }
 
-    if (lastEntryDate && entriesLast7Days < 7) {
-      const missedDays = 7 - entriesLast7Days
+    if (lastEntryDate && entriesLastWindow < expectedInWindow) {
+      const missedDays = expectedInWindow - entriesLastWindow
       const policy = options?.missedCheckinsPolicy ?? "option_a"
       if (policy === "option_a") {
         if (missedDays >= 2) {
@@ -192,9 +197,10 @@ export class AttentionScoreCalculator {
       } else {
         score = Math.max(score, 60)
       }
-      reasons.push(`Missed ${missedDays} check-in${missedDays === 1 ? "" : "s"} this week`)
+      reasons.push(`Missed ${missedDays} check-in${missedDays === 1 ? "" : "s"} in last ${windowDays} days`)
       suggestedActions.push("Check in with client")
-      metadata.entriesLast7Days = entriesLast7Days
+      metadata.entriesLastWindow = entriesLastWindow
+      metadata.expectedInWindow = expectedInWindow
     }
 
     if (user.memberships.length === 0) {
@@ -607,6 +613,7 @@ export class AttentionScoreCalculator {
   ): Promise<AttentionQueueItem[]> {
     if (clientIds.length === 0) return []
 
+    const settings = await getSystemSettings()
     const [clients, recentEntries, latestEntries] = await Promise.all([
       db.user.findMany({
         where: {
@@ -619,9 +626,15 @@ export class AttentionScoreCalculator {
           id: true,
           email: true,
           name: true,
+          checkInFrequencyDays: true,
           CohortMembership: {
             select: {
               cohortId: true,
+              Cohort: {
+                select: {
+                  checkInFrequencyDays: true,
+                },
+              },
             },
           },
         },
@@ -669,6 +682,10 @@ export class AttentionScoreCalculator {
     for (const client of clients) {
       const recent = recentEntriesByUser.get(client.id) || []
       const lastEntryDate = latestEntryMap.get(client.id) || null
+      const cohortFrequency = client.CohortMembership[0]?.Cohort?.checkInFrequencyDays ?? null
+      const userFrequency = client.checkInFrequencyDays ?? null
+      const effectiveFrequency =
+        cohortFrequency ?? userFrequency ?? settings.defaultCheckInFrequencyDays
       const score = this.calculateUserScoreFromData(
         {
           id: client.id,
@@ -680,6 +697,7 @@ export class AttentionScoreCalculator {
         lastEntryDate,
         {
           missedCheckinsPolicy,
+          checkInFrequencyDays: effectiveFrequency,
         }
       )
       if (score.score > 0) {

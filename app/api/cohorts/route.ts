@@ -56,6 +56,13 @@ export async function GET(req: NextRequest) {
             email: true,
           },
         },
+        customCohortType: {
+          select: {
+            id: true,
+            label: true,
+            description: true,
+          },
+        },
         _count: {
           select: {
             memberships: true,
@@ -78,6 +85,11 @@ export async function GET(req: NextRequest) {
       coachId: cohort.User.id,
       coachName: cohort.User.name,
       coachEmail: cohort.User.email,
+      type: cohort.type,
+      customTypeLabel: cohort.customTypeLabel,
+      customCohortType: cohort.customCohortType,
+      checkInFrequencyDays: cohort.checkInFrequencyDays,
+      requiresMigration: !cohort.type,
     }))
 
     return NextResponse.json(cohortsWithCounts, { status: 200 })
@@ -106,6 +118,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const validated = createCohortSchema.parse(body)
 
+    if (validated.type !== "CUSTOM" && (validated.customCohortTypeId || validated.customTypeLabel)) {
+      return NextResponse.json(
+        { error: "Custom type is only allowed when cohort type is CUSTOM" },
+        { status: 400 }
+      )
+    }
+
     // Determine the coach who will own this cohort
     // If admin specifies ownerCoachId, use that; otherwise use current user
     const coachId = validated.ownerCoachId || session.user.id
@@ -129,6 +148,16 @@ export async function POST(req: NextRequest) {
     const cohort = await db.$transaction(async (tx: any) => {
       // Determine duration weeks based on config
       const durationWeeks = validated.durationConfig === "six-week" ? 6 : validated.durationWeeks
+      const customCohortType = validated.customCohortTypeId
+        ? await tx.customCohortType.findUnique({
+            where: { id: validated.customCohortTypeId },
+            select: { id: true, label: true },
+          })
+        : null
+
+      if (validated.customCohortTypeId && !customCohortType) {
+        throw new Error("Custom cohort type not found")
+      }
 
       // Create the cohort
       const newCohort = await tx.cohort.create({
@@ -138,6 +167,13 @@ export async function POST(req: NextRequest) {
           cohortStartDate: new Date(validated.cohortStartDate),
           durationConfig: validated.durationConfig,
           durationWeeks: durationWeeks,
+          type: validated.type,
+          customCohortTypeId: validated.type === "CUSTOM" ? customCohortType?.id || null : null,
+          customTypeLabel:
+            validated.type === "CUSTOM"
+              ? validated.customTypeLabel?.trim() || customCohortType?.label || null
+              : null,
+          checkInFrequencyDays: validated.checkInFrequencyDays ?? null,
         },
       })
 

@@ -1,0 +1,1 @@
+ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "defaultCheckInFrequencyDays" INTEGER NOT NULL DEFAULT 7;

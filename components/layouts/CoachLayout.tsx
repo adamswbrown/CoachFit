@@ -175,6 +175,8 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
       { name: "Attention", href: "/admin/attention", icon: (props: any) => <span className="text-xl">🔔</span>, hasDropdown: false, dropdownKey: "admin-attention" },
       { name: "System", href: "/admin/system", icon: (props: any) => <span className="text-xl">⚙️</span>, hasDropdown: false, dropdownKey: "admin-system" },
       { name: "Settings", href: "/admin/settings", icon: (props: any) => <span className="text-xl">⚡</span>, hasDropdown: false, dropdownKey: "admin-settings" },
+      { name: "Cohort Types", href: "/admin/cohort-types", icon: (props: any) => <span className="text-xl">🏷️</span>, hasDropdown: false, dropdownKey: "admin-cohort-types" },
+      { name: "Audit Log", href: "/admin/audit-log", icon: (props: any) => <span className="text-xl">🧾</span>, hasDropdown: false, dropdownKey: "admin-audit-log" },
       { name: "Email Templates", href: "/admin/email-templates", icon: (props: any) => <span className="text-xl">✉️</span>, hasDropdown: false, dropdownKey: "admin-email-templates" }
     )
   }

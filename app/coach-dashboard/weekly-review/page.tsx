@@ -34,15 +34,25 @@ const DEFAULT_ADHERENCE: AdherenceThresholds = {
 function getDisplayPriority(
   attention: { score: number; priority: string } | null,
   checkInCount: number,
+  expectedCheckIns: number,
   thresholds: AdherenceThresholds,
   missedCheckinsPolicy: AttentionMissedCheckinsPolicy
 ): "red" | "amber" | "green" {
+  const greenThreshold = Math.max(
+    1,
+    Math.ceil((thresholds.greenMinimum / 7) * expectedCheckIns)
+  )
+  const amberThreshold = Math.max(
+    0,
+    Math.ceil((thresholds.amberMinimum / 7) * expectedCheckIns)
+  )
+
   // If adherence is critically low, always red (overrides attention)
-  if (checkInCount < thresholds.amberMinimum) {
+  if (checkInCount < amberThreshold) {
     return "red"
   }
 
-  const missedCheckIns = Math.max(0, 7 - checkInCount)
+  const missedCheckIns = Math.max(0, expectedCheckIns - checkInCount)
   if (missedCheckinsPolicy === "option_b" && missedCheckIns >= 1) {
     return "red"
   }
@@ -57,7 +67,7 @@ function getDisplayPriority(
 
   // If no attention score, use adherence check
   if (!attention) {
-    if (checkInCount >= thresholds.greenMinimum) return "green"
+    if (checkInCount >= greenThreshold) return "green"
     return "amber"
   }
 
@@ -72,6 +82,8 @@ interface ClientSummary {
   stats: {
     checkInCount: number
     checkInRate: number
+    expectedCheckIns?: number
+    effectiveCheckInFrequencyDays?: number
     avgWeight: number | null
     weightTrend: number | null
     avgSteps: number | null
@@ -537,6 +549,7 @@ export default function WeeklyReviewPage() {
     return getDisplayPriority(
       attention?.attentionScore || null,
       client.stats.checkInCount,
+      client.stats.expectedCheckIns ?? 7,
       adherence,
       missedCheckinsPolicy
     )
@@ -620,6 +633,7 @@ export default function WeeklyReviewPage() {
           priority: getDisplayPriority(
             attention?.attentionScore || null,
             client.stats.checkInCount,
+            client.stats.expectedCheckIns ?? 7,
             adherence,
             missedCheckinsPolicy
           ),
@@ -1001,6 +1015,15 @@ export default function WeeklyReviewPage() {
                       const client = row.client
                       const attention = row.attention
                       const priorityColor = row.priority
+                      const expectedCheckIns = client.stats.expectedCheckIns ?? 7
+                      const greenThreshold = Math.max(
+                        1,
+                        Math.ceil((adherence.greenMinimum / 7) * expectedCheckIns)
+                      )
+                      const amberThreshold = Math.max(
+                        0,
+                        Math.ceil((adherence.amberMinimum / 7) * expectedCheckIns)
+                      )
                       const isExpanded = expandedClient === client.clientId
                       const ragClass =
                         priorityColor === "red"
@@ -1048,7 +1071,7 @@ export default function WeeklyReviewPage() {
                               {row.reasons.length > 0 ? row.reasons.join(" • ") : "—"}
                             </td>
                             <td className="px-4 py-3 text-neutral-700">
-                              {client.stats.checkInCount}/7 ({Math.round(client.stats.checkInRate * 100)}%)
+                              {client.stats.checkInCount}/{client.stats.expectedCheckIns ?? 7} ({Math.round(client.stats.checkInRate * 100)}%)
                             </td>
                             <td className="px-4 py-3 text-neutral-700">
                               {client.lastCheckInDate
@@ -1084,7 +1107,7 @@ export default function WeeklyReviewPage() {
                                   <div className="lg:col-span-2 space-y-4">
                                     <div>
                                       <div className="text-sm font-semibold text-neutral-900 mb-1">
-                                        Check-ins: {client.stats.checkInCount}/7{" "}
+                                        Check-ins: {client.stats.checkInCount}/{client.stats.expectedCheckIns ?? 7}{" "}
                                         <span className="text-xs text-neutral-600">
                                           ({Math.round(client.stats.checkInRate * 100)}%)
                                         </span>
@@ -1092,9 +1115,9 @@ export default function WeeklyReviewPage() {
                                       <div className="w-full bg-neutral-200 rounded-full h-2">
                                         <div
                                           className={`h-2 rounded-full ${
-                                            client.stats.checkInCount >= adherence.greenMinimum
+                                            client.stats.checkInCount >= greenThreshold
                                               ? "bg-green-500"
-                                              : client.stats.checkInCount >= adherence.amberMinimum
+                                              : client.stats.checkInCount >= amberThreshold
                                               ? "bg-amber-500"
                                               : "bg-red-500"
                                           }`}

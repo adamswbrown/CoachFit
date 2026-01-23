@@ -16,6 +16,15 @@ interface Cohort {
   createdAt: string
   coachId: string
   cohortStartDate?: string | null
+  type?: "TIMED" | "ONGOING" | "CHALLENGE" | "CUSTOM" | null
+  customTypeLabel?: string | null
+  customCohortType?: {
+    id: string
+    label: string
+    description?: string | null
+  } | null
+  checkInFrequencyDays?: number | null
+  requiresMigration?: boolean
   memberships: Array<{
     user: {
       id: string
@@ -53,6 +62,8 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
   const [clients, setClients] = useState<Client[]>([])
   const [invites, setInvites] = useState<Invite[]>([])
   const [availableClients, setAvailableClients] = useState<Client[]>([])
+  const [customTypes, setCustomTypes] = useState<Array<{ id: string; label: string; description?: string | null }>>([])
+  const [customTypesLoading, setCustomTypesLoading] = useState(false)
   
   // Coach management state
   const [owner, setOwner] = useState<Coach | null>(null)
@@ -74,6 +85,19 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
   const [startDateSaving, setStartDateSaving] = useState(false)
   const [startDateError, setStartDateError] = useState<string | null>(null)
   const [startDateSuccess, setStartDateSuccess] = useState<string | null>(null)
+
+  const [settingsForm, setSettingsForm] = useState({
+    type: "TIMED" as "TIMED" | "ONGOING" | "CHALLENGE" | "CUSTOM",
+    customCohortTypeId: "",
+    customTypeLabel: "",
+    checkInFrequencyDays: "" as string,
+  })
+  const [settingsSaving, setSettingsSaving] = useState(false)
+  const [settingsError, setSettingsError] = useState<string | null>(null)
+  const [settingsSuccess, setSettingsSuccess] = useState<string | null>(null)
+  const [showMigrationModal, setShowMigrationModal] = useState(false)
+  const [migrationSaving, setMigrationSaving] = useState(false)
+  const [migrationError, setMigrationError] = useState<string | null>(null)
 
   // Check-in config state
   const [showConfigForm, setShowConfigForm] = useState(false)
@@ -150,6 +174,12 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
     }
   }, [session, cohortId])
 
+  useEffect(() => {
+    if (session && cohortId) {
+      fetchCustomTypes()
+    }
+  }, [session, cohortId])
+
   const fetchCohort = async () => {
     try {
       const res = await fetch(`/api/cohorts/${cohortId}`)
@@ -159,6 +189,13 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
         setStartDateInput(
           data.cohortStartDate ? new Date(data.cohortStartDate).toISOString().split("T")[0] : ""
         )
+        setSettingsForm({
+          type: (data.type || "TIMED") as "TIMED" | "ONGOING" | "CHALLENGE" | "CUSTOM",
+          customCohortTypeId: data.customCohortType?.id || "",
+          customTypeLabel: data.customTypeLabel || "",
+          checkInFrequencyDays: data.checkInFrequencyDays ? String(data.checkInFrequencyDays) : "",
+        })
+        setShowMigrationModal(Boolean(data.requiresMigration))
       } else {
         const errorData = await res.json()
         console.error("Error fetching cohort:", errorData)
@@ -167,6 +204,21 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
     } catch (err) {
       console.error("Error fetching cohort:", err)
       setError("Failed to load cohort")
+    }
+  }
+
+  const fetchCustomTypes = async () => {
+    setCustomTypesLoading(true)
+    try {
+      const res = await fetch("/api/custom-cohort-types")
+      if (res.ok) {
+        const data = await res.json()
+        setCustomTypes(data.types || [])
+      }
+    } catch (err) {
+      console.error("Error fetching custom cohort types:", err)
+    } finally {
+      setCustomTypesLoading(false)
     }
   }
 
@@ -235,6 +287,135 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
       setStartDateError("Unable to update start date. Please try again.")
     } finally {
       setStartDateSaving(false)
+    }
+  }
+
+  const handleSettingsSave = async () => {
+    setSettingsSaving(true)
+    setSettingsError(null)
+    setSettingsSuccess(null)
+
+    if (settingsForm.type === "CUSTOM" && !settingsForm.customCohortTypeId && !settingsForm.customTypeLabel.trim()) {
+      setSettingsError("Select a custom type or provide a custom label.")
+      setSettingsSaving(false)
+      return
+    }
+
+    const frequencyValue = settingsForm.checkInFrequencyDays.trim()
+    const frequencyNumber = frequencyValue ? Number(frequencyValue) : null
+    if (frequencyValue && (Number.isNaN(frequencyNumber) || frequencyNumber < 1 || frequencyNumber > 365)) {
+      setSettingsError("Check-in frequency must be between 1 and 365 days.")
+      setSettingsSaving(false)
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/cohorts/${cohortId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: settingsForm.type,
+          customCohortTypeId: settingsForm.customCohortTypeId || undefined,
+          customTypeLabel: settingsForm.customTypeLabel.trim() || undefined,
+          checkInFrequencyDays: frequencyNumber ?? undefined,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        setSettingsError(data.error || "Failed to update cohort settings")
+        return
+      }
+
+      setCohort((prev) =>
+        prev
+          ? {
+              ...prev,
+              type: data.type ?? prev.type,
+              customTypeLabel: data.customTypeLabel ?? prev.customTypeLabel,
+              customCohortType: settingsForm.customCohortTypeId
+                ? customTypes.find((type) => type.id === settingsForm.customCohortTypeId) || prev.customCohortType
+                : null,
+              checkInFrequencyDays: data.checkInFrequencyDays ?? prev.checkInFrequencyDays,
+              requiresMigration: false,
+            }
+          : prev
+      )
+      setSettingsSuccess("Cohort settings updated.")
+      setTimeout(() => setSettingsSuccess(null), 3000)
+    } catch (err) {
+      setSettingsError("Unable to update cohort settings. Please try again.")
+    } finally {
+      setSettingsSaving(false)
+    }
+  }
+
+  const handleMigration = async (action: "update" | "skip" | "cancel") => {
+    setMigrationSaving(true)
+    setMigrationError(null)
+
+    if (action === "update") {
+      if (settingsForm.type === "CUSTOM" && !settingsForm.customCohortTypeId && !settingsForm.customTypeLabel.trim()) {
+        setMigrationError("Select a custom type or provide a custom label.")
+        setMigrationSaving(false)
+        return
+      }
+    }
+
+    const frequencyValue = settingsForm.checkInFrequencyDays.trim()
+    const frequencyNumber = frequencyValue ? Number(frequencyValue) : null
+    if (action === "update" && frequencyValue && (Number.isNaN(frequencyNumber) || frequencyNumber < 1 || frequencyNumber > 365)) {
+      setMigrationError("Check-in frequency must be between 1 and 365 days.")
+      setMigrationSaving(false)
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/cohorts/${cohortId}/migration`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          type: action === "update" ? settingsForm.type : undefined,
+          customCohortTypeId: action === "update" ? settingsForm.customCohortTypeId || undefined : undefined,
+          customTypeLabel: action === "update" ? settingsForm.customTypeLabel.trim() || undefined : undefined,
+          checkInFrequencyDays: action === "update" ? frequencyNumber ?? undefined : undefined,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        setMigrationError(data.error || "Migration failed")
+        return
+      }
+
+      if (action === "cancel") {
+        router.push("/cohorts")
+        return
+      }
+
+      if (data.cohort) {
+        setCohort((prev) =>
+          prev
+            ? {
+                ...prev,
+                type: data.cohort.type,
+                customTypeLabel: data.cohort.customTypeLabel,
+                customCohortType: settingsForm.customCohortTypeId
+                  ? customTypes.find((type) => type.id === settingsForm.customCohortTypeId) || prev.customCohortType
+                  : null,
+                checkInFrequencyDays: data.cohort.checkInFrequencyDays,
+                requiresMigration: false,
+              }
+            : prev
+        )
+      }
+
+      setShowMigrationModal(false)
+    } catch (err) {
+      setMigrationError("Migration failed. Please try again.")
+    } finally {
+      setMigrationSaving(false)
     }
   }
 
@@ -591,7 +772,9 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
     )
   }
 
-  const canEditStartDate = isAdmin(session.user) || cohort.coachId === session.user.id
+  const isAdminUser = isAdmin(session.user)
+  const canEditStartDate = isAdminUser || cohort.coachId === session.user.id
+  const canEditSettings = isAdminUser || cohort.coachId === session.user.id
   const formattedStartDate = cohort.cohortStartDate
     ? new Date(cohort.cohortStartDate).toLocaleDateString("en-US", {
         year: "numeric",
@@ -599,10 +782,149 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
         day: "numeric",
       })
     : null
+  const cohortTypeLabel = cohort.type
+    ? cohort.type === "TIMED"
+      ? "Timed"
+      : cohort.type === "ONGOING"
+        ? "Ongoing"
+        : cohort.type === "CHALLENGE"
+          ? "Challenge"
+          : "Custom"
+    : "Legacy (migration required)"
+  const customTypeDisplay = cohort.customTypeLabel || cohort.customCohortType?.label || null
+  const checkInFrequencyDisplay = cohort.checkInFrequencyDays
+    ? `${cohort.checkInFrequencyDays} days`
+    : "Defaults apply"
 
   return (
     <CoachLayout>
       <div className="max-w-4xl mx-auto">
+        {showMigrationModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6">
+              <h2 className="text-xl font-semibold mb-2">Legacy Cohort Migration Required</h2>
+              <p className="text-sm text-neutral-600 mb-4">
+                This cohort was created before cohort types and check-in frequency were introduced. Choose how to
+                migrate before continuing.
+              </p>
+
+              {!isAdminUser ? (
+                <div className="p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-md text-sm">
+                  Only an admin can migrate cohorts. Please contact an admin to proceed.
+                </div>
+              ) : (
+                <>
+                  {migrationError && (
+                    <div className="mb-3 p-3 bg-red-100 border border-red-300 text-red-800 rounded-md text-sm">
+                      {migrationError}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Type</label>
+                      <select
+                        value={settingsForm.type}
+                        onChange={(e) =>
+                          setSettingsForm({
+                            ...settingsForm,
+                            type: e.target.value as typeof settingsForm.type,
+                            customCohortTypeId: "",
+                            customTypeLabel: "",
+                          })
+                        }
+                        className="w-full border rounded-md px-3 py-2 text-sm"
+                      >
+                        <option value="TIMED">Timed</option>
+                        <option value="ONGOING">Ongoing</option>
+                        <option value="CHALLENGE">Challenge</option>
+                        <option value="CUSTOM">Custom</option>
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium mb-2">Check-in Frequency (days)</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={settingsForm.checkInFrequencyDays}
+                        onChange={(e) =>
+                          setSettingsForm({ ...settingsForm, checkInFrequencyDays: e.target.value })
+                        }
+                        className="w-full border rounded-md px-3 py-2 text-sm"
+                        placeholder="Leave blank to use system defaults"
+                      />
+                    </div>
+                  </div>
+
+                  {settingsForm.type === "CUSTOM" && (
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Custom Type</label>
+                        <select
+                          value={settingsForm.customCohortTypeId}
+                          onChange={(e) =>
+                            setSettingsForm({ ...settingsForm, customCohortTypeId: e.target.value })
+                          }
+                          className="w-full border rounded-md px-3 py-2 text-sm"
+                        >
+                          <option value="">Select a custom type</option>
+                          {customTypes.map((type) => (
+                            <option key={type.id} value={type.id}>
+                              {type.label}
+                            </option>
+                          ))}
+                        </select>
+                        {customTypesLoading && (
+                          <p className="text-xs text-neutral-400 mt-2">Loading custom types...</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Custom Label (optional override)</label>
+                        <input
+                          type="text"
+                          value={settingsForm.customTypeLabel}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, customTypeLabel: e.target.value })}
+                          className="w-full border rounded-md px-3 py-2 text-sm"
+                          maxLength={80}
+                          placeholder="e.g., Performance Reset"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-6 flex flex-wrap gap-3 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleMigration("cancel")}
+                      disabled={migrationSaving}
+                      className="px-4 py-2 rounded-md border border-neutral-300 text-neutral-700 hover:bg-neutral-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMigration("skip")}
+                      disabled={migrationSaving}
+                      className="px-4 py-2 rounded-md border border-neutral-300 text-neutral-700 hover:bg-neutral-100"
+                    >
+                      Skip (use defaults)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMigration("update")}
+                      disabled={migrationSaving}
+                      className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                      {migrationSaving ? "Updating..." : "Update & Continue"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -623,6 +945,17 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                 ) : (
                   <span className="text-red-600 font-medium">Missing</span>
                 )}
+              </div>
+              <div className="text-sm text-neutral-600">
+                Cohort type:{" "}
+                <span className="text-neutral-900">
+                  {cohortTypeLabel}
+                  {customTypeDisplay ? ` — ${customTypeDisplay}` : ""}
+                </span>
+              </div>
+              <div className="text-sm text-neutral-600">
+                Check-in frequency:{" "}
+                <span className="text-neutral-900">{checkInFrequencyDisplay}</span>
               </div>
               {canEditStartDate && (
                 <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -669,6 +1002,137 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
             </button>
           </div>
         </div>
+
+        {canEditSettings && (
+          <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Cohort Settings</h2>
+              <button
+                type="button"
+                onClick={handleSettingsSave}
+                disabled={settingsSaving}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-60"
+              >
+                {settingsSaving ? "Saving..." : "Save Settings"}
+              </button>
+            </div>
+
+            {settingsError && (
+              <div className="mb-3 p-3 bg-red-100 border border-red-300 text-red-800 rounded-md text-sm">
+                {settingsError}
+              </div>
+            )}
+            {settingsSuccess && (
+              <div className="mb-3 p-3 bg-green-50 border border-green-200 text-green-800 rounded-md text-sm">
+                {settingsSuccess}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Type</label>
+                <select
+                  value={settingsForm.type}
+                  onChange={(e) =>
+                    setSettingsForm({
+                      ...settingsForm,
+                      type: e.target.value as typeof settingsForm.type,
+                      customCohortTypeId: "",
+                      customTypeLabel: "",
+                    })
+                  }
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="TIMED">Timed</option>
+                  <option value="ONGOING">Ongoing</option>
+                  <option value="CHALLENGE">Challenge</option>
+                  <option value="CUSTOM">Custom</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-2">Check-in Frequency (days)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={settingsForm.checkInFrequencyDays}
+                  onChange={(e) =>
+                    setSettingsForm({ ...settingsForm, checkInFrequencyDays: e.target.value })
+                  }
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  placeholder="Leave blank to use user or system defaults"
+                />
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setSettingsForm({ ...settingsForm, checkInFrequencyDays: "7" })}
+                    className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
+                  >
+                    Weekly (7)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSettingsForm({ ...settingsForm, checkInFrequencyDays: "14" })}
+                    className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
+                  >
+                    Bi-weekly (14)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSettingsForm({ ...settingsForm, checkInFrequencyDays: "30" })}
+                    className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
+                  >
+                    Monthly (30)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSettingsForm({ ...settingsForm, checkInFrequencyDays: "" })}
+                    className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
+                  >
+                    Use defaults
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {settingsForm.type === "CUSTOM" && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Custom Type</label>
+                  <select
+                    value={settingsForm.customCohortTypeId}
+                    onChange={(e) =>
+                      setSettingsForm({ ...settingsForm, customCohortTypeId: e.target.value })
+                    }
+                    className="w-full border rounded-md px-3 py-2 text-sm"
+                  >
+                    <option value="">Select a custom type</option>
+                    {customTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                  {customTypesLoading && (
+                    <p className="text-xs text-neutral-400 mt-2">Loading custom types...</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Custom Label (optional override)</label>
+                  <input
+                    type="text"
+                    value={settingsForm.customTypeLabel}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, customTypeLabel: e.target.value })}
+                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    maxLength={80}
+                    placeholder="e.g., Performance Reset"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {error && !showForm && !showConfigForm && (
           <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-800 rounded-md text-sm">

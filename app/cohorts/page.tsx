@@ -18,6 +18,15 @@ interface Cohort {
   coachName?: string | null
   coachEmail?: string | null
   cohortStartDate?: string | null
+  type?: "TIMED" | "ONGOING" | "CHALLENGE" | "CUSTOM" | null
+  customTypeLabel?: string | null
+  customCohortType?: {
+    id: string
+    label: string
+    description?: string | null
+  } | null
+  checkInFrequencyDays?: number | null
+  requiresMigration?: boolean
 }
 
 export default function CohortsPage() {
@@ -183,6 +192,8 @@ export default function CohortsPage() {
                         <th className="text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Cohort Name</th>
                         <th className="hidden md:table-cell text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Owner</th>
                         <th className="hidden md:table-cell text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Start Date</th>
+                        <th className="hidden lg:table-cell text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Type</th>
+                        <th className="hidden lg:table-cell text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Check-in Frequency</th>
                         <th className="hidden sm:table-cell text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Active Clients</th>
                         <th className="hidden md:table-cell text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Pending Invites</th>
                         <th className="text-left p-2 sm:p-3 font-semibold text-neutral-900 text-sm sm:text-base">Actions</th>
@@ -210,6 +221,28 @@ export default function CohortsPage() {
                                   Missing
                                 </span>
                               )}
+                          </td>
+                          <td className="hidden lg:table-cell p-2 sm:p-3 text-sm sm:text-base">
+                            {cohort.requiresMigration ? (
+                              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                                Migration required
+                              </span>
+                            ) : (
+                              <span className="text-neutral-900">
+                                {cohort.type === "TIMED"
+                                  ? "Timed"
+                                  : cohort.type === "ONGOING"
+                                    ? "Ongoing"
+                                    : cohort.type === "CHALLENGE"
+                                      ? "Challenge"
+                                      : cohort.type === "CUSTOM"
+                                        ? `Custom${cohort.customTypeLabel ? ` — ${cohort.customTypeLabel}` : ""}`
+                                        : "—"}
+                              </span>
+                            )}
+                          </td>
+                          <td className="hidden lg:table-cell p-2 sm:p-3 text-sm sm:text-base">
+                            {cohort.checkInFrequencyDays ? `${cohort.checkInFrequencyDays} days` : "Defaults"}
                           </td>
                           <td className="hidden sm:table-cell p-2 sm:p-3 text-sm sm:text-base">{cohort.activeClients}</td>
                           <td className="hidden md:table-cell p-2 sm:p-3 text-sm sm:text-base">{cohort.pendingInvites}</td>

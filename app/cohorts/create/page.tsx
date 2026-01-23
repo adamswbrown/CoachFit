@@ -24,6 +24,8 @@ export default function CreateCohortPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [loadingCoaches, setLoadingCoaches] = useState(true)
   const [coachSearch, setCoachSearch] = useState("")
+  const [customTypes, setCustomTypes] = useState<Array<{ id: string; label: string; description?: string | null }>>([])
+  const [customTypesLoading, setCustomTypesLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     cohortStartDate: today,
@@ -31,6 +33,10 @@ export default function CreateCohortPage() {
     coCoaches: [] as string[],
     durationConfig: "six-week" as "six-week" | "custom",
     durationWeeks: 6,
+    type: "TIMED" as "TIMED" | "ONGOING" | "CHALLENGE" | "CUSTOM",
+    customCohortTypeId: "",
+    customTypeLabel: "",
+    checkInFrequencyDays: "" as string,
     checkInConfig: {
       enabledPrompts: ["weightLbs", "steps", "calories", "perceivedStress"] as string[],
       customPrompt1: "",
@@ -58,6 +64,12 @@ export default function CreateCohortPage() {
     }
   }, [session])
 
+  useEffect(() => {
+    if (session) {
+      fetchCustomTypes()
+    }
+  }, [session])
+
   const fetchCoaches = async () => {
     try {
       const res = await fetch("/api/admin/coaches")
@@ -72,6 +84,21 @@ export default function CreateCohortPage() {
     }
   }
 
+  const fetchCustomTypes = async () => {
+    setCustomTypesLoading(true)
+    try {
+      const res = await fetch("/api/custom-cohort-types")
+      if (res.ok) {
+        const data = await res.json()
+        setCustomTypes(data.types || [])
+      }
+    } catch (err) {
+      console.error("Error fetching custom cohort types:", err)
+    } finally {
+      setCustomTypesLoading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
@@ -83,6 +110,7 @@ export default function CreateCohortPage() {
         name: formData.name,
         cohortStartDate: formData.cohortStartDate,
         durationConfig: formData.durationConfig,
+        type: formData.type,
       }
 
       // Add duration weeks if custom
@@ -96,6 +124,19 @@ export default function CreateCohortPage() {
 
       if (formData.coCoaches.length > 0) {
         requestBody.coCoaches = formData.coCoaches
+      }
+
+      if (formData.type === "CUSTOM") {
+        if (formData.customCohortTypeId) {
+          requestBody.customCohortTypeId = formData.customCohortTypeId
+        }
+        if (formData.customTypeLabel.trim()) {
+          requestBody.customTypeLabel = formData.customTypeLabel.trim()
+        }
+      }
+
+      if (formData.checkInFrequencyDays.trim()) {
+        requestBody.checkInFrequencyDays = Number(formData.checkInFrequencyDays)
       }
 
       if (
@@ -225,6 +266,127 @@ export default function CreateCohortPage() {
                 onChange={(e) => setFormData({ ...formData, cohortStartDate: e.target.value })}
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               />
+            </div>
+
+            {/* Cohort Type */}
+            <div className="bg-white rounded-lg border border-neutral-200 p-6">
+              <label htmlFor="cohortType" className="block text-sm font-semibold mb-3">
+                Cohort Type *
+              </label>
+              <select
+                id="cohortType"
+                value={formData.type}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    type: e.target.value as typeof formData.type,
+                    customCohortTypeId: "",
+                    customTypeLabel: "",
+                  })
+                }
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              >
+                <option value="TIMED">Timed (fixed duration)</option>
+                <option value="ONGOING">Ongoing membership</option>
+                <option value="CHALLENGE">Challenge</option>
+                <option value="CUSTOM">Custom</option>
+              </select>
+              <p className="text-xs text-neutral-500 mt-2">
+                Choose the cohort structure to control status display and reporting.
+              </p>
+
+              {formData.type === "CUSTOM" && (
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label htmlFor="customCohortTypeId" className="block text-xs font-semibold text-neutral-600 mb-2">
+                      Custom Type
+                    </label>
+                    <select
+                      id="customCohortTypeId"
+                      value={formData.customCohortTypeId}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          customCohortTypeId: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    >
+                      <option value="">Select a custom type</option>
+                      {customTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                    {customTypesLoading && (
+                      <p className="text-xs text-neutral-400 mt-2">Loading custom types...</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="customTypeLabel" className="block text-xs font-semibold text-neutral-600 mb-2">
+                      Custom Label (optional override)
+                    </label>
+                    <input
+                      id="customTypeLabel"
+                      type="text"
+                      value={formData.customTypeLabel}
+                      onChange={(e) => setFormData({ ...formData, customTypeLabel: e.target.value })}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      maxLength={80}
+                      placeholder="e.g., 90-Day Reset"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Check-in Frequency */}
+            <div className="bg-white rounded-lg border border-neutral-200 p-6">
+              <label htmlFor="checkInFrequencyDays" className="block text-sm font-semibold mb-3">
+                Check-in Frequency (days)
+              </label>
+              <input
+                id="checkInFrequencyDays"
+                type="number"
+                min={1}
+                max={365}
+                value={formData.checkInFrequencyDays}
+                onChange={(e) => setFormData({ ...formData, checkInFrequencyDays: e.target.value })}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                placeholder="Leave blank to use user or system defaults"
+              />
+              <div className="flex flex-wrap gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, checkInFrequencyDays: "7" })}
+                  className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
+                >
+                  Weekly (7)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, checkInFrequencyDays: "14" })}
+                  className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
+                >
+                  Bi-weekly (14)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, checkInFrequencyDays: "30" })}
+                  className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
+                >
+                  Monthly (30)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, checkInFrequencyDays: "" })}
+                  className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
+                >
+                  Use defaults
+                </button>
+              </div>
             </div>
 
             {/* Cohort Owner (if admin) */}

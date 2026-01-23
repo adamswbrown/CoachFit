@@ -42,6 +42,17 @@ Admin users can now modify customer-facing configuration values through the Sett
 - Triggers RED alert (critical intervention needed)
 - Adjustable from 10-365 days
 
+### Check-In Defaults & Reminders
+
+**Default Check-in Frequency (Days)** (Default: 7)
+- Used when no cohort or user override is set
+- Applies to reminders and check-in expectations
+- Adjustable from 1-365 days
+
+**Reminder Send Time (UTC)** (Default: 09:00)
+- Global UTC time for scheduled reminders
+- Applies to scheduled and missed check-in reminders
+
 ### Attention Policy (Weekly Missed Check-ins)
 
 **Missed Check-in Severity** (Default: option_a)
@@ -120,6 +131,8 @@ model SystemSettings {
   attentionMissedCheckinsPolicy String @default("option_a")
   shortTermWindowDays Int @default(7)
   longTermWindowDays Int @default(30)
+  defaultCheckInFrequencyDays Int @default(7)
+  notificationTimeUtc String @default("09:00")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -212,4 +225,4 @@ If you want more lenient engagement tracking during holidays:
 
 ---
 
-Last Updated: January 14, 2026
+Last Updated: January 23, 2026

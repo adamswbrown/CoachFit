@@ -6,6 +6,7 @@
 interface WeeklyStats {
   checkInCount: number
   checkInRate: number
+  expectedCheckIns?: number
   avgWeight: number | null
   weightTrend: number | null
   avgSteps: number | null
@@ -31,7 +32,8 @@ export function generateWeeklyEmailDraft(options: EmailDraftOptions): string {
   emailBody += `Here's your weekly summary:\n\n`
 
   // Check-ins
-  emailBody += `• Check-ins: ${stats.checkInCount}/7 (${checkInPercentage}%)\n`
+  const expectedCheckIns = stats.expectedCheckIns ?? 7
+  emailBody += `• Check-ins: ${stats.checkInCount}/${expectedCheckIns} (${checkInPercentage}%)\n`
 
   // Weight stats
   if (stats.avgWeight !== null) {

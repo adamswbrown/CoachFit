@@ -42,9 +42,13 @@ model Cohort {
   name                      String
   coachId                   String
   createdAt                 DateTime                       @default(now())
+  type                      CohortType?
+  customTypeLabel           String?
+  customCohortTypeId        String?
   cohortStartDate           DateTime?                      @db.Date // Week 1 start date for questionnaire tracking
   durationConfig            String                         @default("six-week") // "six-week" or "custom"
   durationWeeks             Int?                           // Weeks duration (6 for six-week, or custom value)
+  checkInFrequencyDays      Int?
   coachMemberships          CoachCohortMembership[]
   User                      User                           @relation(fields: [coachId], references: [id], onDelete: Cascade)
   CheckInConfig             CohortCheckInConfig?
@@ -52,6 +56,7 @@ model Cohort {
   memberships               CohortMembership[]
   questionnaireBundle       QuestionnaireBundle?
   weeklyQuestionnaireResponses WeeklyQuestionnaireResponse[]
+  customCohortType          CustomCohortType?              @relation(fields: [customCohortTypeId], references: [id], onDelete: Restrict)
 
   @@unique([coachId, name])
   @@index([coachId])
@@ -89,6 +94,7 @@ model CohortMembership {
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, cohortId])
+  @@unique([userId])
   @@index([userId])
   @@index([cohortId])
 }
@@ -202,6 +208,7 @@ model User {
   dateOfBirth            DateTime?                        @db.Date
   activityLevel          String?
   primaryGoal            String?
+  checkInFrequencyDays   Int?
   Account                Account[]
   AdminActions           AdminAction[]                    @relation("AdminActions")
   CoachCohortMembership  CoachCohortMembership[]
@@ -224,6 +231,7 @@ model User {
   UserPreference         UserPreference?
   Workouts               Workout[]
   WeeklyQuestionnaireResponses WeeklyQuestionnaireResponse[]
+  CustomCohortType       CustomCohortType[]
 
   @@index([invitedByCoachId])
   @@index([createdAt])
@@ -351,6 +359,8 @@ model SystemSettings {
   criticalNoActivityDays   Int      @default(30)
   shortTermWindowDays      Int      @default(7)
   longTermWindowDays       Int      @default(30)
+  defaultCheckInFrequencyDays Int   @default(7)
+  notificationTimeUtc      String   @default("09:00")
   adminOverrideEmail       String?
   healthkitEnabled         Boolean  @default(true)
   iosIntegrationEnabled    Boolean  @default(true)
@@ -486,8 +496,28 @@ model WeeklyQuestionnaireResponse {
   @@index([status])
 }
 
+model CustomCohortType {
+  id          String   @id @default(uuid())
+  label       String   @unique
+  description String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  User        User     @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  Cohort      Cohort[]
+
+  @@index([createdBy])
+  @@index([createdAt])
+}
+
 enum Role {
   CLIENT
   COACH
   ADMIN
+}
+
+enum CohortType {
+  TIMED
+  ONGOING
+  CHALLENGE
+  CUSTOM
 }

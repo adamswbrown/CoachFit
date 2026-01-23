@@ -17,6 +17,7 @@ interface Client {
   email: string
   onboardingComplete?: boolean | null
   invitedByCoachId: string | null
+  checkInFrequencyDays?: number | null
   User: {
     id: string
     name: string | null
@@ -145,6 +146,9 @@ export default function ClientOverviewPage() {
   const [attentionItem, setAttentionItem] = useState<AttentionQueueItem | null>(null)
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null)
   const [onboardingError, setOnboardingError] = useState<string | null>(null)
+  const [checkInFrequencyDays, setCheckInFrequencyDays] = useState<string>("")
+  const [checkInFrequencySaving, setCheckInFrequencySaving] = useState(false)
+  const [checkInFrequencyMessage, setCheckInFrequencyMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -213,6 +217,40 @@ export default function ClientOverviewPage() {
   const fetchClient = async () => {
     const data = await fetchWithRetry<Client>(`/api/clients/${clientId}`)
     setClient(data)
+    setCheckInFrequencyDays(data.checkInFrequencyDays ? String(data.checkInFrequencyDays) : "")
+  }
+
+  const handleCheckInFrequencySave = async () => {
+    setCheckInFrequencySaving(true)
+    setCheckInFrequencyMessage(null)
+
+    const trimmed = checkInFrequencyDays.trim()
+    const parsed = trimmed ? Number(trimmed) : null
+    if (trimmed && (Number.isNaN(parsed) || parsed < 1 || parsed > 365)) {
+      setCheckInFrequencyMessage("Frequency must be between 1 and 365 days.")
+      setCheckInFrequencySaving(false)
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/clients/${clientId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checkInFrequencyDays: parsed }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setCheckInFrequencyMessage(data.error || "Failed to update frequency")
+        return
+      }
+      setClient((prev) => (prev ? { ...prev, checkInFrequencyDays: data.checkInFrequencyDays } : prev))
+      setCheckInFrequencyMessage("Check-in frequency updated.")
+      setTimeout(() => setCheckInFrequencyMessage(null), 3000)
+    } catch (err) {
+      setCheckInFrequencyMessage("Failed to update frequency. Please try again.")
+    } finally {
+      setCheckInFrequencySaving(false)
+    }
   }
 
   const fetchAnalytics = async () => {
@@ -625,6 +663,39 @@ export default function ClientOverviewPage() {
                     </div>
                   </div>
                 )}
+
+                <div>
+                  <div className="text-neutral-500">Check-in Frequency Override</div>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <input
+                      type="number"
+                      min={1}
+                      max={365}
+                      value={checkInFrequencyDays}
+                      onChange={(e) => setCheckInFrequencyDays(e.target.value)}
+                      placeholder="Default"
+                      className="w-28 px-2 py-1 border rounded-md text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCheckInFrequencySave}
+                      disabled={checkInFrequencySaving}
+                      className="px-3 py-1.5 rounded-md bg-neutral-900 text-white text-xs hover:bg-neutral-800 disabled:opacity-50"
+                    >
+                      {checkInFrequencySaving ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCheckInFrequencyDays("")}
+                      className="px-3 py-1.5 rounded-md border border-neutral-300 text-neutral-700 text-xs hover:bg-neutral-100"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  {checkInFrequencyMessage && (
+                    <div className="text-xs text-neutral-500 mt-1">{checkInFrequencyMessage}</div>
+                  )}
+                </div>
                 
                 <div>
                   <div className="text-neutral-500">Local Time</div>

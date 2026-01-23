@@ -6,6 +6,8 @@ Paul Stewart (and other clients) were showing ✅ ON TRACK status despite having
 ## Solution
 Implemented **configurable adherence thresholds** with a smart priority function that ensures check-in rates always override false "on track" classifications.
 
+**Update (Jan 23, 2026):** Thresholds now scale to the **expected check-ins** for each client, based on the effective check-in frequency (cohort → user → system default). This keeps adherence logic consistent across weekly, bi-weekly, or monthly check-in cadences.
+
 ## Key Changes
 
 ### 1. **Configurable Thresholds** (at top of page component)
@@ -37,16 +39,19 @@ const ADHERENCE_THRESHOLDS = {
 ```typescript
 function getDisplayPriority(
   attention: { score: number; priority: string } | null,
-  checkInCount: number
+  checkInCount: number,
+  expectedCheckIns: number
 ): "red" | "amber" | "green" {
   // CRITICAL: If adherence is low, ALWAYS red (overrides attention)
-  if (checkInCount < ADHERENCE_THRESHOLDS.amberMinimum) {
+  const amberThreshold = Math.max(0, Math.ceil((ADHERENCE_THRESHOLDS.amberMinimum / 7) * expectedCheckIns))
+  if (checkInCount < amberThreshold) {
     return "red"
   }
 
   // If no attention score, use adherence check
   if (!attention) {
-    if (checkInCount >= ADHERENCE_THRESHOLDS.greenMinimum) return "green"
+    const greenThreshold = Math.max(1, Math.ceil((ADHERENCE_THRESHOLDS.greenMinimum / 7) * expectedCheckIns))
+    if (checkInCount >= greenThreshold) return "green"
     return "amber"
   }
 
