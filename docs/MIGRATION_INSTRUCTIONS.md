@@ -33,6 +33,30 @@ npx prisma migrate reset
 # Then it will run all migrations from scratch
 ```
 
+### Option 3: Squash Migrations (Staging/Dev Reset - DESTROYS ALL DATA)
+
+Use this when migrations have drifted or duplicated changes and you want a clean baseline:
+
+```bash
+# From Web/
+mkdir -p prisma/migrations_legacy
+mv prisma/migrations/*/ prisma/migrations_legacy/
+
+# Generate a baseline migration from the current schema
+mkdir -p prisma/migrations/20260123_baseline
+./node_modules/.bin/prisma migrate diff \
+  --from-empty \
+  --to-schema-datamodel prisma/schema.prisma \
+  --script > prisma/migrations/20260123_baseline/migration.sql
+
+# Reset the database and apply only the baseline
+./node_modules/.bin/prisma migrate reset --force --skip-seed
+```
+
+Notes:
+- `prisma/migrations_legacy/` is an archive and is not used by Prisma.
+- Drop your staging DB (e.g., Railway) before deploying the squashed baseline.
+
 ## After Fixing Migration
 
 Run the seed scripts:

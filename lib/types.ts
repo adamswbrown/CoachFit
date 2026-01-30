@@ -14,3 +14,41 @@ export enum CohortType {
   CHALLENGE = "CHALLENGE",
   CUSTOM = "CUSTOM",
 }
+
+// Fitness Wrapped types
+export interface WrappedTotals {
+  entries: number
+  workouts: number
+  totalCalories: number
+  totalSteps: number
+  totalWorkoutMins: number
+  totalSleepMins: number
+  weightChange: number | null
+}
+
+export interface WrappedStreaks {
+  longestEntryStreak: number
+}
+
+export interface WrappedTopMetrics {
+  bestStepsDay: number
+  bestCaloriesDay: number
+  longestWorkout: number
+  bestSleepNight: number
+}
+
+export interface WrappedFunFact {
+  metric: string
+  value: number
+  comparison: string
+  icon: string
+}
+
+export interface WrappedSummary {
+  totals: WrappedTotals
+  streaks: WrappedStreaks
+  topMetrics: WrappedTopMetrics
+  funFacts: WrappedFunFact[]
+  dateRange: { startDate: Date; endDate: Date }
+  cohortName?: string
+}

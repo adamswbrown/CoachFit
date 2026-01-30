@@ -13,6 +13,8 @@ import { Role } from "@/lib/types"
 import { QuestionnaireModal } from "@/components/questionnaire/QuestionnaireModal"
 import { QuestionnaireProgress } from "@/components/questionnaire/QuestionnaireProgress"
 import { WeekNumber } from "@/lib/surveyjs-config"
+import { WrappedModal } from "@/components/wrapped/WrappedModal"
+import type { WrappedSummary } from "@/lib/types"
 
 interface Entry {
   id: string
@@ -98,6 +100,11 @@ export default function ClientDashboard() {
   const [selectedCohortTypeLabel, setSelectedCohortTypeLabel] = useState<string | null>(null)
   const [selectedCohortFrequency, setSelectedCohortFrequency] = useState<number | null>(null)
 
+  // Fitness Wrapped state
+  const [showWrappedModal, setShowWrappedModal] = useState(false)
+  const [wrappedData, setWrappedData] = useState<WrappedSummary | null>(null)
+  const [wrappedEligible, setWrappedEligible] = useState(false)
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
@@ -122,6 +129,7 @@ export default function ClientDashboard() {
       fetchCheckInConfig()
       fetchWorkouts()
       fetchUserCohorts()
+      fetchWrappedEligibility()
     }
   }, [session, activeRole])
 
@@ -195,6 +203,26 @@ export default function ClientDashboard() {
         nextExpectedCheckInDate: null,
         checkInMissed: false,
       })
+    }
+  }
+
+  const fetchWrappedEligibility = async () => {
+    try {
+      const response = await fetchWithRetry("/api/client/wrapped")
+      if (response.ok) {
+        const data = await response.json()
+        console.log("✅ Wrapped data received:", data)
+        setWrappedData(data)
+        setWrappedEligible(true)
+      } else {
+        // Not eligible yet - this is normal for active cohorts
+        const errorData = await response.json()
+        console.log("⚠️ Wrapped not eligible:", errorData)
+        setWrappedEligible(false)
+      }
+    } catch (error) {
+      console.error("❌ Error fetching wrapped:", error)
+      setWrappedEligible(false)
     }
   }
 
@@ -648,8 +676,31 @@ export default function ClientDashboard() {
           </div>
         )}
 
-        {/* Weekly Questionnaire Card (Sundays only) */}
-        {hasCoach !== false && selectedCohortId && isQuestionnaireDay() && (
+        {/* Fitness Wrapped Card (shows when 6 or 8 week challenge completes) */}
+        {wrappedEligible && wrappedData && (
+          <div className="mb-6 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-xl p-8 shadow-xl text-white">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-bold mb-3">🎉 Your Fitness Wrapped is Ready!</h2>
+                <p className="text-lg mb-1 opacity-95">
+                  You completed the challenge! See your amazing progress and fun stats.
+                </p>
+                <p className="text-sm opacity-80">
+                  {wrappedData.cohortName || "Your Challenge"} • {wrappedData.dateRange.startDate ? new Date(wrappedData.dateRange.startDate).toLocaleDateString() : ''} - {wrappedData.dateRange.endDate ? new Date(wrappedData.dateRange.endDate).toLocaleDateString() : ''}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowWrappedModal(true)}
+                className="px-8 py-4 bg-white text-purple-600 rounded-full font-bold text-lg hover:scale-105 transition shadow-lg whitespace-nowrap"
+              >
+                View Your Wrapped →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Weekly Questionnaire Card (Sundays only) - Hidden when wrapped is available */}
+        {hasCoach !== false && selectedCohortId && isQuestionnaireDay() && !wrappedEligible && (
           <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <div>
@@ -1210,6 +1261,15 @@ export default function ClientDashboard() {
           weekNumber={selectedWeek}
           isOpen={showQuestionnaireModal}
           onClose={() => setShowQuestionnaireModal(false)}
+        />
+      )}
+
+      {/* Fitness Wrapped Modal */}
+      {wrappedData && (
+        <WrappedModal
+          isOpen={showWrappedModal}
+          onClose={() => setShowWrappedModal(false)}
+          data={wrappedData}
         />
       )}
     </ClientLayout>
