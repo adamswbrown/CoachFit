@@ -2,6 +2,14 @@ import { PrismaClient, Role } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
+// Production administrators to preserve (by email)
+// Only these specific users will be kept - all others will be removed
+const PRODUCTION_ADMIN_EMAILS = [
+  "adamswbrown@gmail.com",
+  "coachgav@gcgyms.com",
+  "victoria.denstedt@gmail.com",
+]
+
 async function main() {
   console.log("=".repeat(60))
   console.log("  PRODUCTION CLEANUP SCRIPT")
@@ -9,20 +17,28 @@ async function main() {
   console.log("=".repeat(60))
   console.log("")
 
-  // Step 1: Identify administrators to keep
+  // Step 1: Identify administrators to keep (by specific email addresses)
   console.log("Step 1: Identifying administrators to preserve...")
   const admins = await prisma.user.findMany({
     where: {
-      roles: { has: Role.ADMIN },
+      email: { in: PRODUCTION_ADMIN_EMAILS },
     },
     select: { id: true, email: true, name: true, roles: true, isTestUser: true },
   })
 
   if (admins.length === 0) {
     console.log("  WARNING: No administrators found in the system!")
+    console.log("  Expected emails:", PRODUCTION_ADMIN_EMAILS.join(", "))
     console.log("  Aborting to prevent accidental deletion of all users.")
-    console.log("  Please create at least one admin user first.")
+    console.log("  Please create the admin users first.")
     process.exit(1)
+  }
+
+  if (admins.length < PRODUCTION_ADMIN_EMAILS.length) {
+    const foundEmails = admins.map((a) => a.email)
+    const missingEmails = PRODUCTION_ADMIN_EMAILS.filter((e) => !foundEmails.includes(e))
+    console.log("  WARNING: Some expected admins not found:")
+    missingEmails.forEach((e) => console.log(`    - ${e} (MISSING)`))
   }
 
   console.log(`  Found ${admins.length} administrator(s) to preserve:`)
