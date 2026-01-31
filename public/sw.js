@@ -1,29 +1,55 @@
 /**
  * CoachFit Service Worker
  * Enables offline functionality and caching for PWA
+ * Supports both Coach and Client personas
  */
 
-const CACHE_NAME = 'coachfit-v1'
-const STATIC_CACHE = 'coachfit-static-v1'
-const DYNAMIC_CACHE = 'coachfit-dynamic-v1'
-const OFFLINE_QUEUE_KEY = 'coachfit-offline-queue'
+const CACHE_VERSION = 'v2'
+const STATIC_CACHE = `coachfit-static-${CACHE_VERSION}`
+const DYNAMIC_CACHE = `coachfit-dynamic-${CACHE_VERSION}`
+const API_CACHE = `coachfit-api-${CACHE_VERSION}`
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
   '/',
   '/dashboard',
-  '/client-dashboard',
-  '/coach-dashboard',
+  '/login',
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
   '/icons/apple-touch-icon.png',
 ]
 
-// API routes that should be cached
+// Pages to cache for each persona (cached on first visit)
+const CLIENT_PAGES = [
+  '/client-dashboard',
+  '/client-dashboard/settings',
+  '/client-dashboard/pairing',
+]
+
+const COACH_PAGES = [
+  '/coach-dashboard',
+  '/coach-dashboard/weekly-review',
+  '/coach-dashboard/healthkit-data',
+  '/coach-dashboard/questionnaire-analytics',
+  '/coach-dashboard/pairing',
+]
+
+// API routes that benefit from caching (stale-while-revalidate)
 const CACHEABLE_API_ROUTES = [
   '/api/entries',
   '/api/client/entries',
+  '/api/client/cohorts',
+  '/api/coach-dashboard/overview',
+  '/api/coach-dashboard/weekly-summaries',
+  '/api/cohorts',
+]
+
+// API routes that support offline queuing
+const OFFLINE_QUEUE_ROUTES = [
+  { method: 'POST', path: '/api/entries' },
+  { method: 'POST', path: '/api/coach/notes' },
+  { method: 'PUT', path: '/api/clients/' }, // Coach notes on client
 ]
 
 // Install event - cache static assets
@@ -50,7 +76,11 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== STATIC_CACHE && name !== DYNAMIC_CACHE)
+          .filter((name) => {
+            // Delete old version caches
+            return name.startsWith('coachfit-') &&
+              !name.includes(CACHE_VERSION)
+          })
           .map((name) => {
             console.log('[SW] Deleting old cache:', name)
             return caches.delete(name)
@@ -65,16 +95,6 @@ self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
 
-  // Skip non-GET requests except for entry submissions
-  if (request.method !== 'GET') {
-    // Handle offline entry submissions
-    if (request.method === 'POST' && url.pathname === '/api/entries') {
-      event.respondWith(handleOfflineEntrySubmission(request))
-      return
-    }
-    return
-  }
-
   // Skip external requests
   if (url.origin !== self.location.origin) {
     return
@@ -85,15 +105,34 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // For API requests - network first, then cache
+  // Handle non-GET requests (offline queue)
+  if (request.method !== 'GET') {
+    const offlineRoute = OFFLINE_QUEUE_ROUTES.find(
+      r => r.method === request.method && url.pathname.startsWith(r.path)
+    )
+    if (offlineRoute) {
+      event.respondWith(handleOfflineQueueableRequest(request, url.pathname))
+      return
+    }
+    return
+  }
+
+  // For API requests - stale-while-revalidate for cacheable routes
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirst(request))
+    const isCacheable = CACHEABLE_API_ROUTES.some(route =>
+      url.pathname.startsWith(route)
+    )
+    if (isCacheable) {
+      event.respondWith(staleWhileRevalidate(request))
+    } else {
+      event.respondWith(networkFirst(request))
+    }
     return
   }
 
   // For navigation requests - network first with offline fallback
   if (request.mode === 'navigate') {
-    event.respondWith(handleNavigation(request))
+    event.respondWith(handleNavigation(request, url.pathname))
     return
   }
 
@@ -121,12 +160,12 @@ async function cacheFirst(request) {
   }
 }
 
-// Network-first strategy (for API requests)
+// Network-first strategy (for non-cacheable API requests)
 async function networkFirst(request) {
   try {
     const networkResponse = await fetch(request)
     if (networkResponse.ok) {
-      const cache = await caches.open(DYNAMIC_CACHE)
+      const cache = await caches.open(API_CACHE)
       cache.put(request, networkResponse.clone())
     }
     return networkResponse
@@ -134,7 +173,14 @@ async function networkFirst(request) {
     console.log('[SW] Network first falling back to cache')
     const cachedResponse = await caches.match(request)
     if (cachedResponse) {
-      return cachedResponse
+      // Add header to indicate cached response
+      const headers = new Headers(cachedResponse.headers)
+      headers.set('X-SW-Cache', 'true')
+      return new Response(cachedResponse.body, {
+        status: cachedResponse.status,
+        statusText: cachedResponse.statusText,
+        headers
+      })
     }
     return new Response(JSON.stringify({ error: 'Offline', offline: true }), {
       status: 503,
@@ -143,13 +189,68 @@ async function networkFirst(request) {
   }
 }
 
-// Handle navigation requests
-async function handleNavigation(request) {
+// Stale-while-revalidate (for cacheable API routes)
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(API_CACHE)
+  const cachedResponse = await cache.match(request)
+
+  // Start network request in background
+  const fetchPromise = fetch(request).then(networkResponse => {
+    if (networkResponse.ok) {
+      cache.put(request, networkResponse.clone())
+    }
+    return networkResponse
+  }).catch(() => null)
+
+  // Return cached response immediately if available
+  if (cachedResponse) {
+    // Add header to indicate stale response
+    const headers = new Headers(cachedResponse.headers)
+    headers.set('X-SW-Cache', 'stale')
+
+    // Wait for network in background (don't block)
+    fetchPromise.then(() => {
+      // Could notify clients of updated data here
+    })
+
+    return new Response(cachedResponse.body, {
+      status: cachedResponse.status,
+      statusText: cachedResponse.statusText,
+      headers
+    })
+  }
+
+  // No cache, wait for network
+  const networkResponse = await fetchPromise
+  if (networkResponse) {
+    return networkResponse
+  }
+
+  return new Response(JSON.stringify({ error: 'Offline', offline: true }), {
+    status: 503,
+    headers: { 'Content-Type': 'application/json' }
+  })
+}
+
+// Handle navigation requests with persona-aware caching
+async function handleNavigation(request, pathname) {
   try {
     const networkResponse = await fetch(request)
+
+    // Cache the page for offline access
+    if (networkResponse.ok) {
+      const isClientPage = CLIENT_PAGES.some(p => pathname.startsWith(p))
+      const isCoachPage = COACH_PAGES.some(p => pathname.startsWith(p))
+
+      if (isClientPage || isCoachPage) {
+        const cache = await caches.open(DYNAMIC_CACHE)
+        cache.put(request, networkResponse.clone())
+      }
+    }
+
     return networkResponse
   } catch (error) {
-    console.log('[SW] Navigation offline, trying cache')
+    console.log('[SW] Navigation offline, trying cache for:', pathname)
 
     // Try to get the cached page
     const cachedResponse = await caches.match(request)
@@ -157,37 +258,64 @@ async function handleNavigation(request) {
       return cachedResponse
     }
 
-    // Try to return cached dashboard as fallback
+    // Try role-specific fallbacks
+    const isCoachPath = pathname.startsWith('/coach')
+    const isClientPath = pathname.startsWith('/client')
+
+    if (isCoachPath) {
+      const coachFallback = await caches.match('/coach-dashboard')
+      if (coachFallback) return coachFallback
+    }
+
+    if (isClientPath) {
+      const clientFallback = await caches.match('/client-dashboard')
+      if (clientFallback) return clientFallback
+    }
+
+    // Generic dashboard fallback
     const dashboardResponse = await caches.match('/dashboard')
     if (dashboardResponse) {
       return dashboardResponse
     }
 
     // Return offline page
-    return new Response(getOfflinePage(), {
+    return new Response(getOfflinePage(isCoachPath ? 'coach' : 'client'), {
       status: 200,
       headers: { 'Content-Type': 'text/html' }
     })
   }
 }
 
-// Handle offline entry submissions
-async function handleOfflineEntrySubmission(request) {
+// Handle requests that can be queued offline
+async function handleOfflineQueueableRequest(request, pathname) {
   try {
     // Try network first
     const response = await fetch(request.clone())
     return response
   } catch (error) {
-    console.log('[SW] Offline - queueing entry for later')
+    console.log('[SW] Offline - queueing request for later:', pathname)
 
-    // Queue the entry for later
+    // Queue the request for later
     const body = await request.clone().json()
-    await queueOfflineEntry(body)
+    await queueOfflineAction({
+      method: request.method,
+      path: pathname,
+      body,
+      queuedAt: new Date().toISOString()
+    })
+
+    // Determine response message based on action type
+    let message = 'Action saved offline. Will sync when back online.'
+    if (pathname.includes('/entries')) {
+      message = 'Entry saved offline. Will sync when back online.'
+    } else if (pathname.includes('/notes') || pathname.includes('/clients/')) {
+      message = 'Notes saved offline. Will sync when back online.'
+    }
 
     return new Response(JSON.stringify({
       success: true,
       offline: true,
-      message: 'Entry saved offline. Will sync when back online.'
+      message
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
@@ -195,32 +323,36 @@ async function handleOfflineEntrySubmission(request) {
   }
 }
 
-// Queue entry for offline sync
-async function queueOfflineEntry(entry) {
+// Queue action for offline sync
+async function queueOfflineAction(action) {
   const queue = await getOfflineQueue()
-  queue.push({
-    ...entry,
-    queuedAt: new Date().toISOString()
-  })
+  queue.push(action)
   await saveOfflineQueue(queue)
 }
 
 // Get offline queue from IndexedDB
 async function getOfflineQueue() {
   return new Promise((resolve) => {
-    const request = indexedDB.open('coachfit-offline', 1)
+    const request = indexedDB.open('coachfit-offline', 2)
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result
       if (!db.objectStoreNames.contains('queue')) {
         db.createObjectStore('queue', { keyPath: 'id', autoIncrement: true })
       }
+      if (!db.objectStoreNames.contains('actions')) {
+        db.createObjectStore('actions', { keyPath: 'id', autoIncrement: true })
+      }
     }
 
     request.onsuccess = (event) => {
       const db = event.target.result
-      const transaction = db.transaction('queue', 'readonly')
-      const store = transaction.objectStore('queue')
+
+      // Check if actions store exists (new schema)
+      const storeName = db.objectStoreNames.contains('actions') ? 'actions' : 'queue'
+
+      const transaction = db.transaction(storeName, 'readonly')
+      const store = transaction.objectStore(storeName)
       const getAllRequest = store.getAll()
 
       getAllRequest.onsuccess = () => {
@@ -241,19 +373,23 @@ async function getOfflineQueue() {
 // Save offline queue to IndexedDB
 async function saveOfflineQueue(queue) {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('coachfit-offline', 1)
+    const request = indexedDB.open('coachfit-offline', 2)
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result
       if (!db.objectStoreNames.contains('queue')) {
         db.createObjectStore('queue', { keyPath: 'id', autoIncrement: true })
       }
+      if (!db.objectStoreNames.contains('actions')) {
+        db.createObjectStore('actions', { keyPath: 'id', autoIncrement: true })
+      }
     }
 
     request.onsuccess = (event) => {
       const db = event.target.result
-      const transaction = db.transaction('queue', 'readwrite')
-      const store = transaction.objectStore('queue')
+      const storeName = db.objectStoreNames.contains('actions') ? 'actions' : 'queue'
+      const transaction = db.transaction(storeName, 'readwrite')
+      const store = transaction.objectStore(storeName)
 
       // Clear existing queue
       store.clear()
@@ -271,56 +407,89 @@ async function saveOfflineQueue(queue) {
   })
 }
 
-// Listen for online event to sync queued entries
+// Listen for messages from clients
 self.addEventListener('message', async (event) => {
+  if (event.data && event.data.type === 'SYNC_OFFLINE_ACTIONS') {
+    console.log('[SW] Syncing offline actions...')
+    await syncOfflineActions()
+  }
+
+  // Legacy support for entry sync
   if (event.data && event.data.type === 'SYNC_OFFLINE_ENTRIES') {
     console.log('[SW] Syncing offline entries...')
-    const queue = await getOfflineQueue()
-
-    const results = []
-    for (const entry of queue) {
-      try {
-        const response = await fetch('/api/entries', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(entry),
-          credentials: 'include'
-        })
-
-        if (response.ok) {
-          results.push({ success: true, entry })
-        } else {
-          results.push({ success: false, entry, error: 'Server error' })
-        }
-      } catch (error) {
-        results.push({ success: false, entry, error: error.message })
-      }
-    }
-
-    // Clear successfully synced entries
-    const failedEntries = results.filter(r => !r.success).map(r => r.entry)
-    await saveOfflineQueue(failedEntries)
-
-    // Notify clients
-    const clients = await self.clients.matchAll()
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'OFFLINE_SYNC_COMPLETE',
-        synced: results.filter(r => r.success).length,
-        failed: failedEntries.length
-      })
-    })
+    await syncOfflineActions()
   }
 })
 
-// Offline HTML page
-function getOfflinePage() {
+// Sync all offline actions
+async function syncOfflineActions() {
+  const queue = await getOfflineQueue()
+
+  if (queue.length === 0) {
+    console.log('[SW] No offline actions to sync')
+    return
+  }
+
+  const results = []
+
+  for (const action of queue) {
+    try {
+      const response = await fetch(action.path, {
+        method: action.method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(action.body),
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        results.push({ success: true, action })
+      } else {
+        results.push({ success: false, action, error: 'Server error' })
+      }
+    } catch (error) {
+      results.push({ success: false, action, error: error.message })
+    }
+  }
+
+  // Clear successfully synced actions
+  const failedActions = results.filter(r => !r.success).map(r => r.action)
+  await saveOfflineQueue(failedActions)
+
+  // Notify clients
+  const clients = await self.clients.matchAll()
+  clients.forEach(client => {
+    client.postMessage({
+      type: 'OFFLINE_SYNC_COMPLETE',
+      synced: results.filter(r => r.success).length,
+      failed: failedActions.length,
+      details: results.map(r => ({
+        path: r.action.path,
+        success: r.success,
+        error: r.error
+      }))
+    })
+  })
+}
+
+// Offline HTML page with persona-specific messaging
+function getOfflinePage(persona = 'client') {
+  const isCoach = persona === 'coach'
+
+  const title = isCoach
+    ? "You're Offline"
+    : "You're Offline"
+
+  const message = isCoach
+    ? "Check your internet connection and try again. Client data will refresh when you're back online."
+    : "Check your internet connection and try again. Any entries you've made will sync when you're back online."
+
   return `
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+      <meta name="theme-color" content="#1E3A8A">
       <title>CoachFit - Offline</title>
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -331,7 +500,10 @@ function getOfflinePage() {
           align-items: center;
           justify-content: center;
           min-height: 100vh;
+          min-height: 100dvh;
           padding: 20px;
+          padding-top: max(20px, env(safe-area-inset-top));
+          padding-bottom: max(20px, env(safe-area-inset-bottom));
           background: #f8fafc;
           color: #1e293b;
         }
@@ -353,18 +525,60 @@ function getOfflinePage() {
           font-size: 16px;
           color: #64748b;
           margin-bottom: 24px;
+          line-height: 1.5;
+        }
+        .status {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          background: #fef3c7;
+          border-radius: 20px;
+          font-size: 14px;
+          color: #92400e;
+          margin-bottom: 24px;
+        }
+        .status-dot {
+          width: 8px;
+          height: 8px;
+          background: #f59e0b;
+          border-radius: 50%;
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
         button {
           background: #1E3A8A;
           color: white;
           border: none;
-          padding: 12px 24px;
-          border-radius: 8px;
+          padding: 14px 28px;
+          border-radius: 12px;
           font-size: 16px;
+          font-weight: 500;
           cursor: pointer;
+          transition: background 0.2s;
+          min-height: 44px;
         }
         button:hover {
           background: #1e40af;
+        }
+        button:active {
+          background: #1e3a8a;
+          transform: scale(0.98);
+        }
+        .secondary-action {
+          margin-top: 16px;
+        }
+        .secondary-action a {
+          color: #64748b;
+          text-decoration: none;
+          font-size: 14px;
+        }
+        .secondary-action a:hover {
+          color: #1E3A8A;
+          text-decoration: underline;
         }
       </style>
     </head>
@@ -374,10 +588,23 @@ function getOfflinePage() {
           <circle cx="256" cy="256" r="220" stroke="#1E3A8A" stroke-width="28"/>
           <path d="M180 300 L256 140 L332 300" stroke="#1E3A8A" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <h1>You're Offline</h1>
-        <p>Check your internet connection and try again. Any entries you've made will sync when you're back online.</p>
+        <div class="status">
+          <span class="status-dot"></span>
+          <span>No internet connection</span>
+        </div>
+        <h1>${title}</h1>
+        <p>${message}</p>
         <button onclick="window.location.reload()">Try Again</button>
+        <div class="secondary-action">
+          <a href="/dashboard">Go to Dashboard</a>
+        </div>
       </div>
+      <script>
+        // Auto-retry when connection is restored
+        window.addEventListener('online', () => {
+          window.location.reload();
+        });
+      </script>
     </body>
     </html>
   `

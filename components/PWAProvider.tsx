@@ -7,7 +7,8 @@ interface PWAContextType {
   isInstalled: boolean
   isOnline: boolean
   promptInstall: () => Promise<void>
-  pendingOfflineEntries: number
+  pendingOfflineActions: number
+  syncOfflineActions: () => void
 }
 
 const PWAContext = createContext<PWAContextType>({
@@ -15,7 +16,8 @@ const PWAContext = createContext<PWAContextType>({
   isInstalled: false,
   isOnline: true,
   promptInstall: async () => {},
-  pendingOfflineEntries: 0,
+  pendingOfflineActions: 0,
+  syncOfflineActions: () => {},
 })
 
 export function usePWA() {
@@ -32,7 +34,7 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
   const [isInstalled, setIsInstalled] = useState(false)
   const [isOnline, setIsOnline] = useState(true)
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [pendingOfflineEntries, setPendingOfflineEntries] = useState(0)
+  const [pendingOfflineActions, setPendingOfflineActions] = useState(0)
 
   // Register service worker
   useEffect(() => {
@@ -55,11 +57,11 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
       navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data?.type === "OFFLINE_SYNC_COMPLETE") {
           console.log("[PWA] Offline sync complete:", event.data)
-          setPendingOfflineEntries(event.data.failed)
+          setPendingOfflineActions(event.data.failed)
 
-          // Show notification if entries were synced
+          // Show notification if actions were synced
           if (event.data.synced > 0) {
-            // Could show a toast notification here
+            console.log(`[PWA] Successfully synced ${event.data.synced} offline actions`)
           }
         }
       })
@@ -111,7 +113,7 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
       // Trigger offline sync
       if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
-          type: "SYNC_OFFLINE_ENTRIES",
+          type: "SYNC_OFFLINE_ACTIONS",
         })
       }
     }
@@ -129,19 +131,21 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Check for pending offline entries
+  // Check for pending offline actions
   useEffect(() => {
-    const checkPendingEntries = async () => {
+    const checkPendingActions = async () => {
       try {
-        const request = indexedDB.open("coachfit-offline", 1)
+        const request = indexedDB.open("coachfit-offline", 2)
         request.onsuccess = (event) => {
           const db = (event.target as IDBOpenDBRequest).result
-          if (db.objectStoreNames.contains("queue")) {
-            const transaction = db.transaction("queue", "readonly")
-            const store = transaction.objectStore("queue")
+          // Check both stores for backwards compatibility
+          const storeName = db.objectStoreNames.contains("actions") ? "actions" : "queue"
+          if (db.objectStoreNames.contains(storeName)) {
+            const transaction = db.transaction(storeName, "readonly")
+            const store = transaction.objectStore(storeName)
             const countRequest = store.count()
             countRequest.onsuccess = () => {
-              setPendingOfflineEntries(countRequest.result)
+              setPendingOfflineActions(countRequest.result)
             }
           }
         }
@@ -150,9 +154,9 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    checkPendingEntries()
+    checkPendingActions()
     // Check periodically
-    const interval = setInterval(checkPendingEntries, 30000)
+    const interval = setInterval(checkPendingActions, 30000)
     return () => clearInterval(interval)
   }, [])
 
@@ -170,6 +174,14 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
     setIsInstallable(false)
   }, [deferredPrompt])
 
+  const syncOfflineActions = useCallback(() => {
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: "SYNC_OFFLINE_ACTIONS",
+      })
+    }
+  }, [])
+
   return (
     <PWAContext.Provider
       value={{
@@ -177,7 +189,8 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
         isInstalled,
         isOnline,
         promptInstall,
-        pendingOfflineEntries,
+        pendingOfflineActions,
+        syncOfflineActions,
       }}
     >
       {children}

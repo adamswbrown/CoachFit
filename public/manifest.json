@@ -72,15 +72,6 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshots/mobile-dashboard.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Track your daily fitness entries"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Log Entry",
@@ -88,6 +79,36 @@
       "description": "Log today's fitness entry",
       "url": "/client-dashboard?action=log",
       "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "View Progress",
+      "short_name": "Progress",
+      "description": "View your fitness progress and stats",
+      "url": "/client-dashboard",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Weekly Review",
+      "short_name": "Review",
+      "description": "Review client check-ins",
+      "url": "/coach-dashboard/weekly-review",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Client Overview",
+      "short_name": "Clients",
+      "description": "View all clients and their status",
+      "url": "/coach-dashboard",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-dashboard.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Track your daily fitness entries"
     }
   ],
   "related_applications": [],
