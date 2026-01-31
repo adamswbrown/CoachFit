@@ -65,9 +65,7 @@ async function main() {
   console.log(`✅ Successfully set password for ${user.email}`)
   console.log(`   Name: ${user.name || "N/A"}`)
   console.log(`   Test User: ${user.isTestUser ? "Yes" : "No"}`)
-  console.log(`\n📝 Login with:`)
-  console.log(`   Email: ${email}`)
-  console.log(`   Password: ${password}`)
+  console.log(`\n📝 User can now log in with the provided credentials.`)
 }
 
 main()
