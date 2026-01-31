@@ -169,33 +169,74 @@ export const authOptions: NextAuthConfig = {
               select: { email: true, name: true, isTestUser: true },
             })
 
-            try {
-              // First, delete the temporary user that was just created by OAuth
-              await db.user.delete({
-                where: { id: user.id },
-              })
-            } catch (deleteError) {
-              // If deletion fails, that's okay - it might have been cleaned up already
-              console.log("Note: Could not delete temporary user during account linking")
-            }
-
-            // Then link the OAuth account to the existing user
-            await db.account.create({
-              data: {
-                id: randomUUID(),
-                userId: existingUser.id,
-                type: account.type,
-                provider: account.provider,
-                providerAccountId: account.providerAccountId,
-                access_token: account.access_token,
-                refresh_token: account.refresh_token,
-                expires_at: account.expires_at,
-                token_type: account.token_type,
-                scope: account.scope,
-                id_token: account.id_token,
-                session_state: account.session_state as string | null,
+            // Check if this OAuth account already exists (PrismaAdapter creates it with the temp user)
+            const existingAccount = await db.account.findUnique({
+              where: {
+                provider_providerAccountId: {
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                },
               },
             })
+
+            if (existingAccount) {
+              if (existingAccount.userId === existingUser.id) {
+                // Account is already correctly linked to the existing user - just sign in
+                user.id = existingUser.id
+                return true
+              }
+
+              // Account exists but linked to temp user - need to re-link it
+              // Use a transaction to safely transfer the account
+              await db.$transaction(async (tx) => {
+                // Update the account to point to the existing user
+                await tx.account.update({
+                  where: {
+                    provider_providerAccountId: {
+                      provider: account.provider,
+                      providerAccountId: account.providerAccountId,
+                    },
+                  },
+                  data: {
+                    userId: existingUser.id,
+                  },
+                })
+
+                // Delete the temporary user (now safe since account is re-linked)
+                await tx.user.delete({
+                  where: { id: user.id },
+                })
+              })
+            } else {
+              // No existing account - create one for the existing user
+              try {
+                // First, delete the temporary user that was just created by OAuth
+                await db.user.delete({
+                  where: { id: user.id },
+                })
+              } catch (deleteError) {
+                // If deletion fails, that's okay - it might have been cleaned up already
+                console.log("Note: Could not delete temporary user during account linking")
+              }
+
+              // Then link the OAuth account to the existing user
+              await db.account.create({
+                data: {
+                  id: randomUUID(),
+                  userId: existingUser.id,
+                  type: account.type,
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                  access_token: account.access_token,
+                  refresh_token: account.refresh_token,
+                  expires_at: account.expires_at,
+                  token_type: account.token_type,
+                  scope: account.scope,
+                  id_token: account.id_token,
+                  session_state: account.session_state as string | null,
+                },
+              })
+            }
 
             // SECURITY: Send notification email about new OAuth provider link
             if (existingUserDetails && !existingUserDetails.isTestUser) {
