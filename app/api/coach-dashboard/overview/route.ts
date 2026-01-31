@@ -7,6 +7,9 @@ import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
 import { getSystemSetting } from "@/lib/system-settings"
 
 export async function GET() {
+  // EARLY DEBUG: This should ALWAYS appear if the route is hit
+  const debugTimestamp = Date.now()
+
   try {
     // Debug: Check what cookies are available
     const cookieStore = await cookies()
@@ -33,6 +36,7 @@ export async function GET() {
       return NextResponse.json({
         error: "Unauthorized",
         debug: {
+          timestamp: debugTimestamp,
           hasSession: !!session,
           cookieCount: allCookies.length,
           cookieNames: allCookies.map(c => c.name),
