@@ -832,7 +832,7 @@ export default function ClientDashboard() {
           {/* Left Column - Entry Form */}
           <div className="lg:col-span-2 space-y-6">
             {/* Log Entry Card */}
-            <div ref={entryFormRef} className="bg-white rounded-lg border border-neutral-200 p-6">
+            <div ref={entryFormRef} className="bg-white rounded-lg border border-neutral-200 p-6 no-pull-refresh">
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-neutral-900 mb-1">
                   {entryMode === "edit" ? "Edit Entry" : "Add New Entry"}

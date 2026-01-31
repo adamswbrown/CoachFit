@@ -1,13 +1,50 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import Script from "next/script"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 import { SessionProvider } from "@/components/SessionProvider"
 import { RoleProvider } from "@/contexts/RoleContext"
+import { PWAProvider } from "@/components/PWAProvider"
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt"
+import { OfflineIndicator } from "@/components/OfflineIndicator"
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#1E3A8A" },
+    { media: "(prefers-color-scheme: dark)", color: "#1E3A8A" },
+  ],
+}
 
 export const metadata: Metadata = {
   title: "CoachFit",
   description: "Fitness data tracking for coaches and clients",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "CoachFit",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 }
 
 export default function RootLayout({
@@ -87,7 +124,13 @@ export default function RootLayout({
           }}
         />
         <SessionProvider>
-          <RoleProvider>{children}</RoleProvider>
+          <RoleProvider>
+            <PWAProvider>
+              <OfflineIndicator />
+              {children}
+              <PWAInstallPrompt />
+            </PWAProvider>
+          </RoleProvider>
         </SessionProvider>
         <SpeedInsights />
       </body>
