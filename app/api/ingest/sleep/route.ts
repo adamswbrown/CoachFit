@@ -3,43 +3,47 @@
  *
  * Endpoint for iOS app to send HealthKit sleep data.
  * Stores detailed sleep records and merges into daily Entry records.
- * 
+ *
+ * SECURITY:
+ * - Requires valid pairing token (X-Pairing-Token header)
+ * - HealthKit must be enabled in system settings
+ * - Rate limited per client
+ *
  * CLIENT SYNC STRATEGY:
  * - First sync: Pulls all sleep data from last 365 days
- * - Subsequent syncs: Pulls only new data since last sync (client tracks via timestamp)
- * - Each sync can send up to 400 sleep records (supports 365-day batches)
- * 
+ * - Subsequent syncs: Pulls only new data since last sync
+ * - Each sync can send up to 400 sleep records
+ *
  * Data Priority:
  * - Sleep stage details (deep, light, REM) are stored in SleepRecord model
  * - Total sleep minutes are also synced to Entry model (daily summary)
  * - If Entry has manual sleep data, preserve it and just mark dataSources as ["manual", "healthkit"]
- * - HealthKit total_sleep_minutes only overwrites if no manual data exists
- * 
- * This ensures manual entries take precedence over HealthKit data.
  */
 
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { ingestSleepSchema } from "@/lib/validations"
 import { db } from "@/lib/db"
+import {
+  validateIngestAuth,
+  createIngestErrorResponse,
+  createIngestSuccessResponse,
+  handleIngestPreflight,
+} from "@/lib/security/ingest-auth"
 
 export async function POST(req: NextRequest) {
+  const origin = req.headers.get("origin")
+
   try {
     const body = await req.json()
 
     // Validate request body
     const validated = ingestSleepSchema.parse(body)
 
-    // Verify client exists
-    const client = await db.user.findUnique({
-      where: { id: validated.client_id },
-      select: { id: true },
-    })
+    // Validate authentication
+    const authResult = await validateIngestAuth(req, validated.client_id)
 
-    if (!client) {
-      return NextResponse.json(
-        { error: "Client not found" },
-        { status: 404 }
-      )
+    if (!authResult.success) {
+      return createIngestErrorResponse(authResult, origin)
     }
 
     // Process each sleep record
@@ -88,7 +92,6 @@ export async function POST(req: NextRequest) {
         })
 
         // Also merge into daily Entry (for daily summary)
-        // Check if entry exists for this date
         const existingEntry = await db.entry.findUnique({
           where: {
             userId_date: {
@@ -102,11 +105,13 @@ export async function POST(req: NextRequest) {
           },
         })
 
-        let entryUpdateData: any
+        let entryUpdateData: Record<string, unknown>
 
         if (existingEntry) {
           // Entry exists - check if it has manual sleep data
-          const dataSources = Array.isArray(existingEntry.dataSources) ? existingEntry.dataSources : []
+          const dataSources = Array.isArray(existingEntry.dataSources)
+            ? existingEntry.dataSources
+            : []
           const hasManualSleep = dataSources.includes("manual")
 
           if (hasManualSleep) {
@@ -119,8 +124,6 @@ export async function POST(req: NextRequest) {
             // No manual data - update with HealthKit sleep minutes
             entryUpdateData = {
               dataSources: ["healthkit"],
-              // Don't store sleepQuality in Entry since we have detailed SleepRecord
-              // sleepQuality is for manual perception ratings (separate from objective duration)
             }
           }
         } else {
@@ -147,10 +150,11 @@ export async function POST(req: NextRequest) {
         })
 
         results.processed++
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to process sleep record"
         results.errors.push({
           date: sleepRecord.date,
-          message: err.message || "Failed to process sleep record",
+          message,
         })
       }
     }
@@ -158,42 +162,35 @@ export async function POST(req: NextRequest) {
     // Return results
     const statusCode = results.errors.length > 0 ? 207 : 200
 
-    const response = NextResponse.json({
-      success: results.processed > 0,
-      processed: results.processed,
-      total: validated.sleep_records.length,
-      errors: results.errors.length > 0 ? results.errors : undefined,
-    }, { status: statusCode })
-    response.headers.set('Access-Control-Allow-Origin', '*')
-    return response
-
-  } catch (error: any) {
+    return createIngestSuccessResponse(
+      {
+        success: results.processed > 0,
+        processed: results.processed,
+        total: validated.sleep_records.length,
+        errors: results.errors.length > 0 ? results.errors : undefined,
+      },
+      origin,
+      statusCode
+    )
+  } catch (error: unknown) {
     console.error("Error in /api/ingest/sleep:", error)
 
-    if (error.name === "ZodError") {
-      const response = NextResponse.json(
-        { error: "Validation error", details: error.errors },
-        { status: 400 }
+    if (error && typeof error === "object" && "name" in error && error.name === "ZodError") {
+      return createIngestErrorResponse(
+        { success: false, error: "Validation error", status: 400 },
+        origin
       )
-      response.headers.set('Access-Control-Allow-Origin', '*')
-      return response
     }
 
-    const response = NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+    return createIngestErrorResponse(
+      { success: false, error: "Internal server error", status: 500 },
+      origin
     )
-    response.headers.set('Access-Control-Allow-Origin', '*')
-    return response
   }
 }
 
 // Handle OPTIONS for CORS preflight
-export async function OPTIONS() {
-  const response = new NextResponse(null, { status: 200 })
-  response.headers.set('Access-Control-Allow-Origin', '*')
-  response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
-  response.headers.set('Access-Control-Max-Age', '86400')
-  return response
+export async function OPTIONS(req: NextRequest) {
+  const origin = req.headers.get("origin")
+  return handleIngestPreflight(origin)
 }

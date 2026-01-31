@@ -118,9 +118,27 @@ export const addClientToCohortSchema = z.object({
   email: z.string().email("Invalid email format"),
 })
 
+// Strong password schema with complexity requirements
+export const passwordSchema = z
+  .string()
+  .min(12, "Password must be at least 12 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character")
+
+// Blocked email domains for security (prevents test user bypass)
+const BLOCKED_EMAIL_DOMAINS = [".local", ".test", ".example", ".invalid", ".localhost"]
+
 export const signupSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  email: z
+    .string()
+    .email("Invalid email format")
+    .refine(
+      (email) => !BLOCKED_EMAIL_DOMAINS.some((domain) => email.toLowerCase().endsWith(domain)),
+      "This email domain is not allowed for registration"
+    ),
+  password: passwordSchema,
   name: z.string().optional(),
 })
 

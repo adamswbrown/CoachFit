@@ -2,13 +2,23 @@
  * POST /api/ingest/profile
  *
  * Endpoint for iOS app to send HealthKit body metrics (weight, height, etc.).
- * HealthKit data overwrites manual entries (uses dataSources field).
+ *
+ * SECURITY:
+ * - Requires valid pairing token (X-Pairing-Token header)
+ * - HealthKit must be enabled in system settings
+ * - Rate limited per client
  */
 
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { ingestProfileSchema, type ProfileMetric } from "@/lib/validations"
 import { db } from "@/lib/db"
 import { kgToLbs, metersToInches, cmToInches } from "@/lib/utils/unit-conversions"
+import {
+  validateIngestAuth,
+  createIngestErrorResponse,
+  createIngestSuccessResponse,
+  handleIngestPreflight,
+} from "@/lib/security/ingest-auth"
 
 // Convert metric to imperial for storage
 function convertToImperial(metric: ProfileMetric): { field: string; value: number } | null {
@@ -40,23 +50,19 @@ function convertToImperial(metric: ProfileMetric): { field: string; value: numbe
 }
 
 export async function POST(req: NextRequest) {
+  const origin = req.headers.get("origin")
+
   try {
     const body = await req.json()
 
     // Validate request body
     const validated = ingestProfileSchema.parse(body)
 
-    // Verify client exists
-    const client = await db.user.findUnique({
-      where: { id: validated.client_id },
-      select: { id: true },
-    })
+    // Validate authentication
+    const authResult = await validateIngestAuth(req, validated.client_id)
 
-    if (!client) {
-      return NextResponse.json(
-        { error: "Client not found" },
-        { status: 404 }
-      )
+    if (!authResult.success) {
+      return createIngestErrorResponse(authResult, origin)
     }
 
     // Group metrics by date for batch processing
@@ -124,10 +130,11 @@ export async function POST(req: NextRequest) {
         })
 
         results.processed++
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to process metrics"
         results.errors.push({
           date: dateKey,
-          message: err.message || "Failed to process metrics",
+          message,
         })
       }
     }
@@ -135,48 +142,35 @@ export async function POST(req: NextRequest) {
     // Return results
     const statusCode = results.errors.length > 0 ? 207 : 200
 
-    const response = NextResponse.json({
-      success: results.processed > 0,
-      processed: results.processed,
-      total: metricsByDate.size,
-      errors: results.errors.length > 0 ? results.errors : undefined,
-    }, { status: statusCode })
-    
-    response.headers.set('Access-Control-Allow-Origin', '*')
-    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
-    return response
-
-  } catch (error: any) {
+    return createIngestSuccessResponse(
+      {
+        success: results.processed > 0,
+        processed: results.processed,
+        total: metricsByDate.size,
+        errors: results.errors.length > 0 ? results.errors : undefined,
+      },
+      origin,
+      statusCode
+    )
+  } catch (error: unknown) {
     console.error("Error in /api/ingest/profile:", error)
 
-    if (error.name === "ZodError") {
-      const response = NextResponse.json(
-        { error: "Validation error", details: error.errors },
-        { status: 400 }
+    if (error && typeof error === "object" && "name" in error && error.name === "ZodError") {
+      return createIngestErrorResponse(
+        { success: false, error: "Validation error", status: 400 },
+        origin
       )
-      response.headers.set('Access-Control-Allow-Origin', '*')
-      response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
-      response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
-      return response
     }
 
-    const errorResponse = NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+    return createIngestErrorResponse(
+      { success: false, error: "Internal server error", status: 500 },
+      origin
     )
-    errorResponse.headers.set('Access-Control-Allow-Origin', '*')
-    errorResponse.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    errorResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type')
-    return errorResponse
   }
 }
 
 // Handle OPTIONS for CORS preflight
-export async function OPTIONS() {
-  const response = new NextResponse(null, { status: 200 })
-  response.headers.set('Access-Control-Allow-Origin', '*')
-  response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
-  return response
+export async function OPTIONS(req: NextRequest) {
+  const origin = req.headers.get("origin")
+  return handleIngestPreflight(origin)
 }

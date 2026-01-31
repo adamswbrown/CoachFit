@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
 
     const hasInvite = coachInvites.length > 0 || cohortInvites.length > 0
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(validated.password, 10)
+    // Hash password with increased cost factor (12 rounds)
+    const passwordHash = await bcrypt.hash(validated.password, 12)
 
     // Create user
     const user = await db.user.create({
