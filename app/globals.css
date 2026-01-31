@@ -1,2 +1,96 @@
 @import "tailwindcss";
 @import "../styles/wrapped-animations.css";
+
+/* PWA Safe Area Insets */
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-inset-left {
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+.safe-area-inset-right {
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+/* PWA Animations */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Mobile-specific optimizations for PWA */
+@media (display-mode: standalone) {
+  /* When running as installed PWA */
+  body {
+    /* Prevent overscroll bounce on iOS */
+    overscroll-behavior: none;
+    /* Ensure full viewport height */
+    min-height: 100dvh;
+  }
+
+  /* Add padding for safe areas in standalone mode */
+  .pwa-safe-top {
+    padding-top: max(env(safe-area-inset-top, 0px), 20px);
+  }
+
+  .pwa-safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px);
+  }
+}
+
+/* Touch-friendly input improvements */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets on mobile */
+  input[type="number"],
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  select {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Larger buttons for touch */
+  button,
+  [role="button"] {
+    min-height: 44px;
+  }
+}
+
+/* Prevent pull-to-refresh on PWA pages with forms */
+.no-pull-refresh {
+  overscroll-behavior-y: contain;
+}
+
+/* iOS-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix for iOS rubber-banding */
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #__next,
+  main {
+    height: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
