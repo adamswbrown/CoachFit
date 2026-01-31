@@ -93,16 +93,19 @@ export async function POST(request: NextRequest) {
       })
     } else {
       // Soft delete - mark account and anonymize data
-      // For now, we'll use a field on User to mark deletion
-      // In production, you'd add an `isDeleted` and `deletedAt` field to User schema
+      // Preserve original email for potential account recovery
 
-      // Anonymize all sensitive data
+      // Anonymize all sensitive data but preserve original email
       await db.user.update({
         where: { id: session.user.id },
         data: {
+          // Store original email for recovery
+          originalEmail: user.email,
+          // Anonymize current email
           email: `deleted_${session.user.id}@deleted.local`,
           name: "Deleted User",
           passwordHash: null,
+          passwordChangedAt: null,
           image: null,
           onboardingComplete: false,
         },

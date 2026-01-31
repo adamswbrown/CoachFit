@@ -1,36 +1,44 @@
 /**
  * Pairing code utilities for iOS app HealthKit integration.
- * Generates and validates 6-character alphanumeric codes for device pairing.
+ * Generates and validates 8-character alphanumeric codes for device pairing.
+ *
+ * SECURITY:
+ * - Uses crypto.randomBytes for secure random generation
+ * - 8 characters for increased entropy (~40 bits)
+ * - 15-minute expiry window (reduced from 24 hours)
+ * - Rate limited at endpoint level
  */
 
 import { db } from "@/lib/db"
+import { randomBytes } from "crypto"
 
 // Characters used for pairing codes (excludes ambiguous characters like 0, O, I, l)
 const PAIRING_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-const PAIRING_CODE_LENGTH = 6
-const PAIRING_CODE_EXPIRY_HOURS = 24
+const PAIRING_CODE_LENGTH = 8 // Increased from 6 for better security
+const PAIRING_CODE_EXPIRY_MINUTES = 15 // Reduced from 24 hours for security
 
 /**
- * Generate a random pairing code
- * @returns 6-character alphanumeric code
+ * Generate a cryptographically secure random pairing code
+ * @returns 8-character alphanumeric code
  */
 export function generatePairingCode(): string {
+  const bytes = randomBytes(PAIRING_CODE_LENGTH)
   let code = ""
   for (let i = 0; i < PAIRING_CODE_LENGTH; i++) {
-    const randomIndex = Math.floor(Math.random() * PAIRING_CODE_CHARS.length)
-    code += PAIRING_CODE_CHARS[randomIndex]
+    // Use modulo to map random byte to character set
+    code += PAIRING_CODE_CHARS[bytes[i] % PAIRING_CODE_CHARS.length]
   }
   return code
 }
 
 /**
  * Generate expiration time for a pairing code
- * @param hours Number of hours until expiration (default: 24)
+ * @param minutes Number of minutes until expiration (default: 15)
  * @returns Expiration Date
  */
-export function generateExpirationTime(hours: number = PAIRING_CODE_EXPIRY_HOURS): Date {
+export function generateExpirationTime(minutes: number = PAIRING_CODE_EXPIRY_MINUTES): Date {
   const expiresAt = new Date()
-  expiresAt.setHours(expiresAt.getHours() + hours)
+  expiresAt.setMinutes(expiresAt.getMinutes() + minutes)
   return expiresAt
 }
 

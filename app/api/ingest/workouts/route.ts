@@ -4,48 +4,70 @@
  * Endpoint for iOS app to send HealthKit workout data.
  * Stores workout records with full metadata from Apple Health.
  *
+ * SECURITY:
+ * - Requires valid pairing token (X-Pairing-Token header)
+ * - HealthKit must be enabled in system settings
+ * - Rate limited per client
+ *
  * CLIENT SYNC STRATEGY:
  * - First sync: Pulls all workouts from last 365 days
- * - Subsequent syncs: Pulls only new/updated workouts since last sync (client tracks via timestamp)
- * - This endpoint processes date-ordered batches and deduplicates by (userId, workoutType, startTime)
- * - Server receives data continuously as long as client has permissions
+ * - Subsequent syncs: Pulls only new/updated workouts since last sync
+ * - Deduplicates by (userId, workoutType, startTime)
  */
 
-import { NextRequest, NextResponse } from "next/server"
-import { ingestWorkoutsSchema, type WorkoutItem } from "@/lib/validations"
+import { NextRequest } from "next/server"
+import { ingestWorkoutsSchema } from "@/lib/validations"
 import { db } from "@/lib/db"
+import {
+  validateIngestAuth,
+  createIngestErrorResponse,
+  createIngestSuccessResponse,
+  handleIngestPreflight,
+} from "@/lib/security/ingest-auth"
 
 export async function POST(req: NextRequest) {
+  const origin = req.headers.get("origin")
+
   try {
     const body = await req.json()
 
-    // Validate request body
+    // Validate request body first to get client_id
     const validated = ingestWorkoutsSchema.parse(body)
 
-    // Verify client exists
-    const client = await db.user.findUnique({
-      where: { id: validated.client_id },
-      select: { id: true },
-    })
+    // Validate authentication
+    const authResult = await validateIngestAuth(req, validated.client_id)
 
-    if (!client) {
-      return NextResponse.json(
-        { error: "Client not found" },
-        { status: 404 }
-      )
+    if (!authResult.success) {
+      return createIngestErrorResponse(authResult, origin)
     }
 
     // Log sync batch details
-    const dateRange = validated.workouts.length > 0
-      ? {
-          earliest: new Date(Math.min(...validated.workouts.map(w => new Date(w.start_time).getTime()))).toISOString(),
-          latest: new Date(Math.max(...validated.workouts.map(w => new Date(w.start_time).getTime()))).toISOString(),
-        }
-      : null
-    console.log(`[/api/ingest/workouts] Processing ${validated.workouts.length} workouts for client ${validated.client_id}${dateRange ? ` (${dateRange.earliest} to ${dateRange.latest})` : ''}`)
+    const dateRange =
+      validated.workouts.length > 0
+        ? {
+            earliest: new Date(
+              Math.min(
+                ...validated.workouts.map((w) => new Date(w.start_time).getTime())
+              )
+            ).toISOString(),
+            latest: new Date(
+              Math.max(
+                ...validated.workouts.map((w) => new Date(w.start_time).getTime())
+              )
+            ).toISOString(),
+          }
+        : null
+    console.log(
+      `[/api/ingest/workouts] Processing ${validated.workouts.length} workouts for client ${validated.client_id}${
+        dateRange ? ` (${dateRange.earliest} to ${dateRange.latest})` : ""
+      }`
+    )
 
     // Process each workout
-    const results: { processed: number; errors: { index: number; message: string }[] } = {
+    const results: {
+      processed: number
+      errors: { index: number; message: string }[]
+    } = {
       processed: 0,
       errors: [],
     }
@@ -64,7 +86,9 @@ export async function POST(req: NextRequest) {
         })
 
         // Cast metadata to Prisma-compatible JSON type
-        const metadataValue = workout.metadata ? JSON.parse(JSON.stringify(workout.metadata)) : null
+        const metadataValue = workout.metadata
+          ? JSON.parse(JSON.stringify(workout.metadata))
+          : null
 
         if (existing) {
           // Update existing workout
@@ -101,59 +125,47 @@ export async function POST(req: NextRequest) {
         }
 
         results.processed++
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to process workout"
         results.errors.push({
           index: i,
-          message: err.message || "Failed to process workout",
+          message,
         })
       }
     }
 
     // Return results
-    const statusCode = results.errors.length > 0 ? 207 : 200 // 207 Multi-Status if partial success
+    const statusCode = results.errors.length > 0 ? 207 : 200
 
-    const response = NextResponse.json({
-      success: results.processed > 0,
-      processed: results.processed,
-      total: validated.workouts.length,
-      errors: results.errors.length > 0 ? results.errors : undefined,
-    }, { status: statusCode })
-    
-    response.headers.set('Access-Control-Allow-Origin', '*')
-    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
-    return response
-
-  } catch (error: any) {
+    return createIngestSuccessResponse(
+      {
+        success: results.processed > 0,
+        processed: results.processed,
+        total: validated.workouts.length,
+        errors: results.errors.length > 0 ? results.errors : undefined,
+      },
+      origin,
+      statusCode
+    )
+  } catch (error: unknown) {
     console.error("Error in /api/ingest/workouts:", error)
 
-    if (error.name === "ZodError") {
-      const response = NextResponse.json(
-        { error: "Validation error", details: error.errors },
-        { status: 400 }
+    if (error && typeof error === "object" && "name" in error && error.name === "ZodError") {
+      return createIngestErrorResponse(
+        { success: false, error: "Validation error", status: 400 },
+        origin
       )
-      response.headers.set('Access-Control-Allow-Origin', '*')
-      response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
-      response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
-      return response
     }
 
-    const response = NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+    return createIngestErrorResponse(
+      { success: false, error: "Internal server error", status: 500 },
+      origin
     )
-    response.headers.set('Access-Control-Allow-Origin', '*')
-    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
-    return response
   }
 }
 
 // Handle OPTIONS for CORS preflight
-export async function OPTIONS() {
-  const response = new NextResponse(null, { status: 200 })
-  response.headers.set('Access-Control-Allow-Origin', '*')
-  response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
-  return response
+export async function OPTIONS(req: NextRequest) {
+  const origin = req.headers.get("origin")
+  return handleIngestPreflight(origin)
 }

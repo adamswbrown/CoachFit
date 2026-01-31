@@ -3,12 +3,71 @@
  *
  * Fetch workouts for a client. Coaches can view their clients' workouts.
  * Supports filtering by date range.
+ *
+ * SECURITY:
+ * - Requires authenticated session with COACH or ADMIN role
+ * - Validates coach-client relationship through multiple paths:
+ *   1. Direct invitation (invitedByCoachId)
+ *   2. Cohort ownership (client is in a cohort owned by the coach)
+ *   3. Co-coach relationship (coach is a co-coach on client's cohort)
  */
 
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isCoach, isAdmin } from "@/lib/permissions"
+
+/**
+ * Check if a coach has access to a client's data through any valid relationship
+ */
+async function hasCoachAccessToClient(
+  coachId: string,
+  clientId: string
+): Promise<boolean> {
+  // Check direct invitation
+  const client = await db.user.findUnique({
+    where: { id: clientId },
+    select: {
+      invitedByCoachId: true,
+      CohortMembership: {
+        select: {
+          Cohort: {
+            select: {
+              coachId: true,
+              coachMemberships: {
+                where: { coachId: coachId },
+                select: { coachId: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!client) {
+    return false
+  }
+
+  // Path 1: Direct invitation
+  if (client.invitedByCoachId === coachId) {
+    return true
+  }
+
+  // Path 2 & 3: Check cohort ownership or co-coach status
+  for (const membership of client.CohortMembership) {
+    // Cohort owner
+    if (membership.Cohort.coachId === coachId) {
+      return true
+    }
+    // Co-coach
+    if (membership.Cohort.coachMemberships.length > 0) {
+      return true
+    }
+  }
+
+  return false
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,7 +83,7 @@ export async function GET(req: NextRequest) {
     // Only coaches and admins can view HealthKit data
     if (!isCoach(session.user) && !isAdmin(session.user)) {
       return NextResponse.json(
-        { error: "Forbidden - Coach or Admin role required" },
+        { error: "Forbidden" },
         { status: 403 }
       )
     }
@@ -41,31 +100,28 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Verify client belongs to this coach (unless admin)
+    // Verify coach has access to this client (unless admin)
     if (!isAdmin(session.user)) {
-      const client = await db.user.findUnique({
-        where: { id: clientId },
-        select: { invitedByCoachId: true },
-      })
+      const hasAccess = await hasCoachAccessToClient(session.user.id, clientId)
 
-      if (!client || client.invitedByCoachId !== session.user.id) {
+      if (!hasAccess) {
         return NextResponse.json(
-          { error: "Forbidden - Not your client" },
+          { error: "Forbidden" },
           { status: 403 }
         )
       }
     }
 
     // Build query filters
-    const where: any = { userId: clientId }
+    const where: Record<string, unknown> = { userId: clientId }
 
     if (startDate || endDate) {
       where.startTime = {}
       if (startDate) {
-        where.startTime.gte = new Date(startDate)
+        (where.startTime as Record<string, Date>).gte = new Date(startDate)
       }
       if (endDate) {
-        where.startTime.lte = new Date(endDate)
+        (where.startTime as Record<string, Date>).lte = new Date(endDate)
       }
     }
 
@@ -99,7 +155,7 @@ export async function GET(req: NextRequest) {
       },
     }, { status: 200 })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in /api/healthkit/workouts:", error)
 
     return NextResponse.json(

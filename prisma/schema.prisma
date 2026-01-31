@@ -195,9 +195,11 @@ model Session {
 model User {
   id                     String                           @id @default(uuid())
   email                  String                           @unique
+  originalEmail          String?                          // Preserved on soft delete for recovery
   name                   String?
   image                  String?
   passwordHash           String?
+  passwordChangedAt      DateTime?                        // For session invalidation on password change
   mustChangePassword     Boolean                          @default(false)
   roles                  Role[]                           @default([CLIENT])
   isTestUser             Boolean                          @default(false)
@@ -363,8 +365,8 @@ model SystemSettings {
   defaultCheckInFrequencyDays Int   @default(7)
   notificationTimeUtc      String   @default("09:00")
   adminOverrideEmail       String?
-  healthkitEnabled         Boolean  @default(true)
-  iosIntegrationEnabled    Boolean  @default(true)
+  healthkitEnabled         Boolean  @default(false)
+  iosIntegrationEnabled    Boolean  @default(false)
   adherenceGreenMinimum    Int      @default(6)
   adherenceAmberMinimum    Int      @default(3)
   attentionMissedCheckinsPolicy String @default("option_a")

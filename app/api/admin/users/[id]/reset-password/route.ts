@@ -8,8 +8,13 @@ import { sendSystemEmail } from "@/lib/email"
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
 import { logAuditAction } from "@/lib/audit-log"
 
+import { passwordSchema } from "@/lib/validations"
+
+// bcrypt cost factor - 12 rounds for strong security
+const BCRYPT_ROUNDS = 12
+
 const resetPasswordSchema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: passwordSchema,
   sendEmail: z.boolean().optional().default(true),
 })
 
@@ -45,13 +50,17 @@ export async function POST(
 
     const isFirstPassword = !user.passwordHash
 
-    // Hash the new password
-    const passwordHash = await bcrypt.hash(password, 10)
+    // Hash the new password with increased cost factor
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
 
-    // Update user's password
+    // Update user's password and set passwordChangedAt for session invalidation
     await db.user.update({
       where: { id: userId },
-      data: { passwordHash, mustChangePassword: true },
+      data: {
+        passwordHash,
+        passwordChangedAt: new Date(),
+        mustChangePassword: true,
+      },
     })
 
     // Send email notification if requested

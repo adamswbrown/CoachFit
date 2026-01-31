@@ -162,7 +162,13 @@ export const authOptions: NextAuthConfig = {
           if (existingUser && existingUser.id !== user.id) {
             // Email exists but for a different user ID from OAuth provider
             // This means we need to link the OAuth account to the existing user
-            
+
+            // Get existing user's full details for notification
+            const existingUserDetails = await db.user.findUnique({
+              where: { id: existingUser.id },
+              select: { email: true, name: true, isTestUser: true },
+            })
+
             try {
               // First, delete the temporary user that was just created by OAuth
               await db.user.delete({
@@ -190,6 +196,40 @@ export const authOptions: NextAuthConfig = {
                 session_state: account.session_state as string | null,
               },
             })
+
+            // SECURITY: Send notification email about new OAuth provider link
+            if (existingUserDetails && !existingUserDetails.isTestUser) {
+              const providerName = account.provider.charAt(0).toUpperCase() + account.provider.slice(1)
+              const { sendSystemEmail } = await import("./email")
+
+              void sendSystemEmail({
+                templateKey: "oauth_provider_linked",
+                to: existingUserDetails.email,
+                variables: {
+                  userName: existingUserDetails.name || "",
+                  providerName,
+                },
+                fallbackSubject: `New sign-in method linked to your CoachFit account`,
+                fallbackHtml: `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #1f2937;">New Sign-In Method Linked</h2>
+                    <p>Hi${existingUserDetails.name ? ` ${existingUserDetails.name}` : ""},</p>
+                    <p>A new sign-in method (<strong>${providerName}</strong>) has been linked to your CoachFit account.</p>
+                    <p>You can now sign in using this provider in addition to your existing methods.</p>
+                    <p style="margin-top: 24px; color: #dc2626; font-weight: bold;">
+                      If you did not link this sign-in method, please contact your administrator immediately.
+                    </p>
+                    <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">
+                      This is a security notification. No action is required if you authorized this change.
+                    </p>
+                  </div>
+                `,
+                fallbackText: `New Sign-In Method Linked\n\nHi${existingUserDetails.name ? ` ${existingUserDetails.name}` : ""},\n\nA new sign-in method (${providerName}) has been linked to your CoachFit account.\n\nYou can now sign in using this provider in addition to your existing methods.\n\nIf you did not link this sign-in method, please contact your administrator immediately.\n\nThis is a security notification. No action is required if you authorized this change.`,
+                isTestUser: existingUserDetails.isTestUser,
+              }).catch((err) => {
+                console.error("Error sending OAuth link notification:", err)
+              })
+            }
 
             // Update the user object so JWT callback uses the correct ID
             user.id = existingUser.id
@@ -257,6 +297,13 @@ export const authOptions: NextAuthConfig = {
         token.id = user.id
         token.mustChangePassword = (user as any).mustChangePassword ?? false
 
+        // Store password change timestamp for session invalidation
+        const dbUserWithPwdChange = await db.user.findUnique({
+          where: { id: user.id },
+          select: { passwordChangedAt: true },
+        })
+        token.passwordChangedAt = dbUserWithPwdChange?.passwordChangedAt?.getTime() ?? null
+
         if (Array.isArray(user.roles) && user.roles.length > 0) {
           token.roles = user.roles
           token.isTestUser = user.isTestUser ?? false
@@ -272,6 +319,22 @@ export const authOptions: NextAuthConfig = {
           token.isTestUser = dbUser?.isTestUser ?? false
           token.isOnboardingComplete = dbUser?.onboardingComplete ?? false
           token.mustChangePassword = dbUser?.mustChangePassword ?? token.mustChangePassword ?? false
+        }
+      }
+
+      // Check if password was changed after token was issued (invalidate session)
+      if (token.id && token.passwordChangedAt) {
+        const dbUser = await db.user.findUnique({
+          where: { id: token.id as string },
+          select: { passwordChangedAt: true },
+        })
+
+        const currentPasswordChangedAt = dbUser?.passwordChangedAt?.getTime() ?? null
+
+        // If password was changed after the token was created, invalidate the session
+        if (currentPasswordChangedAt && currentPasswordChangedAt > (token.passwordChangedAt as number)) {
+          // Return an empty token to effectively invalidate the session
+          return {} as typeof token
         }
       }
 
