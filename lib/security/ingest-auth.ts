@@ -125,14 +125,27 @@ export async function validateIngestAuth(
 
 /**
  * Create an error response for ingest endpoints
+ * Accepts the union type and extracts error details
  */
 export function createIngestErrorResponse(
-  error: IngestAuthError,
+  result: IngestAuthResult | IngestAuthError,
   origin: string | null
 ): NextResponse {
+  // Type guard - if success is false, we have an error
+  if (result.success) {
+    // This shouldn't happen, but handle gracefully
+    const response = NextResponse.json(
+      { error: "Unexpected error" },
+      { status: 500 }
+    )
+    return addCorsHeaders(response, origin, { allowMobileOrigin: true })
+  }
+
+  // After the above check, result is narrowed to IngestAuthError
+  const errorResult = result as IngestAuthError
   const response = NextResponse.json(
-    { error: error.error },
-    { status: error.status }
+    { error: errorResult.error },
+    { status: errorResult.status }
   )
 
   return addCorsHeaders(response, origin, { allowMobileOrigin: true })
