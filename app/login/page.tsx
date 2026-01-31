@@ -18,6 +18,15 @@ function LoginPageContent() {
   const [showInviteAcknowledgment, setShowInviteAcknowledgment] = useState(false)
   const [hasInviteParam, setHasInviteParam] = useState(false)
   const [checkingInvite, setCheckingInvite] = useState(false)
+  const [showDebug, setShowDebug] = useState(false)
+
+  // Capture all URL params for debugging
+  const debugInfo = {
+    error: searchParams.get("error"),
+    errorDescription: searchParams.get("error_description"),
+    callbackUrl: searchParams.get("callbackUrl"),
+    allParams: Object.fromEntries(searchParams.entries()),
+  }
 
   useEffect(() => {
     if (session) {
@@ -75,6 +84,8 @@ function LoginPageContent() {
 
   useEffect(() => {
     const errorParam = searchParams.get("error")
+    const errorDescription = searchParams.get("error_description")
+
     if (errorParam === "OAuthAccountNotLinked") {
       setError("An account with this email already exists. Please contact support or try a different account.")
     } else if (errorParam === "AccessDenied") {
@@ -82,8 +93,9 @@ function LoginPageContent() {
     } else if (errorParam === "CredentialsSignin") {
       setError("Invalid email or password.")
     } else if (errorParam) {
-      // Generic error message for other OAuth errors
-      setError("Unable to sign in. Please try again or use email and password.")
+      // Show detailed error for debugging
+      const details = errorDescription ? `: ${errorDescription}` : ""
+      setError(`Sign-in error (${errorParam})${details}. Please try again or contact support.`)
     }
   }, [searchParams])
 
@@ -188,8 +200,23 @@ function LoginPageContent() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-800 rounded-md text-sm">
-            {error}
+          <div className="mb-6">
+            <div className="p-3 bg-red-50 border border-red-200 text-red-800 rounded-md text-sm">
+              {error}
+            </div>
+            {debugInfo.error && (
+              <button
+                onClick={() => setShowDebug(!showDebug)}
+                className="mt-2 text-xs text-gray-500 hover:text-gray-700 underline"
+              >
+                {showDebug ? "Hide" : "Show"} debug info
+              </button>
+            )}
+            {showDebug && debugInfo.error && (
+              <div className="mt-2 p-3 bg-gray-100 border border-gray-300 rounded-md text-xs font-mono overflow-auto max-h-48">
+                <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+              </div>
+            )}
           </div>
         )}
 

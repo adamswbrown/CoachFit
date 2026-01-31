@@ -154,14 +154,19 @@ export const authOptions: NextAuthConfig = {
       try {
         // Handle account linking: if OAuth provider and email already exists, link instead of reject
         if (account && account.provider !== "credentials") {
+          console.log(`[AUTH] OAuth sign-in attempt: provider=${account.provider}, email=${user.email}, tempUserId=${user.id}`)
+
           const existingUser = await db.user.findUnique({
             where: { email: user.email },
             select: { id: true },
           })
 
+          console.log(`[AUTH] Existing user lookup: found=${!!existingUser}, existingId=${existingUser?.id}, tempId=${user.id}`)
+
           if (existingUser && existingUser.id !== user.id) {
             // Email exists but for a different user ID from OAuth provider
             // This means we need to link the OAuth account to the existing user
+            console.log(`[AUTH] Account linking required: existingUserId=${existingUser.id}, tempUserId=${user.id}`)
 
             // Get existing user's full details for notification
             const existingUserDetails = await db.user.findUnique({
@@ -179,63 +184,82 @@ export const authOptions: NextAuthConfig = {
               },
             })
 
+            console.log(`[AUTH] Existing account lookup: found=${!!existingAccount}, linkedToUserId=${existingAccount?.userId}`)
+
             if (existingAccount) {
               if (existingAccount.userId === existingUser.id) {
                 // Account is already correctly linked to the existing user - just sign in
+                console.log(`[AUTH] Account already correctly linked, proceeding with sign-in`)
                 user.id = existingUser.id
                 return true
               }
 
               // Account exists but linked to temp user - need to re-link it
               // Use a transaction to safely transfer the account
-              await db.$transaction(async (tx) => {
-                // Update the account to point to the existing user
-                await tx.account.update({
-                  where: {
-                    provider_providerAccountId: {
-                      provider: account.provider,
-                      providerAccountId: account.providerAccountId,
+              console.log(`[AUTH] Re-linking account from tempUser=${existingAccount.userId} to existingUser=${existingUser.id}`)
+              try {
+                await db.$transaction(async (tx) => {
+                  // Update the account to point to the existing user
+                  await tx.account.update({
+                    where: {
+                      provider_providerAccountId: {
+                        provider: account.provider,
+                        providerAccountId: account.providerAccountId,
+                      },
                     },
-                  },
-                  data: {
-                    userId: existingUser.id,
-                  },
-                })
+                    data: {
+                      userId: existingUser.id,
+                    },
+                  })
+                  console.log(`[AUTH] Account re-linked successfully`)
 
-                // Delete the temporary user (now safe since account is re-linked)
-                await tx.user.delete({
-                  where: { id: user.id },
+                  // Delete the temporary user (now safe since account is re-linked)
+                  await tx.user.delete({
+                    where: { id: user.id },
+                  })
+                  console.log(`[AUTH] Temporary user deleted successfully`)
                 })
-              })
+              } catch (txError) {
+                console.error(`[AUTH] Transaction failed:`, txError)
+                throw txError
+              }
             } else {
               // No existing account - create one for the existing user
+              console.log(`[AUTH] No existing account, creating new one for existingUser=${existingUser.id}`)
               try {
                 // First, delete the temporary user that was just created by OAuth
                 await db.user.delete({
                   where: { id: user.id },
                 })
+                console.log(`[AUTH] Temporary user deleted`)
               } catch (deleteError) {
                 // If deletion fails, that's okay - it might have been cleaned up already
-                console.log("Note: Could not delete temporary user during account linking")
+                console.log("[AUTH] Note: Could not delete temporary user during account linking:", deleteError)
               }
 
               // Then link the OAuth account to the existing user
-              await db.account.create({
-                data: {
-                  id: randomUUID(),
-                  userId: existingUser.id,
-                  type: account.type,
-                  provider: account.provider,
-                  providerAccountId: account.providerAccountId,
-                  access_token: account.access_token,
-                  refresh_token: account.refresh_token,
-                  expires_at: account.expires_at,
-                  token_type: account.token_type,
-                  scope: account.scope,
-                  id_token: account.id_token,
-                  session_state: account.session_state as string | null,
-                },
-              })
+              try {
+                await db.account.create({
+                  data: {
+                    id: randomUUID(),
+                    userId: existingUser.id,
+                    type: account.type,
+                    provider: account.provider,
+                    providerAccountId: account.providerAccountId,
+                    access_token: account.access_token,
+                    refresh_token: account.refresh_token,
+                    expires_at: account.expires_at,
+                    token_type: account.token_type,
+                    scope: account.scope,
+                    id_token: account.id_token,
+                    session_state: account.session_state as string | null,
+                  },
+                })
+                console.log(`[AUTH] New account created successfully`)
+              } catch (createError) {
+                console.error(`[AUTH] Failed to create account:`, createError)
+                throw createError
+              }
             }
 
             // SECURITY: Send notification email about new OAuth provider link
@@ -328,7 +352,15 @@ export const authOptions: NextAuthConfig = {
           }
         }
       } catch (error) {
-        console.error("Error processing invites on sign-in:", error)
+        // Log the full error with stack trace
+        console.error("[AUTH] Error during sign-in callback:", error)
+        if (error instanceof Error) {
+          console.error("[AUTH] Error name:", error.name)
+          console.error("[AUTH] Error message:", error.message)
+          console.error("[AUTH] Error stack:", error.stack)
+        }
+        // Re-throw to trigger NextAuth error handling
+        throw error
       }
 
       return true
