@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
 import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
 import { getSystemSetting } from "@/lib/system-settings"
 
-export async function GET(req: NextRequest) {
+export const GET = auth(async function GET(req) {
   try {
-    const session = await auth()
+    const session = req.auth
 
     // Debug logging for auth issues
     console.log("[coach-dashboard/overview] Session check:", {
