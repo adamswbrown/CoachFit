@@ -5,15 +5,9 @@ import { Role } from "@/lib/types"
 import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
 import { getSystemSetting } from "@/lib/system-settings"
 
-export const GET = auth(async function GET(req) {
+export async function GET() {
   try {
-    // Debug: Log raw cookies received
-    const cookieHeader = req.headers.get('cookie')
-    console.log("[coach-dashboard/overview] Raw cookies:", cookieHeader?.substring(0, 200))
-    console.log("[coach-dashboard/overview] Has authjs cookie:", cookieHeader?.includes('authjs'))
-    console.log("[coach-dashboard/overview] Has next-auth cookie:", cookieHeader?.includes('next-auth'))
-
-    const session = req.auth
+    const session = await auth()
 
     // Debug logging for auth issues
     console.log("[coach-dashboard/overview] Session check:", {
@@ -440,4 +434,4 @@ export const GET = auth(async function GET(req) {
       { status: 500 }
     )
   }
-})
+}
