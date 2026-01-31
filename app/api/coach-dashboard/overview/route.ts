@@ -9,12 +9,23 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth()
 
+    // Debug logging for auth issues
+    console.log("[coach-dashboard/overview] Session check:", {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      userId: session?.user?.id,
+      userEmail: session?.user?.email,
+      userRoles: session?.user?.roles,
+    })
+
     if (!session || !session.user) {
+      console.log("[coach-dashboard/overview] No session or user - returning 401")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // Allow COACH or ADMIN
     if (!isAdminOrCoach(session.user)) {
+      console.log("[coach-dashboard/overview] User not admin or coach - returning 403", session.user.roles)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
