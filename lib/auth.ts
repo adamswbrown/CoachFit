@@ -169,6 +169,22 @@ export const authOptions: NextAuthConfig = {
               select: { email: true, name: true, isTestUser: true },
             })
 
+            // Check if this OAuth account is already linked to the existing user
+            const existingAccount = await db.account.findUnique({
+              where: {
+                provider_providerAccountId: {
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                },
+              },
+            })
+
+            if (existingAccount) {
+              // Account already linked - just update the user.id reference and continue
+              user.id = existingUser.id
+              return true
+            }
+
             try {
               // First, delete the temporary user that was just created by OAuth
               await db.user.delete({
