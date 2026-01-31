@@ -29,7 +29,16 @@ export async function GET() {
 
     if (!session || !session.user) {
       console.log("[coach-dashboard/overview] No session or user - returning 401")
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      // Return diagnostic info to help debug
+      return NextResponse.json({
+        error: "Unauthorized",
+        debug: {
+          hasSession: !!session,
+          cookieCount: allCookies.length,
+          cookieNames: allCookies.map(c => c.name),
+          hasSessionToken: !!sessionToken,
+        }
+      }, { status: 401 })
     }
 
     // Allow COACH or ADMIN
