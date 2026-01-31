@@ -7,6 +7,12 @@ import { getSystemSetting } from "@/lib/system-settings"
 
 export const GET = auth(async function GET(req) {
   try {
+    // Debug: Log raw cookies received
+    const cookieHeader = req.headers.get('cookie')
+    console.log("[coach-dashboard/overview] Raw cookies:", cookieHeader?.substring(0, 200))
+    console.log("[coach-dashboard/overview] Has authjs cookie:", cookieHeader?.includes('authjs'))
+    console.log("[coach-dashboard/overview] Has next-auth cookie:", cookieHeader?.includes('next-auth'))
+
     const session = req.auth
 
     // Debug logging for auth issues
