@@ -19,6 +19,7 @@ export async function fetchWithRetry<T = any>(
     try {
       const response = await fetch(url, {
         ...options,
+        credentials: 'include', // Required to send cookies (session) with requests
         headers: {
           'Content-Type': 'application/json',
           ...options.headers,
