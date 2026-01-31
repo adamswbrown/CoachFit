@@ -434,4 +434,4 @@ export const GET = auth(async function GET(req) {
       { status: 500 }
     )
   }
-}
+})
