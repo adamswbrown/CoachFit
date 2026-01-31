@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     const passwordValidation = passwordSchema.safeParse(newPassword)
     if (!passwordValidation.success) {
       return NextResponse.json(
-        { error: passwordValidation.error.errors[0].message },
+        { error: passwordValidation.error.issues[0].message },
         { status: 400 }
       )
     }

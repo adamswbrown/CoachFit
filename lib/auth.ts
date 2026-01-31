@@ -201,9 +201,10 @@ export const authOptions: NextAuthConfig = {
             if (existingUserDetails && !existingUserDetails.isTestUser) {
               const providerName = account.provider.charAt(0).toUpperCase() + account.provider.slice(1)
               const { sendSystemEmail } = await import("./email")
+              const { EMAIL_TEMPLATE_KEYS } = await import("./email-templates")
 
               void sendSystemEmail({
-                templateKey: "oauth_provider_linked",
+                templateKey: EMAIL_TEMPLATE_KEYS.OAUTH_PROVIDER_LINKED,
                 to: existingUserDetails.email,
                 variables: {
                   userName: existingUserDetails.name || "",
