@@ -41,10 +41,20 @@ export async function GET(req: NextRequest) {
         },
       }),
 
-      // Coaches
+      // Coaches - exclude admin-only users (back-office) but include actual coaches
+      // Users with COACH but not ADMIN are pure coaches
+      // Gav (coachgav@gcgyms.com) has both but is an actual coach
       db.user.findMany({
         where: {
-          roles: { has: Role.COACH },
+          OR: [
+            // Pure coaches (COACH role without ADMIN)
+            {
+              roles: { has: Role.COACH },
+              NOT: { roles: { has: Role.ADMIN } },
+            },
+            // Gav is the exception - has both but is an actual coach
+            { email: "coachgav@gcgyms.com" },
+          ],
         },
         select: {
           id: true,
