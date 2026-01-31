@@ -25,6 +25,7 @@ export const authOptions: NextAuthConfig = {
           GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
@@ -152,154 +153,13 @@ export const authOptions: NextAuthConfig = {
       if (!user?.email || !user?.id) return true
 
       try {
-        // Handle account linking: if OAuth provider and email already exists, link instead of reject
+        // Log OAuth sign-in attempts for debugging
         if (account && account.provider !== "credentials") {
-          console.log(`[AUTH] OAuth sign-in attempt: provider=${account.provider}, email=${user.email}, tempUserId=${user.id}`)
+          console.log(`[AUTH] OAuth sign-in: provider=${account.provider}, email=${user.email}, userId=${user.id}`)
 
-          const existingUser = await db.user.findUnique({
-            where: { email: user.email },
-            select: { id: true },
-          })
-
-          console.log(`[AUTH] Existing user lookup: found=${!!existingUser}, existingId=${existingUser?.id}, tempId=${user.id}`)
-
-          if (existingUser && existingUser.id !== user.id) {
-            // Email exists but for a different user ID from OAuth provider
-            // This means we need to link the OAuth account to the existing user
-            console.log(`[AUTH] Account linking required: existingUserId=${existingUser.id}, tempUserId=${user.id}`)
-
-            // Get existing user's full details for notification
-            const existingUserDetails = await db.user.findUnique({
-              where: { id: existingUser.id },
-              select: { email: true, name: true, isTestUser: true },
-            })
-
-            // Check if this OAuth account already exists (PrismaAdapter creates it with the temp user)
-            const existingAccount = await db.account.findUnique({
-              where: {
-                provider_providerAccountId: {
-                  provider: account.provider,
-                  providerAccountId: account.providerAccountId,
-                },
-              },
-            })
-
-            console.log(`[AUTH] Existing account lookup: found=${!!existingAccount}, linkedToUserId=${existingAccount?.userId}`)
-
-            if (existingAccount) {
-              if (existingAccount.userId === existingUser.id) {
-                // Account is already correctly linked to the existing user - just sign in
-                console.log(`[AUTH] Account already correctly linked, proceeding with sign-in`)
-                user.id = existingUser.id
-                return true
-              }
-
-              // Account exists but linked to temp user - need to re-link it
-              // Use a transaction to safely transfer the account
-              console.log(`[AUTH] Re-linking account from tempUser=${existingAccount.userId} to existingUser=${existingUser.id}`)
-              try {
-                await db.$transaction(async (tx) => {
-                  // Update the account to point to the existing user
-                  await tx.account.update({
-                    where: {
-                      provider_providerAccountId: {
-                        provider: account.provider,
-                        providerAccountId: account.providerAccountId,
-                      },
-                    },
-                    data: {
-                      userId: existingUser.id,
-                    },
-                  })
-                  console.log(`[AUTH] Account re-linked successfully`)
-
-                  // Delete the temporary user (now safe since account is re-linked)
-                  await tx.user.delete({
-                    where: { id: user.id },
-                  })
-                  console.log(`[AUTH] Temporary user deleted successfully`)
-                })
-              } catch (txError) {
-                console.error(`[AUTH] Transaction failed:`, txError)
-                throw txError
-              }
-            } else {
-              // No existing account - create one for the existing user
-              console.log(`[AUTH] No existing account, creating new one for existingUser=${existingUser.id}`)
-              try {
-                // First, delete the temporary user that was just created by OAuth
-                await db.user.delete({
-                  where: { id: user.id },
-                })
-                console.log(`[AUTH] Temporary user deleted`)
-              } catch (deleteError) {
-                // If deletion fails, that's okay - it might have been cleaned up already
-                console.log("[AUTH] Note: Could not delete temporary user during account linking:", deleteError)
-              }
-
-              // Then link the OAuth account to the existing user
-              try {
-                await db.account.create({
-                  data: {
-                    id: randomUUID(),
-                    userId: existingUser.id,
-                    type: account.type,
-                    provider: account.provider,
-                    providerAccountId: account.providerAccountId,
-                    access_token: account.access_token,
-                    refresh_token: account.refresh_token,
-                    expires_at: account.expires_at,
-                    token_type: account.token_type,
-                    scope: account.scope,
-                    id_token: account.id_token,
-                    session_state: account.session_state as string | null,
-                  },
-                })
-                console.log(`[AUTH] New account created successfully`)
-              } catch (createError) {
-                console.error(`[AUTH] Failed to create account:`, createError)
-                throw createError
-              }
-            }
-
-            // SECURITY: Send notification email about new OAuth provider link
-            if (existingUserDetails && !existingUserDetails.isTestUser) {
-              const providerName = account.provider.charAt(0).toUpperCase() + account.provider.slice(1)
-              const { sendSystemEmail } = await import("./email")
-              const { EMAIL_TEMPLATE_KEYS } = await import("./email-templates")
-
-              void sendSystemEmail({
-                templateKey: EMAIL_TEMPLATE_KEYS.OAUTH_PROVIDER_LINKED,
-                to: existingUserDetails.email,
-                variables: {
-                  userName: existingUserDetails.name || "",
-                  providerName,
-                },
-                fallbackSubject: `New sign-in method linked to your CoachFit account`,
-                fallbackHtml: `
-                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #1f2937;">New Sign-In Method Linked</h2>
-                    <p>Hi${existingUserDetails.name ? ` ${existingUserDetails.name}` : ""},</p>
-                    <p>A new sign-in method (<strong>${providerName}</strong>) has been linked to your CoachFit account.</p>
-                    <p>You can now sign in using this provider in addition to your existing methods.</p>
-                    <p style="margin-top: 24px; color: #dc2626; font-weight: bold;">
-                      If you did not link this sign-in method, please contact your administrator immediately.
-                    </p>
-                    <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">
-                      This is a security notification. No action is required if you authorized this change.
-                    </p>
-                  </div>
-                `,
-                fallbackText: `New Sign-In Method Linked\n\nHi${existingUserDetails.name ? ` ${existingUserDetails.name}` : ""},\n\nA new sign-in method (${providerName}) has been linked to your CoachFit account.\n\nYou can now sign in using this provider in addition to your existing methods.\n\nIf you did not link this sign-in method, please contact your administrator immediately.\n\nThis is a security notification. No action is required if you authorized this change.`,
-                isTestUser: existingUserDetails.isTestUser,
-              }).catch((err) => {
-                console.error("Error sending OAuth link notification:", err)
-              })
-            }
-
-            // Update the user object so JWT callback uses the correct ID
-            user.id = existingUser.id
-          }
+          // With allowDangerousEmailAccountLinking enabled on the provider,
+          // NextAuth should handle account linking automatically.
+          // We just need to process invites below.
         }
 
         // Coach invites
