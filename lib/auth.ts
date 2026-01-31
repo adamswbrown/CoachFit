@@ -227,6 +227,16 @@ export const authOptions: NextAuthConfig = {
     },
 
     async jwt({ token, user }) {
+      // Debug logging for OAuth issues
+      console.log("[AUTH JWT] Called with:", {
+        hasUser: !!user,
+        userId: user?.id,
+        userEmail: user?.email,
+        userRoles: (user as any)?.roles,
+        existingTokenId: token?.id,
+        existingTokenRoles: token?.roles,
+      })
+
       if (user) {
         token.id = user.id
         token.mustChangePassword = (user as any).mustChangePassword ?? false
@@ -239,15 +249,18 @@ export const authOptions: NextAuthConfig = {
         token.passwordChangedAt = dbUserWithPwdChange?.passwordChangedAt?.getTime() ?? null
 
         if (Array.isArray(user.roles) && user.roles.length > 0) {
+          console.log("[AUTH JWT] Using user.roles from auth:", user.roles)
           token.roles = user.roles
           token.isTestUser = user.isTestUser ?? false
           token.isOnboardingComplete =
             (user as any).isOnboardingComplete ?? (user as any).onboardingComplete ?? false
         } else {
+          console.log("[AUTH JWT] Fetching roles from database for user:", user.id)
           const dbUser = await db.user.findUnique({
             where: { id: user.id },
             select: { roles: true, isTestUser: true, onboardingComplete: true, mustChangePassword: true },
           })
+          console.log("[AUTH JWT] Database user roles:", dbUser?.roles)
 
           token.roles = dbUser?.roles ?? [Role.CLIENT]
           token.isTestUser = dbUser?.isTestUser ?? false
@@ -255,6 +268,8 @@ export const authOptions: NextAuthConfig = {
           token.mustChangePassword = dbUser?.mustChangePassword ?? token.mustChangePassword ?? false
         }
       }
+
+      console.log("[AUTH JWT] Final token roles:", token.roles)
 
       // Check if password was changed after token was issued (invalidate session)
       if (token.id && token.passwordChangedAt) {
@@ -299,12 +314,20 @@ export const authOptions: NextAuthConfig = {
     },
 
     async session({ session, token }) {
+      console.log("[AUTH SESSION] Called with token:", {
+        tokenId: token?.id,
+        tokenRoles: token?.roles,
+        tokenEmail: token?.email,
+      })
+
       if (session.user) {
         session.user.id = token.id as string
         session.user.roles = (token.roles as Role[]) ?? [Role.CLIENT]
         session.user.isTestUser = token.isTestUser as boolean
         ;(session.user as any).isOnboardingComplete = token.isOnboardingComplete as boolean
         ;(session.user as any).mustChangePassword = token.mustChangePassword as boolean
+
+        console.log("[AUTH SESSION] Final session.user.roles:", session.user.roles)
       }
 
       return session
