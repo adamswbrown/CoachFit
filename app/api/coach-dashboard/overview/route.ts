@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { cookies, headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { Role } from "@/lib/types"
@@ -7,6 +8,14 @@ import { getSystemSetting } from "@/lib/system-settings"
 
 export async function GET() {
   try {
+    // Debug: Check what cookies are available
+    const cookieStore = await cookies()
+    const allCookies = cookieStore.getAll()
+    console.log("[coach-dashboard/overview] All cookies:", allCookies.map(c => ({ name: c.name, valueLen: c.value?.length })))
+
+    const sessionToken = cookieStore.get('__Secure-authjs.session-token') || cookieStore.get('authjs.session-token')
+    console.log("[coach-dashboard/overview] Session token cookie:", sessionToken ? `found (${sessionToken.value?.substring(0, 20)}...)` : 'NOT FOUND')
+
     const session = await auth()
 
     // Debug logging for auth issues
