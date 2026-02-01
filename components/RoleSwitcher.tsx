@@ -32,11 +32,6 @@ export function RoleSwitcher() {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
-  // Only show if user has multiple roles
-  if (availableRoles.length <= 1) {
-    return null
-  }
-
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -50,6 +45,11 @@ export function RoleSwitcher() {
       return () => document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [isOpen])
+
+  // Only show if user has multiple roles
+  if (availableRoles.length <= 1) {
+    return null
+  }
 
   const handleRoleSwitch = (role: Role) => {
     setActiveRole(role)
