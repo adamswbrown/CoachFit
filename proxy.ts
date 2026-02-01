@@ -79,6 +79,15 @@ function isPublicPath(pathname: string): boolean {
   )
 }
 
+function getSessionCookie(req: NextRequest) {
+  return (
+    req.cookies.get("__Secure-authjs.session-token") ||
+    req.cookies.get("authjs.session-token") ||
+    req.cookies.get("__Secure-next-auth.session-token") ||
+    req.cookies.get("next-auth.session-token")
+  )
+}
+
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
@@ -120,9 +129,7 @@ export async function proxy(req: NextRequest) {
 
   // API routes - validate authentication
   if (pathname.startsWith("/api/")) {
-    const tokenCookie =
-      req.cookies.get("next-auth.session-token") ||
-      req.cookies.get("__Secure-next-auth.session-token")
+    const tokenCookie = getSessionCookie(req)
 
     if (!tokenCookie) {
       return addSecurityHeaders(
@@ -176,9 +183,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // Page routes - check authentication for protected pages
-  const tokenCookie =
-    req.cookies.get("next-auth.session-token") ||
-    req.cookies.get("__Secure-next-auth.session-token")
+  const tokenCookie = getSessionCookie(req)
 
   if (!tokenCookie) {
     const loginUrl = new URL("/login", req.url)
