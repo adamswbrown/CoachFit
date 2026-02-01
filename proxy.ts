@@ -12,24 +12,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-// Lightweight JWT parsing without any NextAuth imports to stay under the Edge bundle limit.
-function parseJWT(token: string): { roles?: string[]; exp?: number } | null {
-  try {
-    const base64Url = token.split(".")[1]
-    if (!base64Url) return null
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/")
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    )
-    return JSON.parse(jsonPayload)
-  } catch {
-    return null
-  }
-}
-
 /**
  * Add security headers to response
  */
@@ -137,55 +119,12 @@ export async function proxy(req: NextRequest) {
       )
     }
 
-    const tokenData = parseJWT(tokenCookie.value)
-
-    if (!tokenData) {
-      return addSecurityHeaders(
-        NextResponse.json({ error: "Invalid session" }, { status: 401 })
-      )
-    }
-
-    // Check token expiration
-    if (tokenData.exp && Date.now() >= tokenData.exp * 1000) {
-      return addSecurityHeaders(
-        NextResponse.json({ error: "Session expired" }, { status: 401 })
-      )
-    }
-
-    const userRoles = tokenData.roles || []
-    const isCoach = userRoles.includes("COACH") || userRoles.includes("ADMIN")
-    const isAdminUser = userRoles.includes("ADMIN")
-
-    // Admin routes
-    if (pathname.startsWith("/api/admin") && !isAdminUser) {
-      return addSecurityHeaders(
-        NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 })
-      )
-    }
-
-    // Coach routes
-    if (
-      pathname.startsWith("/api/cohorts") ||
-      pathname.startsWith("/api/clients") ||
-      pathname.startsWith("/api/coach-dashboard") ||
-      pathname.startsWith("/api/coach/") ||
-      pathname.startsWith("/api/invites") ||
-      pathname.startsWith("/api/pairing-codes")
-    ) {
-      if (!isCoach) {
-        return addSecurityHeaders(
-          NextResponse.json({ error: "Forbidden: Coach access required" }, { status: 403 })
-        )
-      }
-    }
-
+    // Allow request to proceed — role/expiration checks happen in route handlers via auth()
     return addSecurityHeaders(NextResponse.next())
   }
 
   // Page routes - check authentication for protected pages
-  const tokenCookie = getSessionCookie(req)
-
-  if (!tokenCookie) {
+  if (!getSessionCookie(req)) {
     const loginUrl = new URL("/login", req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)
     return NextResponse.redirect(loginUrl)
