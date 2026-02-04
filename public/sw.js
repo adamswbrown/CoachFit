@@ -421,6 +421,95 @@ self.addEventListener('message', async (event) => {
   }
 })
 
+// ==========================================
+// Push Notification Handling
+// ==========================================
+
+// Handle incoming push notifications
+self.addEventListener('push', (event) => {
+  console.log('[SW] Push notification received')
+
+  let payload = {
+    title: 'CoachFit',
+    body: 'You have a new notification',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/badge-72x72.png',
+    tag: 'coachfit-notification',
+    data: { url: '/client-dashboard' }
+  }
+
+  try {
+    if (event.data) {
+      const data = event.data.json()
+      payload = {
+        title: data.title || payload.title,
+        body: data.body || payload.body,
+        icon: data.icon || payload.icon,
+        badge: data.badge || payload.badge,
+        tag: data.tag || payload.tag,
+        data: data.data || payload.data
+      }
+    }
+  } catch (error) {
+    console.error('[SW] Error parsing push data:', error)
+  }
+
+  const options = {
+    body: payload.body,
+    icon: payload.icon,
+    badge: payload.badge,
+    tag: payload.tag,
+    data: payload.data,
+    vibrate: [100, 50, 100],
+    requireInteraction: true,
+    actions: payload.data?.actions || [
+      { action: 'open', title: 'Open' },
+      { action: 'dismiss', title: 'Dismiss' }
+    ]
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, options)
+  )
+})
+
+// Handle notification click
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event.action)
+
+  event.notification.close()
+
+  // Handle action buttons
+  if (event.action === 'dismiss') {
+    return
+  }
+
+  // Get the URL to open
+  const url = event.notification.data?.url || '/client-dashboard'
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Check if there's already a window open with the app
+        for (const client of windowClients) {
+          if (client.url.includes(self.location.origin)) {
+            // Focus the existing window and navigate to the URL
+            client.focus()
+            client.navigate(url)
+            return
+          }
+        }
+        // No existing window, open a new one
+        return clients.openWindow(url)
+      })
+  )
+})
+
+// Handle notification close (for analytics)
+self.addEventListener('notificationclose', (event) => {
+  console.log('[SW] Notification closed without interaction')
+})
+
 // Sync all offline actions
 async function syncOfflineActions() {
   const queue = await getOfflineQueue()

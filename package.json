@@ -33,7 +33,9 @@
     "email:setup-audience": "npx tsx scripts/setup-broadcast-audience.ts",
     "seed:questionnaire-templates": "npx tsx scripts/seed-questionnaire-templates.ts",
     "questionnaire:setup-email": "npx tsx scripts/setup-questionnaire-email-template.ts",
-    "pwa:generate-icons": "npx tsx scripts/generate-pwa-icons.ts"
+    "pwa:generate-icons": "npx tsx scripts/generate-pwa-icons.ts",
+    "notifications:generate-vapid": "npx tsx scripts/generate-vapid-keys.ts",
+    "notifications:setup-templates": "npx tsx scripts/setup-notification-email-templates.ts"
   },
   "keywords": [],
   "author": "",
@@ -69,11 +71,13 @@
     "survey-react-ui": "^2.5.6",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18",
+    "web-push": "^3.6.7",
     "zod": "^4.3.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@types/sharp": "^0.31.1",
+    "@types/web-push": "^3.6.4",
     "sharp": "^0.34.5",
     "typescript": "5.9.3"
   }

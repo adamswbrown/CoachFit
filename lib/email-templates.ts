@@ -10,6 +10,11 @@ export const EMAIL_TEMPLATE_KEYS = {
   PASSWORD_RESET: "password_reset",
   WEEKLY_QUESTIONNAIRE_REMINDER: "weekly_questionnaire_reminder",
   OAUTH_PROVIDER_LINKED: "oauth_provider_linked",
+  // Notification emails
+  DAILY_CHECKIN_REMINDER: "daily_checkin_reminder",
+  MISSED_ENTRY_REMINDER: "missed_entry_reminder",
+  MISSED_QUESTIONNAIRE_REMINDER: "missed_questionnaire_reminder",
+  COACH_NOTE_NOTIFICATION: "coach_note_notification",
 } as const
 
 export type EmailTemplateKey = (typeof EMAIL_TEMPLATE_KEYS)[keyof typeof EMAIL_TEMPLATE_KEYS]
@@ -27,6 +32,12 @@ const TOKEN_WHITELIST = [
   "weekNumber",
   "questionnaireUrl",
   "providerName",
+  // Notification tokens
+  "dashboardUrl",
+  "missedDays",
+  "lastEntryDate",
+  "notePreview",
+  "unsubscribeUrl",
 ] as const
 
 export type EmailToken = (typeof TOKEN_WHITELIST)[number]
@@ -43,6 +54,12 @@ export interface EmailVariables {
   weekNumber?: string
   questionnaireUrl?: string
   providerName?: string
+  // Notification variables
+  dashboardUrl?: string
+  missedDays?: string
+  lastEntryDate?: string
+  notePreview?: string
+  unsubscribeUrl?: string
 }
 
 export interface RenderedEmail {
