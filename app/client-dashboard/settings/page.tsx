@@ -8,6 +8,7 @@ import { ClientLayout } from "@/components/layouts/ClientLayout"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import { Role } from "@/lib/types"
+import { useNotifications } from "@/hooks/useNotifications"
 
 interface UserSettings {
   id: string
@@ -78,6 +79,19 @@ export default function ClientSettingsPage() {
   const [consentLoading, setConsentLoading] = useState(false)
   const [consentError, setConsentError] = useState<string | null>(null)
   const [updatingConsent, setUpdatingConsent] = useState(false)
+
+  // Notification state
+  const {
+    permissionState,
+    isPushSupported,
+    isSubscribed,
+    preferences: notificationPreferences,
+    preferencesLoading: notificationPreferencesLoading,
+    updatePreferences: updateNotificationPreferences,
+    subscribeToPush,
+    unsubscribeFromPush,
+  } = useNotifications()
+  const [updatingNotifications, setUpdatingNotifications] = useState(false)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -676,6 +690,273 @@ export default function ClientSettingsPage() {
                 >
                   Generate Pairing Code
                 </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Notification Preferences */}
+          <div className="bg-white border border-neutral-200 rounded-lg p-6 lg:col-span-2">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Notification Preferences</h2>
+
+            {notificationPreferencesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin"></div>
+              </div>
+            ) : notificationPreferences ? (
+              <div className="space-y-6">
+                {/* Push Notification Status */}
+                {isPushSupported && (
+                  <div className="p-4 bg-neutral-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium text-neutral-900">Push Notifications</h3>
+                        <p className="text-sm text-neutral-600 mt-1">
+                          {permissionState === "granted"
+                            ? isSubscribed
+                              ? "Enabled - You'll receive notifications on this device"
+                              : "Permission granted - Click to enable"
+                            : permissionState === "denied"
+                            ? "Blocked - Enable in browser settings"
+                            : "Get instant notifications on your device"}
+                        </p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          setUpdatingNotifications(true)
+                          if (isSubscribed) {
+                            await unsubscribeFromPush()
+                          } else {
+                            await subscribeToPush()
+                          }
+                          setUpdatingNotifications(false)
+                        }}
+                        disabled={updatingNotifications || permissionState === "denied"}
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                          isSubscribed
+                            ? "bg-red-100 text-red-700 hover:bg-red-200"
+                            : permissionState === "denied"
+                            ? "bg-neutral-200 text-neutral-500 cursor-not-allowed"
+                            : "bg-blue-600 text-white hover:bg-blue-700"
+                        } disabled:opacity-50`}
+                      >
+                        {updatingNotifications
+                          ? "..."
+                          : isSubscribed
+                          ? "Disable"
+                          : "Enable"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Daily Reminder Settings */}
+                <div className="border-t border-neutral-200 pt-4">
+                  <h3 className="font-medium text-neutral-900 mb-3">Daily Check-in Reminder</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm text-neutral-700">Enable daily reminder</span>
+                        <p className="text-xs text-neutral-500">Get reminded to log your stats</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationPreferences.dailyReminderEnabled}
+                          onChange={async (e) => {
+                            setUpdatingNotifications(true)
+                            await updateNotificationPreferences({ dailyReminderEnabled: e.target.checked })
+                            setUpdatingNotifications(false)
+                          }}
+                          disabled={updatingNotifications}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors" />
+                      </label>
+                    </div>
+
+                    {notificationPreferences.dailyReminderEnabled && (
+                      <div className="flex items-center justify-between pl-4">
+                        <span className="text-sm text-neutral-700">Reminder time</span>
+                        <select
+                          value={notificationPreferences.dailyReminderTime}
+                          onChange={async (e) => {
+                            setUpdatingNotifications(true)
+                            await updateNotificationPreferences({
+                              dailyReminderTime: e.target.value as "morning" | "afternoon" | "evening",
+                            })
+                            setUpdatingNotifications(false)
+                          }}
+                          disabled={updatingNotifications}
+                          className="px-3 py-1.5 text-sm border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="morning">Morning (8 AM)</option>
+                          <option value="afternoon">Afternoon (2 PM)</option>
+                          <option value="evening">Evening (6 PM)</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Weekly Questionnaire Reminder */}
+                <div className="border-t border-neutral-200 pt-4">
+                  <h3 className="font-medium text-neutral-900 mb-3">Weekly Questionnaire</h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-neutral-700">Sunday 9 AM reminder</span>
+                      <p className="text-xs text-neutral-500">Reminder to fill out weekly questionnaire</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notificationPreferences.weeklyReminderEnabled}
+                        onChange={async (e) => {
+                          setUpdatingNotifications(true)
+                          await updateNotificationPreferences({ weeklyReminderEnabled: e.target.checked })
+                          setUpdatingNotifications(false)
+                        }}
+                        disabled={updatingNotifications}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors" />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Catch-up Reminders */}
+                <div className="border-t border-neutral-200 pt-4">
+                  <h3 className="font-medium text-neutral-900 mb-3">Catch-up Reminders</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm text-neutral-700">Missed entry reminder</span>
+                        <p className="text-xs text-neutral-500">Remind if you miss logging a day</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationPreferences.missedEntryReminder}
+                          onChange={async (e) => {
+                            setUpdatingNotifications(true)
+                            await updateNotificationPreferences({ missedEntryReminder: e.target.checked })
+                            setUpdatingNotifications(false)
+                          }}
+                          disabled={updatingNotifications}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors" />
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm text-neutral-700">Missed questionnaire reminder</span>
+                        <p className="text-xs text-neutral-500">Remind if questionnaire is incomplete</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationPreferences.missedQuestionnaireReminder}
+                          onChange={async (e) => {
+                            setUpdatingNotifications(true)
+                            await updateNotificationPreferences({ missedQuestionnaireReminder: e.target.checked })
+                            setUpdatingNotifications(false)
+                          }}
+                          disabled={updatingNotifications}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Coach Notifications */}
+                <div className="border-t border-neutral-200 pt-4">
+                  <h3 className="font-medium text-neutral-900 mb-3">Coach Updates</h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-neutral-700">Coach note notification</span>
+                      <p className="text-xs text-neutral-500">Get notified when your coach leaves feedback</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notificationPreferences.coachNoteNotification}
+                        onChange={async (e) => {
+                          setUpdatingNotifications(true)
+                          await updateNotificationPreferences({ coachNoteNotification: e.target.checked })
+                          setUpdatingNotifications(false)
+                        }}
+                        disabled={updatingNotifications}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors" />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Notification Channels */}
+                <div className="border-t border-neutral-200 pt-4">
+                  <h3 className="font-medium text-neutral-900 mb-3">Notification Channels</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm text-neutral-700">Email notifications</span>
+                        <p className="text-xs text-neutral-500">Receive notifications via email</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationPreferences.emailNotifications}
+                          onChange={async (e) => {
+                            setUpdatingNotifications(true)
+                            await updateNotificationPreferences({ emailNotifications: e.target.checked })
+                            setUpdatingNotifications(false)
+                          }}
+                          disabled={updatingNotifications}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors" />
+                      </label>
+                    </div>
+
+                    {isPushSupported && (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-sm text-neutral-700">Push notifications</span>
+                          <p className="text-xs text-neutral-500">Receive instant notifications on device</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={notificationPreferences.pushNotifications}
+                            onChange={async (e) => {
+                              setUpdatingNotifications(true)
+                              if (e.target.checked) {
+                                const success = await subscribeToPush()
+                                if (success) {
+                                  await updateNotificationPreferences({ pushNotifications: true })
+                                }
+                              } else {
+                                await unsubscribeFromPush()
+                                await updateNotificationPreferences({ pushNotifications: false })
+                              }
+                              setUpdatingNotifications(false)
+                            }}
+                            disabled={updatingNotifications || permissionState === "denied"}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors peer-disabled:opacity-50" />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
+                Failed to load notification preferences
               </div>
             )}
           </div>
