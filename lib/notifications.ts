@@ -36,6 +36,21 @@ export interface NotificationPayload {
   }>
 }
 
+/**
+ * Safely strip HTML tags from a string.
+ * Uses repeated replacement to handle nested/malformed tags like <scr<script>ipt>
+ */
+function stripHtmlTags(html: string): string {
+  let result = html
+  let previous = ""
+  // Repeat until no more changes (handles nested malicious tags)
+  while (result !== previous) {
+    previous = result
+    result = result.replace(/<[^>]*>/g, "")
+  }
+  return result.trim()
+}
+
 // Configure web-push with VAPID keys
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
@@ -658,7 +673,7 @@ async function sendNotificationEmail(
       to,
       subject: fallback.subject,
       html: fallback.fallbackHtml,
-      text: fallback.fallbackHtml.replace(/<[^>]*>/g, ""),
+      text: stripHtmlTags(fallback.fallbackHtml),
     })
     return result.success
   } catch (error) {

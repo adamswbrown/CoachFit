@@ -42,21 +42,30 @@ VAPID (Voluntary Application Server Identification) keys are required for Web Pu
 npm run notifications:generate-vapid
 ```
 
-This will output something like:
+This creates a file called `.env.vapid` with your keys:
 
 ```
 === VAPID Keys Generated ===
 
-Add these to your .env.local file:
+Keys written to: /path/to/project/.env.vapid
 
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U
-VAPID_PRIVATE_KEY=UUxI4O8-FbRouADVXBXFXIvT8rptQQPcGYmBZmNqj9A
-VAPID_SUBJECT=mailto:notifications@coachfit.app
+Next steps:
+1. Copy the values from .env.vapid to your .env.local
+2. Add the same values to your Vercel environment variables
+3. Delete .env.vapid after copying (it contains sensitive data)
 
 ============================
 ```
 
-**Copy these values** - you'll need them in Step 2.
+Open `.env.vapid` and copy the values to your `.env.local`:
+
+```bash
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U
+VAPID_PRIVATE_KEY=UUxI4O8-FbRouADVXBXFXIvT8rptQQPcGYmBZmNqj9A
+VAPID_SUBJECT=mailto:notifications@coachfit.app
+```
+
+**Security Note:** Delete `.env.vapid` after copying the values. The file is excluded from git, but should not be left on disk.
 
 ### Option B: Using web-push CLI Directly
 
