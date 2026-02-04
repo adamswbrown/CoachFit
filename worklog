@@ -113,6 +113,10 @@ npm run notifications:setup-templates
 ### Commits
 - `3bf00e8` - Add system notification infrastructure for PWA
 - `fd0f9ed` - Add notification system setup documentation
+- `21f5cff` - Add work log documenting notification system implementation
+- `163a9c8` - Move work log to repository root
+- `a9b11b3` - Add Vercel Hobby plan cron job documentation
+- `9c3a0c1` - Fix CodeQL security vulnerabilities
 
 ### Branch
 `claude/add-system-notifications-Rut1P`
@@ -132,6 +136,20 @@ npm run notifications:setup-templates
 
 See `docs/NOTIFICATION_SETUP.md` → "Hobby Plan Configuration" for detailed instructions.
 
+### Security Fixes (CodeQL)
+
+Fixed 3 high-severity vulnerabilities flagged by GitHub CodeQL:
+
+1. **Incomplete HTML sanitization** (`lib/notifications.ts:661`)
+   - Problem: Simple regex `/<[^>]*>/g` doesn't handle nested malicious tags like `<scr<script>ipt>`
+   - Fix: Added `stripHtmlTags()` function with loop to repeatedly strip tags until no more are found
+
+2. **Clear-text logging of sensitive data** (`scripts/generate-vapid-keys.ts:17-18`)
+   - Problem: VAPID keys were logged to console, which could expose them in CI/CD logs
+   - Fix: Rewrote script to write keys to `.env.vapid` file with restricted permissions (0o600)
+   - Added `.env.vapid` to `.gitignore`
+   - Updated documentation with new workflow
+
 ### State
 - [x] Schema designed and implemented
 - [x] VAPID key generation script created
@@ -145,6 +163,7 @@ See `docs/NOTIFICATION_SETUP.md` → "Hobby Plan Configuration" for detailed ins
 - [x] Hobby plan documentation added
 - [x] Build passes
 - [x] Documentation created
+- [x] Security vulnerabilities fixed (CodeQL)
 - [ ] **Pending:** Database migration (runs on deploy)
 - [ ] **Pending:** VAPID keys need to be generated and added to env
 - [ ] **Pending:** CRON_SECRET needs to be added to env
