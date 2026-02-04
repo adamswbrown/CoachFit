@@ -117,6 +117,21 @@ npm run notifications:setup-templates
 ### Branch
 `claude/add-system-notifications-Rut1P`
 
+### Vercel Plan Considerations
+
+**Pro Plan:** Default `vercel.json` configuration works out of the box.
+
+**Hobby Plan Limitations:**
+- Maximum 2 cron jobs (we have 4)
+- Jobs can only run once per day (daily-reminders needs 4x/day)
+- Timing not guaranteed (1 AM job may run 1:00-1:59 AM)
+
+**Hobby Plan Options:**
+1. Modify `vercel.json` to only use 2 daily jobs (reduced functionality)
+2. Use external cron service (cron-job.org, EasyCron, GitHub Actions)
+
+See `docs/NOTIFICATION_SETUP.md` → "Hobby Plan Configuration" for detailed instructions.
+
 ### State
 - [x] Schema designed and implemented
 - [x] VAPID key generation script created
@@ -126,20 +141,23 @@ npm run notifications:setup-templates
 - [x] Email templates defined
 - [x] Notification service library built
 - [x] Cron API endpoints created
-- [x] Vercel cron configuration added
+- [x] Vercel cron configuration added (Pro plan)
+- [x] Hobby plan documentation added
 - [x] Build passes
 - [x] Documentation created
 - [ ] **Pending:** Database migration (runs on deploy)
 - [ ] **Pending:** VAPID keys need to be generated and added to env
 - [ ] **Pending:** CRON_SECRET needs to be added to env
 - [ ] **Pending:** Email templates setup in Resend (optional)
+- [ ] **Pending:** Configure cron jobs for Hobby plan (if applicable)
 
 ### Next Steps
 1. Merge PR or push to main
 2. Generate VAPID keys: `npm run notifications:generate-vapid`
 3. Add environment variables to Vercel
-4. Deploy (migration runs automatically)
-5. Test notification flow
+4. **If on Hobby plan:** Either modify `vercel.json` or set up external cron service
+5. Deploy (migration runs automatically)
+6. Test notification flow
 
 ---
 

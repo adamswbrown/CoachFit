@@ -205,9 +205,9 @@ After running the script, you can customize templates in the Resend dashboard:
 
 ## Step 5: Configure Vercel Cron Jobs
 
-The `vercel.json` file is already configured with cron jobs. No additional setup needed.
+The `vercel.json` file is already configured with cron jobs for the **Pro Plan**.
 
-### Cron Schedule
+### Pro Plan Configuration (Default)
 
 | Endpoint | Schedule | Description |
 |----------|----------|-------------|
@@ -216,23 +216,137 @@ The `vercel.json` file is already configured with cron jobs. No additional setup
 | `/api/cron/missed-entries` | `0 10 * * *` | Daily at 10 AM UTC |
 | `/api/cron/missed-questionnaires` | `0 10 * * 2,4` | Tuesday & Thursday at 10 AM UTC |
 
-### Vercel Cron Pricing
+### Hobby Plan Limitations
 
-- **Hobby Plan:** 2 cron jobs, once per day max
-- **Pro Plan:** Unlimited cron jobs, up to every minute
+**Important:** The Hobby (free) plan has significant cron job restrictions:
 
-If on Hobby plan, you may need to consolidate cron jobs or use an external service like:
-- [Cron-job.org](https://cron-job.org) (free)
-- [EasyCron](https://www.easycron.com) (free tier available)
-- GitHub Actions scheduled workflows
+1. **Maximum 2 cron jobs** - You can only have 2 cron jobs total
+2. **Daily execution only** - Jobs can only run once per day
+3. **Timing not guaranteed** - A job scheduled for 1:00 AM may run anytime between 1:00 AM and 1:59 AM
 
-### External Cron Setup (if needed)
+The default `vercel.json` configuration **will fail to deploy on Hobby plan** because:
+- `daily-reminders` runs 4 times per day (not allowed)
+- There are 4 cron jobs total (only 2 allowed)
 
-If using an external cron service, call the endpoints with the `CRON_SECRET`:
+### Hobby Plan Configuration
+
+To use cron jobs on the Hobby plan, replace the `crons` section in `vercel.json`:
+
+```json
+{
+  "buildCommand": "prisma generate && prisma migrate deploy && next build",
+  "installCommand": "npm install",
+  "crons": [
+    {
+      "path": "/api/cron/daily-reminders",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-questionnaire",
+      "schedule": "0 9 * * 0"
+    }
+  ]
+}
+```
+
+**Limitations with Hobby plan:**
+- Daily reminders only go out at 8 AM (users can't choose afternoon/evening)
+- No automatic missed entry reminders
+- No automatic missed questionnaire reminders (only Sunday initial reminder)
+
+### Alternative: External Cron Service (Recommended for Hobby Plan)
+
+For full functionality on Hobby plan, use a free external cron service:
+
+#### Option 1: Cron-job.org (Free)
+
+1. Go to [cron-job.org](https://cron-job.org) and create a free account
+2. Create cron jobs for each endpoint:
+
+| Title | URL | Schedule |
+|-------|-----|----------|
+| Daily Reminders (Morning) | `https://your-app.vercel.app/api/cron/daily-reminders` | `0 8 * * *` |
+| Daily Reminders (Afternoon) | `https://your-app.vercel.app/api/cron/daily-reminders` | `0 14 * * *` |
+| Daily Reminders (Evening) | `https://your-app.vercel.app/api/cron/daily-reminders` | `0 18 * * *` |
+| Weekly Questionnaire | `https://your-app.vercel.app/api/cron/weekly-questionnaire` | `0 9 * * 0` |
+| Missed Entries | `https://your-app.vercel.app/api/cron/missed-entries` | `0 10 * * *` |
+| Missed Questionnaires | `https://your-app.vercel.app/api/cron/missed-questionnaires` | `0 10 * * 2,4` |
+
+3. For each job, set the **HTTP Method** to `GET`
+4. Add a custom header:
+   - Header name: `Authorization`
+   - Header value: `Bearer YOUR_CRON_SECRET`
+
+#### Option 2: EasyCron (Free Tier)
+
+1. Go to [easycron.com](https://www.easycron.com) and create a free account
+2. Free tier allows up to 200 executions/month
+3. Configure similar to cron-job.org above
+
+#### Option 3: GitHub Actions
+
+Create `.github/workflows/cron-notifications.yml`:
+
+```yaml
+name: Notification Cron Jobs
+
+on:
+  schedule:
+    # Daily reminders - 8 AM, 2 PM, 6 PM UTC
+    - cron: '0 8 * * *'
+    - cron: '0 14 * * *'
+    - cron: '0 18 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  daily-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Daily Reminders
+        run: |
+          curl -X GET "${{ secrets.APP_URL }}/api/cron/daily-reminders" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+---
+name: Weekly Questionnaire
+
+on:
+  schedule:
+    - cron: '0 9 * * 0'  # Sundays at 9 AM UTC
+
+jobs:
+  weekly-questionnaire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Weekly Questionnaire Reminder
+        run: |
+          curl -X GET "${{ secrets.APP_URL }}/api/cron/weekly-questionnaire" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+```
+
+Add secrets in GitHub:
+1. Go to your repo → Settings → Secrets and variables → Actions
+2. Add `APP_URL` (e.g., `https://your-app.vercel.app`)
+3. Add `CRON_SECRET` (same as your Vercel environment variable)
+
+### Disable Vercel Crons (When Using External Service)
+
+If using an external cron service, remove or empty the crons from `vercel.json`:
+
+```json
+{
+  "buildCommand": "prisma generate && prisma migrate deploy && next build",
+  "installCommand": "npm install"
+}
+```
+
+### External Cron Authentication
+
+All cron endpoints require authentication. Include the `CRON_SECRET` in the Authorization header:
 
 ```bash
-curl -H "Authorization: Bearer YOUR_CRON_SECRET" \
-  https://your-app.vercel.app/api/cron/daily-reminders
+curl -X GET "https://your-app.vercel.app/api/cron/daily-reminders" \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
 
 ---
