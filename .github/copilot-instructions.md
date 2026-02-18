@@ -1,120 +1,62 @@
 # Copilot Instructions for CoachFit
 
+## 🚀 Project Philosophy
+- **Parallel, full-stack batches:** Every feature/change must include frontend, backend, data, tests, docs, and deployment. Never ship partial/incremental slices.
+- **One coherent system slice per change:** Think like a team—product, architecture, frontend, backend, data, QA, and DevOps are all considered together.
+- **MVP > Perfection:** Ship working, testable features before refining.
 
-**Feature Planning Workflow:**
-- For big features, always start by creating a detailed GitHub issue. Big features are those that require multi-phase implementation, cross multiple domains (frontend, backend, data, docs), or have a significant impact on users or compliance. See examples like:
-  - [GDPR Compliance Implementation](https://github.com/adamswbrown/CoachFit/issues/15)
-  - [Weekly Coach Review Queue + Copyable Email Draft](https://github.com/adamswbrown/CoachFit/issues/14)
-  - [iOS App Integration: HealthKit Automatic Data Sync](https://github.com/adamswbrown/CoachFit/issues/3)
-- These issues should include: overview, goals, current state, proposed implementation, acceptance criteria, and follow-ups.
-- Big features must be PR'd from the issue and reference the issue in the PR.
-- For smaller features or fixes, plan directly in a pull request with a complete PR description (no separate issue needed).
-- All PRs must include full-stack, test-covered, and documented changes as described below.
-- Use a fresh branch + PR per issue/feature; never commit to `ci/remove-claude-workflow`.
+## 🏗️ Architecture Overview
+- **Framework:** Next.js 16 (App Router, React 19 Server Components)
+- **Type Safety:** TypeScript everywhere
+- **Styling:** Tailwind CSS 4.x
+- **Database:** PostgreSQL (via Prisma ORM)
+- **Auth:** NextAuth.js v5 (JWT, multi-provider)
+- **Infra:** Vercel (hosting), Railway (DB), Resend (email)
 
-## Project Overview
-CoachFit is a full-stack fitness coaching platform built with Next.js 16 (App Router), TypeScript, Prisma ORM, PostgreSQL, and NextAuth.js v5. The system connects coaches and clients for real-time health tracking, cohort management, and progress analytics.
+## 📁 Key Structure & Patterns
+- `app/` — App Router structure: client-dashboard, coach-dashboard, admin, cohorts/[id], clients/[id], API routes
+- `components/` — UI, icons, admin widgets, layouts, and shared UI
+- `lib/` — Auth, DB, validation, permissions, utilities
+- `prisma/schema.prisma` — Source of truth for data models
+- `middleware.ts` — Lightweight JWT-based route protection (no NextAuth imports)
+- **Server Components by default:** Use client components only for interactivity (forms, charts, browser APIs)
+- **API input validation:** All API routes use Zod schemas from `lib/validations.ts`
+- **Role-based access:** Use helpers from `lib/permissions.ts` for CLIENT, COACH, ADMIN checks
+- **Entry upsert:** One entry per user per day (unique constraint)
 
-## Architecture & Key Patterns
-- **Parallel Full-Stack Batches:** All features are delivered as complete vertical slices: frontend, backend, data, tests, docs, and deployment. Never implement only part of a feature.
-- **App Structure:**
-  - `app/` — Next.js App Router pages and API routes
-  - `components/` — Reusable React components (including icons, layouts, admin widgets)
-  - `lib/` — Auth, permissions, utilities, and business logic
-  - `prisma/` — Prisma schema, migrations, and seed scripts
-  - `public/` — Static assets (images, logos)
-  - `scripts/` — Admin/test utilities (run with `npx tsx`)
-  - `docs/` — User and developer documentation
-- **Authentication:** NextAuth.js v5 with JWT sessions. Roles (CLIENT, COACH, ADMIN) are stored in JWT and DB. See `lib/auth.ts` and `lib/permissions.ts` for role logic and authorization helpers.
-- **Database:** Prisma models in `prisma/schema.prisma`. Users can have multiple roles. Cohorts, entries, and invites are core models.
-- **Testing:** Use Playwright for E2E (`tests/`), and scripts in `scripts/` for data setup/cleanup.
-- **Docs:** All features must update docs in `docs/` and/or `README.md` as part of the batch.
 
-## Developer Workflows
-- **Dev server:** `npm run dev` (Turbopack)
-- **Build:** `npm run build` / `npm run start`
-- **Lint:** `npm run lint`
-- **DB:** `npm run db:generate`, `npm run db:migrate`, `npm run db:seed`, etc.
-- **Test data:** `npm run test:generate`, `npm run test:cleanup`
-- **Admin:** `npm run admin:set <email>`, `npm run password:set <email> <password>`
-- **Email:** `npm run email:setup-templates`, `npm run email:verify`
+## 🛠️ Developer Workflows
+- **Major changes:** Any work that requires a new feature, architectural change, data model update, compliance/regulatory work, or impacts multiple parts of the system (see examples in current GitHub issues: GDPR compliance, new review queues, iOS HealthKit integration). For these, create a detailed implementation plan and file it as a GitHub issue before starting work. All work should reference and close the relevant issue.
+- **Small changes:** Anything outside the above scope (e.g., updating images, text, minor UI tweaks, or isolated bug fixes). Document the change clearly in the pull request description and merge directly to the appropriate domain branch.
+- **Local dev:** See `docs/development/getting-started.md` for setup
+- **Build:** `next build` (Turbopack)
+- **Run:** `next dev` for local, Vercel for prod
+- **DB Migrate:** `npx prisma migrate dev` (see `prisma/`)
+- **Seed data:** `npx prisma db seed` or scripts in `scripts/`
+- **Test:** (add test details if present)
+- **Deploy:** Vercel auto-deploys from `main` branch
 
-## Project Conventions
-- **No sequential/incremental delivery:** Always ship full-stack, test-covered, and documented feature slices.
-- **Role logic:** Use helpers in `lib/permissions.ts` for role-based authorization checks.
-- **Public assets:** Place in `public/` and reference with root-relative paths (e.g., `/logo.png`).
-- **Environment:** All secrets/configs must be in `.env.local` (see `.env.example`).
-- **Deployment:** Vercel (Next.js), Railway (Postgres). See `docs/development/deployment.md`.
+## 🧩 Conventions & Decisions
+- **All roles are additive:** ADMIN ≠ COACH; assign both for admin-coaches
+- **Invitations:** Two-tier (CoachInvite, CohortInvite), auto-processed on sign-in
+- **Test users:** Use `isTestUser` flag to suppress real emails
+- **No raw SQL:** Use Prisma for all DB access
+- **Security:** Auth, role, and input validation required for every API route
 
-## Code Quality Standards
-- **TypeScript:** Use strict typing; avoid `any` types. Leverage Prisma-generated types for database models.
-- **Validation:** All API inputs must be validated with Zod schemas (see `lib/validations/`).
-- **Error Handling:** API routes return structured errors: `{ error: "message" }` with appropriate HTTP status codes.
-- **Server vs Client Components:** Default to Server Components; use `"use client"` only when needed (forms, interactivity, browser APIs).
-- **Imports:** Use `@/` path alias for imports (e.g., `import { db } from "@/lib/db"`).
+## 📚 Reference Files
+- `README.md` — Project intro, links to docs
+- `docs/development/architecture.md` — System design, patterns, and rationale
+- `CLAUDE.md` — AI operating contract and philosophy
+- `prisma/schema.prisma` — Data model
+- `lib/permissions.ts`, `lib/validations.ts` — Role and validation helpers
+- `middleware.ts` — Route protection logic
 
-## Security Best Practices
-- **Authentication:** Every protected API route must call `await auth()` and validate `session?.user?.id`.
-- **Authorization:** Use `isAdmin()`, `isCoach()`, `isClient()` from `lib/permissions.ts` for role checks.
-- **Ownership:** Verify users own resources before allowing access (e.g., coach owns cohort).
-- **Input Validation:** Never trust client input; always validate with Zod schemas.
-- **Password Hashing:** Use bcrypt (10 rounds) via `lib/auth.ts` patterns.
-- **SQL Injection:** Protected by Prisma ORM parameterized queries.
-- **XSS Protection:** React automatic escaping handles this; avoid `dangerouslySetInnerHTML`.
+---
 
-## Examples
-- To add a new feature: create React components, API routes, DB models/migrations, tests, and docs in one PR.
-- To add a new role: update Prisma schema, `lib/permissions.ts`, and docs.
+**For more, see:**
+- `docs/development/README.md` (dev guide)
+- `docs/user-guide/README.md` (user guide)
+- `docs/development/architecture.md` (architecture)
+- `CLAUDE.md` (AI contract)
 
-## Common Patterns
-
-### API Route Structure
-```typescript
-// app/api/resource/route.ts
-import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
-import { isCoach } from "@/lib/permissions"
-import { db } from "@/lib/db"
-
-export async function GET(request: Request) {
-  // 1. Authenticate
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  // 2. Authorize (if needed)
-  if (!isCoach(session.user)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
-
-  // 3. Business logic with Prisma
-  const data = await db.model.findMany({ where: { userId: session.user.id } })
-
-  // 4. Return structured response
-  return NextResponse.json({ data })
-}
-```
-
-### Database Queries
-- Use Prisma Client from `@/lib/db` (singleton instance)
-- Include related data with `include` option
-- Filter with `where` clause
-- Sort with `orderBy`
-
-### Component Patterns
-- Server Components for data fetching (no "use client")
-- Client Components for forms and interactivity ("use client" at top)
-- Use `SessionProvider` wrapper for client components needing auth
-- Tailwind CSS for all styling (no inline styles)
-
-## Anti-Patterns to Avoid
-- ❌ Don't implement backend without frontend (or vice versa)
-- ❌ Don't skip input validation on API routes
-- ❌ Don't hard-code secrets or credentials
-- ❌ Don't use `any` type in TypeScript
-- ❌ Don't commit test data, build artifacts, or dependencies
-- ❌ Don't forget to run migrations after schema changes
-- ❌ Don't mix authentication providers without proper user merge logic
-
-For more, see `README.md`, `CLAUDE.md`, and `docs/`.
+_Last updated: January 2026_
