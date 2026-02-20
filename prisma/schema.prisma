@@ -393,6 +393,10 @@ model SystemSettings {
   termsContentHtml         String   @default("")
   privacyContentHtml       String   @default("")
   dataProcessingContentHtml String  @default("")
+  setupComplete            Boolean  @default(false)
+  organisationName         String   @default("CoachFit")
+  timezone                 String   @default("UTC")
+  unitSystem               String   @default("metric")
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 
