@@ -90,11 +90,18 @@ export const authOptions: NextAuthConfig = {
 
   events: {
     async createUser({ user }) {
-      // Ensure default role
-      await db.user.update({
+      // Set default CLIENT role only if user has no roles yet
+      // (preserves roles set by admin creation endpoints)
+      const existing = await db.user.findUnique({
         where: { id: user.id },
-        data: { roles: [Role.CLIENT] },
+        select: { roles: true },
       })
+      if (!existing?.roles || existing.roles.length === 0) {
+        await db.user.update({
+          where: { id: user.id },
+          data: { roles: [Role.CLIENT] },
+        })
+      }
 
       if (!user.email) return
 
