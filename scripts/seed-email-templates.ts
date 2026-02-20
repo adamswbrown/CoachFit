@@ -157,6 +157,30 @@ const DEFAULT_TEMPLATES = [
     textTemplate: `Password Reset\n\nHi {{userName}},\n\nYour password has been reset by an administrator.\n\nPlease contact your administrator for your new password, then sign in: {{loginUrl}}\n\nIf you did not expect this, please contact your administrator immediately.`,
     availableTokens: ["userName", "loginUrl"],
   },
+  {
+    key: EMAIL_TEMPLATE_KEYS.WEEKLY_QUESTIONNAIRE_REMINDER,
+    name: "Weekly Questionnaire Reminder",
+    description: "Sent to clients who haven't completed their weekly questionnaire",
+    subjectTemplate: "Reminder: Complete Week {{weekNumber}} Questionnaire",
+    bodyTemplate: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1f2937;">Weekly Questionnaire Reminder</h2>
+        <p>Hi {{clientName}},</p>
+        <p>This is a friendly reminder from <strong>{{coachName}}</strong> to complete your <strong>Week {{weekNumber}}</strong> questionnaire for <strong>{{cohortName}}</strong>.</p>
+        <p>Your weekly questionnaire helps your coach understand your progress, challenges, and wins.</p>
+        <p style="margin-top: 24px;">
+          <a href="{{questionnaireUrl}}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Complete Questionnaire
+          </a>
+        </p>
+        <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">
+          Best,<br>{{coachName}}
+        </p>
+      </div>
+    `,
+    textTemplate: `Weekly Questionnaire Reminder\n\nHi {{clientName}},\n\nThis is a friendly reminder from {{coachName}} to complete your Week {{weekNumber}} questionnaire for {{cohortName}}.\n\nYour weekly questionnaire helps your coach understand your progress, challenges, and wins.\n\nComplete your questionnaire here: {{questionnaireUrl}}\n\nBest,\n{{coachName}}`,
+    availableTokens: ["clientName", "coachName", "weekNumber", "cohortName", "questionnaireUrl"],
+  },
 ]
 
 async function seedEmailTemplates() {

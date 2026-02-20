@@ -60,8 +60,10 @@ export async function sendTransactionalEmail(
       return { success: true } // Return success to not block user flows
     }
 
+    const from = process.env.EMAIL_FROM || "CoachFit <onboarding@resend.dev>"
+
     const result = await client.emails.send({
-      from: "CoachFit <onboarding@resend.dev>", // Default Resend domain, should be updated to custom domain
+      from,
       to,
       subject,
       html,

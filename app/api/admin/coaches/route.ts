@@ -112,10 +112,10 @@ export async function POST(req: NextRequest) {
         userEmail: email,
         loginUrl,
       },
-      fallbackSubject: "Welcome to CoachSync - Your Coach Account",
+      fallbackSubject: "Welcome to CoachFit - Your Coach Account",
       fallbackHtml: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #1f2937;">Welcome to CoachSync!</h2>
+          <h2 style="color: #1f2937;">Welcome to CoachFit!</h2>
           <p>Hi ${name},</p>
           <p>Your coach account has been created. You can now log in and start managing your cohorts and clients.</p>
           <p><strong>Email:</strong> ${email}</p>
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
           </p>
         </div>
       `,
-      fallbackText: `Welcome to CoachSync!\n\nHi ${name},\n\nYour coach account has been created.\n\nEmail: ${email}\nPassword: (the one provided by your administrator)\n\nSign in: ${loginUrl}\n\nIf you have any questions, please contact your administrator.`,
+      fallbackText: `Welcome to CoachFit!\n\nHi ${name},\n\nYour coach account has been created.\n\nEmail: ${email}\nPassword: (the one provided by your administrator)\n\nSign in: ${loginUrl}\n\nIf you have any questions, please contact your administrator.`,
       isTestUser: isTestUserEmail,
     })
 

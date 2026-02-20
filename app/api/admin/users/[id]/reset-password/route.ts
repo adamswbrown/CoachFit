@@ -82,7 +82,7 @@ export async function POST(
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #1f2937;">New Sign-In Option Available</h2>
               <p>Hi${user.name ? ` ${user.name}` : ""},</p>
-              <p>Good news! Your administrator has set up a password for your CoachSync account.</p>
+              <p>Good news! Your administrator has set up a password for your CoachFit account.</p>
               <p>You can now sign in using <strong>either</strong>:</p>
               <ul>
                 <li>Your Google account (as before)</li>
@@ -99,7 +99,7 @@ export async function POST(
               </p>
             </div>
           `,
-          fallbackText: `New Sign-In Option Available\n\nHi${user.name ? ` ${user.name}` : ""},\n\nGood news! Your administrator has set up a password for your CoachSync account.\n\nYou can now sign in using either:\n- Your Google account (as before)\n- Your email and new password\n\nContact your administrator for your password, then sign in: ${loginUrl}\n\nIf you did not expect this, please contact your administrator.`,
+          fallbackText: `New Sign-In Option Available\n\nHi${user.name ? ` ${user.name}` : ""},\n\nGood news! Your administrator has set up a password for your CoachFit account.\n\nYou can now sign in using either:\n- Your Google account (as before)\n- Your email and new password\n\nContact your administrator for your password, then sign in: ${loginUrl}\n\nIf you did not expect this, please contact your administrator.`,
           isTestUser: user.isTestUser,
         })
       } else {
@@ -112,7 +112,7 @@ export async function POST(
             userEmail: user.email,
             loginUrl,
           },
-          fallbackSubject: "Your CoachSync Password Has Been Reset",
+          fallbackSubject: "Your CoachFit Password Has Been Reset",
           fallbackHtml: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #1f2937;">Password Reset</h2>
