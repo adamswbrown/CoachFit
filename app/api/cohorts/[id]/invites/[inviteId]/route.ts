@@ -139,10 +139,10 @@ export async function POST(
         userEmail: invite.email,
         loginUrl,
       },
-      fallbackSubject: "You've been invited to CoachSync",
+      fallbackSubject: "You've been invited to CoachFit",
       fallbackHtml: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #1f2937;">You've been invited to CoachSync</h2>
+          <h2 style="color: #1f2937;">You've been invited to CoachFit</h2>
           <p>Hi there,</p>
           <p><strong>${coachName}</strong> has invited you to join the <strong>${cohortName}</strong> cohort.</p>
           <p>Sign in to get started and begin tracking your progress.</p>
@@ -156,7 +156,7 @@ export async function POST(
           </p>
         </div>
       `,
-      fallbackText: `You've been invited to CoachSync\n\n${coachName} has invited you to join the ${cohortName} cohort.\n\nSign in to get started: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
+      fallbackText: `You've been invited to CoachFit\n\n${coachName} has invited you to join the ${cohortName} cohort.\n\nSign in to get started: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
       isTestUser: isTestUserEmail,
     })
 

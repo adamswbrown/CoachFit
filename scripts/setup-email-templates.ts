@@ -69,7 +69,7 @@ async function setupEmailTemplates() {
 <p>You've been invited to CoachFit by your coach.</p>
 <p>Create an account using this email address and you'll automatically be connected.</p>
 <p><a href="{{{SIGNUP_URL}}}">Create your account</a></p>
-<p>— CoachSync</p>`,
+<p>— CoachFit</p>`,
     variables: [
       {
         key: "SIGNUP_URL",

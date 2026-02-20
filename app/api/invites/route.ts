@@ -130,12 +130,12 @@ export async function POST(req: NextRequest) {
         userEmail: email,
         loginUrl,
       },
-      fallbackSubject: "You've been invited to CoachSync",
+      fallbackSubject: "You've been invited to CoachFit",
       fallbackHtml: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #1f2937;">You've been invited to CoachSync</h2>
+          <h2 style="color: #1f2937;">You've been invited to CoachFit</h2>
           <p>Hi there,</p>
-          <p><strong>${coachName}</strong> has invited you to join CoachSync to track your fitness progress.</p>
+          <p><strong>${coachName}</strong> has invited you to join CoachFit to track your fitness progress.</p>
           <p>Sign in to get started.</p>
           <p style="margin-top: 24px;">
             <a href="${loginUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
           </p>
         </div>
       `,
-      fallbackText: `You've been invited to CoachSync\n\n${coachName} has invited you to join CoachSync to track your fitness progress.\n\nSign in to get started: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
+      fallbackText: `You've been invited to CoachFit\n\n${coachName} has invited you to join CoachFit to track your fitness progress.\n\nSign in to get started: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
       isTestUser: isTestUserEmail,
     })
 
