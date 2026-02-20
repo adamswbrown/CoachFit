@@ -60,7 +60,7 @@ export async function sendTransactionalEmail(
       return { success: true } // Return success to not block user flows
     }
 
-    const from = process.env.EMAIL_FROM || "CoachFit <onboarding@resend.dev>"
+    const from = process.env.EMAIL_FROM || "CoachFit <noreply@gcgyms.com>"
 
     const result = await client.emails.send({
       from,

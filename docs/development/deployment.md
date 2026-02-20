@@ -88,7 +88,7 @@ Create these environment variables in Vercel:
 DATABASE_URL="postgresql://postgres:PASSWORD@containers-us-west-XXX.railway.app:5432/railway"
 
 # NextAuth.js
-NEXTAUTH_URL="https://your-domain.vercel.app"
+NEXTAUTH_URL="https://gcgyms.com"
 NEXTAUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64 32
 
 # Google OAuth
@@ -103,7 +103,7 @@ APPLE_KEY_ID="your-key-id"
 
 # Resend (for emails)
 RESEND_API_KEY="re_your_api_key_here"
-RESEND_FROM_EMAIL="CoachFit <hello@yourdomain.com>"
+EMAIL_FROM="CoachFit <noreply@gcgyms.com>"
 
 # Test User Suppression (optional)
 TEST_USER_EMAILS="test@example.com,coach@test.local"
@@ -118,8 +118,8 @@ TEST_USER_EMAILS="test@example.com,coach@test.local"
 
 #### NEXTAUTH_URL
 - Full URL of your application
-- Example: `https://coachfit.vercel.app`
-- Must match Vercel deployment URL
+- Production: `https://gcgyms.com`
+- Must match your custom domain
 - Update OAuth callback URLs to match this
 
 #### NEXTAUTH_SECRET
@@ -131,12 +131,12 @@ TEST_USER_EMAILS="test@example.com,coach@test.local"
 #### Google OAuth
 - Get from [Google Cloud Console](https://console.cloud.google.com/)
 - Create OAuth 2.0 credentials
-- Add authorized redirect URI: `https://your-domain.vercel.app/api/auth/callback/google`
+- Add authorized redirect URI: `https://gcgyms.com/api/auth/callback/google`
 
 #### Apple Sign-In
 - Get from [Apple Developer Portal](https://developer.apple.com)
 - Create a Service ID and Key
-- Add return URL: `https://your-domain.vercel.app/api/auth/callback/apple`
+- Add return URL: `https://gcgyms.com/api/auth/callback/apple`
 
 #### Resend
 - Get API key from [Resend Dashboard](https://resend.com/api-keys)
@@ -242,7 +242,7 @@ railway run npm run db:seed-email-templates
 6. Choose "Web application"
 7. Add authorized redirect URIs:
    ```
-   https://your-domain.vercel.app/api/auth/callback/google
+   https://gcgyms.com/api/auth/callback/google
    http://localhost:3000/api/auth/callback/google  # for local dev
    ```
 8. Copy Client ID and Client Secret
@@ -256,7 +256,7 @@ railway run npm run db:seed-email-templates
 4. Create a Service ID:
    - Register a new Service ID
    - Enable "Sign In with Apple"
-   - Add return URL: `https://your-domain.vercel.app/api/auth/callback/apple`
+   - Add return URL: `https://gcgyms.com/api/auth/callback/apple`
 5. Create a Key:
    - Create new key
    - Enable "Sign In with Apple"
@@ -426,7 +426,7 @@ Recommended monitoring tools:
 **Solution**:
 1. Verify Resend API key is correct
 2. Check sending domain is verified in Resend
-3. Ensure `RESEND_FROM_EMAIL` uses verified domain
+3. Ensure `EMAIL_FROM` uses verified domain (`@gcgyms.com`)
 4. Check Resend dashboard for error logs
 5. Verify `TEST_USER_EMAILS` isn't blocking production users
 

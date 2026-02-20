@@ -43,7 +43,7 @@ This document outlines all external services and their associated costs for runn
 - **Configuration**: `RESEND_API_KEY` environment variable
 - **Free Tier**: Yes - limited monthly emails
 - **Production Cost**: $20-100+/month depending on email volume
-- **Note**: Currently using default domain (`@resend.dev`). Update to custom domain for production.
+- **Note**: Using custom domain (`@gcgyms.com`) for production email sending.
 - **Documentation**: [Resend Pricing](https://resend.com/pricing)
 
 ### 4. Authentication - Google OAuth

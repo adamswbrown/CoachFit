@@ -1019,6 +1019,11 @@ export default function AdminPage() {
               <p className="text-neutral-600 text-sm mb-4">
                 Create a new coach account. They will receive an email with login instructions.
               </p>
+              {error && (
+                <div className="mb-3 p-2.5 bg-red-50 border border-red-200 text-red-800 rounded-md text-sm">
+                  <p>{error}</p>
+                </div>
+              )}
               <form onSubmit={handleCreateCoach} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Name</label>
@@ -1091,6 +1096,11 @@ export default function AdminPage() {
               <p className="text-neutral-600 text-sm mb-4">
                 Create a new admin-only account. This user will have only the ADMIN role and no coach or client permissions.
               </p>
+              {error && (
+                <div className="mb-3 p-2.5 bg-red-50 border border-red-200 text-red-800 rounded-md text-sm">
+                  <p>{error}</p>
+                </div>
+              )}
               <form onSubmit={handleCreateAdmin} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Name</label>
