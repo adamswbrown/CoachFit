@@ -73,13 +73,7 @@ export default function SignupPage() {
       return "Passwords do not match"
     }
     if (!consent.terms) {
-      return "You must accept the Terms of Service"
-    }
-    if (!consent.privacy) {
-      return "You must accept the Privacy Policy"
-    }
-    if (!consent.dataProcessing) {
-      return "You must accept data processing terms"
+      return "You must accept the Terms of Service, Privacy Policy, and Data Processing agreement"
     }
     return null
   }
@@ -284,21 +278,19 @@ export default function SignupPage() {
             />
           </div>
           
-          {/* GDPR Consent Section */}
+          {/* Consent Section */}
           <div className="border-t pt-4 mt-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Terms & Agreements</h3>
-            
             <div className="space-y-3">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={consent.terms}
-                  onChange={(e) => setConsent({ ...consent, terms: e.target.checked })}
+                  onChange={(e) => setConsent({ ...consent, terms: e.target.checked, privacy: e.target.checked, dataProcessing: e.target.checked })}
                   className="mt-1 rounded"
                   required
                 />
                 <span className="text-sm text-gray-700">
-                  I accept the{" "}
+                  I agree to the{" "}
                   <button
                     type="button"
                     onClick={() => setShowTermsModal(true)}
@@ -306,20 +298,7 @@ export default function SignupPage() {
                   >
                     Terms of Service
                   </button>
-                  <span className="text-red-500">*</span>
-                </span>
-              </label>
-
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={consent.privacy}
-                  onChange={(e) => setConsent({ ...consent, privacy: e.target.checked })}
-                  className="mt-1 rounded"
-                  required
-                />
-                <span className="text-sm text-gray-700">
-                  I accept the{" "}
+                  ,{" "}
                   <button
                     type="button"
                     onClick={() => setShowPrivacyModal(true)}
@@ -327,29 +306,14 @@ export default function SignupPage() {
                   >
                     Privacy Policy
                   </button>
-                  <span className="text-red-500">*</span>
-                </span>
-              </label>
-
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={consent.dataProcessing}
-                  onChange={(e) => setConsent({ ...consent, dataProcessing: e.target.checked })}
-                  className="mt-1 rounded"
-                  required
-                />
-                <span className="text-sm text-gray-700">
-                  I consent to the{" "}
+                  , and{" "}
                   <button
                     type="button"
                     onClick={() => setShowDataProcessingModal(true)}
                     className="text-blue-600 hover:underline font-medium"
                   >
-                    processing of my health and fitness data
-                  </button>{" "}
-                  (including HealthKit integration)
-                  <span className="text-red-500">*</span>
+                    Data Processing
+                  </button>
                 </span>
               </label>
 
@@ -361,13 +325,9 @@ export default function SignupPage() {
                   className="mt-1 rounded"
                 />
                 <span className="text-sm text-gray-700">
-                  I want to receive updates and marketing emails (optional)
+                  Send me updates and marketing emails (optional)
                 </span>
               </label>
-
-              <p className="text-xs text-gray-500 mt-2">
-                <span className="text-red-500">*</span> Required fields
-              </p>
             </div>
           </div>
 
