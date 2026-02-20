@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Account" ALTER COLUMN "id" DROP DEFAULT;
