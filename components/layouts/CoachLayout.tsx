@@ -152,6 +152,13 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
       { name: "Weekly Review", href: "/coach-dashboard/weekly-review", icon: CalendarIcon, hasDropdown: false, dropdownKey: "weekly-review" }
     )
     
+    // Add Measurement Tracker for Gav
+    if (session?.user?.email === "coachgav@gcgyms.com") {
+      navigation.push(
+        { name: "Measurements", href: "/measurement-tracker/", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M3 12h18M3 18h18" /><circle cx="7" cy="6" r="1.5" fill="currentColor" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /><circle cx="17" cy="18" r="1.5" fill="currentColor" /></svg>, hasDropdown: false, dropdownKey: "measurements", external: true }
+      )
+    }
+
     // Conditionally add HealthKit navigation item
     if (healthkitEnabled) {
       navigation.push(
@@ -368,6 +375,24 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
                       </div>
                     )}
                   </div>
+                )
+              }
+
+              if ((item as any).external) {
+                return (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+                  >
+                    <item.icon size={20} />
+                    <span>{item.name}</span>
+                    <svg className="w-3 h-3 ml-auto text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
                 )
               }
 
