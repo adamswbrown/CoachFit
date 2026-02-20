@@ -83,9 +83,9 @@ export async function proxy(req: NextRequest) {
 
   // ─── Setup Wizard Gate ───────────────────────────────────────────────
   // If setup is not complete, redirect all non-setup routes to /setup.
-  // Uses a cookie to avoid DB lookups on every request.
-  // The /setup page verifies against the DB and sets the cookie if setup
-  // is already complete.
+  // Uses a cookie as an optimisation to avoid DB lookups on every request.
+  // The database remains the source of truth — the /setup page and all
+  // /api/setup/* endpoints verify setupComplete against the DB directly.
   if (
     !pathname.startsWith("/setup") &&
     !pathname.startsWith("/api/setup") &&
