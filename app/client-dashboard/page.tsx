@@ -589,7 +589,7 @@ export default function ClientDashboard() {
               <div>
                 <h3 className="font-semibold text-amber-900 mb-1">Waiting for your coach</h3>
                 <p className="text-amber-800 text-sm">
-                  You're all signed up! Your coach will add you to their cohort soon. 
+                  You're all signed up! Your coach will add you to their program soon.
                   Once connected, you'll be able to log your daily entries here.
                 </p>
               </div>
@@ -601,7 +601,7 @@ export default function ClientDashboard() {
           <div className="mb-6 bg-white border border-neutral-200 rounded-lg p-5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-wide text-neutral-400">Cohort</p>
+                <p className="text-xs uppercase tracking-wide text-neutral-400">Program</p>
                 <p className="text-lg font-semibold text-neutral-900">{selectedCohortName || "—"}</p>
               </div>
               <div className="flex flex-wrap gap-3 text-sm text-neutral-600">
@@ -709,7 +709,7 @@ export default function ClientDashboard() {
                   Complete your weekly check-in to help your coach track your progress
                 </p>
                 {selectedCohortName && (
-                  <p className="text-xs text-neutral-500 mt-2">Cohort: {selectedCohortName}</p>
+                  <p className="text-xs text-neutral-500 mt-2">{selectedCohortName}</p>
                 )}
               </div>
               <div className="flex items-center gap-2">
@@ -720,7 +720,7 @@ export default function ClientDashboard() {
             </div>
             {userCohorts.length > 1 && (
               <div className="mb-4">
-                <label className="text-xs font-medium text-neutral-600">Select Cohort</label>
+                <label className="text-xs font-medium text-neutral-600">Select Program</label>
                 <select
                   value={selectedCohortId ?? ""}
                   onChange={(e) => handleCohortSelect(e.target.value)}
@@ -736,7 +736,7 @@ export default function ClientDashboard() {
             )}
             {!selectedCohortStartDate && (
               <div className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                Your cohort doesn’t have a start date yet, so questionnaires are locked.
+                Your program doesn’t have a start date yet, so questionnaires are locked.
               </div>
             )}
             <div className="mt-4">
@@ -752,7 +752,7 @@ export default function ClientDashboard() {
         {hasCoach !== false && !selectedCohortId && (
           <div className="mb-6 bg-white border border-neutral-200 rounded-lg p-6">
             <p className="text-sm text-neutral-600">
-              You’re not assigned to a cohort yet. Ask your coach to add you so you can complete questionnaires.
+              You’re not assigned to a program yet. Ask your coach to add you so you can complete questionnaires.
             </p>
           </div>
         )}
@@ -900,7 +900,7 @@ export default function ClientDashboard() {
                       setFormData({ ...formData, date: e.target.value })
                     }}
                     max={new Date().toISOString().split("T")[0]}
-                    disabled={hasCoach === false}
+                    disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                     className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                   />
                 </div>
@@ -939,7 +939,7 @@ export default function ClientDashboard() {
                           setFormData({ ...formData, weightLbs: e.target.value })
                         }
                         required
-                        disabled={hasCoach === false}
+                        disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                         className="w-full px-4 py-2.5 pr-12 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">lbs</span>
@@ -962,7 +962,7 @@ export default function ClientDashboard() {
                             setFormData({ ...formData, steps: e.target.value })
                           }
                           required={!isQuestionnaireDay(formData.date)}
-                          disabled={hasCoach === false}
+                          disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                           className="w-full px-4 py-2.5 pr-16 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">steps</span>
@@ -986,7 +986,7 @@ export default function ClientDashboard() {
                             setFormData({ ...formData, calories: e.target.value })
                           }
                           required={!isQuestionnaireDay(formData.date)}
-                          disabled={hasCoach === false}
+                          disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                           className="w-full px-4 py-2.5 pr-14 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">kcal</span>
@@ -1010,7 +1010,7 @@ export default function ClientDashboard() {
                         setFormData({ ...formData, perceivedStress: e.target.value })
                       }
                       required
-                      disabled={hasCoach === false}
+                      disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                       className="flex-1 h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
                     />
                     <span className="text-lg font-semibold text-neutral-900 min-w-[3rem] text-center">
@@ -1038,7 +1038,7 @@ export default function ClientDashboard() {
                       onChange={(e) =>
                         setFormData({ ...formData, notes: e.target.value })
                       }
-                      disabled={hasCoach === false}
+                      disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                       className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed resize-none"
                     />
                     <p className="text-xs text-neutral-500 mt-1 text-right">
@@ -1064,7 +1064,7 @@ export default function ClientDashboard() {
                             onChange={(e) => {
                               setFormData({ ...formData, perceivedStress: e.target.value })
                             }}
-                            disabled={hasCoach === false}
+                            disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                             className="flex-1 h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
                           />
                           <span className="text-lg font-semibold text-neutral-900 min-w-[3rem] text-center">
@@ -1087,7 +1087,7 @@ export default function ClientDashboard() {
                         onChange={(e) =>
                           setFormData({ ...formData, notes: e.target.value })
                         }
-                        disabled={hasCoach === false}
+                        disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                         className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed resize-none"
                       />
                     )}
@@ -1099,7 +1099,7 @@ export default function ClientDashboard() {
                         onChange={(e) =>
                           setFormData({ ...formData, steps: e.target.value })
                         }
-                        disabled={hasCoach === false}
+                        disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                         className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                       />
                     )}
@@ -1124,7 +1124,7 @@ export default function ClientDashboard() {
                   type="submit"
                   disabled={
                     submitting ||
-                    hasCoach === false ||
+                    (hasCoach === false && !(entryMode === "edit" && existingEntry)) ||
                     (entryMode === "add" && existingEntry !== null) ||
                     (entryMode === "edit" && !existingEntry) ||
                     !(

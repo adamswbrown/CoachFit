@@ -405,6 +405,9 @@ export default function ClientSettingsPage() {
   const hasGoogleAccount = settings.Account.some(acc => acc.provider === "google")
   const hasAppleAccount = settings.Account.some(acc => acc.provider === "apple")
 
+  // Apple SSO is temporarily hidden - will be re-enabled later
+  const showAppleSSO = false
+
   return (
     <ClientLayout>
       <div className="max-w-4xl mx-auto">
@@ -489,6 +492,7 @@ export default function ClientSettingsPage() {
                 </div>
               </div>
 
+              {showAppleSSO && (
               <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-md">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
@@ -521,6 +525,7 @@ export default function ClientSettingsPage() {
                   )}
                 </div>
               </div>
+              )}
             </div>
           </div>
 

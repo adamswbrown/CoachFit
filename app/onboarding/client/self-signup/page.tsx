@@ -172,7 +172,7 @@ export default function ClientSelfSignupOnboardingPage() {
                       I already have a coach
                     </p>
                     <p className="text-amber-800 text-xs">
-                      Your coach will add you to their cohort soon. You'll receive a notification when they do.
+                      Your coach will add you to their program soon. You'll receive a notification when they do.
                     </p>
                   </div>
                 </div>

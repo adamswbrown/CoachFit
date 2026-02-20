@@ -482,16 +482,70 @@ export default function ClientOnboarding() {
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Height</h2>
-                <NumericInput
-                  value={data.height}
-                  onChange={(value) => updateData("height", value)}
-                  min={30}
-                  max={300}
-                  step={0.1}
-                  unit={data.measurementUnit === "cm" ? "cm" : "inches"}
-                  placeholder="0"
-                  error={errors.height}
-                />
+                {data.measurementUnit === "cm" ? (
+                  <NumericInput
+                    value={data.height}
+                    onChange={(value) => updateData("height", value)}
+                    min={30}
+                    max={300}
+                    step={0.1}
+                    unit="cm"
+                    placeholder="0"
+                    error={errors.height}
+                  />
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-3">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Feet</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={data.height ? Math.floor(Number(data.height) / 12) || "" : ""}
+                            onChange={(e) => {
+                              const feet = parseInt(e.target.value) || 0
+                              const currentInches = Number(data.height) % 12
+                              updateData("height", feet * 12 + currentInches)
+                            }}
+                            min={0}
+                            max={8}
+                            placeholder="5"
+                            className={`w-full px-4 py-3 text-center text-lg rounded-lg border-2 pr-12 transition-colors ${
+                              errors.height
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-300 bg-white focus:border-blue-600 focus:outline-none"
+                            }`}
+                          />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">ft</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Inches</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={data.height ? Math.round(Number(data.height) % 12) || "" : ""}
+                            onChange={(e) => {
+                              const inches = parseInt(e.target.value) || 0
+                              const currentFeet = Math.floor(Number(data.height) / 12)
+                              updateData("height", currentFeet * 12 + inches)
+                            }}
+                            min={0}
+                            max={11}
+                            placeholder="6"
+                            className={`w-full px-4 py-3 text-center text-lg rounded-lg border-2 pr-12 transition-colors ${
+                              errors.height
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-300 bg-white focus:border-blue-600 focus:outline-none"
+                            }`}
+                          />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">in</span>
+                        </div>
+                      </div>
+                    </div>
+                    {errors.height && <p className="text-sm text-red-600">{errors.height}</p>}
+                  </div>
+                )}
               </div>
             </div>
           ) : step === 6 ? (
@@ -534,27 +588,27 @@ export default function ClientOnboarding() {
                     {
                       id: "sedentary",
                       label: "Sedentary",
-                      description: "Desk based job, no long walks during the week",
+                      description: "Little to no exercise",
                     },
                     {
                       id: "lightly_active",
                       label: "Lightly Active",
-                      description: "Desk based job but daily walks/hard workouts 2+ per week",
+                      description: "Exercise 1-2 times per week",
                     },
                     {
                       id: "active",
                       label: "Active",
-                      description: "A job mostly on feet (e.g. teacher, retail worker, postman) but no exercise",
+                      description: "Exercise 3-4 times per week",
                     },
                     {
                       id: "very_active",
                       label: "Very Active",
-                      description: "A job mostly on feet and exercises hard 3+ times per week or a manual labor job with no other exercise",
+                      description: "Exercise 5+ times per week or active job",
                     },
                     {
                       id: "extremely_active",
                       label: "Extremely Active",
-                      description: "A manual labor job + hard exercise 3+ times a week or athlete training 10+ times per week",
+                      description: "Intense training daily or active job + exercise",
                     },
                   ]}
                   value={data.activityLevel}
