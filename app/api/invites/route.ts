@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
 
     // Send invite email
     const coachName = session.user.name || session.user.email
-    const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login?invited=1`
+    const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/signup`
     const isTestUserEmail = email.endsWith(".test.local")
 
     await sendSystemEmail({

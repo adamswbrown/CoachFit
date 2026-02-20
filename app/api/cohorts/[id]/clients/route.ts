@@ -273,7 +273,7 @@ export async function POST(
             select: { name: true, email: true },
           })
           
-          const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
+          const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/signup`
           const coachName = coach?.name || coach?.email || "Your coach"
           const cohortName = cohort.name
 

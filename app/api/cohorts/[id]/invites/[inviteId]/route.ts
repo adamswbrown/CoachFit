@@ -127,7 +127,7 @@ export async function POST(
 
     const coachName = coach?.name || coach?.email || "Your coach"
     const cohortName = cohort!.name
-    const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
+    const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/signup`
     const isTestUserEmail = invite.email.endsWith(".test.local")
 
     await sendSystemEmail({
