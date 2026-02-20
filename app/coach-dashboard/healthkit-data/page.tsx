@@ -555,41 +555,46 @@ export default function HealthKitDataExplorer() {
                       <table className="w-full">
                         <thead className="bg-neutral-50">
                           <tr className="border-b border-neutral-200">
-                            <th className="text-left p-4 font-medium text-neutral-700">Type</th>
-                            <th className="text-left p-4 font-medium text-neutral-700">Date & Time</th>
-                            <th className="text-left p-4 font-medium text-neutral-700">Duration</th>
-                            <th className="text-left p-4 font-medium text-neutral-700">Calories</th>
-                            <th className="text-left p-4 font-medium text-neutral-700">Distance</th>
-                            <th className="text-left p-4 font-medium text-neutral-700">Heart Rate</th>
-                            <th className="text-left p-4 font-medium text-neutral-700">Device</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700">Type</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700 hidden sm:table-cell">Date & Time</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700">Duration</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700">Calories</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700 hidden md:table-cell">Distance</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700 hidden md:table-cell">Heart Rate</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700 hidden lg:table-cell">Device</th>
                           </tr>
                         </thead>
                         <tbody>
                           {workouts.map((workout) => (
                             <tr key={workout.id} className="border-b border-neutral-100 hover:bg-neutral-50">
-                              <td className="p-4">
+                              <td className="p-3 sm:p-4">
                                 <div className="flex items-center gap-2">
                                   <span className="text-xl">{getWorkoutIcon(workout.workoutType)}</span>
-                                  <span className="font-medium text-neutral-900">
-                                    {workout.workoutType}
-                                  </span>
+                                  <div>
+                                    <span className="font-medium text-neutral-900">
+                                      {workout.workoutType}
+                                    </span>
+                                    <div className="text-xs text-neutral-500 sm:hidden">
+                                      {formatDateTime(workout.startTime)}
+                                    </div>
+                                  </div>
                                 </div>
                               </td>
-                              <td className="p-4 text-neutral-600">
+                              <td className="p-3 sm:p-4 text-neutral-600 hidden sm:table-cell">
                                 {formatDateTime(workout.startTime)}
                               </td>
-                              <td className="p-4 text-neutral-900 font-medium">
+                              <td className="p-3 sm:p-4 text-neutral-900 font-medium">
                                 {formatDuration(workout.durationSecs)}
                               </td>
-                              <td className="p-4 text-neutral-600">
+                              <td className="p-3 sm:p-4 text-neutral-600">
                                 {workout.caloriesActive
                                   ? `${workout.caloriesActive.toLocaleString()} kcal`
                                   : "—"}
                               </td>
-                              <td className="p-4 text-neutral-600">
+                              <td className="p-3 sm:p-4 text-neutral-600 hidden md:table-cell">
                                 {formatDistance(workout.distanceMeters)}
                               </td>
-                              <td className="p-4">
+                              <td className="p-3 sm:p-4 hidden md:table-cell">
                                 {workout.avgHeartRate ? (
                                   <div className="text-sm">
                                     <span className="text-red-600 font-medium">
@@ -606,7 +611,7 @@ export default function HealthKitDataExplorer() {
                                   "—"
                                 )}
                               </td>
-                              <td className="p-4 text-neutral-500 text-sm">
+                              <td className="p-3 sm:p-4 text-neutral-500 text-sm hidden lg:table-cell">
                                 {workout.sourceDevice || "—"}
                               </td>
                             </tr>
@@ -624,7 +629,7 @@ export default function HealthKitDataExplorer() {
               <div className="space-y-6">
                 {/* Sleep Averages */}
                 {sleepAverages && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-white border border-neutral-200 rounded-lg p-4">
                       <div className="text-sm text-neutral-600 mb-1">Avg Total Sleep</div>
                       <div className="text-2xl font-bold text-neutral-900">
@@ -669,20 +674,20 @@ export default function HealthKitDataExplorer() {
                       <table className="w-full">
                         <thead className="bg-neutral-50">
                           <tr className="border-b border-neutral-200">
-                            <th className="text-left p-4 font-medium text-neutral-700">Date</th>
-                            <th className="text-left p-4 font-medium text-neutral-700">Total Sleep</th>
-                            <th className="text-left p-4 font-medium text-neutral-700">In Bed</th>
-                            <th className="text-left p-4 font-medium text-neutral-700">
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700">Date</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700">Total Sleep</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700 hidden lg:table-cell">In Bed</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700 hidden sm:table-cell">
                               <span className="text-blue-600">Core</span>
                             </th>
-                            <th className="text-left p-4 font-medium text-neutral-700">
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700 hidden sm:table-cell">
                               <span className="text-indigo-600">Deep</span>
                             </th>
-                            <th className="text-left p-4 font-medium text-neutral-700">
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700 hidden md:table-cell">
                               <span className="text-purple-600">REM</span>
                             </th>
-                            <th className="text-left p-4 font-medium text-neutral-700">Awake</th>
-                            <th className="text-left p-4 font-medium text-neutral-700">Time</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700 hidden lg:table-cell">Awake</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-neutral-700 hidden lg:table-cell">Time</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -691,20 +696,20 @@ export default function HealthKitDataExplorer() {
                               key={record.id}
                               className="border-b border-neutral-100 hover:bg-neutral-50"
                             >
-                              <td className="p-4 font-medium text-neutral-900">
+                              <td className="p-3 sm:p-4 font-medium text-neutral-900">
                                 {formatDate(record.date)}
                               </td>
-                              <td className="p-4">
+                              <td className="p-3 sm:p-4">
                                 <span className="text-neutral-900 font-semibold">
                                   {formatMinutesToHours(record.totalSleepMins)}
                                 </span>
                               </td>
-                              <td className="p-4 text-neutral-600">
+                              <td className="p-3 sm:p-4 text-neutral-600 hidden lg:table-cell">
                                 {record.inBedMins
                                   ? formatMinutesToHours(record.inBedMins)
                                   : "—"}
                               </td>
-                              <td className="p-4">
+                              <td className="p-3 sm:p-4 hidden sm:table-cell">
                                 {record.asleepCoreMins !== null ? (
                                   <div className="flex items-center gap-2">
                                     <div
@@ -726,7 +731,7 @@ export default function HealthKitDataExplorer() {
                                   "—"
                                 )}
                               </td>
-                              <td className="p-4">
+                              <td className="p-3 sm:p-4 hidden sm:table-cell">
                                 {record.asleepDeepMins !== null ? (
                                   <div className="flex items-center gap-2">
                                     <div
@@ -748,7 +753,7 @@ export default function HealthKitDataExplorer() {
                                   "—"
                                 )}
                               </td>
-                              <td className="p-4">
+                              <td className="p-3 sm:p-4 hidden md:table-cell">
                                 {record.asleepREMMins !== null ? (
                                   <div className="flex items-center gap-2">
                                     <div
@@ -770,12 +775,12 @@ export default function HealthKitDataExplorer() {
                                   "—"
                                 )}
                               </td>
-                              <td className="p-4 text-neutral-600">
+                              <td className="p-3 sm:p-4 text-neutral-600 hidden lg:table-cell">
                                 {record.awakeMins !== null
                                   ? formatMinutesToHours(record.awakeMins)
                                   : "—"}
                               </td>
-                              <td className="p-4 text-sm text-neutral-500">
+                              <td className="p-3 sm:p-4 text-sm text-neutral-500 hidden lg:table-cell">
                                 {record.sleepStart && record.sleepEnd ? (
                                   <>
                                     {new Date(record.sleepStart).toLocaleTimeString("en-US", {

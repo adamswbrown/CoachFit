@@ -43,7 +43,7 @@ export default function DashboardPage() {
   }, [session, status, router])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-start sm:items-center justify-center bg-gray-50 overflow-y-auto">
       <div className="text-gray-600">Redirecting...</div>
     </div>
   )
