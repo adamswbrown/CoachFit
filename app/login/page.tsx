@@ -84,7 +84,7 @@ function LoginPageContent() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-start sm:items-center justify-center bg-gray-50 overflow-y-auto">
         <div className="text-gray-600">Loading...</div>
       </div>
     )
@@ -95,7 +95,7 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
+    <div className="min-h-screen flex items-start sm:items-center justify-center bg-gray-50 px-4 py-6 sm:py-8 overflow-y-auto">
       <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8 max-w-md w-full border border-gray-200">
         {/* Logo */}
         <div className="mb-6 sm:mb-8 flex justify-center">
@@ -239,7 +239,7 @@ function LoginPageContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-start sm:items-center justify-center bg-gray-50 overflow-y-auto">
         <div className="text-gray-600">Loading...</div>
       </div>
     }>

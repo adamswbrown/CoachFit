@@ -56,7 +56,7 @@ export default function WrappedPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-start sm:items-center justify-center overflow-y-auto">
         <div className="text-center">
           <div className="text-white text-2xl mb-4 animate-pulse">Loading your Fitness Wrapped...</div>
           <div className="text-white/70">🎉</div>
@@ -67,7 +67,7 @@ export default function WrappedPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
         <div className="text-center max-w-md">
           <div className="text-6xl mb-6">😕</div>
           <h1 className="text-white text-3xl font-bold mb-4">Not Quite Yet!</h1>
