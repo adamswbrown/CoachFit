@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback, startTransition } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -320,46 +320,49 @@ export default function AdminPage() {
     }
   }
 
-  // Filter users based on search query
-  const filteredUsers = users.filter((user) => {
-    if (!searchQuery) return true
+  // Memoize filtered/computed values to avoid recalculating on every render
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery) return users
     const query = searchQuery.toLowerCase()
-    return (
+    return users.filter((user) =>
       user.email.toLowerCase().includes(query) ||
       user.name?.toLowerCase().includes(query) ||
       user.roles.some((role) => role.toLowerCase().includes(query))
     )
-  })
+  }, [users, searchQuery])
 
-  const coachClientMap = coaches.reduce((acc, coach) => {
-    const coachCohortIds = new Set(
-      cohorts.filter((cohort) => cohort.coach.id === coach.id).map((cohort) => cohort.id)
-    )
-    acc[coach.id] = users.filter(
-      (user) =>
-        user.roles.includes("CLIENT") &&
-        user.cohortsMemberOf.some((cohort) => coachCohortIds.has(cohort.id))
-    )
-    return acc
-  }, {} as Record<string, User[]>)
+  const coachClientMap = useMemo(() => {
+    return coaches.reduce((acc, coach) => {
+      const coachCohortIds = new Set(
+        cohorts.filter((cohort) => cohort.coach.id === coach.id).map((cohort) => cohort.id)
+      )
+      acc[coach.id] = users.filter(
+        (user) =>
+          user.roles.includes("CLIENT") &&
+          user.cohortsMemberOf.some((cohort) => coachCohortIds.has(cohort.id))
+      )
+      return acc
+    }, {} as Record<string, User[]>)
+  }, [coaches, cohorts, users])
 
-  const coachCohortsMap = coaches.reduce((acc, coach) => {
-    acc[coach.id] = cohorts.filter((cohort) => cohort.coach.id === coach.id)
-    return acc
-  }, {} as Record<string, Cohort[]>)
+  const coachCohortsMap = useMemo(() => {
+    return coaches.reduce((acc, coach) => {
+      acc[coach.id] = cohorts.filter((cohort) => cohort.coach.id === coach.id)
+      return acc
+    }, {} as Record<string, Cohort[]>)
+  }, [coaches, cohorts])
 
-  const adminUsers = users.filter((user) => user.roles.includes("ADMIN"))
+  const adminUsers = useMemo(() => users.filter((user) => user.roles.includes("ADMIN")), [users])
 
-  // Filter cohorts based on search query
-  const filteredCohorts = cohorts.filter((cohort) => {
-    if (!cohortSearchQuery) return true
+  const filteredCohorts = useMemo(() => {
+    if (!cohortSearchQuery) return cohorts
     const query = cohortSearchQuery.toLowerCase()
-    return (
+    return cohorts.filter((cohort) =>
       cohort.name.toLowerCase().includes(query) ||
       cohort.coach.name?.toLowerCase().includes(query) ||
       cohort.coach.email.toLowerCase().includes(query)
     )
-  })
+  }, [cohorts, cohortSearchQuery])
 
   if (status === "loading" || loading) {
     return <div className="p-8">Loading...</div>
@@ -480,7 +483,7 @@ export default function AdminPage() {
                 type="text"
                 placeholder="Search users by email, name, or role..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => startTransition(() => setSearchQuery(e.target.value))}
                 className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500"
               />
             </div>
@@ -639,7 +642,7 @@ export default function AdminPage() {
                                     type="password"
                                     placeholder="Password"
                                     value={resetPassword}
-                                    onChange={(e) => setResetPassword(e.target.value)}
+                                    onChange={(e) => startTransition(() => setResetPassword(e.target.value))}
                                     className="px-2 py-1 text-xs border rounded w-20"
                                     minLength={8}
                                     autoFocus
@@ -765,7 +768,7 @@ export default function AdminPage() {
                                 <input
                                   type="password"
                                   value={resetPassword}
-                                  onChange={(e) => setResetPassword(e.target.value)}
+                                  onChange={(e) => startTransition(() => setResetPassword(e.target.value))}
                                   className="px-2 py-1 text-xs border border-neutral-300 rounded"
                                   placeholder="New password"
                                 />
@@ -863,7 +866,7 @@ export default function AdminPage() {
                               <input
                                 type="password"
                                 value={resetPassword}
-                                onChange={(e) => setResetPassword(e.target.value)}
+                                onChange={(e) => startTransition(() => setResetPassword(e.target.value))}
                                 className="px-2 py-1 text-xs border border-neutral-300 rounded"
                                 placeholder="New password"
                               />
@@ -928,7 +931,7 @@ export default function AdminPage() {
                 type="text"
                 placeholder="Search cohorts by name or coach..."
                 value={cohortSearchQuery}
-                onChange={(e) => setCohortSearchQuery(e.target.value)}
+                onChange={(e) => startTransition(() => setCohortSearchQuery(e.target.value))}
                 className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500"
               />
             </div>
@@ -1031,7 +1034,7 @@ export default function AdminPage() {
                     type="text"
                     required
                     value={newCoachData.name}
-                    onChange={(e) => setNewCoachData({ ...newCoachData, name: e.target.value })}
+                    onChange={(e) => startTransition(() => setNewCoachData({ ...newCoachData, name: e.target.value }))}
                     className="w-full px-3 py-2 border rounded-md text-sm"
                     placeholder="Coach Name"
                   />
@@ -1042,7 +1045,7 @@ export default function AdminPage() {
                     type="email"
                     required
                     value={newCoachData.email}
-                    onChange={(e) => setNewCoachData({ ...newCoachData, email: e.target.value })}
+                    onChange={(e) => startTransition(() => setNewCoachData({ ...newCoachData, email: e.target.value }))}
                     className="w-full px-3 py-2 border rounded-md text-sm"
                     placeholder="coach@example.com"
                   />
@@ -1054,7 +1057,7 @@ export default function AdminPage() {
                     required
                     minLength={8}
                     value={newCoachData.password}
-                    onChange={(e) => setNewCoachData({ ...newCoachData, password: e.target.value })}
+                    onChange={(e) => startTransition(() => setNewCoachData({ ...newCoachData, password: e.target.value }))}
                     className="w-full px-3 py-2 border rounded-md text-sm"
                     placeholder="Min 8 characters"
                   />
@@ -1108,7 +1111,7 @@ export default function AdminPage() {
                     type="text"
                     required
                     value={newAdminData.name}
-                    onChange={(e) => setNewAdminData({ ...newAdminData, name: e.target.value })}
+                    onChange={(e) => startTransition(() => setNewAdminData({ ...newAdminData, name: e.target.value }))}
                     className="w-full px-3 py-2 border rounded-md text-sm"
                     placeholder="Admin Name"
                   />
@@ -1119,7 +1122,7 @@ export default function AdminPage() {
                     type="email"
                     required
                     value={newAdminData.email}
-                    onChange={(e) => setNewAdminData({ ...newAdminData, email: e.target.value })}
+                    onChange={(e) => startTransition(() => setNewAdminData({ ...newAdminData, email: e.target.value }))}
                     className="w-full px-3 py-2 border rounded-md text-sm"
                     placeholder="admin@example.com"
                   />
@@ -1131,7 +1134,7 @@ export default function AdminPage() {
                     required
                     minLength={8}
                     value={newAdminData.password}
-                    onChange={(e) => setNewAdminData({ ...newAdminData, password: e.target.value })}
+                    onChange={(e) => startTransition(() => setNewAdminData({ ...newAdminData, password: e.target.value }))}
                     className="w-full px-3 py-2 border rounded-md text-sm"
                     placeholder="Min 8 characters"
                   />

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect, use, useMemo, useCallback, startTransition } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -820,6 +820,64 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
     }
   }
 
+  const formattedStartDate = useMemo(
+    () =>
+      cohort?.cohortStartDate
+        ? new Date(cohort.cohortStartDate).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })
+        : null,
+    [cohort?.cohortStartDate]
+  )
+  const cohortTypeLabel = useMemo(
+    () =>
+      cohort?.type
+        ? cohort.type === "TIMED"
+          ? "Timed"
+          : cohort.type === "ONGOING"
+            ? "Ongoing"
+            : cohort.type === "CHALLENGE"
+              ? "Challenge"
+              : "Custom"
+        : "Legacy (migration required)",
+    [cohort?.type]
+  )
+  const customTypeDisplay = useMemo(
+    () => cohort?.customTypeLabel || cohort?.customCohortType?.label || null,
+    [cohort?.customTypeLabel, cohort?.customCohortType?.label]
+  )
+  const checkInFrequencyDisplay = useMemo(
+    () =>
+      cohort?.checkInFrequencyDays
+        ? `${cohort.checkInFrequencyDays} days`
+        : "Defaults apply",
+    [cohort?.checkInFrequencyDays]
+  )
+  const durationDisplay = useMemo(
+    () =>
+      cohort?.type === "ONGOING"
+        ? cohort?.membershipDurationMonths
+          ? `${cohort.membershipDurationMonths}-month membership`
+          : "Membership duration not set"
+        : cohort?.durationWeeks
+          ? `${cohort.durationWeeks} weeks`
+          : "Program duration not set",
+    [cohort?.type, cohort?.membershipDurationMonths, cohort?.durationWeeks]
+  )
+
+  const filteredClients = useMemo(() => {
+    return clients.filter((client) => {
+      if (!searchQuery) return true
+      const query = searchQuery.toLowerCase()
+      return (
+        client.email.toLowerCase().includes(query) ||
+        client.name?.toLowerCase().includes(query)
+      )
+    })
+  }, [clients, searchQuery])
+
   if (status === "loading" || loading) {
     return (
       <CoachLayout>
@@ -860,34 +918,6 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
   const isAdminUser = isAdmin(session.user)
   const canEditStartDate = isAdminUser || cohort.coachId === session.user.id
   const canEditSettings = isAdminUser || cohort.coachId === session.user.id
-  const formattedStartDate = cohort.cohortStartDate
-    ? new Date(cohort.cohortStartDate).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      })
-    : null
-  const cohortTypeLabel = cohort.type
-    ? cohort.type === "TIMED"
-      ? "Timed"
-      : cohort.type === "ONGOING"
-        ? "Ongoing"
-        : cohort.type === "CHALLENGE"
-          ? "Challenge"
-          : "Custom"
-    : "Legacy (migration required)"
-  const customTypeDisplay = cohort.customTypeLabel || cohort.customCohortType?.label || null
-  const checkInFrequencyDisplay = cohort.checkInFrequencyDays
-    ? `${cohort.checkInFrequencyDays} days`
-    : "Defaults apply"
-  const durationDisplay =
-    cohort.type === "ONGOING"
-      ? cohort.membershipDurationMonths
-        ? `${cohort.membershipDurationMonths}-month membership`
-        : "Membership duration not set"
-      : cohort.durationWeeks
-        ? `${cohort.durationWeeks} weeks`
-        : "Program duration not set"
 
   return (
     <CoachLayout>
@@ -919,19 +949,21 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                     <select
                       value={settingsForm.type}
                       onChange={(e) =>
-                        setSettingsForm({
-                          ...settingsForm,
-                          type: e.target.value as typeof settingsForm.type,
-                          customCohortTypeId: "",
-                          customTypeLabel: "",
-                          durationWeeks:
-                            e.target.value === "CHALLENGE"
-                              ? "6"
-                              : e.target.value === "ONGOING"
-                                ? settingsForm.durationWeeks
-                                : "6",
-                          membershipDurationMonths: e.target.value === "ONGOING" ? "6" : "",
-                        })
+                        startTransition(() =>
+                          setSettingsForm({
+                            ...settingsForm,
+                            type: e.target.value as typeof settingsForm.type,
+                            customCohortTypeId: "",
+                            customTypeLabel: "",
+                            durationWeeks:
+                              e.target.value === "CHALLENGE"
+                                ? "6"
+                                : e.target.value === "ONGOING"
+                                  ? settingsForm.durationWeeks
+                                  : "6",
+                            membershipDurationMonths: e.target.value === "ONGOING" ? "6" : "",
+                          })
+                        )
                       }
                       className="w-full border rounded-md px-3 py-2 text-sm"
                     >
@@ -950,7 +982,9 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                         max={365}
                         value={settingsForm.checkInFrequencyDays}
                         onChange={(e) =>
-                          setSettingsForm({ ...settingsForm, checkInFrequencyDays: e.target.value })
+                          startTransition(() =>
+                            setSettingsForm({ ...settingsForm, checkInFrequencyDays: e.target.value })
+                          )
                         }
                         className="w-full border rounded-md px-3 py-2 text-sm"
                         placeholder="Leave blank to use system defaults"
@@ -965,7 +999,9 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                         <select
                           value={settingsForm.customCohortTypeId}
                           onChange={(e) =>
-                            setSettingsForm({ ...settingsForm, customCohortTypeId: e.target.value })
+                            startTransition(() =>
+                              setSettingsForm({ ...settingsForm, customCohortTypeId: e.target.value })
+                            )
                           }
                           className="w-full border rounded-md px-3 py-2 text-sm"
                         >
@@ -985,7 +1021,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                         <input
                           type="text"
                           value={settingsForm.customTypeLabel}
-                          onChange={(e) => setSettingsForm({ ...settingsForm, customTypeLabel: e.target.value })}
+                          onChange={(e) => startTransition(() => setSettingsForm({ ...settingsForm, customTypeLabel: e.target.value }))}
                           className="w-full border rounded-md px-3 py-2 text-sm"
                           maxLength={80}
                           placeholder="e.g., Performance Reset"
@@ -1138,19 +1174,21 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                 <select
                   value={settingsForm.type}
                   onChange={(e) =>
-                    setSettingsForm({
-                      ...settingsForm,
-                      type: e.target.value as typeof settingsForm.type,
-                      customCohortTypeId: "",
-                      customTypeLabel: "",
-                      durationWeeks:
-                        e.target.value === "CHALLENGE"
-                          ? "6"
-                          : e.target.value === "ONGOING"
-                            ? settingsForm.durationWeeks
-                            : "6",
-                      membershipDurationMonths: e.target.value === "ONGOING" ? "6" : "",
-                    })
+                    startTransition(() =>
+                      setSettingsForm({
+                        ...settingsForm,
+                        type: e.target.value as typeof settingsForm.type,
+                        customCohortTypeId: "",
+                        customTypeLabel: "",
+                        durationWeeks:
+                          e.target.value === "CHALLENGE"
+                            ? "6"
+                            : e.target.value === "ONGOING"
+                              ? settingsForm.durationWeeks
+                              : "6",
+                        membershipDurationMonths: e.target.value === "ONGOING" ? "6" : "",
+                      })
+                    )
                   }
                   className="w-full border rounded-md px-3 py-2 text-sm"
                 >
@@ -1167,7 +1205,9 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                       <select
                         value={settingsForm.membershipDurationMonths}
                         onChange={(e) =>
-                          setSettingsForm({ ...settingsForm, membershipDurationMonths: e.target.value })
+                          startTransition(() =>
+                            setSettingsForm({ ...settingsForm, membershipDurationMonths: e.target.value })
+                          )
                         }
                         className="w-full border rounded-md px-3 py-2 text-sm"
                       >
@@ -1181,7 +1221,9 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                       <select
                         value={settingsForm.durationWeeks}
                         onChange={(e) =>
-                          setSettingsForm({ ...settingsForm, durationWeeks: e.target.value })
+                          startTransition(() =>
+                            setSettingsForm({ ...settingsForm, durationWeeks: e.target.value })
+                          )
                         }
                         className="w-full border rounded-md px-3 py-2 text-sm"
                       >
@@ -1199,7 +1241,9 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                         max={52}
                         value={settingsForm.durationWeeks}
                         onChange={(e) =>
-                          setSettingsForm({ ...settingsForm, durationWeeks: e.target.value })
+                          startTransition(() =>
+                            setSettingsForm({ ...settingsForm, durationWeeks: e.target.value })
+                          )
                         }
                         className="w-full border rounded-md px-3 py-2 text-sm"
                         placeholder="Enter number of weeks"
@@ -1217,7 +1261,9 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                   max={365}
                   value={settingsForm.checkInFrequencyDays}
                   onChange={(e) =>
-                    setSettingsForm({ ...settingsForm, checkInFrequencyDays: e.target.value })
+                    startTransition(() =>
+                      setSettingsForm({ ...settingsForm, checkInFrequencyDays: e.target.value })
+                    )
                   }
                   className="w-full border rounded-md px-3 py-2 text-sm"
                   placeholder="Leave blank to use user or system defaults"
@@ -1225,28 +1271,28 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <button
                     type="button"
-                    onClick={() => setSettingsForm({ ...settingsForm, checkInFrequencyDays: "7" })}
+                    onClick={() => startTransition(() => setSettingsForm({ ...settingsForm, checkInFrequencyDays: "7" }))}
                     className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
                   >
                     Weekly (7)
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSettingsForm({ ...settingsForm, checkInFrequencyDays: "14" })}
+                    onClick={() => startTransition(() => setSettingsForm({ ...settingsForm, checkInFrequencyDays: "14" }))}
                     className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
                   >
                     Bi-weekly (14)
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSettingsForm({ ...settingsForm, checkInFrequencyDays: "30" })}
+                    onClick={() => startTransition(() => setSettingsForm({ ...settingsForm, checkInFrequencyDays: "30" }))}
                     className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
                   >
                     Monthly (30)
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSettingsForm({ ...settingsForm, checkInFrequencyDays: "" })}
+                    onClick={() => startTransition(() => setSettingsForm({ ...settingsForm, checkInFrequencyDays: "" }))}
                     className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
                   >
                     Use defaults
@@ -1262,7 +1308,9 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                   <select
                     value={settingsForm.customCohortTypeId}
                     onChange={(e) =>
-                      setSettingsForm({ ...settingsForm, customCohortTypeId: e.target.value })
+                      startTransition(() =>
+                        setSettingsForm({ ...settingsForm, customCohortTypeId: e.target.value })
+                      )
                     }
                     className="w-full border rounded-md px-3 py-2 text-sm"
                   >
@@ -1282,7 +1330,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                   <input
                     type="text"
                     value={settingsForm.customTypeLabel}
-                    onChange={(e) => setSettingsForm({ ...settingsForm, customTypeLabel: e.target.value })}
+                    onChange={(e) => startTransition(() => setSettingsForm({ ...settingsForm, customTypeLabel: e.target.value }))}
                     className="w-full border rounded-md px-3 py-2 text-sm"
                     maxLength={80}
                     placeholder="e.g., Performance Reset"
@@ -1338,7 +1386,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                     required
                     value={coachFormData.email}
                     onChange={(e) => {
-                      setCoachFormData({ email: e.target.value })
+                      startTransition(() => setCoachFormData({ email: e.target.value }))
                       if (coachError) setCoachError(null)
                     }}
                     className="w-full px-3 py-2 border rounded-md"
@@ -1476,7 +1524,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                           const prompts = e.target.checked
                             ? [...checkInConfig.enabledPrompts, "notes"]
                             : checkInConfig.enabledPrompts.filter((p) => p !== "notes")
-                          setCheckInConfig({ ...checkInConfig, enabledPrompts: prompts })
+                          startTransition(() => setCheckInConfig({ ...checkInConfig, enabledPrompts: prompts }))
                         }}
                         className="mr-2"
                       />
@@ -1492,10 +1540,12 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                       type="text"
                       value={checkInConfig.customPrompt1 || ""}
                       onChange={(e) =>
-                        setCheckInConfig({
-                          ...checkInConfig,
-                          customPrompt1: e.target.value,
-                        })
+                        startTransition(() =>
+                          setCheckInConfig({
+                            ...checkInConfig,
+                            customPrompt1: e.target.value,
+                          })
+                        )
                       }
                       className="w-full px-3 py-2 border rounded-md"
                       placeholder="e.g., How was your energy today?"
@@ -1504,10 +1554,12 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                     <select
                       value={checkInConfig.customPrompt1Type || ""}
                       onChange={(e) =>
-                        setCheckInConfig({
-                          ...checkInConfig,
-                          customPrompt1Type: e.target.value as "scale" | "text" | "number" | "",
-                        })
+                        startTransition(() =>
+                          setCheckInConfig({
+                            ...checkInConfig,
+                            customPrompt1Type: e.target.value as "scale" | "text" | "number" | "",
+                          })
+                        )
                       }
                       className="w-full px-3 py-2 border rounded-md"
                       disabled={!checkInConfig.customPrompt1 || checkInConfig.customPrompt1.trim() === ""}
@@ -1787,7 +1839,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                       required
                       value={formData.email}
                       onChange={(e) => {
-                        setFormData({ ...formData, email: e.target.value })
+                        startTransition(() => setFormData({ ...formData, email: e.target.value }))
                         // Clear error when user starts typing
                         if (error) setError(null)
                       }}
@@ -1824,23 +1876,12 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                     type="text"
                     placeholder="Search clients by name or email..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => startTransition(() => setSearchQuery(e.target.value))}
                     className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500"
                   />
                 </div>
 
-                {(() => {
-                  // Filter clients based on search query
-                  const filteredClients = clients.filter((client) => {
-                    if (!searchQuery) return true
-                    const query = searchQuery.toLowerCase()
-                    return (
-                      client.email.toLowerCase().includes(query) ||
-                      client.name?.toLowerCase().includes(query)
-                    )
-                  })
-
-                  return filteredClients.length === 0 ? (
+                {filteredClients.length === 0 ? (
                     <p className="text-neutral-500 py-2 text-center">
                       No clients found matching "{searchQuery}"
                     </p>
@@ -1885,8 +1926,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                         </div>
                       ))}
                     </div>
-                  )
-                })()}
+                  )}
               </>
             )}
           </div>

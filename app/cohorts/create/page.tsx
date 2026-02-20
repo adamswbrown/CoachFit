@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback, startTransition } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -249,7 +249,7 @@ export default function CreateCohortPage() {
                 type="text"
                 required
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => { const v = e.target.value; startTransition(() => setFormData({ ...formData, name: v })) }}
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 maxLength={255}
                 placeholder="e.g., Morning Group"
@@ -266,7 +266,7 @@ export default function CreateCohortPage() {
                 type="date"
                 required
                 value={formData.cohortStartDate}
-                onChange={(e) => setFormData({ ...formData, cohortStartDate: e.target.value })}
+                onChange={(e) => { const v = e.target.value; startTransition(() => setFormData({ ...formData, cohortStartDate: v })) }}
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               />
             </div>
@@ -279,22 +279,25 @@ export default function CreateCohortPage() {
               <select
                 id="cohortType"
                 value={formData.type}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    type: e.target.value as typeof formData.type,
-                    customCohortTypeId: "",
-                    customTypeLabel: "",
-                    durationWeeks:
-                      e.target.value === "CHALLENGE"
-                        ? 6
-                        : e.target.value === "ONGOING"
-                          ? formData.durationWeeks
-                          : 6,
-                    membershipDurationMonths:
-                      e.target.value === "ONGOING" ? "6" : "",
-                  })
-                }
+                onChange={(e) => {
+                  const v = e.target.value;
+                  startTransition(() =>
+                    setFormData({
+                      ...formData,
+                      type: v as typeof formData.type,
+                      customCohortTypeId: "",
+                      customTypeLabel: "",
+                      durationWeeks:
+                        v === "CHALLENGE"
+                          ? 6
+                          : v === "ONGOING"
+                            ? formData.durationWeeks
+                            : 6,
+                      membershipDurationMonths:
+                        v === "ONGOING" ? "6" : "",
+                    })
+                  )
+                }}
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               >
                 <option value="TIMED">Timed (fixed duration)</option>
@@ -315,12 +318,15 @@ export default function CreateCohortPage() {
                     <select
                       id="customCohortTypeId"
                       value={formData.customCohortTypeId}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          customCohortTypeId: e.target.value,
-                        })
-                      }
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        startTransition(() =>
+                          setFormData({
+                            ...formData,
+                            customCohortTypeId: v,
+                          })
+                        )
+                      }}
                       className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     >
                       <option value="">Select a custom type</option>
@@ -343,7 +349,7 @@ export default function CreateCohortPage() {
                       id="customTypeLabel"
                       type="text"
                       value={formData.customTypeLabel}
-                      onChange={(e) => setFormData({ ...formData, customTypeLabel: e.target.value })}
+                      onChange={(e) => { const v = e.target.value; startTransition(() => setFormData({ ...formData, customTypeLabel: v })) }}
                       className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                       maxLength={80}
                       placeholder="e.g., 90-Day Reset"
@@ -362,7 +368,7 @@ export default function CreateCohortPage() {
                     <select
                       id="membershipDurationMonths"
                       value={formData.membershipDurationMonths}
-                      onChange={(e) => setFormData({ ...formData, membershipDurationMonths: e.target.value })}
+                      onChange={(e) => { const v = e.target.value; startTransition(() => setFormData({ ...formData, membershipDurationMonths: v })) }}
                       className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     >
                       <option value="6">6-month membership</option>
@@ -377,9 +383,12 @@ export default function CreateCohortPage() {
                     <select
                       id="challengeDurationWeeks"
                       value={String(formData.durationWeeks)}
-                      onChange={(e) =>
-                        setFormData({ ...formData, durationWeeks: parseInt(e.target.value, 10) || 6 })
-                      }
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value, 10) || 6;
+                        startTransition(() =>
+                          setFormData({ ...formData, durationWeeks: v })
+                        )
+                      }}
                       className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     >
                       <option value="6">6 weeks</option>
@@ -399,9 +408,12 @@ export default function CreateCohortPage() {
                       max="52"
                       required
                       value={formData.durationWeeks}
-                      onChange={(e) =>
-                        setFormData({ ...formData, durationWeeks: parseInt(e.target.value, 10) || 0 })
-                      }
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value, 10) || 0;
+                        startTransition(() =>
+                          setFormData({ ...formData, durationWeeks: v })
+                        )
+                      }}
                       className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                       placeholder="Enter number of weeks"
                     />
@@ -421,35 +433,35 @@ export default function CreateCohortPage() {
                 min={1}
                 max={365}
                 value={formData.checkInFrequencyDays}
-                onChange={(e) => setFormData({ ...formData, checkInFrequencyDays: e.target.value })}
+                onChange={(e) => { const v = e.target.value; startTransition(() => setFormData({ ...formData, checkInFrequencyDays: v })) }}
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 placeholder="Leave blank to use user or system defaults"
               />
               <div className="flex flex-wrap gap-2 mt-3">
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, checkInFrequencyDays: "7" })}
+                  onClick={() => startTransition(() => setFormData({ ...formData, checkInFrequencyDays: "7" }))}
                   className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
                 >
                   Weekly (7)
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, checkInFrequencyDays: "14" })}
+                  onClick={() => startTransition(() => setFormData({ ...formData, checkInFrequencyDays: "14" }))}
                   className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
                 >
                   Bi-weekly (14)
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, checkInFrequencyDays: "30" })}
+                  onClick={() => startTransition(() => setFormData({ ...formData, checkInFrequencyDays: "30" }))}
                   className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
                 >
                   Monthly (30)
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, checkInFrequencyDays: "" })}
+                  onClick={() => startTransition(() => setFormData({ ...formData, checkInFrequencyDays: "" }))}
                   className="px-3 py-1 text-xs rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
                 >
                   Use defaults
@@ -466,7 +478,7 @@ export default function CreateCohortPage() {
                 <select
                   id="ownerCoachId"
                   value={formData.ownerCoachId}
-                  onChange={(e) => setFormData({ ...formData, ownerCoachId: e.target.value })}
+                  onChange={(e) => { const v = e.target.value; startTransition(() => setFormData({ ...formData, ownerCoachId: v })) }}
                   className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 >
                   <option value="">
@@ -519,7 +531,7 @@ export default function CreateCohortPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setFormData({ ...formData, coCoaches: [...formData.coCoaches, coach.email] })
+                              startTransition(() => setFormData({ ...formData, coCoaches: [...formData.coCoaches, coach.email] }))
                               setCoachSearch("")
                             }}
                             className="text-xs font-medium text-blue-700 hover:text-blue-900"
@@ -544,10 +556,12 @@ export default function CreateCohortPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          setFormData({
-                            ...formData,
-                            coCoaches: formData.coCoaches.filter((_, i) => i !== idx),
-                          })
+                          startTransition(() =>
+                            setFormData({
+                              ...formData,
+                              coCoaches: formData.coCoaches.filter((_, i) => i !== idx),
+                            })
+                          )
                         }}
                         className="text-red-600 hover:text-red-800 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity"
                       >
@@ -572,10 +586,12 @@ export default function CreateCohortPage() {
                     const input = document.getElementById("coCoachEmail") as HTMLInputElement
                     const email = input?.value.trim()
                     if (email && !formData.coCoaches.includes(email)) {
-                      setFormData({
-                        ...formData,
-                        coCoaches: [...formData.coCoaches, email],
-                      })
+                      startTransition(() =>
+                        setFormData({
+                          ...formData,
+                          coCoaches: [...formData.coCoaches, email],
+                        })
+                      )
                       if (input) input.value = ""
                     }
                   }}
@@ -627,12 +643,15 @@ export default function CreateCohortPage() {
                       type="checkbox"
                       checked={formData.checkInConfig.enabledPrompts.includes(prompt.value)}
                       onChange={(e) => {
-                        const prompts = e.target.checked
-                          ? [...formData.checkInConfig.enabledPrompts, prompt.value]
-                          : formData.checkInConfig.enabledPrompts.filter((p) => p !== prompt.value)
-                        setFormData({
-                          ...formData,
-                          checkInConfig: { ...formData.checkInConfig, enabledPrompts: prompts },
+                        const checked = e.target.checked;
+                        startTransition(() => {
+                          const prompts = checked
+                            ? [...formData.checkInConfig.enabledPrompts, prompt.value]
+                            : formData.checkInConfig.enabledPrompts.filter((p) => p !== prompt.value)
+                          setFormData({
+                            ...formData,
+                            checkInConfig: { ...formData.checkInConfig, enabledPrompts: prompts },
+                          })
                         })
                       }}
                       className="mr-2"
@@ -649,12 +668,15 @@ export default function CreateCohortPage() {
               <input
                 type="text"
                 value={formData.checkInConfig.customPrompt1}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    checkInConfig: { ...formData.checkInConfig, customPrompt1: e.target.value },
-                  })
-                }
+                onChange={(e) => {
+                  const v = e.target.value;
+                  startTransition(() =>
+                    setFormData({
+                      ...formData,
+                      checkInConfig: { ...formData.checkInConfig, customPrompt1: v },
+                    })
+                  )
+                }}
                 className="w-full px-2 py-1 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs mb-2"
                 placeholder="e.g., How was energy?"
                 maxLength={255}
@@ -662,15 +684,18 @@ export default function CreateCohortPage() {
               {formData.checkInConfig.customPrompt1 && (
                 <select
                   value={formData.checkInConfig.customPrompt1Type}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      checkInConfig: {
-                        ...formData.checkInConfig,
-                        customPrompt1Type: e.target.value as "scale" | "text" | "number" | "",
-                      },
-                    })
-                  }
+                  onChange={(e) => {
+                    const v = e.target.value as "scale" | "text" | "number" | "";
+                    startTransition(() =>
+                      setFormData({
+                        ...formData,
+                        checkInConfig: {
+                          ...formData.checkInConfig,
+                          customPrompt1Type: v,
+                        },
+                      })
+                    )
+                  }}
                   className="w-full px-2 py-1 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
                 >
                   <option value="">Type...</option>

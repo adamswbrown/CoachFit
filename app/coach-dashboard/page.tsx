@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, useMemo, useCallback, startTransition, Suspense } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -308,6 +308,88 @@ function CoachDashboardContent() {
     })
   }
 
+  const isOneDayBehind = useCallback((lastCheckInDate?: string | null) => {
+    if (!lastCheckInDate) return true
+    const lastCheckIn = new Date(lastCheckInDate)
+    const today = new Date()
+    lastCheckIn.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
+    return lastCheckIn < today
+  }, [])
+
+  // Separate clients by status and sort active clients by cohort
+  const activeClients = useMemo(
+    () =>
+      (data?.clients.filter(c => c.status === "active") || [])
+        .sort((a, b) => {
+          const cohortA = a.cohorts[0] || ""
+          const cohortB = b.cohorts[0] || ""
+          return cohortA.localeCompare(cohortB)
+        }),
+    [data?.clients]
+  )
+
+  const unassignedClients = useMemo(
+    () => data?.clients.filter(c => c.status === "unassigned") || [],
+    [data?.clients]
+  )
+
+  const invitedClients = useMemo(
+    () => data?.clients.filter(c => c.status === "invited") || [],
+    [data?.clients]
+  )
+
+  // Apply filter based on sidebar selection, then text search
+  const filteredClients = useMemo(() => {
+    let base: Client[]
+    switch (currentFilter) {
+      case "all":
+        base = data?.clients || []
+        break
+      case "active":
+      case "connected":
+        base = activeClients
+        break
+      case "pending":
+        base = invitedClients
+        break
+      case "unassigned":
+        base = unassignedClients
+        break
+      case "invited":
+        base = invitedClients
+        break
+      case "needs-attention":
+        base = activeClients.filter((client) => {
+          const adherenceRate = client.adherenceRate ?? 0
+          const checkInCount = client.checkInCount ?? 0
+          const expected = client.expectedCheckIns ?? 7
+          const minimumExpected = Math.max(1, expected - 1)
+          return adherenceRate < 0.6 || checkInCount < minimumExpected || isOneDayBehind(client.lastCheckInDate)
+        })
+        break
+      case "offline":
+        // Offline = active clients who haven't checked in recently
+        base = activeClients.filter((client) => {
+          if (!client.lastCheckInDate) return true
+          const lastCheckIn = new Date(client.lastCheckInDate)
+          const windowDays = client.checkInWindowDays ?? 7
+          const windowStart = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000)
+          return lastCheckIn < windowStart
+        })
+        break
+      default:
+        base = data?.clients || []
+    }
+
+    if (!searchQuery) return base
+    const query = searchQuery.toLowerCase()
+    return base.filter((client) =>
+      client.email.toLowerCase().includes(query) ||
+      client.name?.toLowerCase().includes(query)
+    )
+  }, [data?.clients, currentFilter, searchQuery, activeClients, invitedClients, unassignedClients, isOneDayBehind])
+
   if (status === "loading" || loading) {
     return (
       <CoachLayout>
@@ -319,72 +401,6 @@ function CoachDashboardContent() {
   if (!session) {
     return null
   }
-
-  // Separate clients by status and sort active clients by cohort
-  const activeClients = (data?.clients.filter(c => c.status === "active") || [])
-    .sort((a, b) => {
-      const cohortA = a.cohorts[0] || ""
-      const cohortB = b.cohorts[0] || ""
-      return cohortA.localeCompare(cohortB)
-    })
-  
-  const unassignedClients = data?.clients.filter(c => c.status === "unassigned") || []
-  const invitedClients = data?.clients.filter(c => c.status === "invited") || []
-
-  const isOneDayBehind = (lastCheckInDate?: string | null) => {
-    if (!lastCheckInDate) return true
-    const lastCheckIn = new Date(lastCheckInDate)
-    const today = new Date()
-    lastCheckIn.setHours(0, 0, 0, 0)
-    today.setHours(0, 0, 0, 0)
-    return lastCheckIn < today
-  }
-
-  // Apply filter based on sidebar selection
-  const getFilteredClients = () => {
-    switch (currentFilter) {
-      case "all":
-        return data?.clients || []
-      case "active":
-      case "connected":
-        return activeClients
-      case "pending":
-        return invitedClients
-      case "unassigned":
-        return unassignedClients
-      case "invited":
-        return invitedClients
-      case "needs-attention":
-        return activeClients.filter((client) => {
-          const adherenceRate = client.adherenceRate ?? 0
-          const checkInCount = client.checkInCount ?? 0
-          const expected = client.expectedCheckIns ?? 7
-          const minimumExpected = Math.max(1, expected - 1)
-          return adherenceRate < 0.6 || checkInCount < minimumExpected || isOneDayBehind(client.lastCheckInDate)
-        })
-      case "offline":
-        // Offline = active clients who haven't checked in recently
-        return activeClients.filter((client) => {
-          if (!client.lastCheckInDate) return true
-          const lastCheckIn = new Date(client.lastCheckInDate)
-          const windowDays = client.checkInWindowDays ?? 7
-          const windowStart = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000)
-          return lastCheckIn < windowStart
-        })
-      default:
-        return data?.clients || []
-    }
-  }
-
-  // Apply status filter first, then text search
-  const filteredClients = getFilteredClients().filter((client) => {
-    if (!searchQuery) return true
-    const query = searchQuery.toLowerCase()
-    return (
-      client.email.toLowerCase().includes(query) ||
-      client.name?.toLowerCase().includes(query)
-    )
-  })
 
   return (
     <CoachLayout>
@@ -763,7 +779,12 @@ function CoachDashboardContent() {
                     type="text"
                     placeholder="Search clients by name or email..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      startTransition(() => {
+                        setSearchQuery(value)
+                      })
+                    }}
                     className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500"
                   />
                 </div>

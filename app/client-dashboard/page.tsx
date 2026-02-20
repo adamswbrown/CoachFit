@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState, useEffect, useMemo, useCallback, startTransition } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -333,11 +333,6 @@ export default function ClientDashboard() {
     }
   }
 
-  const isQuestionnaireDay = (dateValue?: string) => {
-    const target = dateValue ? new Date(`${dateValue}T00:00:00`) : new Date()
-    return target.getDay() === 0
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
@@ -463,32 +458,56 @@ export default function ClientDashboard() {
   // Get user's first name for greeting
   const firstName = session?.user?.name?.split(" ")[0] || "there"
   
-  // Calculate quick stats from entries (handle null values)
-  const latestEntry = entries[0]
-  const weekEntries = entries.filter((e) => {
-    const entryDate = new Date(e.date)
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    return entryDate >= weekAgo
-  })
-  const stepsWithValues = weekEntries
-    .filter((e) => e.steps !== null)
-    .map((e) => e.steps!)
-  const avgStepsThisWeek =
-    stepsWithValues.length > 0
-      ? Math.round(
-          stepsWithValues.reduce((sum, s) => sum + s, 0) / stepsWithValues.length
-        )
-      : 0
-  const totalEntriesThisWeek = weekEntries.length
+  // Calculate quick stats from entries (memoized to avoid recalculating on every keystroke)
+  const { latestEntry, weekEntries, avgStepsThisWeek, totalEntriesThisWeek } = useMemo(() => {
+    const latest = entries[0]
+    const week = entries.filter((e) => {
+      const entryDate = new Date(e.date)
+      const weekAgo = new Date()
+      weekAgo.setDate(weekAgo.getDate() - 7)
+      return entryDate >= weekAgo
+    })
+    const stepsWithValues = week
+      .filter((e) => e.steps !== null)
+      .map((e) => e.steps!)
+    const avgSteps =
+      stepsWithValues.length > 0
+        ? Math.round(
+            stepsWithValues.reduce((sum, s) => sum + s, 0) / stepsWithValues.length
+          )
+        : 0
+    return { latestEntry: latest, weekEntries: week, avgStepsThisWeek: avgSteps, totalEntriesThisWeek: week.length }
+  }, [entries])
 
-  // Get greeting based on time of day
-  const getGreeting = () => {
+  // Get greeting based on time of day (memoized)
+  const greeting = useMemo(() => {
     const hour = new Date().getHours()
     if (hour < 12) return "Good morning"
     if (hour < 17) return "Good afternoon"
     return "Good evening"
-  }
+  }, [])
+
+  // Memoize isQuestionnaireDay to avoid recreating on every render
+  const isQuestionnaireDay = useCallback((dateValue?: string) => {
+    const target = dateValue ? new Date(`${dateValue}T00:00:00`) : new Date()
+    return target.getDay() === 0
+  }, [])
+
+  // Memoize submit button disabled state
+  const isSubmitDisabled = useMemo(() => {
+    return (
+      submitting ||
+      (hasCoach === false && !(entryMode === "edit" && existingEntry)) ||
+      (entryMode === "add" && existingEntry !== null) ||
+      (entryMode === "edit" && !existingEntry) ||
+      !(
+        formData.weightLbs.toString().trim() !== "" &&
+        (isQuestionnaireDay(formData.date) || formData.steps.toString().trim() !== "") &&
+        (isQuestionnaireDay(formData.date) || formData.calories.toString().trim() !== "") &&
+        formData.perceivedStress.toString().trim() !== ""
+      )
+    )
+  }, [submitting, hasCoach, entryMode, existingEntry, formData, isQuestionnaireDay])
 
   if (status === "loading" || loading || activeRole === null) {
     return (
@@ -551,7 +570,7 @@ export default function ClientDashboard() {
         <div className="mb-6 flex flex-col sm:flex-row items-start justify-between gap-3">
           <div className="flex-1">
             <h1 className="text-xl sm:text-2xl font-semibold text-neutral-900 mb-1">
-              {getGreeting()}, {firstName}
+              {greeting}, {firstName}
             </h1>
             <p className="text-sm text-neutral-600">
               {hasCoach === false 
@@ -936,7 +955,7 @@ export default function ClientDashboard() {
                         placeholder="0.0"
                         value={formData.weightLbs}
                         onChange={(e) =>
-                          setFormData({ ...formData, weightLbs: e.target.value })
+                          startTransition(() => setFormData({ ...formData, weightLbs: e.target.value }))
                         }
                         required
                         disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
@@ -959,7 +978,7 @@ export default function ClientDashboard() {
                           placeholder="0"
                           value={formData.steps}
                           onChange={(e) =>
-                            setFormData({ ...formData, steps: e.target.value })
+                            startTransition(() => setFormData({ ...formData, steps: e.target.value }))
                           }
                           required={!isQuestionnaireDay(formData.date)}
                           disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
@@ -983,7 +1002,7 @@ export default function ClientDashboard() {
                           placeholder="0"
                           value={formData.calories}
                           onChange={(e) =>
-                            setFormData({ ...formData, calories: e.target.value })
+                            startTransition(() => setFormData({ ...formData, calories: e.target.value }))
                           }
                           required={!isQuestionnaireDay(formData.date)}
                           disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
@@ -1007,7 +1026,7 @@ export default function ClientDashboard() {
                       max="10"
                       value={formData.perceivedStress || "5"}
                       onChange={(e) =>
-                        setFormData({ ...formData, perceivedStress: e.target.value })
+                        startTransition(() => setFormData({ ...formData, perceivedStress: e.target.value }))
                       }
                       required
                       disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
@@ -1036,7 +1055,7 @@ export default function ClientDashboard() {
                       placeholder="Any additional notes for your coach..."
                       value={formData.notes}
                       onChange={(e) =>
-                        setFormData({ ...formData, notes: e.target.value })
+                        startTransition(() => setFormData({ ...formData, notes: e.target.value }))
                       }
                       disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                       className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed resize-none"
@@ -1062,7 +1081,7 @@ export default function ClientDashboard() {
                             max="10"
                             value={formData.perceivedStress || "5"}
                             onChange={(e) => {
-                              setFormData({ ...formData, perceivedStress: e.target.value })
+                              startTransition(() => setFormData({ ...formData, perceivedStress: e.target.value }))
                             }}
                             disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                             className="flex-1 h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
@@ -1085,7 +1104,7 @@ export default function ClientDashboard() {
                         placeholder={`${checkInConfig.customPrompt1}...`}
                         value={formData.notes}
                         onChange={(e) =>
-                          setFormData({ ...formData, notes: e.target.value })
+                          startTransition(() => setFormData({ ...formData, notes: e.target.value }))
                         }
                         disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                         className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed resize-none"
@@ -1097,7 +1116,7 @@ export default function ClientDashboard() {
                         placeholder="Enter a number..."
                         value={formData.steps}
                         onChange={(e) =>
-                          setFormData({ ...formData, steps: e.target.value })
+                          startTransition(() => setFormData({ ...formData, steps: e.target.value }))
                         }
                         disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
                         className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
@@ -1122,18 +1141,7 @@ export default function ClientDashboard() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={
-                    submitting ||
-                    (hasCoach === false && !(entryMode === "edit" && existingEntry)) ||
-                    (entryMode === "add" && existingEntry !== null) ||
-                    (entryMode === "edit" && !existingEntry) ||
-                    !(
-                      formData.weightLbs.toString().trim() !== "" &&
-                      (isQuestionnaireDay(formData.date) || formData.steps.toString().trim() !== "") &&
-                      (isQuestionnaireDay(formData.date) || formData.calories.toString().trim() !== "") &&
-                      formData.perceivedStress.toString().trim() !== ""
-                    )
-                  }
+                  disabled={isSubmitDisabled}
                   className="w-full bg-neutral-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-neutral-800 focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? (

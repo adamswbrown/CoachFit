@@ -2,7 +2,7 @@
 
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState, useCallback, Suspense } from "react"
+import { useEffect, useState, useCallback, useMemo, startTransition, Suspense } from "react"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 import Image from "next/image"
@@ -32,13 +32,11 @@ function LoginPageContent() {
     }
   }, [session, router])
 
-  // Check for invite query parameter (persists once set)
+  // Handle invite acknowledgment and error params from URL
   useEffect(() => {
     const invitedParam = searchParams.get("invited")
     setShowInviteAcknowledgment(invitedParam === "1")
-  }, [searchParams])
 
-  useEffect(() => {
     const errorParam = searchParams.get("error")
     const errorDescription = searchParams.get("error_description")
 
@@ -55,7 +53,7 @@ function LoginPageContent() {
     }
   }, [searchParams])
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleEmailLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
@@ -78,7 +76,7 @@ function LoginPageContent() {
     } finally {
       setSubmitting(false)
     }
-  }
+  }, [email, password, router])
 
   const handleGoogleSignIn = useCallback(() => {
     signIn("google", { callbackUrl: "/dashboard" })
@@ -163,7 +161,7 @@ function LoginPageContent() {
                 type="email"
                 placeholder="Email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => startTransition(() => setEmail(e.target.value))}
                 required
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               />
@@ -173,7 +171,7 @@ function LoginPageContent() {
                 type="password"
                 placeholder="Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => startTransition(() => setPassword(e.target.value))}
                 required
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               />
