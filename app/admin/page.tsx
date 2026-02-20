@@ -60,6 +60,7 @@ export default function AdminPage() {
   const [assigning, setAssigning] = useState<Record<string, boolean>>({})
   const [selectedCoaches, setSelectedCoaches] = useState<Record<string, string>>({})
   const [updatingRoles, setUpdatingRoles] = useState<Record<string, boolean>>({})
+  const [deletingUsers, setDeletingUsers] = useState<Record<string, boolean>>({})
   const [showCreateCoach, setShowCreateCoach] = useState(false)
   const [creatingCoach, setCreatingCoach] = useState(false)
   const [newCoachData, setNewCoachData] = useState({ email: "", name: "", password: "" })
@@ -88,7 +89,7 @@ export default function AdminPage() {
     if (session?.user && isAdmin(session.user)) {
       loadAllData()
     }
-  }, [session])
+  }, [session?.user?.id])
 
   const loadAllData = async () => {
     setLoading(true)
@@ -269,6 +270,53 @@ export default function AdminPage() {
       setError("An error occurred. Please try again.")
     } finally {
       setResettingPassword(false)
+    }
+  }
+
+  const isSessionUser = (user: Pick<User, "id" | "email">) => {
+    const sessionId = session?.user?.id
+    const sessionEmail = session?.user?.email?.toLowerCase()
+
+    if (sessionId && user.id === sessionId) return true
+    if (sessionEmail && user.email.toLowerCase() === sessionEmail) return true
+
+    return false
+  }
+
+  const handleDeleteUser = async (user: User) => {
+    if (isSessionUser(user)) {
+      setError("You cannot delete your own account.")
+      return
+    }
+
+    const label = user.name?.trim() || user.email
+    const confirmed = window.confirm(
+      `Delete user "${label}"?\n\nThis permanently removes the account and related data.`
+    )
+    if (!confirmed) {
+      return
+    }
+
+    setDeletingUsers((prev) => ({ ...prev, [user.id]: true }))
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: "DELETE",
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setSuccess(data.message || "User deleted successfully")
+        await loadAllData()
+      } else {
+        setError(data.error || "Failed to delete user")
+      }
+    } catch (err) {
+      setError("An error occurred while deleting the user.")
+    } finally {
+      setDeletingUsers((prev) => ({ ...prev, [user.id]: false }))
     }
   }
 
@@ -457,7 +505,7 @@ export default function AdminPage() {
                     {filteredUsers.map((user) => {
                       const hasCoach = user.roles.includes(Role.COACH)
                       const hasAdmin = user.roles.includes(Role.ADMIN)
-                      const isCurrentUser = user.id === session.user.id
+                      const isCurrentUser = isSessionUser(user)
 
                       return (
                         <tr key={user.id} className="border-b border-neutral-100 hover:bg-neutral-50">
@@ -619,6 +667,18 @@ export default function AdminPage() {
                                   🔑
                                 </button>
                               )}
+                              {isCurrentUser ? (
+                                <span className="text-xs text-neutral-400">Current user</span>
+                              ) : (
+                                <button
+                                  onClick={() => handleDeleteUser(user)}
+                                  disabled={deletingUsers[user.id]}
+                                  className="px-2 py-1 text-xs rounded bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50"
+                                  title="Delete user"
+                                >
+                                  {deletingUsers[user.id] ? "..." : "Delete"}
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -771,7 +831,7 @@ export default function AdminPage() {
                   </thead>
                   <tbody>
                     {adminUsers.map((admin) => {
-                      const isCurrentUser = admin.id === session.user.id
+                      const isCurrentUser = isSessionUser(admin)
                       return (
                       <tr key={admin.id} className="border-b border-neutral-100 hover:bg-neutral-50">
                         <td className="p-2.5">
@@ -799,7 +859,7 @@ export default function AdminPage() {
                           {isCurrentUser ? (
                             <span className="text-xs text-neutral-400">Current user</span>
                           ) : resetPasswordUserId === admin.id ? (
-                            <div className="flex gap-1 items-center">
+                            <div className="flex gap-1 items-center flex-wrap">
                               <input
                                 type="password"
                                 value={resetPassword}
@@ -823,14 +883,30 @@ export default function AdminPage() {
                               >
                                 Cancel
                               </button>
+                              <button
+                                onClick={() => handleDeleteUser(admin)}
+                                disabled={deletingUsers[admin.id]}
+                                className="px-2 py-1 text-xs rounded bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50"
+                              >
+                                {deletingUsers[admin.id] ? "..." : "Delete"}
+                              </button>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => setResetPasswordUserId(admin.id)}
-                              className="px-2 py-1 text-xs bg-neutral-100 text-neutral-700 rounded hover:bg-neutral-200"
-                            >
-                              Reset Password
-                            </button>
+                            <div className="flex gap-1 items-center">
+                              <button
+                                onClick={() => setResetPasswordUserId(admin.id)}
+                                className="px-2 py-1 text-xs bg-neutral-100 text-neutral-700 rounded hover:bg-neutral-200"
+                              >
+                                Reset Password
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUser(admin)}
+                                disabled={deletingUsers[admin.id]}
+                                className="px-2 py-1 text-xs rounded bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50"
+                              >
+                                {deletingUsers[admin.id] ? "..." : "Delete"}
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>

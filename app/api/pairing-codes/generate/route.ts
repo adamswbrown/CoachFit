@@ -133,6 +133,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       codes: activeCodes.map(code => ({
         code: code.code,
+        client_id: code.clientId,
         expires_at: code.expiresAt.toISOString(),
         created_at: code.createdAt.toISOString(),
       })),

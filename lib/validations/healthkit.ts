@@ -98,8 +98,8 @@ export type SleepRecordItem = z.infer<typeof sleepRecordSchema>
 export const pairingCodeSchema = z.object({
   code: z
     .string()
-    .length(6, "Pairing code must be 6 characters")
-    .regex(/^[A-Z0-9]+$/i, "Pairing code must be alphanumeric"),
+    .length(8, "Pairing code must be 8 characters")
+    .regex(/^[A-HJ-NP-Z2-9]+$/i, "Pairing code must contain only valid pairing characters"),
 })
 
 export type PairingCodeInput = z.infer<typeof pairingCodeSchema>

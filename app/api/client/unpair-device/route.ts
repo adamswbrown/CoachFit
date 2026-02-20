@@ -21,26 +21,29 @@ export async function POST() {
       )
     }
 
-    // Find the most recent paired code for this user
-    const pairingCode = await db.pairingCode.findFirst({
+    const pairedCodeCount = await db.pairingCode.count({
       where: {
         clientId: session.user.id,
         usedAt: { not: null },
       },
-      orderBy: { usedAt: "desc" },
     })
 
-    if (!pairingCode) {
+    if (pairedCodeCount === 0) {
       return NextResponse.json(
         { error: "No paired device found" },
         { status: 404 }
       )
     }
 
-    // Do not make the code reusable; simply expire it to prevent further ingestion with this token
-    await db.pairingCode.update({
-      where: { id: pairingCode.id },
+    // Revoke all previously paired tokens for this client.
+    // Setting usedAt to null ensures ingest auth can no longer validate them.
+    await db.pairingCode.updateMany({
+      where: {
+        clientId: session.user.id,
+        usedAt: { not: null },
+      },
       data: {
+        usedAt: null,
         expiresAt: new Date(),
       },
     })

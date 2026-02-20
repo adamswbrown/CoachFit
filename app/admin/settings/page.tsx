@@ -115,13 +115,13 @@ const TECHNICAL_CONSTANTS: TechnicalConstant[] = [
   {
     category: "Authentication & Security",
     name: "Password Hash Rounds",
-    value: "10",
+    value: "12",
     description: "Bcrypt hashing iterations (security vs speed tradeoff)",
   },
   {
     category: "Pairing & Devices",
     name: "Pairing Code Length",
-    value: "6 characters",
+    value: "8 characters",
     description: "Length of device pairing codes",
   },
   {
@@ -133,7 +133,7 @@ const TECHNICAL_CONSTANTS: TechnicalConstant[] = [
   {
     category: "Pairing & Devices",
     name: "Pairing Code Expiry",
-    value: "24 hours",
+    value: "15 minutes (unused codes)",
     description: "How long a pairing code remains valid",
   },
   {

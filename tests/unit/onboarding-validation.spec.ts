@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { onboardingStep2Schema, onboardingStep9Schema, onboardingSubmitSchema, onboardingPlanReviewSchema } from '../lib/validations'
+import { onboardingStep2Schema, onboardingStep9Schema, onboardingSubmitSchema, onboardingPlanReviewSchema } from '../../lib/validations'
 
 // Onboarding Step 2: Sex enum
 
@@ -48,7 +48,8 @@ describe('Onboarding Plan Review Schema', () => {
   it('accepts only dailyCaloriesKcal and dailyStepsTarget', () => {
     expect(() => onboardingPlanReviewSchema.parse({ dailyCaloriesKcal: 2000, dailyStepsTarget: 10000 })).not.toThrow()
   })
-  it('rejects extra fields', () => {
-    expect(() => onboardingPlanReviewSchema.parse({ dailyCaloriesKcal: 2000, proteinGrams: 100 })).toThrow()
+  it('strips extra fields', () => {
+    const parsed = onboardingPlanReviewSchema.parse({ dailyCaloriesKcal: 2000, proteinGrams: 100 } as any)
+    expect(parsed).toEqual({ dailyCaloriesKcal: 2000 })
   })
 })

@@ -4,6 +4,8 @@ import { test, expect } from '@playwright/test'
 // and that the admin dashboard allows creation of admin-only users.
 
 test.describe('Admin-only user creation', () => {
+  test.skip(!process.env.E2E_LOCAL_AUTH, "Set E2E_LOCAL_AUTH=1 to run local auth-dependent tests")
+
   test('Admin can create an admin-only user (no coach/client roles)', async ({ page }) => {
     // Login as an admin
     await page.goto('http://localhost:3000/login')

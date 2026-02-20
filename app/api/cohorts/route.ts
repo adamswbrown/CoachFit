@@ -129,9 +129,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Determine the coach who will own this cohort
-    // If admin specifies ownerCoachId, use that; otherwise use current user
-    const coachId = validated.ownerCoachId || session.user.id
+    const isAdminUser = session.user.roles.includes(Role.ADMIN)
+
+    // Only admins may set ownerCoachId.
+    if (validated.ownerCoachId && !isAdminUser) {
+      return NextResponse.json(
+        { error: "Forbidden: only admins can assign cohort ownership" },
+        { status: 403 }
+      )
+    }
+
+    // Determine the coach who will own this cohort.
+    const coachId = isAdminUser ? validated.ownerCoachId || session.user.id : session.user.id
 
     // If admin specified a different coach, verify the coach exists
     if (validated.ownerCoachId && validated.ownerCoachId !== session.user.id) {

@@ -8,7 +8,8 @@
     "dev:local": "bash scripts/dev-local.sh",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "npm run typecheck",
+    "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -33,7 +34,8 @@
     "email:setup-audience": "npx tsx scripts/setup-broadcast-audience.ts",
     "seed:questionnaire-templates": "npx tsx scripts/seed-questionnaire-templates.ts",
     "questionnaire:setup-email": "npx tsx scripts/setup-questionnaire-email-template.ts",
-    "pwa:generate-icons": "npx tsx scripts/generate-pwa-icons.ts"
+    "pwa:generate-icons": "npx tsx scripts/generate-pwa-icons.ts",
+    "test:e2e": "playwright test"
   },
   "keywords": [],
   "author": "",

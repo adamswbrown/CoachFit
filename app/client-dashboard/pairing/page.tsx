@@ -65,14 +65,15 @@ export default function ClientPairingPage() {
 
   const handlePairingCode = async (e: React.FormEvent) => {
     e.preventDefault()
+    const normalizedPairingCode = pairingCode.trim().toUpperCase()
     
-    if (!pairingCode.trim()) {
+    if (!normalizedPairingCode) {
       setError("Please enter a pairing code")
       return
     }
 
-    if (pairingCode.length !== 6 || !/^\d+$/.test(pairingCode)) {
-      setError("Pairing code must be 6 digits")
+    if (normalizedPairingCode.length !== 8 || !/^[A-HJ-NP-Z2-9]{8}$/.test(normalizedPairingCode)) {
+      setError("Pairing code must be 8 characters (letters and numbers)")
       return
     }
 
@@ -84,7 +85,7 @@ export default function ClientPairingPage() {
       const res = await fetch("/api/client/pair-device", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pairingCode }),
+        body: JSON.stringify({ pairingCode: normalizedPairingCode }),
       })
 
       if (res.ok) {
@@ -251,15 +252,20 @@ export default function ClientPairingPage() {
                   <form onSubmit={handlePairingCode} className="space-y-4 pt-4 border-t border-neutral-200">
                     <div>
                       <label className="block text-sm font-medium text-neutral-900 mb-2">
-                        6-Digit Pairing Code
+                        8-Character Pairing Code
                       </label>
                       <input
                         type="text"
-                        inputMode="numeric"
-                        maxLength={6}
-                        placeholder="000000"
+                        inputMode="text"
+                        maxLength={8}
+                        autoCapitalize="characters"
+                        placeholder="ABCD2345"
                         value={pairingCode}
-                        onChange={(e) => setPairingCode(e.target.value.replace(/\D/g, ""))}
+                        onChange={(e) =>
+                          setPairingCode(
+                            e.target.value.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g, "")
+                          )
+                        }
                         className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-lg tracking-widest"
                       />
                       <p className="text-xs text-neutral-500 mt-2">
@@ -269,7 +275,7 @@ export default function ClientPairingPage() {
 
                     <button
                       type="submit"
-                      disabled={submitting || pairingCode.length !== 6}
+                      disabled={submitting || pairingCode.length !== 8}
                       className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {submitting ? "Pairing..." : "Pair Device"}
@@ -288,7 +294,7 @@ export default function ClientPairingPage() {
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-semibold">1</span>
                 <div>
                   <p className="font-medium text-neutral-900">Coach generates pairing code</p>
-                  <p className="text-sm text-neutral-600 mt-1">Your coach creates a 6-digit code at their pairing dashboard</p>
+                  <p className="text-sm text-neutral-600 mt-1">Your coach creates an 8-character code at their pairing dashboard</p>
                 </div>
               </li>
               <li className="flex gap-3">

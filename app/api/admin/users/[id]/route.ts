@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/permissions"
+import { Role } from "@/lib/types"
+import { logAuditAction } from "@/lib/audit-log"
 
 export async function GET(
   req: NextRequest,
@@ -143,6 +145,122 @@ export async function GET(
     return NextResponse.json(formattedUser, { status: 200 })
   } catch (error) {
     console.error("Error fetching user:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth()
+    const { id } = await params
+
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    if (!isAdmin(session.user)) {
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 })
+    }
+
+    const sessionEmail = session.user.email?.toLowerCase() ?? null
+
+    let actorId = session.user.id
+    if (!actorId && sessionEmail) {
+      const actor = await db.user.findUnique({
+        where: { email: sessionEmail },
+        select: { id: true },
+      })
+      actorId = actor?.id
+    }
+
+    if (!actorId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    if (id === actorId) {
+      return NextResponse.json(
+        { error: "You cannot delete your own account." },
+        { status: 400 }
+      )
+    }
+
+    const user = await db.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        roles: true,
+      },
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    if (sessionEmail && user.email.toLowerCase() === sessionEmail) {
+      return NextResponse.json(
+        { error: "You cannot delete your own account." },
+        { status: 400 }
+      )
+    }
+
+    const targetRoles = user.roles as Role[]
+    if (targetRoles.includes(Role.ADMIN)) {
+      const adminCount = await db.user.count({
+        where: {
+          roles: {
+            has: Role.ADMIN,
+          },
+        },
+      })
+
+      if (adminCount <= 1) {
+        return NextResponse.json(
+          { error: "Cannot delete the last admin account." },
+          { status: 400 }
+        )
+      }
+    }
+
+    await db.user.delete({
+      where: { id: user.id },
+    })
+
+    await logAuditAction({
+      actor: session.user,
+      actionType: "ADMIN_DELETE_USER",
+      targetType: "user",
+      targetId: user.id,
+      details: {
+        email: user.email,
+        name: user.name,
+        roles: user.roles,
+      },
+    })
+
+    return NextResponse.json(
+      { message: "User deleted successfully" },
+      { status: 200 }
+    )
+  } catch (error: any) {
+    if (error?.code === "P2003" || error?.code === "P2014") {
+      return NextResponse.json(
+        {
+          error:
+            "This user cannot be deleted because related records require reassignment first.",
+        },
+        { status: 409 }
+      )
+    }
+
+    console.error("Error deleting user:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

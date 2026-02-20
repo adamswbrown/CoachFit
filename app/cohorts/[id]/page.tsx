@@ -52,6 +52,7 @@ interface Client {
 }
 
 interface Invite {
+  id: string
   email: string
   createdAt: string
 }
@@ -80,6 +81,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [assigningClientId, setAssigningClientId] = useState<string | null>(null)
+  const [rescindingInviteId, setRescindingInviteId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({ email: "" })
   const [selectedClientId, setSelectedClientId] = useState<string>("")
@@ -783,6 +785,38 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
       }
     } catch (err) {
       setError("Unable to delete cohort. Please try again.")
+    }
+  }
+
+  const handleRescindInvite = async (invite: Invite) => {
+    if (!invite.id) {
+      setError("Invite details are missing. Please refresh and try again.")
+      return
+    }
+
+    const confirmed = window.confirm(`Rescind invite for ${invite.email}?`)
+    if (!confirmed) {
+      return
+    }
+
+    setRescindingInviteId(invite.id)
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/cohorts/${cohortId}/invites/${invite.id}`, {
+        method: "DELETE",
+      })
+
+      if (res.ok) {
+        setInvites((prev) => prev.filter((pendingInvite) => pendingInvite.id !== invite.id))
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || "Failed to rescind invite. Please try again.")
+      }
+    } catch (err) {
+      setError("Unable to rescind invite. Please check your connection and try again.")
+    } finally {
+      setRescindingInviteId(null)
     }
   }
 
@@ -1870,7 +1904,7 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
               <div className="space-y-2">
                 {invites.map((invite) => (
                   <div
-                    key={invite.email}
+                    key={invite.id}
                     className="block p-4 border rounded-lg bg-neutral-50 italic"
                   >
                     <div className="flex justify-between items-center">
@@ -1879,9 +1913,18 @@ export default function CohortPage({ params }: { params: Promise<{ id: string }>
                           {invite.email}
                         </p>
                       </div>
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-neutral-600">
-                        Pending
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-neutral-600">
+                          Pending
+                        </span>
+                        <button
+                          onClick={() => handleRescindInvite(invite)}
+                          disabled={rescindingInviteId === invite.id}
+                          className="text-xs font-medium text-red-600 hover:text-red-800 disabled:opacity-50"
+                        >
+                          {rescindingInviteId === invite.id ? "Rescinding..." : "Rescind"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

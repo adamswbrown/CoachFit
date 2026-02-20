@@ -11,12 +11,22 @@ interface PairingCode {
   code: string
   expires_at: string
   created_at: string
+  client_id?: string
+}
+
+interface CoachClient {
+  id: string
+  name?: string
+  email: string
+  status: string
 }
 
 export default function PairingPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [activeCodes, setActiveCodes] = useState<PairingCode[]>([])
+  const [clients, setClients] = useState<CoachClient[]>([])
+  const [selectedClientId, setSelectedClientId] = useState("")
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,7 +62,8 @@ export default function PairingPage() {
 
   useEffect(() => {
     if (session) {
-      fetchActiveCodes()
+      void Promise.all([fetchActiveCodes(), fetchClients()])
+        .finally(() => setLoading(false))
     }
   }, [session])
 
@@ -65,12 +76,39 @@ export default function PairingPage() {
       }
     } catch (err) {
       console.error("Error fetching pairing codes:", err)
-    } finally {
-      setLoading(false)
+    }
+  }
+
+  const fetchClients = async () => {
+    try {
+      const res = await fetch("/api/coach-dashboard/overview")
+      if (!res.ok) return
+
+      const data = await res.json()
+      const normalizedClients: CoachClient[] = (data.clients || [])
+        .filter((client: any) => typeof client?.id === "string")
+        .map((client: any) => ({
+          id: client.id,
+          name: client.name || undefined,
+          email: client.email,
+          status: client.status,
+        }))
+
+      setClients(normalizedClients)
+      if (!selectedClientId && normalizedClients.length > 0) {
+        setSelectedClientId(normalizedClients[0].id)
+      }
+    } catch (err) {
+      console.error("Error fetching clients for pairing:", err)
     }
   }
 
   const handleGenerateCode = async () => {
+    if (!selectedClientId) {
+      setError("Select a client before generating a pairing code.")
+      return
+    }
+
     setGenerating(true)
     setError(null)
     setSuccess(null)
@@ -79,6 +117,7 @@ export default function PairingPage() {
       const res = await fetch("/api/pairing-codes/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_id: selectedClientId }),
       })
 
       const data = await res.json()
@@ -120,6 +159,13 @@ export default function PairingPage() {
       return `${hours}h ${minutes}m remaining`
     }
     return `${minutes}m remaining`
+  }
+
+  const getClientLabel = (clientId?: string) => {
+    if (!clientId) return "Unknown client"
+    const client = clients.find((item) => item.id === clientId)
+    if (!client) return "Unknown client"
+    return client.name ? `${client.name} (${client.email})` : client.email
   }
 
   if (status === "loading" || loading) {
@@ -207,14 +253,14 @@ export default function PairingPage() {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
           <h2 className="text-lg font-semibold text-blue-900 mb-2">How Pairing Works</h2>
           <ol className="list-decimal list-inside space-y-2 text-blue-800 text-sm">
-            <li>Generate a 6-character pairing code below</li>
+            <li>Select a client and generate an 8-character pairing code below</li>
             <li>Share the code with your client</li>
             <li>Client enters the code in the iOS app (GymDashSync)</li>
             <li>Once paired, HealthKit data will automatically sync to their CoachFit account</li>
           </ol>
           <div className="mt-4 p-3 bg-blue-100 rounded-md">
             <p className="text-blue-900 text-sm">
-              <strong>Note:</strong> Pairing codes expire after 24 hours and can only be used once.
+              <strong>Note:</strong> Pairing codes expire after 15 minutes if unused and can only be used once.
             </p>
           </div>
         </div>
@@ -222,9 +268,30 @@ export default function PairingPage() {
         {/* Generate Button */}
         <div className="bg-white border border-neutral-200 rounded-lg p-6 mb-8">
           <h2 className="text-lg font-semibold text-neutral-900 mb-4">Generate New Pairing Code</h2>
+          <div className="mb-4">
+            <label htmlFor="pairing-client" className="block text-sm font-medium text-neutral-700 mb-2">
+              Client
+            </label>
+            <select
+              id="pairing-client"
+              value={selectedClientId}
+              onChange={(e) => setSelectedClientId(e.target.value)}
+              className="w-full max-w-xl px-3 py-2 border border-neutral-300 rounded-md bg-white text-sm"
+            >
+              {clients.length === 0 ? (
+                <option value="">No clients available</option>
+              ) : (
+                clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name ? `${client.name} (${client.email})` : client.email}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
           <button
             onClick={handleGenerateCode}
-            disabled={generating}
+            disabled={generating || !selectedClientId}
             className="bg-neutral-900 text-white px-6 py-3 rounded-md hover:bg-neutral-800 disabled:opacity-50 font-medium"
           >
             {generating ? "Generating..." : "Generate Pairing Code"}
@@ -250,8 +317,9 @@ export default function PairingPage() {
                     <div className="font-mono text-2xl font-bold text-neutral-900 tracking-wider">
                       {code.code}
                     </div>
-                    <div className="text-sm text-neutral-600">
-                      {formatExpirationTime(code.expires_at)}
+                    <div className="text-sm text-neutral-600 space-y-1">
+                      <div>{formatExpirationTime(code.expires_at)}</div>
+                      <div>{getClientLabel(code.client_id)}</div>
                     </div>
                   </div>
                   <button

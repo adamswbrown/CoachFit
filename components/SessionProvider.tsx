@@ -6,7 +6,9 @@ import { ErrorBoundary } from "./ErrorBoundary"
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
-      <NextAuthSessionProvider>{children}</NextAuthSessionProvider>
+      <NextAuthSessionProvider refetchOnWindowFocus={false}>
+        {children}
+      </NextAuthSessionProvider>
     </ErrorBoundary>
   )
 }

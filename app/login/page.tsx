@@ -16,8 +16,6 @@ function LoginPageContent() {
   const [password, setPassword] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [showInviteAcknowledgment, setShowInviteAcknowledgment] = useState(false)
-  const [hasInviteParam, setHasInviteParam] = useState(false)
-  const [checkingInvite, setCheckingInvite] = useState(false)
   const [showDebug, setShowDebug] = useState(false)
 
   // Capture all URL params for debugging
@@ -37,50 +35,8 @@ function LoginPageContent() {
   // Check for invite query parameter (persists once set)
   useEffect(() => {
     const invitedParam = searchParams.get("invited")
-    if (invitedParam === "1") {
-      setHasInviteParam(true)
-      setShowInviteAcknowledgment(true)
-    }
+    setShowInviteAcknowledgment(invitedParam === "1")
   }, [searchParams])
-
-  // Check for invite by email (debounced) - only if not already acknowledged via query param
-  useEffect(() => {
-    // If already acknowledged via query param, skip dynamic checking
-    if (hasInviteParam) {
-      return
-    }
-
-    if (!email || email.length < 3) {
-      setShowInviteAcknowledgment(false)
-      return
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      setShowInviteAcknowledgment(false)
-      return
-    }
-
-    const checkInviteTimeout = setTimeout(async () => {
-      setCheckingInvite(true)
-      try {
-        const response = await fetch(`/api/auth/check-invite?email=${encodeURIComponent(email)}`)
-        if (response.ok) {
-          const data = await response.json()
-          setShowInviteAcknowledgment(data.hasInvite)
-        }
-      } catch (err) {
-        // Silently fail - don't disrupt user experience
-        console.error("Error checking invite:", err)
-        setShowInviteAcknowledgment(false)
-      } finally {
-        setCheckingInvite(false)
-      }
-    }, 500) // 500ms debounce
-
-    return () => clearTimeout(checkInviteTimeout)
-  }, [email, hasInviteParam])
 
   useEffect(() => {
     const errorParam = searchParams.get("error")
