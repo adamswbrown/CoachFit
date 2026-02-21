@@ -421,7 +421,7 @@ export default function WeeklyReviewPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-50 p-4 sm:p-8 flex items-start sm:items-center justify-center overflow-y-auto">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-neutral-600">Loading weekly review...</p>

@@ -876,7 +876,7 @@ export default function ClientDashboard() {
                     setManualEditEntryId(null)
                     resetFormForDate(formData.date)
                   }}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`flex-1 sm:flex-none rounded-full px-4 py-2.5 sm:py-2 text-sm font-medium transition-colors ${
                     entryMode === "add"
                       ? "bg-neutral-900 text-white"
                       : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
@@ -895,7 +895,7 @@ export default function ClientDashboard() {
                       setManualEditEntryId(null)
                     }
                   }}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`flex-1 sm:flex-none rounded-full px-4 py-2.5 sm:py-2 text-sm font-medium transition-colors ${
                     entryMode === "edit"
                       ? "bg-neutral-900 text-white"
                       : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"

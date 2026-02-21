@@ -162,7 +162,7 @@ export default function SignupPage() {
           <img
             src="/coachfit-logo-login.png"
             alt="CoachFit Logo"
-            style={{ maxWidth: "100%", height: "auto", width: 320 }}
+            style={{ maxWidth: "min(100%, 320px)", height: "auto" }}
             width={400}
             height={130}
             loading="eager"

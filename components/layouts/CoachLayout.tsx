@@ -265,7 +265,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
 
                     {/* Clients Dropdown Menu */}
                     {clientsDropdownOpen && (
-                      <div className="mt-1 ml-9 mr-2 bg-white border border-neutral-200 rounded-md shadow-sm overflow-hidden">
+                      <div className="mt-1 ml-4 sm:ml-9 mr-1 sm:mr-2 bg-white border border-neutral-200 rounded-md shadow-sm overflow-hidden">
                         <div className="px-3 py-2 border-b border-neutral-100 flex items-center justify-between">
                           <span className="text-neutral-700 font-medium text-xs uppercase tracking-wide">Filters</span>
                           <item.icon size={14} className="text-neutral-400" />
@@ -321,7 +321,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
 
                     {/* Cohorts Dropdown Menu */}
                     {cohortsDropdownOpen && (
-                      <div className="mt-1 ml-9 mr-2 bg-white border border-neutral-200 rounded-md shadow-sm overflow-hidden">
+                      <div className="mt-1 ml-4 sm:ml-9 mr-1 sm:mr-2 bg-white border border-neutral-200 rounded-md shadow-sm overflow-hidden">
                         <div className="px-3 py-2 border-b border-neutral-100 flex items-center justify-between">
                           <span className="text-neutral-700 font-medium text-xs uppercase tracking-wide">Cohorts</span>
                           <item.icon size={14} className="text-neutral-400" />
