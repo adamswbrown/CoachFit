@@ -75,19 +75,7 @@ export default function ClientOnboarding() {
       const isOnboardingComplete = (session?.user as any)?.isOnboardingComplete ?? false
       if (isOnboardingComplete) {
         router.push("/client-dashboard")
-        return
       }
-      // Check if user was invited - redirect to the simpler invited onboarding
-      fetch("/api/onboarding/detect-state")
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data?.state?.accountOrigin === "coach-invited" || data?.state?.accountOrigin === "client-invited") {
-            router.push("/onboarding/client/invited")
-          }
-        })
-        .catch(() => {
-          // Ignore - stay on current page for self-signup users
-        })
     }
   }, [router, status])
 
