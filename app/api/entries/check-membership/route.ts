@@ -15,11 +15,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const membership = await db.cohortMembership.findFirst({
-      where: { userId: session.user.id },
-    })
+    const [membership, user] = await Promise.all([
+      db.cohortMembership.findFirst({
+        where: { userId: session.user.id },
+      }),
+      db.user.findUnique({
+        where: { id: session.user.id },
+        select: { invitedByCoachId: true },
+      }),
+    ])
 
-    return NextResponse.json({ hasMembership: !!membership })
+    // User has a coach if they're in a cohort OR were invited by a coach
+    const hasMembership = !!membership || !!user?.invitedByCoachId
+
+    return NextResponse.json({ hasMembership })
   } catch (error) {
     console.error("Error checking membership:", error)
     return NextResponse.json(

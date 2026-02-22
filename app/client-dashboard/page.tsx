@@ -577,7 +577,7 @@ export default function ClientDashboard() {
             </p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
-            {healthkitEnabled && (
+            {healthkitEnabled && hasCoach !== false && (
               <Link
                 href="/client-dashboard/pairing"
                 className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors text-center"
