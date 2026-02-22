@@ -130,7 +130,7 @@ export async function POST(
     const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/signup`
     const isTestUserEmail = invite.email.endsWith(".test.local")
 
-    await sendSystemEmail({
+    const emailResult = await sendSystemEmail({
       templateKey: EMAIL_TEMPLATE_KEYS.COHORT_INVITE,
       to: invite.email,
       variables: {
@@ -159,6 +159,20 @@ export async function POST(
       fallbackText: `You've been invited to CoachFit\n\n${coachName} has invited you to join the ${cohortName} cohort.\n\nSign up to get started: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
       isTestUser: isTestUserEmail,
     })
+
+    // Record email event for delivery tracking
+    if (emailResult.emailId) {
+      await db.emailEvent.create({
+        data: {
+          resendEmailId: emailResult.emailId,
+          to: invite.email,
+          subject: "You've been invited to CoachFit",
+          status: "sent",
+          occurredAt: new Date(),
+          cohortInviteId: invite.id,
+        },
+      }).catch((err: unknown) => console.error("Error recording email event:", err))
+    }
 
     await logAuditAction({
       actor: session.user,

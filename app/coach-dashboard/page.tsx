@@ -29,6 +29,7 @@ interface Client {
   inviteType?: "global" | "cohort"
   inviteCohortId?: string
   invitedAt?: string
+  latestEmailStatus?: string | null
   lastCheckInDate?: string | null
   checkInCount?: number
   adherenceRate?: number
@@ -621,6 +622,7 @@ function CoachDashboardContent() {
                         <th className="text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Email</th>
                         <th className="hidden sm:table-cell text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Cohort (if any)</th>
                         <th className="hidden sm:table-cell text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Date Added</th>
+                        <th className="hidden sm:table-cell text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Email Status</th>
                         <th className="text-left p-2 sm:p-3 font-semibold text-sm sm:text-base">Actions</th>
                       </tr>
                     </thead>
@@ -635,6 +637,28 @@ function CoachDashboardContent() {
                             </td>
                             <td className="hidden sm:table-cell p-2 sm:p-3 text-sm text-neutral-500">
                               {formatInviteDate(client.invitedAt)}
+                            </td>
+                            <td className="hidden sm:table-cell p-2 sm:p-3 text-sm">
+                              {(() => {
+                                const s = client.latestEmailStatus
+                                if (!s) return <span className="text-neutral-400">—</span>
+                                if (s === "delivered" || s === "opened" || s === "clicked") {
+                                  return <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 font-medium px-2 py-0.5 text-xs not-italic">&#10003; {s.charAt(0).toUpperCase() + s.slice(1)}</span>
+                                }
+                                if (s === "bounced" || s === "failed") {
+                                  return <span className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-700 font-medium px-2 py-0.5 text-xs not-italic">&#10007; {s.charAt(0).toUpperCase() + s.slice(1)}</span>
+                                }
+                                if (s === "complained") {
+                                  return <span className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-700 font-medium px-2 py-0.5 text-xs not-italic">&#9888; Spam</span>
+                                }
+                                if (s === "sent") {
+                                  return <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-700 font-medium px-2 py-0.5 text-xs not-italic">&#9679; Sent</span>
+                                }
+                                if (s === "delivery_delayed") {
+                                  return <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 font-medium px-2 py-0.5 text-xs not-italic">&#9201; Delayed</span>
+                                }
+                                return <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 text-neutral-600 font-medium px-2 py-0.5 text-xs not-italic">{s}</span>
+                              })()}
                             </td>
                             <td className="p-2 sm:p-3">
                               {client.inviteId ? (

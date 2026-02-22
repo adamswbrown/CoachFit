@@ -26,11 +26,12 @@ model Account {
 }
 
 model CoachInvite {
-  id        String   @id @default(uuid())
-  email     String
-  coachId   String
-  createdAt DateTime @default(now())
-  User      User     @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  id          String       @id @default(uuid())
+  email       String
+  coachId     String
+  createdAt   DateTime     @default(now())
+  User        User         @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  emailEvents EmailEvent[]
 
   @@unique([email, coachId])
   @@index([coachId])
@@ -38,26 +39,27 @@ model CoachInvite {
 }
 
 model Cohort {
-  id                        String                         @id @default(uuid())
-  name                      String
-  coachId                   String
-  createdAt                 DateTime                       @default(now())
-  type                      CohortType?
-  customTypeLabel           String?
-  customCohortTypeId        String?
-  cohortStartDate           DateTime?                      @db.Date // Week 1 start date for questionnaire tracking
-  durationConfig            String                         @default("six-week") // "six-week" or "custom"
-  durationWeeks             Int?                           // Weeks duration (6 for six-week, or custom value)
-  membershipDurationMonths  Int?                           // Ongoing membership duration in months (e.g., 6 or 12)
-  checkInFrequencyDays      Int?
-  coachMemberships          CoachCohortMembership[]
-  User                      User                           @relation(fields: [coachId], references: [id], onDelete: Cascade)
-  CheckInConfig             CohortCheckInConfig?
-  invites                   CohortInvite[]
-  memberships               CohortMembership[]
-  questionnaireBundle       QuestionnaireBundle?
+  id                           String                        @id @default(uuid())
+  name                         String
+  coachId                      String
+  createdAt                    DateTime                      @default(now())
+  type                         CohortType?
+  customTypeLabel              String?
+  customCohortTypeId           String?
+  cohortStartDate              DateTime?                     @db.Date // Week 1 start date for questionnaire tracking
+  durationConfig               String                        @default("six-week") // "six-week" or "custom"
+  durationWeeks                Int? // Weeks duration (6 for six-week, or custom value)
+  membershipDurationMonths     Int? // Ongoing membership duration in months (e.g., 6 or 12)
+  checkInFrequencyDays         Int?
+  coachMemberships             CoachCohortMembership[]
+  User                         User                          @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  CheckInConfig                CohortCheckInConfig?
+  invites                      CohortInvite[]
+  memberships                  CohortMembership[]
+  classTemplates               ClassTemplate[]
+  questionnaireBundle          QuestionnaireBundle?
   weeklyQuestionnaireResponses WeeklyQuestionnaireResponse[]
-  customCohortType          CustomCohortType?              @relation(fields: [customCohortTypeId], references: [id], onDelete: Restrict)
+  customCohortType             CustomCohortType?             @relation(fields: [customCohortTypeId], references: [id], onDelete: Restrict)
 
   @@unique([coachId, name])
   @@index([coachId])
@@ -77,11 +79,12 @@ model CoachCohortMembership {
 }
 
 model CohortInvite {
-  id        String   @id @default(uuid())
-  email     String
-  cohortId  String
-  createdAt DateTime @default(now())
-  Cohort    Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  id          String       @id @default(uuid())
+  email       String
+  cohortId    String
+  createdAt   DateTime     @default(now())
+  Cohort      Cohort       @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  emailEvents EmailEvent[]
 
   @@unique([email, cohortId])
   @@index([cohortId])
@@ -193,48 +196,59 @@ model Session {
 }
 
 model User {
-  id                     String                           @id @default(uuid())
-  email                  String                           @unique
-  originalEmail          String?                          // Preserved on soft delete for recovery
-  name                   String?
-  image                  String?
-  passwordHash           String?
-  passwordChangedAt      DateTime?                        // For session invalidation on password change
-  mustChangePassword     Boolean                          @default(false)
-  roles                  Role[]                           @default([CLIENT])
-  isTestUser             Boolean                          @default(false)
-  emailVerified          DateTime?
-  createdAt              DateTime                         @default(now())
-  invitedByCoachId       String?
-  onboardingComplete     Boolean                          @default(false)
-  gender                 String?
-  dateOfBirth            DateTime?                        @db.Date
-  activityLevel          String?
-  primaryGoal            String?
-  checkInFrequencyDays   Int?
-  Account                Account[]
-  AdminActions           AdminAction[]                    @relation("AdminActions")
-  CoachCohortMembership  CoachCohortMembership[]
-  CoachInvite            CoachInvite[]
-  ClientNotes            CoachNote[]                      @relation("ClientNotes")
-  CoachNotes             CoachNote[]                      @relation("CoachNotes")
-  ClientWeeklyResponses  WeeklyCoachResponse[]            @relation("ClientWeeklyResponses")
-  CoachWeeklyResponses   WeeklyCoachResponse[]            @relation("CoachWeeklyResponses")
-  Cohort                 Cohort[]
-  CohortMembership       CohortMembership[]
-  Entry                  Entry[]
-  ClientPairingCodes     PairingCode[]                    @relation("ClientPairingCodes")
-  CoachPairingCodes      PairingCode[]                    @relation("CoachPairingCodes")
-  Session                Session[]
-  SleepRecords           SleepRecord[]
-  User                   User?                            @relation("UserToUser", fields: [invitedByCoachId], references: [id])
-  other_User             User[]                           @relation("UserToUser")
-  UserConsent            UserConsent?
-  UserGoals              UserGoals?
-  UserPreference         UserPreference?
-  Workouts               Workout[]
+  id                           String                        @id @default(uuid())
+  email                        String                        @unique
+  originalEmail                String? // Preserved on soft delete for recovery
+  name                         String?
+  image                        String?
+  passwordHash                 String?
+  passwordChangedAt            DateTime? // For session invalidation on password change
+  mustChangePassword           Boolean                       @default(false)
+  roles                        Role[]                        @default([CLIENT])
+  isTestUser                   Boolean                       @default(false)
+  emailVerified                DateTime?
+  createdAt                    DateTime                      @default(now())
+  invitedByCoachId             String?
+  onboardingComplete           Boolean                       @default(false)
+  gender                       String?
+  dateOfBirth                  DateTime?                     @db.Date
+  activityLevel                String?
+  primaryGoal                  String?
+  checkInFrequencyDays         Int?
+  Account                      Account[]
+  AdminActions                 AdminAction[]                 @relation("AdminActions")
+  CoachCohortMembership        CoachCohortMembership[]
+  CoachInvite                  CoachInvite[]
+  ClientNotes                  CoachNote[]                   @relation("ClientNotes")
+  CoachNotes                   CoachNote[]                   @relation("CoachNotes")
+  ClientWeeklyResponses        WeeklyCoachResponse[]         @relation("ClientWeeklyResponses")
+  CoachWeeklyResponses         WeeklyCoachResponse[]         @relation("CoachWeeklyResponses")
+  Cohort                       Cohort[]
+  CohortMembership             CohortMembership[]
+  Entry                        Entry[]
+  ClientPairingCodes           PairingCode[]                 @relation("ClientPairingCodes")
+  CoachPairingCodes            PairingCode[]                 @relation("CoachPairingCodes")
+  Session                      Session[]
+  SleepRecords                 SleepRecord[]
+  User                         User?                         @relation("UserToUser", fields: [invitedByCoachId], references: [id])
+  other_User                   User[]                        @relation("UserToUser")
+  UserConsent                  UserConsent?
+  UserGoals                    UserGoals?
+  UserPreference               UserPreference?
+  Workouts                     Workout[]
+  OwnedClassTemplates          ClassTemplate[]               @relation("OwnedClassTemplates")
+  InstructedClassSessions      ClassSession[]                @relation("InstructedClassSessions")
+  ClassBookings                ClassBooking[]                @relation("ClassBookings")
+  ClassBookingsCreated         ClassBooking[]                @relation("ClassBookingsCreated")
+  ClientCreditAccount          ClientCreditAccount?
+  ClientCreditLedger           ClientCreditLedger[]          @relation("ClientCreditLedger")
+  ClientCreditSubscriptions    ClientCreditSubscription[]    @relation("ClientCreditSubscriptions")
+  CreditSubmissions            CreditSubmission[]            @relation("CreditSubmissions")
+  ReviewedCreditSubmissions    CreditSubmission[]            @relation("ReviewedCreditSubmissions")
+  CreditLedgerCreated          ClientCreditLedger[]          @relation("CreditLedgerCreated")
+  CreditProducts               CreditProduct[]               @relation("OwnedCreditProducts")
   WeeklyQuestionnaireResponses WeeklyQuestionnaireResponse[]
-  CustomCohortType       CustomCohortType[]
+  CustomCohortType             CustomCohortType[]
 
   @@index([invitedByCoachId])
   @@index([createdAt])
@@ -352,49 +366,243 @@ model AdminAction {
   @@index([insightId])
 }
 
+model ClassTemplate {
+  id                        String         @id @default(uuid())
+  ownerCoachId              String
+  name                      String
+  classType                 String
+  description               String?
+  scope                     ClassScope     @default(FACILITY)
+  cohortId                  String?
+  locationLabel             String
+  roomLabel                 String?
+  capacity                  Int            @default(20)
+  waitlistEnabled           Boolean        @default(true)
+  waitlistCapacity          Int            @default(10)
+  bookingOpenHoursBefore    Int            @default(336)
+  bookingCloseMinutesBefore Int            @default(0)
+  cancelCutoffMinutes       Int            @default(60)
+  creditsRequired           Int            @default(1)
+  isActive                  Boolean        @default(true)
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+  ownerCoach                User           @relation("OwnedClassTemplates", fields: [ownerCoachId], references: [id], onDelete: Cascade)
+  cohort                    Cohort?        @relation(fields: [cohortId], references: [id], onDelete: SetNull)
+  sessions                  ClassSession[]
+
+  @@index([ownerCoachId])
+  @@index([cohortId])
+  @@index([classType])
+  @@index([isActive])
+  @@index([scope])
+}
+
+model ClassSession {
+  id               String         @id @default(uuid())
+  classTemplateId  String
+  instructorId     String?
+  startsAt         DateTime
+  endsAt           DateTime
+  capacityOverride Int?
+  status           SessionStatus  @default(SCHEDULED)
+  cancelReason     String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  classTemplate    ClassTemplate  @relation(fields: [classTemplateId], references: [id], onDelete: Cascade)
+  instructor       User?          @relation("InstructedClassSessions", fields: [instructorId], references: [id], onDelete: SetNull)
+  bookings         ClassBooking[]
+
+  @@index([classTemplateId])
+  @@index([instructorId])
+  @@index([startsAt])
+  @@index([status])
+}
+
+model ClassBooking {
+  id                  String               @id @default(uuid())
+  sessionId           String
+  clientId            String
+  status              BookingStatus        @default(BOOKED)
+  source              BookingSource        @default(CLIENT)
+  waitlistPosition    Int?
+  bookedByUserId      String?
+  canceledAt          DateTime?
+  attendanceMarkedAt  DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  session             ClassSession         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  client              User                 @relation("ClassBookings", fields: [clientId], references: [id], onDelete: Cascade)
+  bookedByUser        User?                @relation("ClassBookingsCreated", fields: [bookedByUserId], references: [id], onDelete: SetNull)
+  creditLedgerEntries ClientCreditLedger[]
+
+  @@unique([sessionId, clientId])
+  @@index([clientId])
+  @@index([status])
+  @@index([waitlistPosition])
+}
+
+model CreditProduct {
+  id                        String                     @id @default(uuid())
+  ownerCoachId              String?
+  name                      String
+  description               String?
+  appliesToClassTypes       String[]                   @default([])
+  creditMode                CreditProductMode
+  creditsPerPeriod          Int?
+  periodType                CreditPeriodType
+  purchasePriceGbp          Float?
+  currency                  String                     @default("GBP")
+  purchasableByProviderOnly Boolean                    @default(false)
+  classEligible             Boolean                    @default(true)
+  isActive                  Boolean                    @default(true)
+  externalSource            String?
+  externalId                String?
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  ownerCoach                User?                      @relation("OwnedCreditProducts", fields: [ownerCoachId], references: [id], onDelete: SetNull)
+  creditSubscriptions       ClientCreditSubscription[]
+  creditSubmissions         CreditSubmission[]
+  creditLedgerEntries       ClientCreditLedger[]
+
+  @@index([ownerCoachId])
+  @@index([name])
+  @@index([classEligible])
+  @@index([isActive])
+  @@index([externalSource, externalId])
+}
+
+model ClientCreditAccount {
+  id        String   @id @default(uuid())
+  clientId  String   @unique
+  balance   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  client    User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+model ClientCreditSubscription {
+  id                  String               @id @default(uuid())
+  clientId            String
+  creditProductId     String
+  monthlyCredits      Int
+  active              Boolean              @default(true)
+  startDate           DateTime             @db.Date
+  endDate             DateTime?            @db.Date
+  lastAppliedMonth    String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  client              User                 @relation("ClientCreditSubscriptions", fields: [clientId], references: [id], onDelete: Cascade)
+  creditProduct       CreditProduct        @relation(fields: [creditProductId], references: [id], onDelete: Cascade)
+  creditLedgerEntries ClientCreditLedger[]
+
+  @@index([clientId])
+  @@index([creditProductId])
+  @@index([active, startDate, endDate])
+}
+
+model CreditSubmission {
+  id                  String                 @id @default(uuid())
+  clientId            String
+  creditProductId     String
+  revolutReference    String
+  note                String?
+  status              CreditSubmissionStatus @default(PENDING)
+  reviewedByUserId    String?
+  reviewedAt          DateTime?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  client              User                   @relation("CreditSubmissions", fields: [clientId], references: [id], onDelete: Cascade)
+  creditProduct       CreditProduct          @relation(fields: [creditProductId], references: [id], onDelete: Cascade)
+  reviewedByUser      User?                  @relation("ReviewedCreditSubmissions", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  creditLedgerEntries ClientCreditLedger[]
+
+  @@index([clientId])
+  @@index([creditProductId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ClientCreditLedger {
+  id              String                    @id @default(uuid())
+  clientId        String
+  deltaCredits    Int
+  reason          CreditLedgerReason
+  bookingId       String?
+  submissionId    String?
+  creditProductId String?
+  subscriptionId  String?
+  expiresAt       DateTime?
+  createdByUserId String?
+  createdAt       DateTime                  @default(now())
+  client          User                      @relation("ClientCreditLedger", fields: [clientId], references: [id], onDelete: Cascade)
+  booking         ClassBooking?             @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  submission      CreditSubmission?         @relation(fields: [submissionId], references: [id], onDelete: SetNull)
+  creditProduct   CreditProduct?            @relation(fields: [creditProductId], references: [id], onDelete: SetNull)
+  subscription    ClientCreditSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  createdByUser   User?                     @relation("CreditLedgerCreated", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([reason])
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@index([bookingId])
+  @@index([submissionId])
+}
+
 model SystemSettings {
-  id                       String   @id @default(uuid())
-  maxClientsPerCoach       Int      @default(50)
-  minClientsPerCoach       Int      @default(10)
-  recentActivityDays       Int      @default(14)
-  lowEngagementEntries     Int      @default(7)
-  noActivityDays           Int      @default(14)
-  criticalNoActivityDays   Int      @default(30)
-  shortTermWindowDays      Int      @default(7)
-  longTermWindowDays       Int      @default(30)
-  defaultCheckInFrequencyDays Int   @default(7)
-  notificationTimeUtc      String   @default("09:00")
-  adminOverrideEmail       String?
-  healthkitEnabled         Boolean  @default(false)
-  iosIntegrationEnabled    Boolean  @default(false)
-  adherenceGreenMinimum    Int      @default(6)
-  adherenceAmberMinimum    Int      @default(3)
-  attentionMissedCheckinsPolicy String @default("option_a")
-  bodyFatLowPercent        Float    @default(12.5)
-  bodyFatMediumPercent     Float    @default(20.0)
-  bodyFatHighPercent       Float    @default(30.0)
-  bodyFatVeryHighPercent   Float    @default(37.5)
-  minDailyCalories         Int      @default(1000)
-  maxDailyCalories         Int      @default(5000)
-  minProteinPerLb          Float    @default(0.4)
-  maxProteinPerLb          Float    @default(2.0)
-  defaultCarbsPercent      Float    @default(40.0)
-  defaultProteinPercent    Float    @default(30.0)
-  defaultFatPercent        Float    @default(30.0)
-  stepsNotMuch             Int      @default(5000)
-  stepsLight               Int      @default(7500)
-  stepsModerate            Int      @default(10000)
-  stepsHeavy               Int      @default(12500)
-  workoutNotMuch           Int      @default(75)
-  workoutLight             Int      @default(150)
-  workoutModerate          Int      @default(225)
-  workoutHeavy             Int      @default(300)
-  showPersonalizedPlan     Boolean  @default(true)
-  termsContentHtml         String   @default("")
-  privacyContentHtml       String   @default("")
-  dataProcessingContentHtml String  @default("")
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  id                             String   @id @default(uuid())
+  maxClientsPerCoach             Int      @default(50)
+  minClientsPerCoach             Int      @default(10)
+  recentActivityDays             Int      @default(14)
+  lowEngagementEntries           Int      @default(7)
+  noActivityDays                 Int      @default(14)
+  criticalNoActivityDays         Int      @default(30)
+  shortTermWindowDays            Int      @default(7)
+  longTermWindowDays             Int      @default(30)
+  defaultCheckInFrequencyDays    Int      @default(7)
+  notificationTimeUtc            String   @default("09:00")
+  adminOverrideEmail             String?
+  healthkitEnabled               Boolean  @default(false)
+  iosIntegrationEnabled          Boolean  @default(false)
+  adherenceGreenMinimum          Int      @default(6)
+  adherenceAmberMinimum          Int      @default(3)
+  attentionMissedCheckinsPolicy  String   @default("option_a")
+  bodyFatLowPercent              Float    @default(12.5)
+  bodyFatMediumPercent           Float    @default(20.0)
+  bodyFatHighPercent             Float    @default(30.0)
+  bodyFatVeryHighPercent         Float    @default(37.5)
+  minDailyCalories               Int      @default(1000)
+  maxDailyCalories               Int      @default(5000)
+  minProteinPerLb                Float    @default(0.4)
+  maxProteinPerLb                Float    @default(2.0)
+  defaultCarbsPercent            Float    @default(40.0)
+  defaultProteinPercent          Float    @default(30.0)
+  defaultFatPercent              Float    @default(30.0)
+  stepsNotMuch                   Int      @default(5000)
+  stepsLight                     Int      @default(7500)
+  stepsModerate                  Int      @default(10000)
+  stepsHeavy                     Int      @default(12500)
+  workoutNotMuch                 Int      @default(75)
+  workoutLight                   Int      @default(150)
+  workoutModerate                Int      @default(225)
+  workoutHeavy                   Int      @default(300)
+  classBookingEnabled            Boolean  @default(false)
+  bookingTimezone                String   @default("Europe/London")
+  bookingCurrency                String   @default("GBP")
+  defaultClassCapacity           Int      @default(20)
+  defaultWaitlistCap             Int      @default(10)
+  bookingOpenHoursDefault        Int      @default(336)
+  bookingCloseMinutesDefault     Int      @default(0)
+  lateCancelCutoffMinutesDefault Int      @default(60)
+  defaultCreditsPerBooking       Int      @default(1)
+  showPersonalizedPlan           Boolean  @default(true)
+  termsContentHtml               String   @default("")
+  privacyContentHtml             String   @default("")
+  dataProcessingContentHtml      String   @default("")
+  createdAt                      DateTime @default(now())
+  updatedAt                      DateTime @updatedAt
 
   @@index([createdAt])
 }
@@ -456,41 +664,41 @@ model UserGoals {
 }
 
 model UserPreference {
-  id                String   @id @default(uuid())
-  userId            String   @unique
-  weightUnit        String   @default("lbs")
-  measurementUnit   String   @default("inches")
-  dateFormat        String   @default("MM/dd/yyyy")
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  weightUnit      String   @default("lbs")
+  measurementUnit String   @default("inches")
+  dateFormat      String   @default("MM/dd/yyyy")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model QuestionnaireBundle {
-  id          String   @id @default(uuid())
-  cohortId    String   @unique
-  bundleJson  Json     // SurveyJS JSON schema with all 5 weeks
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  cohort      Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  cohortId   String   @unique
+  bundleJson Json // SurveyJS JSON schema with all 5 weeks
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  cohort     Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
 
   @@index([cohortId])
 }
 
 model WeeklyQuestionnaireResponse {
-  id          String   @id @default(uuid())
-  userId      String
-  cohortId    String
-  weekNumber  Int      // 1-5
-  responseJson Json    // SurveyJS response data
-  status      String   @default("in_progress") // "in_progress" or "completed"
-  submittedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohort      Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  id           String    @id @default(uuid())
+  userId       String
+  cohortId     String
+  weekNumber   Int // 1-5
+  responseJson Json // SurveyJS response data
+  status       String    @default("in_progress") // "in_progress" or "completed"
+  submittedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort       Cohort    @relation(fields: [cohortId], references: [id], onDelete: Cascade)
 
   @@unique([userId, cohortId, weekNumber])
   @@index([userId])
@@ -512,6 +720,29 @@ model CustomCohortType {
   @@index([createdAt])
 }
 
+model EmailEvent {
+  id             String       @id @default(uuid())
+  resendEmailId  String
+  to             String
+  subject        String?
+  status         String // "sent" | "delivered" | "bounced" | "failed" | "complained" | "delivery_delayed" | "opened" | "clicked"
+  eventData      Json? // Bounce reason, failure reason, click details, etc.
+  occurredAt     DateTime // When the event happened (from Resend)
+  createdAt      DateTime     @default(now())
+
+  // Optional link back to a coach/cohort invite
+  coachInviteId  String?
+  cohortInviteId String?
+  CoachInvite    CoachInvite?  @relation(fields: [coachInviteId], references: [id], onDelete: SetNull)
+  CohortInvite   CohortInvite? @relation(fields: [cohortInviteId], references: [id], onDelete: SetNull)
+
+  @@index([resendEmailId])
+  @@index([to])
+  @@index([status])
+  @@index([coachInviteId])
+  @@index([cohortInviteId])
+}
+
 enum Role {
   CLIENT
   COACH
@@ -523,4 +754,57 @@ enum CohortType {
   ONGOING
   CHALLENGE
   CUSTOM
+}
+
+enum ClassScope {
+  FACILITY
+  COHORT
+}
+
+enum SessionStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+}
+
+enum BookingStatus {
+  BOOKED
+  WAITLISTED
+  CANCELLED
+  LATE_CANCEL
+  ATTENDED
+  NO_SHOW
+}
+
+enum BookingSource {
+  CLIENT
+  COACH
+  ADMIN
+  SYSTEM
+}
+
+enum CreditSubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CreditLedgerReason {
+  TOPUP_MONTHLY
+  PACK_PURCHASE
+  BOOKING_DEBIT
+  REFUND
+  MANUAL_ADJUSTMENT
+  EXPIRY
+}
+
+enum CreditProductMode {
+  MONTHLY_TOPUP
+  ONE_TIME_PACK
+  CATALOG_ONLY
+}
+
+enum CreditPeriodType {
+  MONTH
+  ONE_TIME
 }

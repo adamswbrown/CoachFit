@@ -154,6 +154,7 @@ export async function GET() {
         inviteType?: "global" | "cohort"
         inviteCohortId?: string
         invitedAt?: string
+        latestEmailStatus?: string | null
         lastCheckInDate?: string | null
         checkInCount?: number
         adherenceRate?: number
@@ -365,6 +366,56 @@ export async function GET() {
       }
     }
 
+    // Batch-fetch latest email delivery status for all pending invites
+    const invitedEntries = Array.from(clientMap.values()).filter(
+      (c) => c.status === "invited" && c.inviteId
+    )
+
+    const coachInviteIds = invitedEntries
+      .filter((c) => c.inviteType === "global")
+      .map((c) => c.inviteId!)
+    const cohortInviteIds = invitedEntries
+      .filter((c) => c.inviteType === "cohort")
+      .map((c) => c.inviteId!)
+
+    // Fetch latest email events for coach invites and cohort invites in parallel
+    const [coachEmailEvents, cohortEmailEvents] = await Promise.all([
+      coachInviteIds.length > 0
+        ? db.emailEvent.findMany({
+            where: { coachInviteId: { in: coachInviteIds } },
+            orderBy: { occurredAt: "desc" },
+            select: { coachInviteId: true, status: true },
+          })
+        : Promise.resolve([]),
+      cohortInviteIds.length > 0
+        ? db.emailEvent.findMany({
+            where: { cohortInviteId: { in: cohortInviteIds } },
+            orderBy: { occurredAt: "desc" },
+            select: { cohortInviteId: true, status: true },
+          })
+        : Promise.resolve([]),
+    ])
+
+    // Build a map of inviteId -> latest status (first result per invite since ordered DESC)
+    const emailStatusMap = new Map<string, string>()
+    for (const event of coachEmailEvents) {
+      if (event.coachInviteId && !emailStatusMap.has(event.coachInviteId)) {
+        emailStatusMap.set(event.coachInviteId, event.status)
+      }
+    }
+    for (const event of cohortEmailEvents) {
+      if (event.cohortInviteId && !emailStatusMap.has(event.cohortInviteId)) {
+        emailStatusMap.set(event.cohortInviteId, event.status)
+      }
+    }
+
+    // Attach latestEmailStatus to invited clients
+    for (const client of clientMap.values()) {
+      if (client.status === "invited" && client.inviteId) {
+        client.latestEmailStatus = emailStatusMap.get(client.inviteId) || null
+      }
+    }
+
     // Convert map to array and sort cohort names alphabetically for each client
     type ClientMapValue = {
       id?: string
@@ -376,6 +427,7 @@ export async function GET() {
       inviteType?: "global" | "cohort"
       inviteCohortId?: string
       invitedAt?: string
+      latestEmailStatus?: string | null
       lastCheckInDate?: string | null
       checkInCount?: number
       adherenceRate?: number
@@ -395,6 +447,7 @@ export async function GET() {
       inviteType: client.inviteType,
       inviteCohortId: client.inviteCohortId,
       invitedAt: client.invitedAt,
+      latestEmailStatus: client.latestEmailStatus ?? undefined,
       lastCheckInDate: client.lastCheckInDate ?? undefined,
       checkInCount: client.checkInCount,
       adherenceRate: client.adherenceRate,

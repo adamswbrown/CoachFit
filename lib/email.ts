@@ -32,9 +32,15 @@ export interface SendSystemEmailOptions {
   fallbackText?: string
 }
 
+export interface SendEmailResult {
+  success: boolean
+  error?: string
+  emailId?: string // Resend email ID for delivery tracking
+}
+
 export async function sendTransactionalEmail(
   options: SendEmailOptions
-): Promise<{ success: boolean; error?: string }> {
+): Promise<SendEmailResult> {
   const { to, subject, html, text, isTestUser } = options
 
   try {
@@ -75,7 +81,7 @@ export async function sendTransactionalEmail(
       return { success: false, error: result.error.message || "Failed to send email" }
     }
 
-    return { success: true }
+    return { success: true, emailId: result.data?.id }
   } catch (error: any) {
     console.error("Error sending email:", error)
     return { success: false, error: error.message || "Failed to send email" }
@@ -88,7 +94,7 @@ export async function sendTransactionalEmail(
  */
 export async function sendSystemEmail(
   options: SendSystemEmailOptions
-): Promise<{ success: boolean; error?: string }> {
+): Promise<SendEmailResult> {
   const {
     templateKey,
     to,
