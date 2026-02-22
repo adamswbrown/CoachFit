@@ -23,13 +23,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Normalize email for case-insensitive invite matching
+    const normalizedEmail = validated.email.toLowerCase().trim()
+
     const [coachInvites, cohortInvites] = await Promise.all([
       db.coachInvite.findMany({
-        where: { email: validated.email },
+        where: { email: normalizedEmail },
         select: { id: true },
       }),
       db.cohortInvite.findMany({
-        where: { email: validated.email },
+        where: { email: normalizedEmail },
         select: { id: true },
       }),
     ])

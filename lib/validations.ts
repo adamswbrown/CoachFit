@@ -115,7 +115,7 @@ export const createCohortSchema = z.object({
 )
 
 export const addClientToCohortSchema = z.object({
-  email: z.string().email("Invalid email format"),
+  email: z.string().email("Invalid email format").transform((e) => e.toLowerCase().trim()),
 })
 
 // Strong password schema with complexity requirements
@@ -134,10 +134,11 @@ export const signupSchema = z.object({
   email: z
     .string()
     .email("Invalid email format")
-    .refine(
-      (email) => !BLOCKED_EMAIL_DOMAINS.some((domain) => email.toLowerCase().endsWith(domain)),
+    .transform((e) => e.toLowerCase().trim())
+    .pipe(z.string().refine(
+      (email) => !BLOCKED_EMAIL_DOMAINS.some((domain) => email.endsWith(domain)),
       "This email domain is not allowed for registration"
-    ),
+    )),
   password: passwordSchema,
   name: z.string().optional(),
 })
