@@ -36,6 +36,32 @@ export function ClientLayout({ children }: ClientLayoutProps) {
         </div>
       </header>
 
+      <nav className="bg-white border-b border-neutral-200">
+        <div className="px-3 sm:px-4 md:px-6 py-2 flex flex-wrap gap-2">
+          {[
+            { href: "/client-dashboard", label: "Dashboard" },
+            { href: "/client-dashboard/classes", label: "Classes" },
+            { href: "/client-dashboard/settings", label: "Settings" },
+            { href: "/client-dashboard/pairing", label: "iOS Pairing" },
+          ].map((item) => {
+            const active = pathname === item.href || pathname?.startsWith(`${item.href}/`)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  active
+                    ? "bg-neutral-900 text-white"
+                    : "text-neutral-700 hover:bg-neutral-100"
+                }`}
+              >
+                {item.label}
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
+
       {/* Main content */}
       <main className="p-4 sm:p-6 md:p-8">{children}</main>
     </div>

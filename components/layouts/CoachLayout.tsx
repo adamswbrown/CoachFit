@@ -33,24 +33,41 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   const [cohortsData, setCohortsData] = useState<Array<{ id: string; name: string; activeClients: number; pendingInvites: number }>>([])
   const [cohortsLoading, setCohortsLoading] = useState(true)
 
+  const isAbortLikeError = (err: unknown, signal?: AbortSignal): boolean => {
+    if (signal?.aborted) return true
+    if (err instanceof DOMException && err.name === "AbortError") return true
+    return err instanceof TypeError && err.message.includes("Failed to fetch")
+  }
+
   const currentFilter = (searchParams.get("filter") as ClientFilter) || "all"
 
   // Fetch feature flags
   useEffect(() => {
+    if (!session?.user?.id) {
+      return
+    }
+
+    const controller = new AbortController()
     const fetchFeatureFlags = async () => {
       try {
-        const res = await fetch("/api/admin/settings")
+        const res = await fetch("/api/settings/feature-flags", {
+          signal: controller.signal,
+        })
         if (res.ok) {
           const data = await res.json()
           setHealthkitEnabled(data.data.healthkitEnabled ?? true)
           setIosIntegrationEnabled(data.data.iosIntegrationEnabled ?? true)
         }
       } catch (err) {
-        console.error("Error fetching feature flags:", err)
+        if (!isAbortLikeError(err, controller.signal)) {
+          console.error("Error fetching feature flags:", err)
+        }
       }
     }
-    fetchFeatureFlags()
-  }, [])
+    void fetchFeatureFlags()
+
+    return () => controller.abort()
+  }, [session?.user?.id])
 
   // Fetch cohorts when session is available
   useEffect(() => {
@@ -59,39 +76,30 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
       return
     }
 
+    const controller = new AbortController()
+
     const fetchCohorts = async () => {
       try {
         setCohortsLoading(true)
-        const res = await fetch("/api/cohorts")
+        const res = await fetch("/api/cohorts", { signal: controller.signal })
         if (res.ok) {
           const data = await res.json()
           setCohortsData(data)
         }
       } catch (err) {
-        console.error("Error fetching cohorts:", err)
+        if (!isAbortLikeError(err, controller.signal)) {
+          console.error("Error fetching cohorts:", err)
+        }
       } finally {
-        setCohortsLoading(false)
+        if (!controller.signal.aborted) {
+          setCohortsLoading(false)
+        }
       }
     }
 
-    fetchCohorts()
+    void fetchCohorts()
+    return () => controller.abort()
   }, [session?.user?.id])
-
-  if (!session) return null
-
-  const firstName = session?.user?.name?.split(" ")[0] || session?.user?.email || "there"
-
-  const isClientsActive = pathname === "/coach-dashboard" || pathname?.startsWith("/clients/") || pathname?.startsWith("/coach-dashboard/")
-
-  const clientFilters: { value: ClientFilter; label: string }[] = [
-    { value: "all", label: "All Clients" },
-    { value: "active", label: "Connected" },
-    { value: "pending", label: "Pending" },
-    { value: "offline", label: "Offline" },
-    { value: "unassigned", label: "Unassigned" },
-    { value: "invited", label: "Invited" },
-    { value: "needs-attention", label: "Needs Attention" },
-  ]
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -111,6 +119,22 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [clientsDropdownOpen, cohortsDropdownOpen])
+
+  if (!session) return null
+
+  const firstName = session?.user?.name?.split(" ")[0] || session?.user?.email || "there"
+
+  const isClientsActive = pathname === "/coach-dashboard" || pathname?.startsWith("/clients/")
+
+  const clientFilters: { value: ClientFilter; label: string }[] = [
+    { value: "all", label: "All Clients" },
+    { value: "active", label: "Connected" },
+    { value: "pending", label: "Pending" },
+    { value: "offline", label: "Offline" },
+    { value: "unassigned", label: "Unassigned" },
+    { value: "invited", label: "Invited" },
+    { value: "needs-attention", label: "Needs Attention" },
+  ]
 
   const handleFilterChange = (filter: ClientFilter) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -144,6 +168,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     navigation.push(
       { name: "Clients", href: "/coach-dashboard", icon: ClientsIcon, hasDropdown: true, dropdownKey: "clients" },
       { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" },
+      { name: "Classes", href: "/coach-dashboard/classes", icon: CalendarIcon, hasDropdown: false, dropdownKey: "classes" },
       { name: "Questionnaire Analytics", href: "/coach-dashboard/questionnaire-analytics", icon: CalendarIcon, hasDropdown: false, dropdownKey: "questionnaire-analytics" }
     )
     

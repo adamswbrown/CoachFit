@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { isClient } from "@/lib/permissions"
-import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import { WrappedCarousel } from "@/components/wrapped/WrappedCarousel"
 import type { WrappedSummary } from "@/lib/types"
 
@@ -38,14 +37,21 @@ export default function WrappedPage() {
 
   async function fetchWrapped() {
     try {
-      const response = await fetchWithRetry("/api/client/wrapped")
+      const response = await fetch("/api/client/wrapped")
       if (!response.ok) {
-        const data = await response.json()
-        setError(data.error || "Fitness Wrapped not available")
+        setError("Failed to load Fitness Wrapped data")
         setLoading(false)
         return
       }
+
       const data = await response.json()
+
+      if (!data.available) {
+        setError(data.message || "Fitness Wrapped not available")
+        setLoading(false)
+        return
+      }
+
       setWrappedData(data)
       setLoading(false)
     } catch (err) {

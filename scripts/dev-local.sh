@@ -4,16 +4,25 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
+if [ -f ".env" ]; then
+  set -a
+  source ".env"
+  set +a
+fi
+
 if [ -f ".env.local" ]; then
   set -a
   source ".env.local"
   set +a
 fi
 
-if [ -f ".env" ]; then
-  set -a
-  source ".env"
-  set +a
+# Local dev must use a local auth origin to avoid callback/cookie mismatches.
+DEV_PORT="${PORT:-3000}"
+export PORT="$DEV_PORT"
+LOCAL_AUTH_URL="http://localhost:${DEV_PORT}"
+if [ "${NEXTAUTH_URL:-}" != "$LOCAL_AUTH_URL" ]; then
+  export NEXTAUTH_URL="$LOCAL_AUTH_URL"
+  echo "Using NEXTAUTH_URL=$NEXTAUTH_URL for local development."
 fi
 
 if [ -z "${DATABASE_URL:-}" ]; then

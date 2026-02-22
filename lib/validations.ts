@@ -246,3 +246,110 @@ export const questionnaireStatusQuerySchema = z.object({
   cohortId: z.string().uuid().optional(),
   weekNumber: z.number().int().min(1).max(5).optional(),
 })
+
+const hhmmPattern = /^([01]\d|2[0-3]):([0-5]\d)$/
+
+export const classTemplateCreateSchema = z.object({
+  name: z.string().min(1).max(120),
+  classType: z.string().min(1).max(50),
+  description: z.string().max(1000).optional().nullable(),
+  scope: z.enum(["FACILITY", "COHORT"]).default("FACILITY"),
+  cohortId: z.string().uuid().optional().nullable(),
+  locationLabel: z.string().min(1).max(120),
+  roomLabel: z.string().max(120).optional().nullable(),
+  capacity: z.number().int().min(1).max(100).default(20),
+  waitlistEnabled: z.boolean().default(true),
+  waitlistCapacity: z.number().int().min(0).max(100).default(10),
+  bookingOpenHoursBefore: z.number().int().min(0).max(24 * 60).default(24 * 14),
+  bookingCloseMinutesBefore: z.number().int().min(0).max(24 * 60).default(0),
+  cancelCutoffMinutes: z.number().int().min(0).max(24 * 60).default(60),
+  creditsRequired: z.number().int().min(0).max(20).default(1),
+  isActive: z.boolean().default(true),
+}).superRefine((data, ctx) => {
+  if (data.scope === "COHORT" && !data.cohortId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "cohortId is required when scope is COHORT",
+      path: ["cohortId"],
+    })
+  }
+})
+
+export const classTemplateUpdateSchema = z.object({
+  name: z.string().min(1).max(120).optional(),
+  classType: z.string().min(1).max(50).optional(),
+  description: z.string().max(1000).optional().nullable(),
+  scope: z.enum(["FACILITY", "COHORT"]).optional(),
+  cohortId: z.string().uuid().optional().nullable(),
+  locationLabel: z.string().min(1).max(120).optional(),
+  roomLabel: z.string().max(120).optional().nullable(),
+  capacity: z.number().int().min(1).max(100).optional(),
+  waitlistEnabled: z.boolean().optional(),
+  waitlistCapacity: z.number().int().min(0).max(100).optional(),
+  bookingOpenHoursBefore: z.number().int().min(0).max(24 * 60).optional(),
+  bookingCloseMinutesBefore: z.number().int().min(0).max(24 * 60).optional(),
+  cancelCutoffMinutes: z.number().int().min(0).max(24 * 60).optional(),
+  creditsRequired: z.number().int().min(0).max(20).optional(),
+  isActive: z.boolean().optional(),
+}).superRefine((data, ctx) => {
+  if (data.scope === "COHORT" && !data.cohortId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "cohortId is required when scope is COHORT",
+      path: ["cohortId"],
+    })
+  }
+})
+
+export const classSessionGenerateSchema = z.object({
+  startDate: z.string().refine((v) => !isNaN(new Date(v).getTime()), "Invalid startDate"),
+  endDate: z.string().refine((v) => !isNaN(new Date(v).getTime()), "Invalid endDate"),
+  weekdays: z.array(z.number().int().min(0).max(6)).min(1),
+  startTime: z.string().regex(hhmmPattern, "startTime must be HH:MM"),
+  durationMinutes: z.number().int().min(5).max(240),
+  instructorId: z.string().uuid().optional().nullable(),
+  capacityOverride: z.number().int().min(1).max(100).optional().nullable(),
+}).superRefine((data, ctx) => {
+  const start = new Date(data.startDate)
+  const end = new Date(data.endDate)
+  if (start > end) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "startDate must be on or before endDate",
+      path: ["startDate"],
+    })
+  }
+})
+
+export const classSessionQuerySchema = z.object({
+  from: z.string().optional(),
+  to: z.string().optional(),
+  ownerCoachId: z.string().uuid().optional(),
+  cohortId: z.string().uuid().optional(),
+  classType: z.string().optional(),
+})
+
+export const coachCreateBookingSchema = z.object({
+  clientId: z.string().uuid(),
+  skipCreditValidation: z.boolean().optional().default(false),
+  overrideNoCreditReason: z.string().max(500).optional(),
+})
+
+export const bookingAttendanceUpdateSchema = z.object({
+  status: z.enum(["ATTENDED", "NO_SHOW", "CANCELLED", "LATE_CANCEL"]),
+})
+
+export const clientCancelBookingSchema = z.object({
+  reason: z.string().max(500).optional(),
+})
+
+export const creditSubmissionCreateSchema = z.object({
+  creditProductId: z.string().uuid(),
+  revolutReference: z.string().min(3).max(120),
+  note: z.string().max(1000).optional(),
+})
+
+export const creditSubmissionReviewSchema = z.object({
+  action: z.enum(["APPROVE", "REJECT"]),
+  note: z.string().max(1000).optional(),
+})

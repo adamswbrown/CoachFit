@@ -46,6 +46,15 @@ export interface SystemSettings {
   workoutLight: number
   workoutModerate: number
   workoutHeavy: number
+  classBookingEnabled: boolean
+  bookingTimezone: string
+  bookingCurrency: string
+  defaultClassCapacity: number
+  defaultWaitlistCap: number
+  bookingOpenHoursDefault: number
+  bookingCloseMinutesDefault: number
+  lateCancelCutoffMinutesDefault: number
+  defaultCreditsPerBooking: number
   showPersonalizedPlan: boolean
   termsContentHtml: string
   privacyContentHtml: string
@@ -89,6 +98,15 @@ const DEFAULT_SETTINGS: SystemSettings = {
   workoutLight: 150,
   workoutModerate: 225,
   workoutHeavy: 300,
+  classBookingEnabled: false,
+  bookingTimezone: "Europe/London",
+  bookingCurrency: "GBP",
+  defaultClassCapacity: 20,
+  defaultWaitlistCap: 10,
+  bookingOpenHoursDefault: 336,
+  bookingCloseMinutesDefault: 0,
+  lateCancelCutoffMinutesDefault: 60,
+  defaultCreditsPerBooking: 1,
   showPersonalizedPlan: true,
   termsContentHtml: DEFAULT_TERMS_HTML,
   privacyContentHtml: DEFAULT_PRIVACY_HTML,
@@ -117,6 +135,15 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       'stepsHeavy',
       'defaultCheckInFrequencyDays',
       'notificationTimeUtc',
+      'classBookingEnabled',
+      'bookingTimezone',
+      'bookingCurrency',
+      'defaultClassCapacity',
+      'defaultWaitlistCap',
+      'bookingOpenHoursDefault',
+      'bookingCloseMinutesDefault',
+      'lateCancelCutoffMinutesDefault',
+      'defaultCreditsPerBooking',
     ]
     for (const key of requiredKeys) {
       if (result[key] === undefined || result[key] === null) {

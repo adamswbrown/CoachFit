@@ -105,6 +105,12 @@ export default function ClientDashboard() {
   const [wrappedData, setWrappedData] = useState<WrappedSummary | null>(null)
   const [wrappedEligible, setWrappedEligible] = useState(false)
 
+  const isAbortError = (err: unknown, signal?: AbortSignal): boolean => {
+    if (signal?.aborted) return true
+    if (err instanceof DOMException && err.name === "AbortError") return true
+    return err instanceof TypeError && err.message.includes("Failed to fetch")
+  }
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
@@ -124,18 +130,21 @@ export default function ClientDashboard() {
 
   useEffect(() => {
     if (session?.user && activeRole === Role.CLIENT && isClient(session.user)) {
-      checkCohortMembership()
+      const controller = new AbortController()
+      checkCohortMembership(controller.signal)
       fetchEntries()
-      fetchCheckInConfig()
-      fetchWorkouts()
-      fetchUserCohorts()
-      fetchWrappedEligibility()
+      fetchCheckInConfig(controller.signal)
+      fetchWorkouts(controller.signal)
+      fetchUserCohorts(controller.signal)
+      fetchWrappedEligibility(controller.signal)
+
+      return () => controller.abort()
     }
   }, [session, activeRole])
 
-  const fetchUserCohorts = async () => {
+  const fetchUserCohorts = async (signal?: AbortSignal) => {
     try {
-      const res = await fetch("/api/client/cohorts")
+      const res = await fetch("/api/client/cohorts", signal ? { signal } : undefined)
       if (res.ok) {
         const data = await res.json()
         const cohorts = data.cohorts || []
@@ -157,6 +166,7 @@ export default function ClientDashboard() {
         }
       }
     } catch (err) {
+      if (isAbortError(err, signal)) return
       console.error("Error fetching user cohorts:", err)
     }
   }
@@ -176,9 +186,9 @@ export default function ClientDashboard() {
     setShowQuestionnaireModal(true)
   }
 
-  const fetchCheckInConfig = async () => {
+  const fetchCheckInConfig = async (signal?: AbortSignal) => {
     try {
-      const res = await fetch("/api/entries/check-in-config")
+      const res = await fetch("/api/entries/check-in-config", signal ? { signal } : undefined)
       if (res.ok) {
         const data = await res.json()
         setCheckInConfig({
@@ -192,6 +202,7 @@ export default function ClientDashboard() {
         })
       }
     } catch (err) {
+      if (isAbortError(err, signal)) return
       console.error("Error fetching check-in config:", err)
       // Default to showing all prompts if config fetch fails
       setCheckInConfig({
@@ -206,22 +217,24 @@ export default function ClientDashboard() {
     }
   }
 
-  const fetchWrappedEligibility = async () => {
+  const fetchWrappedEligibility = async (signal?: AbortSignal) => {
     try {
-      const response = await fetchWithRetry("/api/client/wrapped")
-      if (response.ok) {
-        const data = await response.json()
-        console.log("✅ Wrapped data received:", data)
+      const response = await fetch("/api/client/wrapped", signal ? { signal } : undefined)
+      if (!response.ok) {
+        setWrappedEligible(false)
+        return
+      }
+
+      const data = await response.json()
+      if (data.available) {
         setWrappedData(data)
         setWrappedEligible(true)
       } else {
-        // Not eligible yet - this is normal for active cohorts
-        const errorData = await response.json()
-        console.log("⚠️ Wrapped not eligible:", errorData)
+        setWrappedData(null)
         setWrappedEligible(false)
       }
     } catch (error) {
-      console.error("❌ Error fetching wrapped:", error)
+      if (isAbortError(error, signal)) return
       setWrappedEligible(false)
     }
   }
@@ -288,14 +301,15 @@ export default function ClientDashboard() {
     }
   }, [entryMode, formData.date, entries])
 
-  const checkCohortMembership = async () => {
+  const checkCohortMembership = async (signal?: AbortSignal) => {
     try {
-      const res = await fetch("/api/entries/check-membership")
+      const res = await fetch("/api/entries/check-membership", signal ? { signal } : undefined)
       if (res.ok) {
         const data = await res.json()
         setHasCoach(data.hasMembership)
       }
     } catch (err) {
+      if (isAbortError(err, signal)) return
       console.error("Error checking membership:", err)
       setHasCoach(false)
     }
@@ -319,15 +333,15 @@ export default function ClientDashboard() {
     }
   }
 
-  const fetchWorkouts = async () => {
-    if (!session?.user?.id) return
+  const fetchWorkouts = async (signal?: AbortSignal) => {
     try {
-      const res = await fetch(`/api/healthkit/workouts?clientId=${session.user.id}`)
+      const res = await fetch("/api/client/workouts", signal ? { signal } : undefined)
       if (res.ok) {
         const data = await res.json()
         setWorkouts(data.workouts || [])
       }
     } catch (err) {
+      if (isAbortError(err, signal)) return
       console.error("Error fetching workouts:", err)
       // Don't set error state - workouts are optional
     }

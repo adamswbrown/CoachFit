@@ -38,7 +38,7 @@ export default function PairingPage() {
   useEffect(() => {
     const checkFeature = async () => {
       try {
-        const res = await fetch("/api/admin/settings")
+        const res = await fetch("/api/settings/feature-flags")
         if (res.ok) {
           const data = await res.json()
           setFeatureEnabled(data.data.iosIntegrationEnabled ?? true)

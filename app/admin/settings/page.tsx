@@ -41,6 +41,15 @@ const DEFAULT_SETTINGS: Omit<SystemSettings, "id"> = {
   defaultCarbsPercent: 40,
   defaultProteinPercent: 30,
   defaultFatPercent: 30,
+  classBookingEnabled: false,
+  bookingTimezone: "Europe/London",
+  bookingCurrency: "GBP",
+  defaultClassCapacity: 20,
+  defaultWaitlistCap: 10,
+  bookingOpenHoursDefault: 336,
+  bookingCloseMinutesDefault: 0,
+  lateCancelCutoffMinutesDefault: 60,
+  defaultCreditsPerBooking: 1,
   stepsNotMuch: 5000,
   stepsLight: 7500,
   stepsModerate: 10000,
@@ -84,6 +93,15 @@ interface SystemSettings {
   defaultCarbsPercent: number
   defaultProteinPercent: number
   defaultFatPercent: number
+  classBookingEnabled: boolean
+  bookingTimezone: string
+  bookingCurrency: string
+  defaultClassCapacity: number
+  defaultWaitlistCap: number
+  bookingOpenHoursDefault: number
+  bookingCloseMinutesDefault: number
+  lateCancelCutoffMinutesDefault: number
+  defaultCreditsPerBooking: number
   stepsNotMuch: number
   stepsLight: number
   stepsModerate: number
@@ -547,6 +565,153 @@ export default function AdminSettingsPage() {
                       className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <p className="text-xs text-neutral-500 mt-1">All reminders send at this UTC time</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Class Booking Defaults */}
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Class Booking Defaults</h3>
+                <div className="space-y-4">
+                  <div className="flex items-start">
+                    <div className="flex items-center h-5">
+                      <input
+                        type="checkbox"
+                        name="classBookingEnabled"
+                        checked={formData.classBookingEnabled ?? false}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, classBookingEnabled: e.target.checked }))
+                        }
+                        className="w-4 h-4 border border-neutral-300 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="ml-3">
+                      <label className="block text-sm font-medium text-neutral-700">
+                        Enable class booking
+                      </label>
+                      <p className="text-xs text-neutral-500 mt-1">
+                        Turns client booking APIs and UI on/off globally
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        Booking Timezone
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.bookingTimezone || "Europe/London"}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, bookingTimezone: e.target.value }))
+                        }
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        Booking Currency
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.bookingCurrency || "GBP"}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            bookingCurrency: e.target.value.toUpperCase().slice(0, 3),
+                          }))
+                        }
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        Default Class Capacity
+                      </label>
+                      <input
+                        type="number"
+                        name="defaultClassCapacity"
+                        min={1}
+                        max={200}
+                        value={formData.defaultClassCapacity || ""}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        Default Waitlist Cap
+                      </label>
+                      <input
+                        type="number"
+                        name="defaultWaitlistCap"
+                        min={0}
+                        max={200}
+                        value={formData.defaultWaitlistCap || ""}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        Booking Opens Before (Hours)
+                      </label>
+                      <input
+                        type="number"
+                        name="bookingOpenHoursDefault"
+                        min={0}
+                        max={1440}
+                        value={formData.bookingOpenHoursDefault || ""}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        Booking Closes Before (Minutes)
+                      </label>
+                      <input
+                        type="number"
+                        name="bookingCloseMinutesDefault"
+                        min={0}
+                        max={1440}
+                        value={formData.bookingCloseMinutesDefault || ""}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        Late Cancel Cutoff (Minutes)
+                      </label>
+                      <input
+                        type="number"
+                        name="lateCancelCutoffMinutesDefault"
+                        min={0}
+                        max={1440}
+                        value={formData.lateCancelCutoffMinutesDefault || ""}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        Credits Required per Booking
+                      </label>
+                      <input
+                        type="number"
+                        name="defaultCreditsPerBooking"
+                        min={0}
+                        max={20}
+                        value={formData.defaultCreditsPerBooking || ""}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

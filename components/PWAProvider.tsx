@@ -38,34 +38,60 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
 
   // Register service worker
   useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => {
-          console.log("[PWA] Service worker registered:", registration.scope)
+    if (!("serviceWorker" in navigator)) return
 
-          // Check for updates periodically
-          setInterval(() => {
-            registration.update()
-          }, 60 * 60 * 1000) // Check every hour
-        })
-        .catch((error) => {
-          console.error("[PWA] Service worker registration failed:", error)
-        })
+    const isLocalHost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    const isLocalDevelopment = process.env.NODE_ENV !== "production" || isLocalHost
 
-      // Listen for messages from service worker
-      navigator.serviceWorker.addEventListener("message", (event) => {
-        if (event.data?.type === "OFFLINE_SYNC_COMPLETE") {
-          console.log("[PWA] Offline sync complete:", event.data)
-          setPendingOfflineActions(event.data.failed)
+    if (isLocalDevelopment) {
+      void (async () => {
+        try {
+          const registrations = await navigator.serviceWorker.getRegistrations()
+          await Promise.all(registrations.map((registration) => registration.unregister()))
 
-          // Show notification if actions were synced
-          if (event.data.synced > 0) {
-            console.log(`[PWA] Successfully synced ${event.data.synced} offline actions`)
+          if ("caches" in window) {
+            const keys = await caches.keys()
+            await Promise.all(
+              keys
+                .filter((key) => key.startsWith("coachfit-"))
+                .map((key) => caches.delete(key)),
+            )
           }
+
+          console.log("[PWA] Disabled service worker caching for local development")
+        } catch (error) {
+          console.warn("[PWA] Failed to clear local service workers/caches:", error)
         }
-      })
+      })()
+      return
     }
+
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((registration) => {
+        console.log("[PWA] Service worker registered:", registration.scope)
+
+        // Check for updates periodically
+        setInterval(() => {
+          registration.update()
+        }, 60 * 60 * 1000) // Check every hour
+      })
+      .catch((error) => {
+        console.error("[PWA] Service worker registration failed:", error)
+      })
+
+    // Listen for messages from service worker
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data?.type === "OFFLINE_SYNC_COMPLETE") {
+        console.log("[PWA] Offline sync complete:", event.data)
+        setPendingOfflineActions(event.data.failed)
+
+        // Show notification if actions were synced
+        if (event.data.synced > 0) {
+          console.log(`[PWA] Successfully synced ${event.data.synced} offline actions`)
+        }
+      }
+    })
   }, [])
 
   // Handle beforeinstallprompt event

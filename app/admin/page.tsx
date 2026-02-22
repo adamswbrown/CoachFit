@@ -73,6 +73,12 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [cohortSearchQuery, setCohortSearchQuery] = useState("")
 
+  const isAbortLikeError = (err: unknown, signal?: AbortSignal): boolean => {
+    if (signal?.aborted) return true
+    if (err instanceof DOMException && err.name === "AbortError") return true
+    return err instanceof TypeError && err.message.includes("Failed to fetch")
+  }
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
@@ -87,15 +93,17 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (session?.user && isAdmin(session.user)) {
-      loadAllData()
+      const controller = new AbortController()
+      loadAllData(controller.signal)
+      return () => controller.abort()
     }
   }, [session?.user?.id])
 
-  const loadAllData = async () => {
+  const loadAllData = async (signal?: AbortSignal) => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch("/api/admin/dashboard")
+      const res = await fetch("/api/admin/dashboard", signal ? { signal } : undefined)
       if (res.ok) {
         const data = await res.json()
         setCohorts(data.cohorts || [])
@@ -106,6 +114,7 @@ export default function AdminPage() {
         setError(errorData.error || "Failed to load dashboard data")
       }
     } catch (err) {
+      if (isAbortLikeError(err, signal)) return
       console.error("Error fetching dashboard data:", err)
       setError("Failed to load dashboard data. Please try again.")
     } finally {

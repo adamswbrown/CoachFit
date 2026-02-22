@@ -15,6 +15,104 @@ export enum CohortType {
   CUSTOM = "CUSTOM",
 }
 
+export enum ClassScope {
+  FACILITY = "FACILITY",
+  COHORT = "COHORT",
+}
+
+export enum SessionStatus {
+  SCHEDULED = "SCHEDULED",
+  CANCELLED = "CANCELLED",
+  COMPLETED = "COMPLETED",
+}
+
+export enum BookingStatus {
+  BOOKED = "BOOKED",
+  WAITLISTED = "WAITLISTED",
+  CANCELLED = "CANCELLED",
+  LATE_CANCEL = "LATE_CANCEL",
+  ATTENDED = "ATTENDED",
+  NO_SHOW = "NO_SHOW",
+}
+
+export enum BookingSource {
+  CLIENT = "CLIENT",
+  COACH = "COACH",
+  ADMIN = "ADMIN",
+  SYSTEM = "SYSTEM",
+}
+
+export enum CreditSubmissionStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+}
+
+export enum CreditLedgerReason {
+  TOPUP_MONTHLY = "TOPUP_MONTHLY",
+  PACK_PURCHASE = "PACK_PURCHASE",
+  BOOKING_DEBIT = "BOOKING_DEBIT",
+  REFUND = "REFUND",
+  MANUAL_ADJUSTMENT = "MANUAL_ADJUSTMENT",
+  EXPIRY = "EXPIRY",
+}
+
+export enum CreditProductMode {
+  MONTHLY_TOPUP = "MONTHLY_TOPUP",
+  ONE_TIME_PACK = "ONE_TIME_PACK",
+  CATALOG_ONLY = "CATALOG_ONLY",
+}
+
+export enum CreditPeriodType {
+  MONTH = "MONTH",
+  ONE_TIME = "ONE_TIME",
+}
+
+export interface ClassTemplateSummary {
+  id: string
+  ownerCoachId: string
+  name: string
+  classType: string
+  description?: string | null
+  scope: ClassScope
+  cohortId?: string | null
+  locationLabel: string
+  roomLabel?: string | null
+  capacity: number
+  waitlistEnabled: boolean
+  waitlistCapacity: number
+  bookingOpenHoursBefore: number
+  bookingCloseMinutesBefore: number
+  cancelCutoffMinutes: number
+  creditsRequired: number
+  isActive: boolean
+}
+
+export interface ClassSessionSummary {
+  id: string
+  classTemplateId: string
+  instructorId?: string | null
+  startsAt: string
+  endsAt: string
+  capacityOverride?: number | null
+  status: SessionStatus
+  cancelReason?: string | null
+}
+
+export interface CreditProductSummary {
+  id: string
+  name: string
+  description?: string | null
+  appliesToClassTypes: string[]
+  creditMode: CreditProductMode
+  creditsPerPeriod?: number | null
+  periodType: CreditPeriodType
+  purchasePriceGbp?: number | null
+  currency: string
+  classEligible: boolean
+  isActive: boolean
+}
+
 // Fitness Wrapped types
 export interface WrappedTotals {
   entries: number

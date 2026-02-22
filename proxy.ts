@@ -48,6 +48,15 @@ function isHealthKitEndpoint(pathname: string): boolean {
   return pathname.startsWith("/api/ingest") || pathname.startsWith("/api/pair")
 }
 
+function isPublicAssetPath(pathname: string): boolean {
+  return (
+    pathname === "/sw.js" ||
+    pathname === "/manifest.json" ||
+    pathname.startsWith("/measurement-tracker/") ||
+    pathname.match(/^\/.+\.(png|jpg|jpeg|svg|gif|ico|webp|avif|bmp)$/) !== null
+  )
+}
+
 function isPublicPath(pathname: string): boolean {
   return (
     pathname === "/" ||
@@ -57,7 +66,7 @@ function isPublicPath(pathname: string): boolean {
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/public") ||
     pathname.startsWith("/public/") ||
-    pathname.match(/^\/.+\.(png|jpg|jpeg|svg|gif|ico|webp|avif|bmp)$/) !== null
+    isPublicAssetPath(pathname)
   )
 }
 
@@ -74,10 +83,7 @@ export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
   // Static files - pass through
-  if (
-    pathname.startsWith("/public/") ||
-    pathname.match(/^\/.+\.(png|jpg|jpeg|svg|gif|ico|webp|avif|bmp)$/)
-  ) {
+  if (pathname.startsWith("/public/") || isPublicAssetPath(pathname)) {
     return NextResponse.next()
   }
 

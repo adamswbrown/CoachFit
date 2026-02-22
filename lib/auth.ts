@@ -68,6 +68,7 @@ export const authOptions: NextAuthConfig = {
             roles: true,
             isTestUser: true,
             mustChangePassword: true,
+            onboardingComplete: true,
           },
         })
 
@@ -83,6 +84,7 @@ export const authOptions: NextAuthConfig = {
           roles: user.roles as Role[],
           isTestUser: user.isTestUser,
           mustChangePassword: user.mustChangePassword,
+          isOnboardingComplete: user.onboardingComplete,
         }
       },
     }),

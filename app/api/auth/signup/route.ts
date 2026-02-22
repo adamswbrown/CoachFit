@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
         name: validated.name || null,
         passwordHash,
         roles: [Role.CLIENT],
-        mustChangePassword: hasInvite,
+        mustChangePassword: false,
       },
       select: {
         id: true,

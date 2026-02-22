@@ -16,22 +16,15 @@ import { calculateWrappedStats, getCohortDateRange, isWrappedEligible } from "@/
  */
 export async function GET() {
   try {
-    console.log("🎯 Wrapped API called")
     const session = await auth()
 
     if (!session?.user?.id) {
-      console.log("❌ No session")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("✅ Session found:", session.user.email)
-
     if (!isClient(session.user)) {
-      console.log("❌ Not a client")
       return NextResponse.json({ error: "Forbidden: Clients only" }, { status: 403 })
     }
-
-    console.log("✅ User is client")
 
     // Find user's cohort
     const membership = await db.cohortMembership.findUnique({
@@ -48,12 +41,14 @@ export async function GET() {
       }
     })
 
-    console.log("📊 Membership found:", membership ? "Yes" : "No")
-
     if (!membership?.Cohort) {
       return NextResponse.json(
-        { error: "No cohort found" },
-        { status: 404 }
+        {
+          available: false,
+          reason: "NO_COHORT",
+          message: "Join a cohort to unlock Fitness Wrapped.",
+        },
+        { status: 200 }
       )
     }
 
@@ -65,8 +60,12 @@ export async function GET() {
 
       if (weeks !== 6 && weeks !== 8) {
         return NextResponse.json(
-          { error: "Wrapped only available for 6-week and 8-week challenges" },
-          { status: 400 }
+          {
+            available: false,
+            reason: "UNSUPPORTED_DURATION",
+            message: "Fitness Wrapped is available for 6-week and 8-week challenges only.",
+          },
+          { status: 200 }
         )
       }
 
@@ -77,10 +76,12 @@ export async function GET() {
 
       return NextResponse.json(
         {
-          error: "Cohort not yet completed",
+          available: false,
+          reason: "COHORT_IN_PROGRESS",
+          message: "Fitness Wrapped unlocks when your cohort is complete.",
           completionDate: endDate.toISOString()
         },
-        { status: 400 }
+        { status: 200 }
       )
     }
 
@@ -97,6 +98,7 @@ export async function GET() {
     )
 
     return NextResponse.json({
+      available: true,
       cohortName: cohort.name,
       ...wrappedStats
     })

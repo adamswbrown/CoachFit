@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         email,
         name,
         passwordHash,
-        mustChangePassword: true,
+        mustChangePassword: false,
         roles: [Role.ADMIN],
       },
       select: {
