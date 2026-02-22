@@ -355,19 +355,13 @@ export default function ClientDashboard() {
       const hasValue = (value: string | number) =>
         value !== null && value !== undefined && value.toString().trim() !== ""
 
-      const isQuestionnaireDayEntry = isQuestionnaireDay(formData.date)
-
       if (
         !hasValue(formData.weightLbs) ||
-        (!isQuestionnaireDayEntry && !hasValue(formData.steps)) ||
-        (!isQuestionnaireDayEntry && !hasValue(formData.calories)) ||
+        !hasValue(formData.steps) ||
+        !hasValue(formData.calories) ||
         !hasValue(formData.perceivedStress)
       ) {
-        setError(
-          isQuestionnaireDayEntry
-            ? "Weight and perceived stress are required."
-            : "Weight, steps, calories, and perceived stress are required."
-        )
+        setError("Weight, steps, calories, and perceived stress are required.")
         setSubmitting(false)
         return
       }
@@ -502,12 +496,12 @@ export default function ClientDashboard() {
       (entryMode === "edit" && !existingEntry) ||
       !(
         formData.weightLbs.toString().trim() !== "" &&
-        (isQuestionnaireDay(formData.date) || formData.steps.toString().trim() !== "") &&
-        (isQuestionnaireDay(formData.date) || formData.calories.toString().trim() !== "") &&
+        formData.steps.toString().trim() !== "" &&
+        formData.calories.toString().trim() !== "" &&
         formData.perceivedStress.toString().trim() !== ""
       )
     )
-  }, [submitting, hasCoach, entryMode, existingEntry, formData, isQuestionnaireDay])
+  }, [submitting, hasCoach, entryMode, existingEntry, formData])
 
   if (status === "loading" || loading || activeRole === null) {
     return (
@@ -965,53 +959,49 @@ export default function ClientDashboard() {
                     </div>
                   </div>
                   
-                  {!isQuestionnaireDay(formData.date) && (
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
-                        Steps
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          min="0"
-                          max="100000"
-                          placeholder="0"
-                          value={formData.steps}
-                          onChange={(e) =>
-                            startTransition(() => setFormData({ ...formData, steps: e.target.value }))
-                          }
-                          required={!isQuestionnaireDay(formData.date)}
-                          disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
-                          className="w-full px-4 py-2.5 pr-16 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">steps</span>
-                      </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      Steps
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100000"
+                        placeholder="0"
+                        value={formData.steps}
+                        onChange={(e) =>
+                          startTransition(() => setFormData({ ...formData, steps: e.target.value }))
+                        }
+                        required
+                        disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
+                        className="w-full px-4 py-2.5 pr-16 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">steps</span>
                     </div>
-                  )}
-                  
-                  {!isQuestionnaireDay(formData.date) && (
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
-                        Calories
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          min="0"
-                          max="20000"
-                          placeholder="0"
-                          value={formData.calories}
-                          onChange={(e) =>
-                            startTransition(() => setFormData({ ...formData, calories: e.target.value }))
-                          }
-                          required={!isQuestionnaireDay(formData.date)}
-                          disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
-                          className="w-full px-4 py-2.5 pr-14 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">kcal</span>
-                      </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      Calories
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        max="20000"
+                        placeholder="0"
+                        value={formData.calories}
+                        onChange={(e) =>
+                          startTransition(() => setFormData({ ...formData, calories: e.target.value }))
+                        }
+                        required
+                        disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
+                        className="w-full px-4 py-2.5 pr-14 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">kcal</span>
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Perceived Stress - Always Visible if enabled */}
