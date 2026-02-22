@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Role } from "@/lib/types"
@@ -8,6 +8,7 @@ import { Role } from "@/lib/types"
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const [checking, setChecking] = useState(false)
 
   useEffect(() => {
     if (status === "loading") return
@@ -33,14 +34,31 @@ export default function DashboardPage() {
       // Check if client has completed onboarding
       const isOnboardingComplete = (session.user as any)?.isOnboardingComplete ?? false
       if (!isOnboardingComplete) {
-        router.push("/onboarding/client")
+        // Detect if client was invited (via coach or cohort) to route to the
+        // simplified invited onboarding instead of the full self-signup flow.
+        if (!checking) {
+          setChecking(true)
+          fetch("/api/onboarding/detect-state")
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              const route = data?.route
+              if (route) {
+                router.push(route)
+              } else {
+                router.push("/onboarding/client")
+              }
+            })
+            .catch(() => {
+              router.push("/onboarding/client")
+            })
+        }
       } else {
         router.push("/client-dashboard")
       }
     } else {
       router.push("/login")
     }
-  }, [session, status, router])
+  }, [session, status, router, checking])
 
   return (
     <div className="min-h-screen flex items-start sm:items-center justify-center bg-gray-50 overflow-y-auto">

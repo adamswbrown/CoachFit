@@ -6,6 +6,11 @@ import { db } from "@/lib/db"
 /**
  * GET /api/onboarding/invite-context
  * Returns invite context for the signed-in client (cohort + coach details).
+ *
+ * NOTE: Invite records (CoachInvite / CohortInvite) are deleted during the
+ * signIn callback in lib/auth.ts after they are processed. So for users who
+ * have already signed in, we also check invitedByCoachId and CohortMembership
+ * on the User model as a fallback.
  */
 export async function GET() {
   const session = await auth()
@@ -21,30 +26,31 @@ export async function GET() {
   try {
     const email = session.user.email.toLowerCase()
 
-    const cohortInvites = await db.cohortInvite.findMany({
-      where: { email },
-      include: {
-        Cohort: {
-          select: {
-            id: true,
-            name: true,
-            coachId: true,
-            User: {
-              select: { name: true, email: true },
+    const [cohortInvites, coachInvites] = await Promise.all([
+      db.cohortInvite.findMany({
+        where: { email },
+        include: {
+          Cohort: {
+            select: {
+              id: true,
+              name: true,
+              coachId: true,
+              User: {
+                select: { name: true, email: true },
+              },
             },
           },
         },
-      },
-    })
-
-    const coachInvites = await db.coachInvite.findMany({
-      where: { email },
-      include: {
-        User: {
-          select: { name: true, email: true },
+      }),
+      db.coachInvite.findMany({
+        where: { email },
+        include: {
+          User: {
+            select: { name: true, email: true },
+          },
         },
-      },
-    })
+      }),
+    ])
 
     const cohortInviteSummaries = cohortInvites.map((invite) => ({
       cohortId: invite.Cohort.id,
@@ -57,6 +63,53 @@ export async function GET() {
       coachName: invite.User?.name || null,
       coachEmail: invite.User?.email || null,
     }))
+
+    // Fallback: if invite records were already deleted (processed during
+    // sign-in), look at the user's invitedByCoachId and CohortMembership.
+    if (cohortInviteSummaries.length === 0 && coachInviteSummaries.length === 0) {
+      const user = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          invitedByCoachId: true,
+          // Self-relation "UserToUser" for the coach who invited this user
+          User: {
+            select: { name: true, email: true },
+          },
+          CohortMembership: {
+            select: {
+              Cohort: {
+                select: {
+                  id: true,
+                  name: true,
+                  coachId: true,
+                  User: {
+                    select: { name: true, email: true },
+                  },
+                },
+              },
+            },
+            take: 1,
+          },
+        },
+      })
+
+      if (user?.invitedByCoachId && user.User) {
+        coachInviteSummaries.push({
+          coachName: user.User.name || null,
+          coachEmail: user.User.email || null,
+        })
+      }
+
+      if (user?.CohortMembership && user.CohortMembership.length > 0) {
+        const membership = user.CohortMembership[0]
+        cohortInviteSummaries.push({
+          cohortId: membership.Cohort.id,
+          cohortName: membership.Cohort.name,
+          coachName: membership.Cohort.User?.name || null,
+          coachEmail: membership.Cohort.User?.email || null,
+        })
+      }
+    }
 
     return NextResponse.json(
       {
