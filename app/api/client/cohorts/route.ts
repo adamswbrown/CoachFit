@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isClient } from "@/lib/permissions"
+import { isHealthKitEnabled } from "@/lib/system-settings"
 
 // GET /api/client/cohorts - Fetch user's cohorts
 export async function GET(req: NextRequest) {
@@ -48,7 +49,9 @@ export async function GET(req: NextRequest) {
       checkInFrequencyDays: membership.Cohort.checkInFrequencyDays,
     }))
 
-    return NextResponse.json({ cohorts })
+    const healthkitEnabled = await isHealthKitEnabled()
+
+    return NextResponse.json({ cohorts, healthkitEnabled })
   } catch (error) {
     console.error("Error fetching user cohorts:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

@@ -56,6 +56,7 @@ export default function ClientDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [hasCoach, setHasCoach] = useState<boolean | null>(null)
+  const [healthkitEnabled, setHealthkitEnabled] = useState(false)
 
   const [formData, setFormData] = useState({
     weightLbs: "",
@@ -140,6 +141,9 @@ export default function ClientDashboard() {
         const data = await res.json()
         const cohorts = data.cohorts || []
         setUserCohorts(cohorts)
+        if (typeof data.healthkitEnabled === "boolean") {
+          setHealthkitEnabled(data.healthkitEnabled)
+        }
         if (cohorts.length > 0) {
           setSelectedCohortId(cohorts[0].id)
           setSelectedCohortStartDate(cohorts[0].cohortStartDate || null)
@@ -573,14 +577,16 @@ export default function ClientDashboard() {
             </p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
-            <Link
-              href="/client-dashboard/pairing"
-              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors text-center"
-              title="Connect your iOS device for automatic HealthKit syncing"
-            >
-              <span className="sm:hidden">📱</span>
-              <span className="hidden sm:inline">📱 Pairing</span>
-            </Link>
+            {healthkitEnabled && (
+              <Link
+                href="/client-dashboard/pairing"
+                className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors text-center"
+                title="Connect your iOS device for automatic HealthKit syncing"
+              >
+                <span className="sm:hidden">📱</span>
+                <span className="hidden sm:inline">📱 Pairing</span>
+              </Link>
+            )}
             <Link
               href="/client-dashboard/settings"
               className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors text-center"

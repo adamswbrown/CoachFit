@@ -26,6 +26,7 @@ export default function ClientPairingPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [showCodeForm, setShowCodeForm] = useState(false)
+  const [featureEnabled, setFeatureEnabled] = useState(true)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -39,11 +40,26 @@ export default function ClientPairingPage() {
     }
   }, [status, session, router])
 
+  // Check if HealthKit pairing is enabled
   useEffect(() => {
     if (session?.user && isClient(session.user)) {
+      fetch("/api/client/cohorts")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.healthkitEnabled === false) {
+            setFeatureEnabled(false)
+            router.push("/client-dashboard")
+          }
+        })
+        .catch(() => {})
+    }
+  }, [session, router])
+
+  useEffect(() => {
+    if (session?.user && isClient(session.user) && featureEnabled) {
       fetchPairingStatus()
     }
-  }, [session])
+  }, [session, featureEnabled])
 
   const fetchPairingStatus = async () => {
     try {
