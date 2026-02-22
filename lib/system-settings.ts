@@ -50,6 +50,10 @@ export interface SystemSettings {
   termsContentHtml: string
   privacyContentHtml: string
   dataProcessingContentHtml: string
+  setupComplete: boolean
+  organisationName: string
+  timezone: string
+  unitSystem: string
 }
 
 // Default values (fallback if database settings not found)
@@ -93,6 +97,10 @@ const DEFAULT_SETTINGS: SystemSettings = {
   termsContentHtml: DEFAULT_TERMS_HTML,
   privacyContentHtml: DEFAULT_PRIVACY_HTML,
   dataProcessingContentHtml: DEFAULT_DATA_PROCESSING_HTML,
+  setupComplete: false,
+  organisationName: "CoachFit",
+  timezone: "UTC",
+  unitSystem: "metric",
 }
 
 /**

@@ -81,6 +81,29 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
+  // ─── Setup Wizard Gate ───────────────────────────────────────────────
+  // If setup is not complete, redirect all non-setup routes to /setup.
+  // Uses a cookie as an optimisation to avoid DB lookups on every request.
+  // The database remains the source of truth — the /setup page and all
+  // /api/setup/* endpoints verify setupComplete against the DB directly.
+  if (
+    !pathname.startsWith("/setup") &&
+    !pathname.startsWith("/api/setup") &&
+    !pathname.startsWith("/api/auth") &&
+    !pathname.endsWith(".webmanifest") &&
+    !pathname.endsWith(".json")
+  ) {
+    const setupComplete = req.cookies.get("coachfit_setup_complete")?.value
+    if (setupComplete !== "true") {
+      return NextResponse.redirect(new URL("/setup", req.url))
+    }
+  }
+
+  // Allow setup routes through with security headers
+  if (pathname.startsWith("/setup") || pathname.startsWith("/api/setup")) {
+    return addSecurityHeaders(NextResponse.next())
+  }
+
   // CORS preflight for mobile endpoints
   if (isHealthKitEndpoint(pathname) && req.method === "OPTIONS") {
     return addMobileCorsHeaders(new NextResponse(null, { status: 204 }))
