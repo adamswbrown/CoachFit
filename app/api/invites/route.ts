@@ -8,7 +8,7 @@ import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
 import { logAuditAction } from "@/lib/audit-log"
 
 const createInviteSchema = z.object({
-  email: z.string().email("Invalid email format"),
+  email: z.string().email("Invalid email format").transform((e) => e.toLowerCase().trim()),
 })
 
 // GET /api/invites - List all pending invites for the current coach

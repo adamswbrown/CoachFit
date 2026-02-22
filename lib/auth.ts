@@ -52,7 +52,7 @@ export const authOptions: NextAuthConfig = {
         if (!credentials?.email || !credentials?.password) return null
 
         const email =
-          typeof credentials.email === "string" ? credentials.email : ""
+          typeof credentials.email === "string" ? credentials.email.toLowerCase().trim() : ""
         const password =
           typeof credentials.password === "string" ? credentials.password : ""
 
@@ -169,9 +169,12 @@ export const authOptions: NextAuthConfig = {
           // We just need to process invites below.
         }
 
+        // Normalize email for case-insensitive invite matching
+        const normalizedEmail = user.email!.toLowerCase().trim()
+
         // Coach invites
         const coachInvites = await db.coachInvite.findMany({
-          where: { email: user.email },
+          where: { email: normalizedEmail },
         })
 
         if (coachInvites.length > 0) {
@@ -183,13 +186,13 @@ export const authOptions: NextAuthConfig = {
           })
 
           await db.coachInvite.deleteMany({
-            where: { email: user.email },
+            where: { email: normalizedEmail },
           })
         }
 
         // Cohort invites
         const cohortInvites = await db.cohortInvite.findMany({
-          where: { email: user.email },
+          where: { email: normalizedEmail },
         })
 
         if (cohortInvites.length > 0) {
@@ -200,7 +203,7 @@ export const authOptions: NextAuthConfig = {
 
           if (existingMembership) {
             await db.cohortInvite.deleteMany({
-              where: { email: user.email },
+              where: { email: normalizedEmail },
             })
           } else {
             const invite = cohortInvites[0]
@@ -213,7 +216,7 @@ export const authOptions: NextAuthConfig = {
               })
 
               await tx.cohortInvite.deleteMany({
-                where: { email: user.email },
+                where: { email: normalizedEmail },
               })
             })
           }
