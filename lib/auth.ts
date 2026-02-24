@@ -11,9 +11,15 @@ import bcrypt from "bcryptjs"
 
 const isSecureCookie = process.env.NODE_ENV === "production"
 const cookiePrefix = isSecureCookie ? "__Secure-" : ""
+const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET
+
+if (process.env.NODE_ENV === "production" && !authSecret) {
+  throw new Error("Missing AUTH_SECRET/NEXTAUTH_SECRET in production")
+}
 
 export const authOptions: NextAuthConfig = {
   adapter: PrismaAdapter(db) as Adapter,
+  secret: authSecret,
   trustHost: true,
   useSecureCookies: isSecureCookie,
 
