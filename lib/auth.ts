@@ -8,14 +8,50 @@ import { Role } from "./types"
 import { isAdminWithOverride } from "./permissions-server"
 import type { Adapter } from "next-auth/adapters"
 import bcrypt from "bcryptjs"
-import { randomUUID } from "crypto"
+
+const isSecureCookie = process.env.NODE_ENV === "production"
+const cookiePrefix = isSecureCookie ? "__Secure-" : ""
 
 export const authOptions: NextAuthConfig = {
   adapter: PrismaAdapter(db) as Adapter,
+  trustHost: true,
+  useSecureCookies: isSecureCookie,
 
   session: {
     strategy: "jwt",
     maxAge: 60 * 60, // 1 hour
+  },
+
+  // Explicit transient cookie names/options reduce OAuth PKCE/state parsing issues
+  // when stale cookies from prior auth stacks are present in the browser.
+  cookies: {
+    pkceCodeVerifier: {
+      name: `${cookiePrefix}coachfit.authjs.pkce.code_verifier`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isSecureCookie,
+      },
+    },
+    state: {
+      name: `${cookiePrefix}coachfit.authjs.state`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isSecureCookie,
+      },
+    },
+    nonce: {
+      name: `${cookiePrefix}coachfit.authjs.nonce`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isSecureCookie,
+      },
+    },
   },
 
   providers: [
@@ -346,6 +382,7 @@ export const authOptions: NextAuthConfig = {
 
   pages: {
     signIn: "/login",
+    error: "/login",
   },
 }
 
