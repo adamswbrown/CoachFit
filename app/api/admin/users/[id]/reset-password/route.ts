@@ -68,7 +68,7 @@ export async function POST(
       const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
 
       if (isFirstPassword) {
-        // First-time password - user previously only had OAuth
+        // First-time password
         await sendSystemEmail({
           templateKey: EMAIL_TEMPLATE_KEYS.PASSWORD_SET,
           to: user.email,
@@ -83,11 +83,7 @@ export async function POST(
               <h2 style="color: #1f2937;">New Sign-In Option Available</h2>
               <p>Hi${user.name ? ` ${user.name}` : ""},</p>
               <p>Good news! Your administrator has set up a password for your CoachFit account.</p>
-              <p>You can now sign in using <strong>either</strong>:</p>
-              <ul>
-                <li>Your Google account (as before)</li>
-                <li>Your email and new password</li>
-              </ul>
+              <p>You can now sign in using your email and new password.</p>
               <p>Contact your administrator for your password, then sign in:</p>
               <p style="margin-top: 24px;">
                 <a href="${loginUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
@@ -99,7 +95,7 @@ export async function POST(
               </p>
             </div>
           `,
-          fallbackText: `New Sign-In Option Available\n\nHi${user.name ? ` ${user.name}` : ""},\n\nGood news! Your administrator has set up a password for your CoachFit account.\n\nYou can now sign in using either:\n- Your Google account (as before)\n- Your email and new password\n\nContact your administrator for your password, then sign in: ${loginUrl}\n\nIf you did not expect this, please contact your administrator.`,
+          fallbackText: `New Sign-In Option Available\n\nHi${user.name ? ` ${user.name}` : ""},\n\nGood news! Your administrator has set up a password for your CoachFit account.\n\nYou can now sign in using your email and new password.\n\nContact your administrator for your password, then sign in: ${loginUrl}\n\nIf you did not expect this, please contact your administrator.`,
           isTestUser: user.isTestUser,
         })
       } else {

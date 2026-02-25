@@ -384,14 +384,12 @@ describe('signupSchema', () => {
   it('accepts valid signup', () => {
     expect(() => signupSchema.parse({
       email: 'user@example.com',
-      password: 'MyStr0ngP@ss!',
     })).not.toThrow()
   })
 
   it('accepts signup with optional name', () => {
     expect(() => signupSchema.parse({
       email: 'user@example.com',
-      password: 'MyStr0ngP@ss!',
       name: 'John Doe',
     })).not.toThrow()
   })
@@ -399,49 +397,36 @@ describe('signupSchema', () => {
   it('rejects .local email domain', () => {
     expect(() => signupSchema.parse({
       email: 'user@test.local',
-      password: 'MyStr0ngP@ss!',
     })).toThrow()
   })
 
   it('rejects .test email domain', () => {
     expect(() => signupSchema.parse({
       email: 'user@something.test',
-      password: 'MyStr0ngP@ss!',
     })).toThrow()
   })
 
   it('rejects .example email domain', () => {
     expect(() => signupSchema.parse({
       email: 'user@foo.example',
-      password: 'MyStr0ngP@ss!',
     })).toThrow()
   })
 
   it('rejects .invalid email domain', () => {
     expect(() => signupSchema.parse({
       email: 'user@something.invalid',
-      password: 'MyStr0ngP@ss!',
     })).toThrow()
   })
 
   it('rejects .localhost email domain', () => {
     expect(() => signupSchema.parse({
       email: 'user@app.localhost',
-      password: 'MyStr0ngP@ss!',
     })).toThrow()
   })
 
   it('rejects invalid email format', () => {
     expect(() => signupSchema.parse({
       email: 'not-an-email',
-      password: 'MyStr0ngP@ss!',
-    })).toThrow()
-  })
-
-  it('rejects weak password', () => {
-    expect(() => signupSchema.parse({
-      email: 'user@example.com',
-      password: 'weak',
     })).toThrow()
   })
 })

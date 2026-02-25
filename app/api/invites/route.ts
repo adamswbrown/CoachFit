@@ -136,10 +136,10 @@ export async function POST(req: NextRequest) {
           <h2 style="color: #1f2937;">You've been invited to CoachFit</h2>
           <p>Hi there,</p>
           <p><strong>${coachName}</strong> has invited you to join CoachFit to track your fitness progress.</p>
-          <p>Sign up to get started.</p>
+          <p>Create your account to receive a temporary password.</p>
           <p style="margin-top: 24px;">
             <a href="${loginUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-              Sign up to get started
+              Create account
             </a>
           </p>
           <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
           </p>
         </div>
       `,
-      fallbackText: `You've been invited to CoachFit\n\n${coachName} has invited you to join CoachFit to track your fitness progress.\n\nSign up to get started: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
+      fallbackText: `You've been invited to CoachFit\n\n${coachName} has invited you to join CoachFit to track your fitness progress.\n\nCreate your account to receive a temporary password: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
       isTestUser: isTestUserEmail,
     })
 

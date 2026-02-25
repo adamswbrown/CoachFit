@@ -1,7 +1,5 @@
 import NextAuth, { type NextAuthConfig } from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import GoogleProvider from "next-auth/providers/google"
-import AppleProvider from "next-auth/providers/apple"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { db } from "./db"
 import { Role } from "./types"
@@ -61,27 +59,6 @@ export const authOptions: NextAuthConfig = {
   },
 
   providers: [
-    // Google (optional)
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-      ? [
-          GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-            allowDangerousEmailAccountLinking: true,
-          }),
-        ]
-      : []),
-
-    // Apple (optional)
-    ...(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET
-      ? [
-          AppleProvider({
-            clientId: process.env.APPLE_CLIENT_ID!,
-            clientSecret: process.env.APPLE_CLIENT_SECRET!,
-          }),
-        ]
-      : []),
-
     // Email / password
     CredentialsProvider({
       name: "Email",

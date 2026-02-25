@@ -20,19 +20,13 @@ export async function GET(
 
     const { id: clientId } = await params
 
-    // Fetch client with their connected accounts
+    // Fetch client account settings
     const client = await db.user.findUnique({
       where: { id: clientId },
       select: {
         id: true,
         name: true,
         email: true,
-        Account: {
-          select: {
-            provider: true,
-            providerAccountId: true,
-          },
-        },
       },
     })
 

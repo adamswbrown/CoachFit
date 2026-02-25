@@ -22,6 +22,7 @@ const TOKEN_WHITELIST = [
   "coachEmail",
   "cohortName",
   "loginUrl",
+  "temporaryPassword",
   "appName",
   "clientName",
   "weekNumber",
@@ -38,6 +39,7 @@ export interface EmailVariables {
   coachEmail?: string
   cohortName?: string
   loginUrl?: string
+  temporaryPassword?: string
   appName?: string
   clientName?: string
   weekNumber?: string

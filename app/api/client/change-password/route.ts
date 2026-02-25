@@ -71,10 +71,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    // Check if user has a password (OAuth-only users don't)
+    // Accounts must have a temporary or permanent password before change.
     if (!user.passwordHash) {
       return NextResponse.json(
-        { error: "You signed up with OAuth and don't have a password. Please use your OAuth provider to sign in." },
+        { error: "No password is set for this account. Please contact your coach or administrator." },
         { status: 400 }
       )
     }

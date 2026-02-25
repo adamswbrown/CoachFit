@@ -17,7 +17,6 @@ interface UserDetails {
   createdAt: string
   onboardingComplete: boolean
   hasPassword: boolean
-  authProviders: string[]
   cohortsMemberOf: Array<{
     id: string
     name: string
@@ -191,14 +190,11 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                     Email/Password
                   </span>
                 )}
-                {user.authProviders.map((provider) => (
-                  <span
-                    key={provider}
-                    className="px-2 py-0.5 text-xs bg-neutral-100 text-neutral-700 rounded"
-                  >
-                    {provider}
+                {!user.hasPassword && (
+                  <span className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded">
+                    No password set
                   </span>
-                ))}
+                )}
               </div>
             </div>
             {user.isTestUser && (

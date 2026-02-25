@@ -139,7 +139,6 @@ export const signupSchema = z.object({
       (email) => !BLOCKED_EMAIL_DOMAINS.some((domain) => email.endsWith(domain)),
       "This email domain is not allowed for registration"
     )),
-  password: passwordSchema,
   name: z.string().optional(),
 })
 

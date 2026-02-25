@@ -524,18 +524,13 @@ export default function AdminPage() {
                               </div>
                               <p className="text-xs text-neutral-500 mt-0.5">{user.email}</p>
                               <div className="flex gap-1 mt-1">
-                                {user.authProviders?.includes("google") && (
-                                  <span className="px-1 py-0.5 text-xs bg-neutral-100 text-neutral-600 rounded" title="Google OAuth">
-                                    Google
-                                  </span>
-                                )}
                                 {user.hasPassword ? (
-                                  <span className="px-1 py-0.5 text-xs bg-neutral-50 text-neutral-700 rounded" title="Has password">
-                                    🔑
+                                  <span className="px-1 py-0.5 text-xs bg-neutral-50 text-neutral-700 rounded" title="Password configured">
+                                    Password
                                   </span>
                                 ) : (
-                                  <span className="px-1 py-0.5 text-xs bg-amber-50 text-amber-600 rounded" title="No password">
-                                    ⚠️
+                                  <span className="px-1 py-0.5 text-xs bg-amber-50 text-amber-600 rounded" title="No password configured">
+                                    No password
                                   </span>
                                 )}
                               </div>
