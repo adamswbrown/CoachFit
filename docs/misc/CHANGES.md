@@ -1,5 +1,7 @@
 # Changes Made - 2026-01-12
 
+> **Note (March 2026):** Authentication has been migrated from NextAuth to Clerk (managed auth). References to NextAuth below are historical and describe the state at the time of these changes. See [Authentication Setup](../development/authentication.md) for current auth architecture.
+
 ## Bug Fixes
 
 ### 1. Fixed Redirect Loop Issue

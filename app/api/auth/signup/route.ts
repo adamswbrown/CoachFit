@@ -4,7 +4,6 @@ import { signupSchema } from "@/lib/validations"
 import { sendSystemEmail } from "@/lib/email"
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
 import { Role } from "@/lib/types"
-import bcrypt from "bcryptjs"
 import { z } from "zod"
 
 const TEMP_PASSWORD_LENGTH = 16
@@ -55,13 +54,21 @@ function generateTemporaryPassword(length = TEMP_PASSWORD_LENGTH): string {
   return shuffleChars([...requiredChars, ...remainingChars])
 }
 
+/**
+ * POST /api/auth/signup
+ *
+ * Creates a new user via Clerk Backend API + local database record.
+ * Used for admin/coach-created accounts with temporary passwords.
+ *
+ * For self-service signup, users go through Clerk's <SignUp /> component instead.
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const validated = signupSchema.parse(body)
     const consent = signupConsentSchema.parse(body)
 
-    // Check if user already exists
+    // Check if user already exists locally
     const existingUser = await db.user.findUnique({
       where: { email: validated.email },
     })
@@ -74,7 +81,31 @@ export async function POST(req: NextRequest) {
     }
 
     const temporaryPassword = generateTemporaryPassword()
-    const passwordHash = await bcrypt.hash(temporaryPassword, 12)
+    const normalizedEmail = validated.email.toLowerCase().trim()
+
+    // Create user in Clerk
+    let clerkUserId: string | null = null
+    try {
+      const { clerkClient } = await import("@clerk/nextjs/server")
+      const client = await clerkClient()
+      const clerkUser = await client.users.createUser({
+        emailAddress: [normalizedEmail],
+        password: temporaryPassword,
+        firstName: validated.name || undefined,
+        skipPasswordChecks: true,
+      })
+      clerkUserId = clerkUser.id
+    } catch (clerkErr: any) {
+      // If Clerk is not configured (dev mode), continue without Clerk user
+      if (clerkErr?.errors?.[0]?.code === "form_identifier_exists") {
+        return NextResponse.json(
+          { error: "An account with this email already exists" },
+          { status: 409 }
+        )
+      }
+      console.error("[SIGNUP] Clerk user creation failed:", clerkErr)
+      // Continue — local user will be created, Clerk link happens on first sign-in
+    }
 
     const now = new Date()
     const ip =
@@ -83,13 +114,13 @@ export async function POST(req: NextRequest) {
       "unknown"
     const userAgent = req.headers.get("user-agent") || undefined
 
-    // Create user and persist legal consent atomically.
+    // Create local user and persist legal consent atomically
     const user = await db.$transaction(async (tx) => {
       const createdUser = await tx.user.create({
         data: {
-          email: validated.email,
+          clerkId: clerkUserId,
+          email: normalizedEmail,
           name: validated.name || null,
-          passwordHash,
           roles: [Role.CLIENT],
           mustChangePassword: true,
         },
@@ -117,8 +148,27 @@ export async function POST(req: NextRequest) {
       return createdUser
     })
 
+    // Sync metadata to Clerk
+    if (clerkUserId) {
+      try {
+        const { clerkClient } = await import("@clerk/nextjs/server")
+        const client = await clerkClient()
+        await client.users.updateUserMetadata(clerkUserId, {
+          publicMetadata: {
+            dbId: user.id,
+            roles: [Role.CLIENT],
+            isTestUser: false,
+            mustChangePassword: true,
+            onboardingComplete: false,
+          },
+        })
+      } catch (metaErr) {
+        console.error("[SIGNUP] Failed to sync Clerk metadata:", metaErr)
+      }
+    }
+
     // Send welcome email (non-blocking)
-    const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
+    const loginUrl = `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"}/login`
     sendSystemEmail({
       templateKey: EMAIL_TEMPLATE_KEYS.WELCOME_CLIENT,
       to: user.email,
@@ -144,12 +194,9 @@ export async function POST(req: NextRequest) {
               Sign in
             </a>
           </p>
-          <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">
-            If you have any questions, please contact your coach.
-          </p>
         </div>
       `,
-      fallbackText: `Welcome to CoachFit!\n\nHi${user.name ? ` ${user.name}` : ""},\n\nWelcome to CoachFit! We've created your account.\n\nTemporary password: ${temporaryPassword}\n\nSign in with your email and this temporary password: ${loginUrl}\n\nYou'll be prompted to set a new password after signing in.\n\nIf you have any questions, please contact your coach.`,
+      fallbackText: `Welcome to CoachFit!\n\nHi${user.name ? ` ${user.name}` : ""},\n\nTemporary password: ${temporaryPassword}\n\nSign in: ${loginUrl}`,
       isTestUser: false,
     }).catch((err) => {
       console.error("Error sending welcome email:", err)

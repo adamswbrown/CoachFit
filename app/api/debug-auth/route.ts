@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 
 export async function GET() {
   const timestamp = Date.now()
@@ -9,9 +9,9 @@ export async function GET() {
     const cookieStore = await cookies()
     const allCookies = cookieStore.getAll()
 
-    const sessionToken = cookieStore.get('__Secure-authjs.session-token') || cookieStore.get('authjs.session-token')
+    const sessionToken = cookieStore.get('__Secure-better-auth.session_token') || cookieStore.get('better-auth.session_token') || cookieStore.get('__Secure-authjs.session-token') || cookieStore.get('authjs.session-token')
 
-    const session = await auth()
+    const session = await getSession()
 
     return NextResponse.json({
       timestamp,

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CoachFit (previously CoachSync) is a comprehensive fitness tracking and coaching platform connecting coaches with clients for real-time health tracking. Built with Next.js 16 (App Router), TypeScript, Prisma ORM, PostgreSQL, and NextAuth.js v5.
+CoachFit (previously CoachSync) is a comprehensive fitness tracking and coaching platform connecting coaches with clients for real-time health tracking. Built with Next.js 16 (App Router), TypeScript, Prisma ORM, PostgreSQL, and Clerk (managed auth).
 
 **Core capabilities:**
 - **Client tracking**: Daily fitness entries (weight, steps, calories, sleep, effort), HealthKit integration, workout tracking, sleep records
@@ -196,17 +196,25 @@ npm run test:cleanup-healthkit        # Remove HealthKit demo data
 
 ### Authentication & Authorization
 
-**NextAuth.js v5 (lib/auth.ts)**
-- JWT session strategy with 1-hour duration (configurable in `authOptions.session.maxAge`)
-- Multiple providers: Google OAuth (required), Apple Sign-In (optional), Email/Password (Credentials)
-- User roles stored in JWT token and database: CLIENT, COACH, ADMIN
-- Users can have multiple roles (e.g., COACH + ADMIN)
+**Clerk (Managed Auth)**
+- Managed service — Google OAuth, email/password, sessions all handled by Clerk
+- No self-hosted auth infrastructure, no OAuth credentials to manage
+- User data synced from Clerk to local DB via webhooks (`app/api/webhooks/route.ts`)
+- Roles stored in DB (`User.roles[]`), synced to Clerk `publicMetadata` for client access
 
-**Middleware (middleware.ts)**
-- Lightweight JWT parsing to avoid Edge Function size limits (no NextAuth imports)
-- Parses JWT token manually to extract roles
-- Role-based route protection for API and pages
-- Public routes bypass authentication
+**Server Auth (lib/auth.ts)**
+- `getSession()` — looks up Clerk session + enriches with DB data (roles, isTestUser, etc.)
+- Same return shape as old NextAuth/Better Auth — 98 API routes unchanged
+
+**Client Auth (lib/auth-client.ts)**
+- `useSession()`, `signIn()`, `signOut()` — compatibility wrappers over Clerk hooks
+- `<ClerkProvider>` in root layout
+- `<SignIn />` / `<SignUp />` components on login/signup pages
+
+**Proxy (proxy.ts)**
+- Clerk middleware (`clerkMiddleware()`) for session validation
+- Security headers and CORS for mobile endpoints
+- Public route whitelist via `createRouteMatcher()`
 
 **Permissions (lib/permissions.ts)**
 - `isAdmin()`: Full admin access (can see all cohorts, assign coaches, manage users)
@@ -430,7 +438,9 @@ return NextResponse.json({ error: "Error message" }, { status: 400 })
 
 **Authentication Pattern (all protected routes)**:
 ```typescript
-const session = await auth()
+import { getSession } from "@/lib/auth"
+
+const session = await getSession()
 if (!session?.user?.id) {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 }
@@ -517,7 +527,7 @@ app/
 **Backend Structure**:
 ```
 lib/
-├── auth.ts               # NextAuth configuration
+├── auth.ts               # Clerk auth wrapper (getSession)
 ├── db.ts                 # Prisma client instance
 ├── email.ts              # Email service (Resend)
 ├── permissions.ts        # Role-based permissions
@@ -530,7 +540,7 @@ components/
 ├── charts/               # Chart components (Recharts wrappers)
 ├── forms/                # Form components
 ├── navigation/           # Navigation components (navbar, sidebar)
-└── SessionProvider.tsx   # NextAuth session provider wrapper
+└── SessionProvider.tsx   # ErrorBoundary wrapper (no auth provider needed)
 
 prisma/
 ├── schema.prisma         # Prisma schema definition
@@ -620,8 +630,8 @@ scripts/
 - OAuth users can have passwordHash, allowing both login methods
 
 **Session Duration**:
-- JWT sessions expire after 1 hour (configurable in lib/auth.ts)
-- Can be adjusted for development: `maxAge: 30 * 24 * 60 * 60` (30 days)
+- Sessions managed by Clerk (configurable in Clerk Dashboard)
+- Default: long-lived sessions with automatic refresh
 
 **Entry Upsert Behavior** (POST /api/entries):
 - Creates new entry or updates existing entry for the same date
@@ -843,8 +853,8 @@ Even for personal projects, every feature includes:
 ### Authentication & Authorization:
 - Session validation on all protected routes
 - Role-based access control (lib/permissions.ts)
-- JWT token with 1-hour expiration
-- Password hashing with bcrypt (10 rounds)
+- Clerk-managed sessions (no self-hosted session infrastructure)
+- Password hashing managed by Clerk
 
 ### Secrets Management:
 - Never hard-code secrets
@@ -865,7 +875,7 @@ Even for personal projects, every feature includes:
 **Security debt compounds faster than code debt.**
 
 **Security checklist for every API route:**
-- [ ] Authentication check (`await auth()`)
+- [ ] Authentication check (`await getSession()`)
 - [ ] Authorization check (role/ownership validation)
 - [ ] Input validation (Zod schema)
 - [ ] Error messages don't leak sensitive info
@@ -943,16 +953,15 @@ Therefore:
 
 **Required**:
 - `DATABASE_URL` - PostgreSQL connection string
-- `NEXTAUTH_URL` - App URL (http://localhost:3000 for local)
-- `NEXTAUTH_SECRET` - Generate with `openssl rand -base64 32`
-- `GOOGLE_CLIENT_ID` - Google OAuth client ID
-- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk publishable key (from dashboard.clerk.com)
+- `CLERK_SECRET_KEY` - Clerk secret key (from dashboard.clerk.com)
 - `RESEND_API_KEY` - Resend API key for emails
 
 **Optional**:
-- `APPLE_CLIENT_ID` - Apple Sign-In client ID
-- `APPLE_CLIENT_SECRET` - Apple Sign-In client secret
-- `NEXT_PUBLIC_APPLE_CLIENT_ID` - Public Apple client ID (for client-side rendering)
+- `CLERK_WEBHOOK_SIGNING_SECRET` - For Clerk webhook verification (user sync)
+- `ADMIN_OVERRIDE_EMAIL` - Emergency admin access for a specific email address
+
+See **[Authentication Setup](docs/development/authentication.md)** for full configuration guide.
 
 **Note**: `.env.local` is git-ignored and NOT deployed. For production (Vercel), configure environment variables in the dashboard.
 
@@ -1165,9 +1174,10 @@ Each batch must answer:
 - [ ] Monitor for errors in Vercel logs
 - [ ] Test critical paths in production
 
-**Edge Function Limitations**:
-- Middleware is kept lightweight (manual JWT parsing) to stay under 1MB limit
-- NextAuth imports in middleware cause bundle size issues - avoid them
+**Proxy / Route Protection**:
+- `proxy.ts` uses Clerk's `clerkMiddleware()` for session validation
+- `createRouteMatcher()` defines public routes
+- Security headers and CORS injected alongside Clerk middleware
 
 **Solo-friendly defaults:**
 - Boring infrastructure (Vercel, Railway)
@@ -1195,16 +1205,18 @@ Each feature may log (in comments or this doc):
 ### Example Decision Log:
 ```typescript
 // lib/auth.ts
-// Decision: Manual JWT parsing in middleware.ts to avoid Edge Function size limits
-// Pattern: NextAuth callbacks.signIn processes invites automatically on login
-// Mistake avoided: Don't import NextAuth in middleware - causes bundle bloat
+// Decision: Migrated to Clerk (managed auth) for zero-config Google OAuth
+// Pattern: Clerk webhooks sync users to local DB for business data (roles, invites)
+// Pattern: getSession() enriches Clerk session with DB data (roles, isTestUser)
+// Pattern: Compatibility wrappers (useSession, signIn, signOut) minimize migration blast radius
 ```
 
 **No essays. Just future leverage.**
 
 **Key learnings for this project:**
-- Lightweight middleware = manual JWT parsing (avoid NextAuth imports in middleware.ts to stay under 1MB Edge Function limit)
-- Invitation flow = auto-process on sign-in via callbacks in lib/auth.ts
+- Clerk (managed auth) = zero-config Google OAuth, no self-hosted auth infrastructure
+- Invitation flow = auto-process via Clerk webhooks in app/api/webhooks/route.ts
+- getSession() wrapper enriches Clerk session with DB data (roles, custom fields)
 - Test users = suppress emails with isTestUser flag (or emails ending in `.local`)
 - Role collapse = ADMIN doesn't replace COACH, users can have multiple roles
 - Entry upsert = one entry per user per day via unique constraint `[userId, date]`

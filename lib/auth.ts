@@ -1,372 +1,185 @@
-import NextAuth, { type NextAuthConfig } from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import CredentialsProvider from "next-auth/providers/credentials"
+import { auth as clerkAuth, currentUser } from "@clerk/nextjs/server"
+import { clerkClient } from "@clerk/nextjs/server"
 import { db } from "./db"
 import { Role } from "./types"
-import { isAdminWithOverride } from "./permissions-server"
-import type { Adapter } from "next-auth/adapters"
-import bcrypt from "bcryptjs"
 
-const isSecureCookie = process.env.NODE_ENV === "production"
-const cookiePrefix = isSecureCookie ? "__Secure-" : ""
-const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET
+/**
+ * Clerk-based authentication for CoachFit.
+ *
+ * Provides a compatibility wrapper (`getSession()`) that returns the same
+ * session shape as the old NextAuth/Better Auth implementation, so API routes
+ * and components don't need changes.
+ */
 
-if (process.env.NODE_ENV === "production" && !authSecret) {
-  throw new Error("Missing AUTH_SECRET/NEXTAUTH_SECRET in production")
+export interface AuthSession {
+  user: {
+    id: string
+    email: string
+    name?: string | null
+    image?: string | null
+    roles: Role[]
+    isTestUser: boolean
+    mustChangePassword?: boolean
+    onboardingComplete?: boolean
+  }
 }
 
-export const authOptions: NextAuthConfig = {
-  adapter: PrismaAdapter(db) as Adapter,
-  secret: authSecret,
-  trustHost: true,
-  useSecureCookies: isSecureCookie,
+/**
+ * Get the current session (server-side).
+ *
+ * Drop-in replacement for the old `getSession()` function.
+ * Returns `{ user: { id, email, name, roles, isTestUser, ... } }` or `null`.
+ *
+ * Flow:
+ * 1. Get Clerk auth state (userId from session cookie)
+ * 2. Look up the local User record by clerkId
+ * 3. Return enriched session with roles and custom fields from our DB
+ */
+export async function getSession(): Promise<AuthSession | null> {
+  try {
+    const { userId } = await clerkAuth()
 
-  session: {
-    strategy: "jwt",
-    maxAge: 60 * 60, // 1 hour
-  },
+    if (!userId) return null
 
-  // Explicit transient cookie names/options reduce OAuth PKCE/state parsing issues
-  // when stale cookies from prior auth stacks are present in the browser.
-  cookies: {
-    pkceCodeVerifier: {
-      name: `${cookiePrefix}coachfit.authjs.pkce.code_verifier`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: isSecureCookie,
+    // Look up local user by Clerk ID
+    const dbUser = await db.user.findFirst({
+      where: { clerkId: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        roles: true,
+        isTestUser: true,
+        mustChangePassword: true,
+        onboardingComplete: true,
       },
-    },
-    state: {
-      name: `${cookiePrefix}coachfit.authjs.state`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: isSecureCookie,
-      },
-    },
-    nonce: {
-      name: `${cookiePrefix}coachfit.authjs.nonce`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: isSecureCookie,
-      },
-    },
-  },
+    })
 
-  providers: [
-    // Email / password
-    CredentialsProvider({
-      name: "Email",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
+    if (!dbUser) {
+      // User exists in Clerk but not in our DB yet (webhook may not have fired)
+      // Try to get basic info from Clerk and create the user
+      const clerkUser = await currentUser()
+      if (!clerkUser?.emailAddresses?.[0]?.emailAddress) return null
 
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
+      const email = clerkUser.emailAddresses[0].emailAddress
 
-        const email =
-          typeof credentials.email === "string" ? credentials.email.toLowerCase().trim() : ""
-        const password =
-          typeof credentials.password === "string" ? credentials.password : ""
-
-        if (!email || !password) return null
-
-        const user = await db.user.findUnique({
-          where: { email },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            passwordHash: true,
-            roles: true,
-            isTestUser: true,
-            mustChangePassword: true,
-          },
-        })
-
-        if (!user || !user.passwordHash) return null
-
-        const isValid = await bcrypt.compare(password, user.passwordHash)
-        if (!isValid) return null
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          roles: user.roles as Role[],
-          isTestUser: user.isTestUser,
-          mustChangePassword: user.mustChangePassword,
-        }
-      },
-    }),
-  ],
-
-  events: {
-    async createUser({ user }) {
-      // Set default CLIENT role only if user has no roles yet
-      // (preserves roles set by admin creation endpoints)
-      const existing = await db.user.findUnique({
-        where: { id: user.id },
-        select: { roles: true },
-      })
-      if (!existing?.roles || existing.roles.length === 0) {
-        await db.user.update({
-          where: { id: user.id },
-          data: { roles: [Role.CLIENT] },
-        })
-      }
-
-      if (!user.email) return
-
-      try {
-        const dbUser = await db.user.findUnique({
-          where: { id: user.id },
-          select: { isTestUser: true },
-        })
-
-        const { sendSystemEmail } = await import("./email")
-        const { EMAIL_TEMPLATE_KEYS } = await import("./email-templates")
-        const loginUrl = `${
-          process.env.NEXTAUTH_URL || "http://localhost:3000"
-        }/login`
-
-        // Fire-and-forget: do not block auth lifecycle
-        void sendSystemEmail({
-          templateKey: EMAIL_TEMPLATE_KEYS.WELCOME_CLIENT,
-          to: user.email,
-          variables: {
-            userName: user.name ? ` ${user.name}` : "",
-            loginUrl,
-          },
-          isTestUser: dbUser?.isTestUser,
-          // Fallback to inline content if template not available
-          fallbackSubject: "Welcome to CoachFit",
-          fallbackHtml: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #1f2937;">Welcome to CoachFit!</h2>
-              <p>Hi${user.name ? ` ${user.name}` : ""},</p>
-              <p>Welcome to CoachFit! We're excited to have you on board.</p>
-              <p>You're all set — your coach will guide you next.</p>
-              <p style="margin-top: 24px;">
-                <a
-                  href="${loginUrl}"
-                  style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;"
-                >
-                  Sign in to your dashboard
-                </a>
-              </p>
-              <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">
-                If you have any questions, please contact your coach.
-              </p>
-            </div>
-          `,
-          fallbackText: `Welcome to CoachFit!\n\nHi${user.name ? ` ${user.name}` : ""},\n\nWelcome to CoachFit! We're excited to have you on board.\n\nYou're all set — your coach will guide you next.\n\nSign in to your dashboard: ${loginUrl}\n\nIf you have any questions, please contact your coach.`,
-        })
-      } catch (error) {
-        console.error("Error sending welcome email:", error)
-      }
-    },
-  },
-
-  callbacks: {
-    async signIn({ user, account, profile }) {
-      if (!user?.email || !user?.id) return true
-
-      try {
-        // Log OAuth sign-in attempts for debugging
-        if (account && account.provider !== "credentials") {
-          console.log(`[AUTH] OAuth sign-in: provider=${account.provider}, email=${user.email}, userId=${user.id}`)
-
-          // With allowDangerousEmailAccountLinking enabled on the provider,
-          // NextAuth should handle account linking automatically.
-          // We just need to process invites below.
-        }
-
-        // Normalize email for case-insensitive invite matching
-        const normalizedEmail = user.email!.toLowerCase().trim()
-
-        // Coach invites
-        const coachInvites = await db.coachInvite.findMany({
-          where: { email: normalizedEmail },
-        })
-
-        if (coachInvites.length > 0) {
-          const firstInvite = coachInvites[0]
-
-          await db.user.update({
-            where: { id: user.id },
-            data: { invitedByCoachId: firstInvite.coachId },
-          })
-
-          await db.coachInvite.deleteMany({
-            where: { email: normalizedEmail },
-          })
-        }
-
-        // Cohort invites
-        const cohortInvites = await db.cohortInvite.findMany({
-          where: { email: normalizedEmail },
-        })
-
-        if (cohortInvites.length > 0) {
-          const existingMembership = await db.cohortMembership.findFirst({
-            where: { userId: user.id! },
-            select: { cohortId: true },
-          })
-
-          if (existingMembership) {
-            await db.cohortInvite.deleteMany({
-              where: { email: normalizedEmail },
-            })
-          } else {
-            const invite = cohortInvites[0]
-            await db.$transaction(async (tx) => {
-              await tx.cohortMembership.create({
-                data: {
-                  userId: user.id!,
-                  cohortId: invite.cohortId,
-                },
-              })
-
-              await tx.cohortInvite.deleteMany({
-                where: { email: normalizedEmail },
-              })
-            })
-          }
-        }
-      } catch (error) {
-        // Log the full error with stack trace
-        console.error("[AUTH] Error during sign-in callback:", error)
-        if (error instanceof Error) {
-          console.error("[AUTH] Error name:", error.name)
-          console.error("[AUTH] Error message:", error.message)
-          console.error("[AUTH] Error stack:", error.stack)
-        }
-        // Re-throw to trigger NextAuth error handling
-        throw error
-      }
-
-      return true
-    },
-
-    async jwt({ token, user }) {
-      // Debug logging for OAuth issues
-      console.log("[AUTH JWT] Called with:", {
-        hasUser: !!user,
-        userId: user?.id,
-        userEmail: user?.email,
-        userRoles: (user as any)?.roles,
-        existingTokenId: token?.id,
-        existingTokenRoles: token?.roles,
+      // Create local user record
+      const newUser = await db.user.create({
+        data: {
+          clerkId: userId,
+          email,
+          name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || null,
+          image: clerkUser.imageUrl || null,
+          roles: [Role.CLIENT],
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          image: true,
+          roles: true,
+          isTestUser: true,
+          mustChangePassword: true,
+          onboardingComplete: true,
+        },
       })
 
-      if (user) {
-        token.id = user.id
-        token.mustChangePassword = (user as any).mustChangePassword ?? false
-
-        // Store password change timestamp for session invalidation
-        const dbUserWithPwdChange = await db.user.findUnique({
-          where: { id: user.id },
-          select: { passwordChangedAt: true },
-        })
-        token.passwordChangedAt = dbUserWithPwdChange?.passwordChangedAt?.getTime() ?? null
-
-        if (Array.isArray(user.roles) && user.roles.length > 0) {
-          console.log("[AUTH JWT] Using user.roles from auth:", user.roles)
-          token.roles = user.roles
-          token.isTestUser = user.isTestUser ?? false
-          token.isOnboardingComplete =
-            (user as any).isOnboardingComplete ?? (user as any).onboardingComplete ?? false
-        } else {
-          console.log("[AUTH JWT] Fetching roles from database for user:", user.id)
-          const dbUser = await db.user.findUnique({
-            where: { id: user.id },
-            select: { roles: true, isTestUser: true, onboardingComplete: true, mustChangePassword: true },
-          })
-          console.log("[AUTH JWT] Database user roles:", dbUser?.roles)
-
-          token.roles = dbUser?.roles ?? [Role.CLIENT]
-          token.isTestUser = dbUser?.isTestUser ?? false
-          token.isOnboardingComplete = dbUser?.onboardingComplete ?? false
-          token.mustChangePassword = dbUser?.mustChangePassword ?? token.mustChangePassword ?? false
-        }
+      return {
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          name: newUser.name ?? null,
+          image: newUser.image ?? null,
+          roles: (newUser.roles as Role[]) ?? [Role.CLIENT],
+          isTestUser: newUser.isTestUser ?? false,
+          mustChangePassword: newUser.mustChangePassword ?? false,
+          onboardingComplete: newUser.onboardingComplete ?? false,
+        },
       }
+    }
 
-      console.log("[AUTH JWT] Final token roles:", token.roles)
+    let roles = (dbUser.roles as Role[]) ?? [Role.CLIENT]
 
-      // Check if password was changed after token was issued (invalidate session)
-      if (token.id && token.passwordChangedAt) {
-        const dbUser = await db.user.findUnique({
-          where: { id: token.id as string },
-          select: { passwordChangedAt: true },
-        })
-
-        const currentPasswordChangedAt = dbUser?.passwordChangedAt?.getTime() ?? null
-
-        // If password was changed after the token was created, invalidate the session
-        if (currentPasswordChangedAt && currentPasswordChangedAt > (token.passwordChangedAt as number)) {
-          // Return an empty token to effectively invalidate the session
-          return {} as typeof token
-        }
-      }
-
-      if (token.adminOverride === undefined && token.email) {
-        const roles = (token.roles as Role[]) ?? [Role.CLIENT]
-        const hasOverrideAdmin = await isAdminWithOverride({
-          roles,
-          email: token.email as string,
-        })
-
-        token.adminOverride = hasOverrideAdmin
-        if (hasOverrideAdmin && !roles.includes(Role.ADMIN)) {
-          token.roles = [...roles, Role.ADMIN]
-        }
-      } else if (token.adminOverride && token.roles && !(token.roles as Role[]).includes(Role.ADMIN)) {
-        token.roles = [...(token.roles as Role[]), Role.ADMIN]
-      }
-
-      if (token.id && (token.mustChangePassword === undefined || token.mustChangePassword === true)) {
-        const dbUser = await db.user.findUnique({
-          where: { id: token.id as string },
-          select: { mustChangePassword: true },
-        })
-        token.mustChangePassword = dbUser?.mustChangePassword ?? false
-      }
-
-      return token
-    },
-
-    async session({ session, token }) {
-      console.log("[AUTH SESSION] Called with token:", {
-        tokenId: token?.id,
-        tokenRoles: token?.roles,
-        tokenEmail: token?.email,
+    // Check for admin override
+    if (!roles.includes(Role.ADMIN) && dbUser.email) {
+      const { isAdminWithOverride } = await import("./permissions-server")
+      const hasOverride = await isAdminWithOverride({
+        roles,
+        email: dbUser.email,
       })
-
-      if (session.user) {
-        session.user.id = token.id as string
-        session.user.roles = (token.roles as Role[]) ?? [Role.CLIENT]
-        session.user.isTestUser = token.isTestUser as boolean
-        ;(session.user as any).isOnboardingComplete = token.isOnboardingComplete as boolean
-        ;(session.user as any).mustChangePassword = token.mustChangePassword as boolean
-
-        console.log("[AUTH SESSION] Final session.user.roles:", session.user.roles)
+      if (hasOverride) {
+        roles = [...roles, Role.ADMIN]
       }
+    }
 
-      return session
-    },
-  },
-
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
+    return {
+      user: {
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name ?? null,
+        image: dbUser.image ?? null,
+        roles,
+        isTestUser: dbUser.isTestUser ?? false,
+        mustChangePassword: dbUser.mustChangePassword ?? false,
+        onboardingComplete: dbUser.onboardingComplete ?? false,
+      },
+    }
+  } catch (error) {
+    console.error("[AUTH] Error getting session:", error)
+    return null
+  }
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth(authOptions)
+/**
+ * Process pending invites for a user (coach invites and cohort invites).
+ * Called from the Clerk webhook after sign-in/sign-up.
+ */
+export async function processInvitesForUser(userId: string, normalizedEmail: string) {
+  // Coach invites
+  const coachInvites = await db.coachInvite.findMany({
+    where: { email: normalizedEmail },
+  })
+
+  if (coachInvites.length > 0) {
+    const firstInvite = coachInvites[0]
+    await db.user.update({
+      where: { id: userId },
+      data: { invitedByCoachId: firstInvite.coachId },
+    })
+    await db.coachInvite.deleteMany({
+      where: { email: normalizedEmail },
+    })
+  }
+
+  // Cohort invites
+  const cohortInvites = await db.cohortInvite.findMany({
+    where: { email: normalizedEmail },
+  })
+
+  if (cohortInvites.length > 0) {
+    const existingMembership = await db.cohortMembership.findFirst({
+      where: { userId },
+      select: { cohortId: true },
+    })
+
+    if (existingMembership) {
+      await db.cohortInvite.deleteMany({
+        where: { email: normalizedEmail },
+      })
+    } else {
+      const invite = cohortInvites[0]
+      await db.$transaction(async (tx) => {
+        await tx.cohortMembership.create({
+          data: {
+            userId,
+            cohortId: invite.cohortId,
+          },
+        })
+        await tx.cohortInvite.deleteMany({
+          where: { email: normalizedEmail },
+        })
+      })
+    }
+  }
+}

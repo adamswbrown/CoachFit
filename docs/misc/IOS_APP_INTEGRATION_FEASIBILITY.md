@@ -3,6 +3,8 @@
 **Date:** 2026-01-13
 **Evaluating:** GymDashSync iOS app integration with CoachFit web application
 
+> **Note (March 2026):** Authentication has been migrated from NextAuth to Clerk (managed auth). References to NextAuth/JWT below describe the state at the time of this analysis. The iOS app would authenticate via Clerk's API or pairing codes. See [Authentication Setup](../development/authentication.md) for current auth architecture.
+
 ---
 
 ## Executive Summary

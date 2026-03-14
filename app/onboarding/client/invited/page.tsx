@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/lib/auth-client"
 import {
   DEFAULT_DATA_PROCESSING_HTML,
   DEFAULT_PRIVACY_HTML,

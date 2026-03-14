@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isClient } from "@/lib/permissions"
 import { validateAndUsePairingCode } from "@/lib/healthkit/pairing"
@@ -8,7 +8,7 @@ import { pairingCodeSchema } from "@/lib/validations/healthkit"
 
 export async function POST(request: Request) {
   try {
-    const session = await auth()
+    const session = await getSession()
     
     if (!session?.user?.id) {
       return NextResponse.json(

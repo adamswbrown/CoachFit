@@ -31,9 +31,9 @@ Complete guide to CoachFit's system architecture and design patterns.
 - Railway for hosted PostgreSQL
 
 **Authentication**:
-- NextAuth.js v5 with JWT sessions (1-hour duration)
-- Multi-provider: Google OAuth, Apple Sign-In, Email/Password
-- bcrypt password hashing (10 rounds)
+- Clerk (managed auth — no self-hosted auth infrastructure)
+- Providers: Google OAuth, Email/Password (configured in Clerk Dashboard)
+- Session management handled entirely by Clerk (cookie-based)
 
 **Infrastructure**:
 - Vercel for hosting and automatic deployments
@@ -148,32 +148,31 @@ See [prisma/schema.prisma](../../prisma/schema.prisma) for complete schema.
 ### Authentication Flow
 
 1. **Sign In**:
-   - User chooses provider (Google/Apple/Email)
-   - NextAuth handles authentication
-   - JWT token created with user ID and roles
-   - Session stored in cookie (1-hour expiration)
+   - User chooses provider (Google or Email/Password)
+   - Clerk handles authentication (managed service)
+   - Session managed by Clerk (cookie-based, automatic rotation)
 
-2. **Invitation Processing** (callbacks.signIn):
-   - Check for CoachInvite → set `invitedByCoachId`
-   - Check for CohortInvite → create CohortMembership
-   - Delete processed invites
+2. **User Sync** (via Clerk webhook):
+   - `user.created` event → creates local DB user, processes invites, sends welcome email
+   - `user.updated` event → syncs email/name changes
+   - If webhook hasn't fired, `getSession()` auto-creates local user on first API call
 
 3. **Role Assignment**:
    - New users default to CLIENT role
-   - Roles stored in both database and JWT
+   - Roles stored in database (source of truth) and synced to Clerk `publicMetadata`
    - Admin can grant additional roles (COACH, ADMIN)
 
 ### Authorization Patterns
 
-**Middleware (middleware.ts)**:
-- Lightweight JWT parsing (no NextAuth imports)
-- Route protection based on roles
-- Redirects unauthorized users to login
+**Middleware (proxy.ts)**:
+- Clerk middleware (`clerkMiddleware()`) for route protection
+- `createRouteMatcher()` defines public routes
+- Adds security headers and CORS
 
 **API Route Protection**:
 ```typescript
 // Authentication check
-const session = await auth()
+const session = await getSession()
 if (!session?.user?.id) {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 }
@@ -295,11 +294,11 @@ app/
 **Server Component** (default):
 ```typescript
 // app/dashboard/page.tsx
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 
 export default async function DashboardPage() {
-  const session = await auth()
+  const session = await getSession()
   const data = await db.entry.findMany({
     where: { userId: session.user.id }
   })
@@ -349,25 +348,26 @@ export default function EntryForm() {
 - Generates large client bundle (acceptable for server-side use)
 - Migration workflow requires discipline
 
-### 3. NextAuth.js v5
+### 3. Clerk (Managed Auth)
 
 **Why**:
-- Multi-provider authentication out of the box
-- Flexible JWT or database sessions
-- Good documentation and community support
+- Zero self-hosted auth infrastructure (no Google Cloud Console, no session tables)
+- Google OAuth configured entirely in Clerk Dashboard
+- Free tier supports 10,000 monthly active users
+- Pre-built UI components (`<SignIn />`, `<SignUp />`)
 
 **Trade-offs**:
-- v5 is beta (but stable enough for production)
-- Complex configuration for multiple providers
+- External dependency (managed service)
+- Multi-role not natively supported (solved via DB + publicMetadata sync)
 
-### 4. Lightweight Middleware
+### 4. Clerk Middleware
 
-**Decision**: Manual JWT parsing in middleware to avoid Edge Function size limits
+**Decision**: Use `clerkMiddleware()` for route protection
 
 **Why**:
-- NextAuth imports cause bundle bloat
-- Edge Functions have 1MB limit
-- Simple JWT parsing is sufficient for route protection
+- Handles session validation automatically
+- No manual JWT parsing needed
+- Clean route matching with `createRouteMatcher()`
 
 ### 5. Two-Tier Invitation System
 
@@ -416,15 +416,15 @@ export default function EntryForm() {
 1. **Input Validation**: Zod schemas on all API inputs
 2. **SQL Injection Protection**: Prisma parameterized queries
 3. **XSS Protection**: React automatic escaping
-4. **Authentication**: NextAuth with secure JWT
+4. **Authentication**: Clerk managed auth (sessions, OAuth, passwords)
 5. **Authorization**: Role-based access control
-6. **Password Security**: bcrypt hashing (10 rounds)
-7. **Session Security**: 1-hour JWT expiration
+6. **Password Security**: Managed by Clerk (no self-hosted password storage)
+7. **Session Security**: Managed by Clerk (automatic token rotation)
 8. **Secrets Management**: Environment variables only
 
 ### Security Checklist (Every API Route)
 
-- [ ] Authentication check (`await auth()`)
+- [ ] Authentication check (`await getSession()`)
 - [ ] Authorization check (role/ownership)
 - [ ] Input validation (Zod schema)
 - [ ] Error messages don't leak sensitive info
@@ -437,7 +437,7 @@ export default function EntryForm() {
 - **Server Components**: Reduce client-side JavaScript
 - **Turbopack**: Fast development builds
 - **Database Indexes**: On frequently queried fields
-- **JWT Sessions**: No database lookup on every request
+- **Clerk Sessions**: No manual session management needed
 - **Prisma Connection Pooling**: Efficient database connections
 
 ---
@@ -450,4 +450,4 @@ export default function EntryForm() {
 
 ---
 
-**Last Updated**: January 2025
+**Last Updated**: March 2026

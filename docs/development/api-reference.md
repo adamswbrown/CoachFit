@@ -26,7 +26,7 @@ Production: https://your-domain.vercel.app/api
 
 ### Authentication
 
-All protected endpoints require authentication via NextAuth.js session cookie.
+All protected endpoints require authentication via Clerk session.
 
 ### Response Format
 
@@ -90,16 +90,17 @@ Create new user account with email/password.
 - Email: must be valid email format
 - Password: minimum 8 characters
 
-### POST /api/auth/[...nextauth]
+### Authentication (Clerk Managed)
 
-NextAuth handlers for sign in/sign out/callbacks.
+Authentication is handled entirely by Clerk. Sign-in, sign-up, and session management are managed via Clerk's pre-built components and middleware.
 
-**Providers**:
+**Providers** (configured in Clerk Dashboard):
 - Google OAuth
-- Apple Sign-In
-- Email/Password (Credentials)
+- Email/Password
 
-See [NextAuth.js documentation](https://next-auth.js.org/) for details.
+**Webhook**: `POST /api/webhooks` — Clerk webhook handler for user sync (creates local DB user, processes invites, sends welcome email).
+
+See **[Authentication Setup](./authentication.md)** for details.
 
 ---
 
@@ -751,9 +752,9 @@ Assign coach to cohort.
 ### Authentication Pattern
 
 ```typescript
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 
-const session = await auth()
+const session = await getSession()
 if (!session?.user?.id) {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 }
@@ -819,4 +820,4 @@ Currently not implemented. Future consideration for:
 
 ---
 
-**Last Updated**: January 2025
+**Last Updated**: March 2026

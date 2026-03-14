@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { detectOnboardingState, getOnboardingRoute } from "@/lib/onboarding"
 
 /**
@@ -8,7 +8,7 @@ import { detectOnboardingState, getOnboardingRoute } from "@/lib/onboarding"
  * account origin (invited vs self-signup) and role.
  */
 export async function GET() {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

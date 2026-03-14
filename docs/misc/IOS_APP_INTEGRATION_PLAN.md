@@ -4,6 +4,8 @@
 **Estimated Duration:** 5 weeks (part-time) or 2.5 weeks (full-time)
 **Total Effort:** ~100 hours
 
+> **Note (March 2026):** Authentication has been migrated from NextAuth to Clerk (managed auth). Architecture diagrams referencing NextAuth/JWT below describe the original plan. The iOS app would authenticate via Clerk's API or pairing codes. See [Authentication Setup](../development/authentication.md) for current auth architecture.
+
 ---
 
 ## Project Overview

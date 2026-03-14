@@ -8,10 +8,11 @@ Complete guide for contributing to CoachFit development.
 
 1. [Overview](#overview)
 2. [Getting Started](./getting-started.md)
-3. [Architecture](./architecture.md)
-4. [API Reference](./api-reference.md)
-5. [Deployment](./deployment.md)
-6. [Contributing](../misc/CONTRIBUTING.md)
+3. [Authentication Setup](./authentication.md)
+4. [Architecture](./architecture.md)
+5. [API Reference](./api-reference.md)
+6. [Deployment](./deployment.md)
+7. [Contributing](../misc/CONTRIBUTING.md)
 
 ---
 
@@ -35,8 +36,7 @@ CoachFit is built with modern web technologies and follows a full-stack parallel
 **Database & Auth**:
 - PostgreSQL via Railway
 - Prisma 6.19.1 ORM
-- NextAuth.js v5 with JWT sessions
-- bcrypt password hashing
+- Clerk (managed auth — Google OAuth, email/password)
 
 **Infrastructure**:
 - Vercel for hosting
@@ -89,7 +89,7 @@ CoachFit/Web/
 │   └── clients/                 # Client pages
 ├── components/                   # React components
 ├── lib/                         # Utilities and configuration
-│   ├── auth.ts                 # NextAuth configuration
+│   ├── auth.ts                 # Clerk auth wrapper (getSession)
 │   ├── db.ts                   # Prisma client
 │   ├── email.ts                # Email service
 │   ├── permissions.ts          # Role-based permissions
@@ -211,8 +211,8 @@ After seeding:
 - ✅ Verify authorization (roles/ownership)
 - ✅ Never hard-code secrets
 - ✅ Use Prisma for SQL injection protection
-- ✅ Hash passwords with bcrypt (10 rounds)
-- ✅ Expire JWT tokens (1-hour default)
+- ✅ Passwords managed by Clerk (no self-hosted hashing)
+- ✅ Sessions managed by Clerk (automatic token rotation)
 
 See [CLAUDE.md](../../CLAUDE.md) for complete security baseline.
 
@@ -228,4 +228,4 @@ See [CLAUDE.md](../../CLAUDE.md) for complete security baseline.
 
 ---
 
-**Last Updated**: January 2025
+**Last Updated**: March 2026

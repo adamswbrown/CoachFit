@@ -99,7 +99,7 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 - ✅ **Why it exists**: Provides compliance-grade traceability, operational accountability, and a verifiable history for debugging and support.
 
 #### System Features
-- ✅ **Multi-Provider Auth**: Google OAuth, Apple Sign-In, Email/Password
+- ✅ **Managed Auth (Clerk)**: Google OAuth, Email/Password (configured in Clerk Dashboard)
 - ✅ **Role-Based Access Control**: CLIENT, COACH, ADMIN roles with proper authorization and multi-role support
 - ✅ **Configurable Email Templates**: Database-backed email templates with token substitution and preview
 - ✅ **Transactional Emails**: Automated invitations and welcome emails (via Resend)
@@ -128,8 +128,8 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 **Database & Auth**
 - PostgreSQL via Railway (production-grade relational database)
 - Prisma 6.19.1 ORM with type-safe queries
-- NextAuth.js v5 with JWT sessions (1-hour duration)
-- bcrypt password hashing (10 rounds)
+- Clerk (managed auth — Google OAuth, email/password)
+- Session management handled by Clerk (cookie-based)
 
 **Infrastructure**
 - Vercel for hosting and automatic deployments
@@ -290,21 +290,14 @@ Create `.env.local` with:
 # Database
 DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
 
-# NextAuth
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-here  # Generate with: openssl rand -base64 32
-
-# Google OAuth (Required)
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+# Clerk Authentication (get from https://dashboard.clerk.com → API Keys)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
 
 # Email Service (Resend)
 RESEND_API_KEY=re_your-resend-api-key
-
-# Apple Sign-In (Optional)
-APPLE_CLIENT_ID=your-apple-client-id
-APPLE_CLIENT_SECRET=your-apple-client-secret
-NEXT_PUBLIC_APPLE_CLIENT_ID=your-apple-client-id
 ```
 
 See [CLAUDE.md](./CLAUDE.md) for detailed setup instructions and architecture documentation.
@@ -401,11 +394,11 @@ Weekly questionnaires are bundled per cohort using SurveyJS templates and surfac
 
 ### Authentication Flow
 
-1. **Multi-Provider Support**: Google OAuth, Apple Sign-In, Email/Password
-2. **Invitation Processing**: On sign-in, both CoachInvite and CohortInvite are processed automatically
-3. **JWT Sessions**: 1-hour duration with role data embedded in token
-4. **Middleware**: Lightweight JWT parsing to avoid Edge Function size limits
-5. **Role-Based Authorization**: Every protected route validates user roles
+1. **Managed Auth (Clerk)**: Google OAuth and Email/Password configured in Clerk Dashboard
+2. **Invitation Processing**: On sign-up, both CoachInvite and CohortInvite are processed via Clerk webhook
+3. **Session Management**: Handled by Clerk (cookie-based, no manual JWT management)
+4. **Middleware**: Clerk middleware (`clerkMiddleware()`) for route protection
+5. **Role-Based Authorization**: Every protected route validates user roles (stored in DB, synced to Clerk metadata)
 
 ### API Design Patterns
 
@@ -452,8 +445,8 @@ See [CLAUDE.md](./CLAUDE.md) for the complete development workflow and operating
 - **Input Validation**: Zod schemas for all API inputs
 - **SQL Injection Protection**: Prisma ORM with parameterized queries
 - **XSS Protection**: React automatic escaping
-- **Password Security**: bcrypt hashing (10 rounds)
-- **JWT Tokens**: 1-hour expiration with secure signing
+- **Password Security**: Managed by Clerk (no self-hosted password storage)
+- **Session Security**: Managed by Clerk (automatic token rotation)
 - **Role-Based Access**: Strict authorization checks on all protected routes
 - **Secrets Management**: Environment variables only, never hard-coded
 - **Test User Safety**: Email suppression for development accounts
@@ -478,8 +471,8 @@ See [CLAUDE.md](./CLAUDE.md) for the complete development workflow and operating
 
 1. **Next.js 16 App Router**: Server Components + streaming for optimal performance
 2. **Prisma ORM**: Type-safe database queries with excellent migration tools
-3. **NextAuth.js v5**: Flexible authentication with multiple providers
-4. **Lightweight Middleware**: Manual JWT parsing to stay under Edge Function limits
+3. **Clerk (Managed Auth)**: Google OAuth and email/password with zero self-hosted infrastructure
+4. **Clerk Middleware**: Route protection via `clerkMiddleware()` with security headers
 5. **Invitation Flow**: Two-tier system (global + cohort) for flexible onboarding
 6. **Role Arrays**: Users can have multiple roles (COACH + ADMIN) for flexibility
 7. **Entry Upsert**: One entry per user per day via unique constraint
@@ -519,7 +512,7 @@ This project demonstrates what's possible when human product vision meets AI tec
 
 ---
 
-**Last Updated**: January 19, 2026
+**Last Updated**: March 2026
 **Version**: 1.0.0
 **Next.js**: 16.1.1
 **React**: 19.2.3

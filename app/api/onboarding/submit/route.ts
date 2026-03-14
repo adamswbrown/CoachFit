@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isClient } from "@/lib/permissions"
 import { onboardingSubmitSchema } from "@/lib/validations"
@@ -14,7 +14,7 @@ import { NextResponse } from "next/server"
  * Submits completed onboarding form and creates user profile, goals, and baseline entry
  */
 export async function POST(request: Request) {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Fragment } from "react"
 import Link from "next/link"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/lib/auth-client"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { generateWeeklyEmailDraft } from "@/lib/utils/email-draft"
 import { Role } from "@/lib/types"

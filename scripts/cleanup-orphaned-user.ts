@@ -2,11 +2,11 @@ import { db } from "../lib/db"
 
 async function cleanupOrphanedUser() {
   const email = "adamswbrown@gmail.com"
-  
+
   // Find the user
+  // Note: OAuth accounts are now managed by Clerk externally
   const user = await db.user.findUnique({
     where: { email },
-    include: { Account: true },
   })
 
   if (!user) {
@@ -15,17 +15,12 @@ async function cleanupOrphanedUser() {
   }
 
   console.log(`Found user: ${user.id} (${user.email})`)
-  console.log(`Accounts linked: ${user.Account.length}`)
 
-  if (user.Account.length === 0) {
-    // Delete the orphaned user
-    await db.user.delete({
-      where: { id: user.id },
-    })
-    console.log(`Deleted orphaned user: ${user.email}`)
-  } else {
-    console.log(`User has ${user.Account.length} account(s), not deleting`)
-  }
+  // Delete the orphaned user
+  await db.user.delete({
+    where: { id: user.id },
+  })
+  console.log(`Deleted orphaned user: ${user.email}`)
 }
 
 cleanupOrphanedUser()

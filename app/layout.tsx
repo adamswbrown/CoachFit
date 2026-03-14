@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import Script from "next/script"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { ClerkProvider } from "@clerk/nextjs"
 import "./globals.css"
 import { SessionProvider } from "@/components/SessionProvider"
 import { RoleProvider } from "@/contexts/RoleContext"
@@ -55,6 +56,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans">
+        <ClerkProvider
+          signInUrl="/login"
+          signUpUrl="/signup"
+          afterSignOutUrl="/login"
+        >
         <Script
           id="suppress-extension-errors"
           strategy="beforeInteractive"
@@ -133,6 +139,7 @@ export default function RootLayout({
           </RoleProvider>
         </SessionProvider>
         <SpeedInsights />
+        </ClerkProvider>
       </body>
     </html>
   )

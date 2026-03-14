@@ -79,21 +79,7 @@ async function main() {
   })
   console.log(`  ✓ Deleted ${deletedCohorts.count} cohorts`)
 
-  console.log("Deleting accounts (OAuth)...")
-  const deletedAccounts = await prisma.account.deleteMany({
-    where: {
-      userId: { in: testUserIds },
-    },
-  })
-  console.log(`  ✓ Deleted ${deletedAccounts.count} accounts`)
-
-  console.log("Deleting sessions...")
-  const deletedSessions = await prisma.session.deleteMany({
-    where: {
-      userId: { in: testUserIds },
-    },
-  })
-  console.log(`  ✓ Deleted ${deletedSessions.count} sessions`)
+  // Note: OAuth accounts and sessions are managed by Clerk externally
 
   console.log("Deleting admin actions...")
   const deletedAdminActions = await prisma.adminAction.deleteMany({

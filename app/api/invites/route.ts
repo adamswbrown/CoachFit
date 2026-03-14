@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdminOrCoach } from "@/lib/permissions"
 import { z } from "zod"
@@ -14,7 +14,7 @@ const createInviteSchema = z.object({
 // GET /api/invites - List all pending invites for the current coach
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getSession()
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 // POST /api/invites - Create a global invite (not tied to a cohort)
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getSession()
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
 
     // Send invite email
     const coachName = session.user.name || session.user.email
-    const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/signup`
+    const loginUrl = `${process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"}/signup`
     const isTestUserEmail = email.endsWith(".test.local")
 
     const emailResult = await sendSystemEmail({

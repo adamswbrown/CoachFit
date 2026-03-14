@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/lib/auth-client"
 import { isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
 import { CoachLayout } from "@/components/layouts/CoachLayout"

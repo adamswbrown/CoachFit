@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, use, useMemo, useCallback, startTransition } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/lib/auth-client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"

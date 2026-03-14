@@ -7,23 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Account {
-  id                String  @id @default(uuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
+// Account, Session, and Verification tables are no longer needed — Clerk manages auth state.
+// These models are kept temporarily for migration compatibility but can be dropped
+// after the Clerk migration is complete.
 
 model CoachInvite {
   id          String       @id @default(uuid())
@@ -191,27 +177,23 @@ model PairingCode {
   @@index([expiresAt])
 }
 
-model Session {
-  id           String   @id
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+// Session model removed — Clerk manages sessions externally.
 
 model User {
   id                           String                        @id @default(uuid())
+  clerkId                      String?                       @unique // Clerk user ID for auth
   email                        String                        @unique
   originalEmail                String? // Preserved on soft delete for recovery
   name                         String?
   image                        String?
-  passwordHash                 String?
-  passwordChangedAt            DateTime? // For session invalidation on password change
+  passwordHash                 String? // Legacy — Clerk manages passwords now
+  passwordChangedAt            DateTime? // Legacy — kept for compatibility
   mustChangePassword           Boolean                       @default(false)
   roles                        Role[]                        @default([CLIENT])
   isTestUser                   Boolean                       @default(false)
-  emailVerified                DateTime?
+  emailVerified                Boolean                       @default(false)
   createdAt                    DateTime                      @default(now())
+  updatedAt                    DateTime                      @default(now()) @updatedAt
   invitedByCoachId             String?
   onboardingComplete           Boolean                       @default(false)
   gender                       String?
@@ -220,7 +202,6 @@ model User {
   primaryGoal                  String?
   checkInFrequencyDays         Int?
   cronometerLinked             Boolean                       @default(false)
-  Account                      Account[]
   AdminActions                 AdminAction[]                 @relation("AdminActions")
   CoachCohortMembership        CoachCohortMembership[]
   CoachInvite                  CoachInvite[]
@@ -233,7 +214,6 @@ model User {
   Entry                        Entry[]
   ClientPairingCodes           PairingCode[]                 @relation("ClientPairingCodes")
   CoachPairingCodes            PairingCode[]                 @relation("CoachPairingCodes")
-  Session                      Session[]
   SleepRecords                 SleepRecord[]
   User                         User?                         @relation("UserToUser", fields: [invitedByCoachId], references: [id])
   other_User                   User[]                        @relation("UserToUser")
@@ -260,13 +240,7 @@ model User {
   @@index([roles])
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
+// Verification model removed — Clerk manages verification externally.
 
 model CoachNote {
   id        String   @id @default(uuid())

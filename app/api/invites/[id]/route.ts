@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin, isAdminOrCoach } from "@/lib/permissions"
 import { sendSystemEmail } from "@/lib/email"
@@ -12,7 +12,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
+    const session = await getSession()
     const { id } = await params
 
     if (!session || !session.user) {
@@ -61,7 +61,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
+    const session = await getSession()
     const { id } = await params
 
     if (!session || !session.user) {
@@ -90,7 +90,7 @@ export async function POST(
     })
 
     const coachName = coach?.name || coach?.email || "Your coach"
-    const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/signup`
+    const loginUrl = `${process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"}/signup`
     const isTestUserEmail = invite.email.endsWith(".test.local")
 
     const emailResult = await sendSystemEmail({
