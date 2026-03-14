@@ -65,6 +65,10 @@ export async function GET(request: NextRequest) {
         weight: entry.weightLbs,
         steps: entry.steps,
         calories: entry.calories,
+        proteinGrams: entry.proteinGrams,
+        carbsGrams: entry.carbsGrams,
+        fatGrams: entry.fatGrams,
+        fiberGrams: entry.fiberGrams,
         height: entry.heightInches,
         sleepQuality: entry.sleepQuality,
         perceivedStress: entry.perceivedStress,
@@ -151,10 +155,10 @@ function generateCSV(data: any) {
 
   // Entries
   lines.push("Daily Entries")
-  lines.push("Date,Weight (lbs),Steps,Calories,Height (in),Sleep Quality,Perceived Stress,Notes,Data Sources")
+  lines.push("Date,Weight (lbs),Steps,Calories,Protein (g),Carbs (g),Fat (g),Fiber (g),Height (in),Sleep Quality,Perceived Stress,Notes,Data Sources")
   data.entries.forEach((entry: any) => {
     lines.push(
-      `"${entry.date}","${entry.weight || ""}","${entry.steps || ""}","${entry.calories || ""}","${entry.height || ""}","${entry.sleepQuality || ""}","${entry.perceivedStress || ""}","${entry.notes || ""}","${Array.isArray(entry.dataSources) ? entry.dataSources.join(";") : ""}"` 
+      `"${entry.date}","${entry.weight || ""}","${entry.steps || ""}","${entry.calories || ""}","${entry.proteinGrams || ""}","${entry.carbsGrams || ""}","${entry.fatGrams || ""}","${entry.fiberGrams || ""}","${entry.height || ""}","${entry.sleepQuality || ""}","${entry.perceivedStress || ""}","${entry.notes || ""}","${Array.isArray(entry.dataSources) ? entry.dataSources.join(";") : ""}"`
     )
   })
   lines.push("")

@@ -25,9 +25,10 @@ export function DataSourceBadge({
   )
   const hasManual = sources.some(s => s.toLowerCase() === "manual")
   const hasStrava = sources.some(s => s.toLowerCase() === "strava")
+  const hasCronometer = sources.some(s => s.toLowerCase() === "cronometer")
 
   // Default to manual if no sources specified
-  const isManualOnly = sources.length === 0 || (hasManual && !hasHealthKit && !hasStrava)
+  const isManualOnly = sources.length === 0 || (hasManual && !hasHealthKit && !hasStrava && !hasCronometer)
 
   const sizeClasses = {
     sm: "text-xs px-1.5 py-0.5",
@@ -72,6 +73,24 @@ export function DataSourceBadge({
     )
   }
 
+  // Cronometer
+  if (hasCronometer) {
+    return (
+      <div className="flex items-center gap-1">
+        <span className={`inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 font-medium ${sizeClasses[size]}`}>
+          <CronometerIcon size={iconSize} />
+          {showLabel && "Cronometer"}
+        </span>
+        {hasManual && (
+          <span className={`inline-flex items-center gap-1 rounded-full bg-neutral-100 text-neutral-600 font-medium ${sizeClasses[size]}`}>
+            <PencilIcon size={iconSize} />
+            {showLabel && "Manual"}
+          </span>
+        )}
+      </div>
+    )
+  }
+
   // Manual (default)
   return (
     <span className={`inline-flex items-center gap-1 rounded-full bg-neutral-100 text-neutral-600 font-medium ${sizeClasses[size]}`}>
@@ -103,6 +122,15 @@ function StravaIcon({ size = 12 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
       <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/>
+    </svg>
+  )
+}
+
+function CronometerIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z"/>
+      <path d="M12 6v6l4 2"/>
     </svg>
   )
 }

@@ -38,6 +38,7 @@ interface Client {
   effectiveCheckInFrequencyDays?: number
   weightTrend?: "up" | "down" | "stable" | null
   latestWeight?: number | null
+  cronometerLinked?: boolean
 }
 
 interface Cohort {
@@ -844,16 +845,26 @@ function CoachDashboardContent() {
                         return (
                           <tr key={client.email || client.id} className="border-b border-neutral-100 hover:bg-neutral-50">
                             <td className="p-2 sm:p-3">
-                              {client.id ? (
-                                <Link
-                                  href={`/clients/${client.id}`}
-                                  className="font-medium text-neutral-900 hover:underline text-sm sm:text-base"
-                                >
-                                  {client.name || client.email}
-                                </Link>
-                              ) : (
-                                <span className="font-medium text-neutral-900 text-sm sm:text-base">{client.name || client.email}</span>
-                              )}
+                              <div className="flex items-center gap-1.5">
+                                {client.id ? (
+                                  <Link
+                                    href={`/clients/${client.id}`}
+                                    className="font-medium text-neutral-900 hover:underline text-sm sm:text-base"
+                                  >
+                                    {client.name || client.email}
+                                  </Link>
+                                ) : (
+                                  <span className="font-medium text-neutral-900 text-sm sm:text-base">{client.name || client.email}</span>
+                                )}
+                                {client.cronometerLinked && (
+                                  <span
+                                    className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-medium"
+                                    title="Cronometer linked"
+                                  >
+                                    C
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td className="p-2 sm:p-3">
                               <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${

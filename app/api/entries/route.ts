@@ -48,6 +48,10 @@ export async function POST(req: NextRequest) {
       weightLbs?: number | null
       steps?: number | null
       calories?: number | null
+      proteinGrams?: number | null
+      carbsGrams?: number | null
+      fatGrams?: number | null
+      fiberGrams?: number | null
       sleepQuality?: number | null
       perceivedStress?: number | null
       notes?: string | null
@@ -62,6 +66,18 @@ export async function POST(req: NextRequest) {
     }
     if (validated.calories !== undefined && !isNaN(validated.calories)) {
       updateData.calories = validated.calories
+    }
+    if (validated.proteinGrams !== undefined && !isNaN(validated.proteinGrams)) {
+      updateData.proteinGrams = validated.proteinGrams
+    }
+    if (validated.carbsGrams !== undefined && !isNaN(validated.carbsGrams)) {
+      updateData.carbsGrams = validated.carbsGrams
+    }
+    if (validated.fatGrams !== undefined && !isNaN(validated.fatGrams)) {
+      updateData.fatGrams = validated.fatGrams
+    }
+    if (validated.fiberGrams !== undefined && !isNaN(validated.fiberGrams)) {
+      updateData.fiberGrams = validated.fiberGrams
     }
     if (validated.sleepQuality !== undefined && !isNaN(validated.sleepQuality)) {
       updateData.sleepQuality = validated.sleepQuality
@@ -152,10 +168,23 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "20")
     const skip = (page - 1) * limit
+    const startDate = searchParams.get("startDate")
+    const endDate = searchParams.get("endDate")
+
+    const dateFilter: { gte?: Date; lte?: Date } = {}
+    if (startDate) {
+      const parsed = new Date(startDate)
+      if (!isNaN(parsed.getTime())) dateFilter.gte = parsed
+    }
+    if (endDate) {
+      const parsed = new Date(endDate)
+      if (!isNaN(parsed.getTime())) dateFilter.lte = parsed
+    }
 
     const entries = await db.entry.findMany({
       where: {
         userId: session.user.id,
+        ...(Object.keys(dateFilter).length > 0 && { date: dateFilter }),
       },
       orderBy: {
         date: "desc",

@@ -12,7 +12,7 @@ import { PlanReview, PlanReviewOnSavePayload, PlanReviewRanges } from "@/compone
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { lbsToKg, inchesToCm, kgToLbs } from "@/lib/utils/unit-conversions"
 
-const BASE_STEPS = 8
+const BASE_STEPS = 9
 const INTERSTITIAL_STEP = BASE_STEPS + 1
 const PLAN_REVIEW_STEP = BASE_STEPS + 2
 
@@ -35,7 +35,7 @@ interface OnboardingData {
   birthDate: string
   targetWeight: number | string
   activityLevel: string
-  // addBurnedCalories removed
+  cronometerLinked: boolean
 }
 
 export default function ClientOnboarding() {
@@ -64,7 +64,7 @@ export default function ClientOnboarding() {
     birthDate: "",
     targetWeight: "",
     activityLevel: "",
-    // addBurnedCalories removed
+    cronometerLinked: false,
   })
 
   useEffect(() => {
@@ -299,7 +299,7 @@ export default function ClientOnboarding() {
         birthDate: data.birthDate,
         targetWeightKg,
         activityLevel: data.activityLevel,
-        // addBurnedCalories removed
+        cronometerLinked: data.cronometerLinked,
         weightUnit: data.weightUnit,
         measurementUnit: data.measurementUnit,
         dateFormat: data.dateFormat,
@@ -619,6 +619,75 @@ export default function ClientOnboarding() {
               {errors.activityLevel && (
                 <p className="text-red-600 text-sm">{errors.activityLevel}</p>
               )}
+            </div>
+          ) : step === 9 ? (
+            // Step 9: Cronometer Account
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Track your nutrition</h2>
+                <p className="text-gray-600 mb-6">
+                  We use <strong>Cronometer</strong> to track what you eat. It gives your coach detailed
+                  insight into your calories, protein, carbs, fat, and fiber intake.
+                </p>
+
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-6">
+                  <h3 className="font-semibold text-emerald-900 mb-3">Getting started with Cronometer</h3>
+                  <ol className="space-y-3">
+                    <li className="flex gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center">1</span>
+                      <span className="text-sm text-emerald-800">
+                        Create a free account at <strong>cronometer.com</strong> (or download the app)
+                      </span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center">2</span>
+                      <span className="text-sm text-emerald-800">
+                        Log your meals each day &mdash; Cronometer has a huge food database to make this quick
+                      </span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center">3</span>
+                      <span className="text-sm text-emerald-800">
+                        Periodically export your data and import it into CoachFit using the <strong>Import</strong> feature on your dashboard
+                      </span>
+                    </li>
+                  </ol>
+                  <p className="text-xs text-emerald-600 mt-3 italic">
+                    Tip: Cronometer Gold ($5.99/mo) enables CSV exports. The free version works great for daily logging.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => updateData("cronometerLinked", true)}
+                    className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-colors ${
+                      data.cronometerLinked
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-900"
+                        : "border-gray-200 hover:border-gray-300 text-gray-700"
+                    }`}
+                  >
+                    <span className="font-medium">I have a Cronometer account</span>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      I&apos;m set up and ready to start logging
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateData("cronometerLinked", false)}
+                    className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-colors ${
+                      !data.cronometerLinked
+                        ? "border-blue-500 bg-blue-50 text-blue-900"
+                        : "border-gray-200 hover:border-gray-300 text-gray-700"
+                    }`}
+                  >
+                    <span className="font-medium">I&apos;ll set it up later</span>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      You can always link your account from the dashboard
+                    </p>
+                  </button>
+                </div>
+              </div>
             </div>
           ) : null}
           {/* PlanReview usage (coach-facing only, not shown in client onboarding) would go here, e.g.: */}

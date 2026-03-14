@@ -7,6 +7,10 @@ export const upsertEntrySchema = z.object({
   weightLbs: z.number().positive("Weight must be greater than 0").max(1000, "Weight must be 1000 lbs or less"),
   steps: z.number().int("Steps must be an integer").nonnegative("Steps cannot be negative").max(100000, "Steps must be 100,000 or less").optional(),
   calories: z.number().int("Calories must be an integer").nonnegative("Calories cannot be negative").max(20000, "Calories must be 20,000 or less").optional(),
+  proteinGrams: z.number().nonnegative("Protein cannot be negative").max(1000, "Protein must be 1,000g or less").optional(),
+  carbsGrams: z.number().nonnegative("Carbs cannot be negative").max(2000, "Carbs must be 2,000g or less").optional(),
+  fatGrams: z.number().nonnegative("Fat cannot be negative").max(1000, "Fat must be 1,000g or less").optional(),
+  fiberGrams: z.number().nonnegative("Fiber cannot be negative").max(500, "Fiber must be 500g or less").optional(),
   sleepQuality: z.number().int("Sleep quality must be an integer").min(1, "Sleep quality must be between 1 and 10").max(10, "Sleep quality must be between 1 and 10").optional(),
   perceivedStress: z.number().int("Perceived stress must be an integer").min(1, "Perceived stress must be between 1 and 10").max(10, "Perceived stress must be between 1 and 10"),
   notes: z.string().max(2000, "Notes must be 2,000 characters or less").optional(),
@@ -215,7 +219,7 @@ export const onboardingSubmitSchema = z.object({
     "very_active",
     "extremely_active"
   ]),
-  // addBurnedCalories removed per requirements
+  cronometerLinked: z.boolean().default(false),
   weightUnit: z.enum(["lbs", "kg"]).default("lbs"),
   measurementUnit: z.enum(["inches", "cm"]).default("inches"),
   dateFormat: z.enum(["MM/dd/yyyy", "dd/MM/yyyy", "dd-MMM-yyyy", "yyyy-MM-dd", "MMM dd, yyyy"]).default("MM/dd/yyyy"),
@@ -244,4 +248,19 @@ export const weeklyQuestionnaireResponseSchema = z.object({
 export const questionnaireStatusQuerySchema = z.object({
   cohortId: z.string().uuid().optional(),
   weekNumber: z.number().int().min(1).max(5).optional(),
+})
+
+// Cronometer CSV import schemas
+export const cronometerImportRowSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+  calories: z.number().int().nonnegative().max(20000).optional().nullable(),
+  proteinGrams: z.number().nonnegative().max(1000).optional().nullable(),
+  carbsGrams: z.number().nonnegative().max(2000).optional().nullable(),
+  fatGrams: z.number().nonnegative().max(1000).optional().nullable(),
+  fiberGrams: z.number().nonnegative().max(500).optional().nullable(),
+  weightLbs: z.number().positive().max(1000).optional().nullable(),
+})
+
+export const cronometerImportSchema = z.object({
+  rows: z.array(cronometerImportRowSchema).min(1, "At least one row required").max(400, "Maximum 400 rows per import"),
 })
