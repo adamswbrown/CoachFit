@@ -2,7 +2,8 @@
 
 ## Prerequisites
 - Vercel account
-- PostgreSQL database (e.g., Neon, Supabase, or Vercel Postgres)
+- PostgreSQL database (e.g., Railway, Neon, or Supabase)
+- Clerk account (for authentication)
 
 ## Environment Variables
 
@@ -12,9 +13,14 @@ Set these in your Vercel project settings:
 # Database
 DATABASE_URL="postgresql://user:password@host:5432/database?schema=public"
 
-# NextAuth
-NEXTAUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64 32
-NEXTAUTH_URL="https://your-app.vercel.app"
+# Clerk Authentication (from dashboard.clerk.com → API Keys)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_live_..."
+CLERK_SECRET_KEY="sk_live_..."
+NEXT_PUBLIC_CLERK_SIGN_IN_URL="/login"
+NEXT_PUBLIC_CLERK_SIGN_UP_URL="/signup"
+
+# Clerk Webhook (optional but recommended for user sync)
+CLERK_WEBHOOK_SIGNING_SECRET="whsec_..."
 
 # Email (Resend)
 RESEND_API_KEY="your-resend-api-key"
@@ -80,7 +86,7 @@ npm run password:set client@test.local YourPassword123
    - Monitor database connections
 
 3. **Security checklist**
-   - ✅ NEXTAUTH_SECRET is unique and secure
+   - ✅ `CLERK_SECRET_KEY` is set (from Clerk Dashboard)
    - ✅ DATABASE_URL uses SSL connection
    - ✅ All environment variables are set
    - ✅ Test users have strong passwords in production
@@ -89,8 +95,8 @@ npm run password:set client@test.local YourPassword123
 
 ### Issue: Redirect loops on login
 - Clear browser cookies
-- Verify NEXTAUTH_URL matches your deployed domain
-- Check that onboardingComplete is true for test users
+- Verify Clerk env vars are set correctly
+- Check that Clerk is in the correct mode (development vs production) for your domain
 
 ### Issue: Database connection errors
 - Verify DATABASE_URL is correct

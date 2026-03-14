@@ -1,8 +1,10 @@
 # Log Entry Functionality Audit Report
 ## CoachSync Web Application
 
-**Date:** January 2025  
+**Date:** January 2025
 **Audit Scope:** Complete Log Entry feature implementation, data flow, storage, and user interaction
+
+> **Note (March 2026):** Authentication has been migrated from NextAuth to Clerk (managed auth). References to NextAuth/session management below describe the state at the time of this audit. See [Authentication Setup](../development/authentication.md) for current auth architecture.
 
 ---
 

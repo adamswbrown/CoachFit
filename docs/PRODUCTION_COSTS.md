@@ -11,7 +11,7 @@ This document outlines all external services and their associated costs for runn
 | **Railway PostgreSQL** | Database | Limited | $5-50/month |
 | **Vercel** | Hosting | Limited | $20+/month |
 | **Resend** | Transactional email | Limited | $20-100+/month |
-| **Google OAuth** | Login | Yes | Free |
+| **Clerk** | Authentication (Google OAuth, Email/Password) | 10K MAU free | Free–$25+/month |
 
 **Minimum monthly cost: ~$45-120+**
 
@@ -46,11 +46,13 @@ This document outlines all external services and their associated costs for runn
 - **Note**: Using custom domain (`@gcgyms.com`) for production email sending.
 - **Documentation**: [Resend Pricing](https://resend.com/pricing)
 
-### 4. Authentication - Google OAuth
-- **Purpose**: User authentication and sign-in
-- **Configuration**: `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
-- **Cost**: Free (within standard usage quotas)
-- **Documentation**: [Google Cloud Console](https://console.cloud.google.com/)
+### 4. Authentication - Clerk
+- **Purpose**: Managed authentication (Google OAuth, Email/Password)
+- **Configuration**: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`
+- **Free Tier**: 10,000 monthly active users
+- **Production Cost**: Free for most small apps; $25+/month for higher tiers
+- **Note**: Google OAuth is configured in Clerk Dashboard — no Google Cloud Console needed
+- **Documentation**: [Clerk Pricing](https://clerk.com/pricing)
 
 ---
 
@@ -61,11 +63,11 @@ This document outlines all external services and their associated costs for runn
 | **Apple Sign-In** | iOS login option | $99/year |
 | **SurveyJS License** | Advanced questionnaire features | $500-2000+/year |
 
-### Apple Sign-In (Optional)
+### Apple Sign-In (Optional, Future)
 - **Purpose**: Alternative authentication for iOS users
-- **Configuration**: `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`
+- **Configuration**: Enable in Clerk Dashboard → Social Connections → Apple
 - **Cost**: $99/year (Apple Developer Program membership)
-- **Note**: Can be disabled if not needed
+- **Note**: Not currently enabled; can be added via Clerk Dashboard
 
 ### SurveyJS Commercial License (Optional)
 - **Purpose**: Advanced questionnaire builder features
@@ -113,21 +115,17 @@ For a small-scale production launch:
 # Database (Required)
 DATABASE_URL=postgresql://...
 
-# Authentication (Required)
-NEXTAUTH_SECRET=...
-NEXTAUTH_URL=https://your-domain.com
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
+# Authentication - Clerk (Required)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
+CLERK_SECRET_KEY=sk_live_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
+
+# Clerk Webhook (Recommended)
+CLERK_WEBHOOK_SIGNING_SECRET=whsec_...
 
 # Email (Required)
 RESEND_API_KEY=...
-
-# Apple Sign-In (Optional)
-APPLE_CLIENT_ID=...
-APPLE_CLIENT_SECRET=...
-APPLE_TEAM_ID=...
-APPLE_KEY_ID=...
-APPLE_PRIVATE_KEY=...
 
 # SurveyJS (Optional)
 NEXT_PUBLIC_SURVEYJS_LICENSE=...
@@ -144,4 +142,4 @@ NEXT_PUBLIC_SURVEYJS_LICENSE=...
 
 ---
 
-*Last updated: January 2026*
+*Last updated: March 2026*
