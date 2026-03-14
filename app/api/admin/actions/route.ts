@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { isAdmin } from "@/lib/permissions"
 import { db } from "@/lib/db"
 import { z } from "zod"
@@ -15,7 +15,7 @@ const createActionSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getSession()
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
 // GET /api/admin/actions - Retrieve admin actions (for audit trail)
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getSession()
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

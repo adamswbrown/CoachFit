@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
@@ -16,7 +16,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
+    const session = await getSession()
     const { id: userId } = await params
 
     if (!session || !session.user) {
@@ -109,7 +109,7 @@ export async function PATCH(
         passwordHash: true,
         Account: {
           select: {
-            provider: true,
+            providerId: true,
           },
         },
         CohortMembership: {
@@ -149,7 +149,7 @@ export async function PATCH(
           isTestUser: updatedUser.isTestUser,
           createdAt: updatedUser.createdAt,
           hasPassword: !!updatedUser.passwordHash,
-          authProviders: updatedUser.Account.map((a: { provider: string }) => a.provider),
+          authProviders: updatedUser.Account.map((a: { providerId: string }) => a.providerId),
           cohortsMemberOf: updatedUser.CohortMembership.map((m: { Cohort: { id: string; name: string } }) => ({
             id: m.Cohort.id,
             name: m.Cohort.name,

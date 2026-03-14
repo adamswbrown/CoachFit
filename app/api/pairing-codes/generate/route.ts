@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { createPairingCode, regeneratePairingCode, getActiveCodesForCoach } from "@/lib/healthkit/pairing"
 import { isCoach, isAdmin } from "@/lib/permissions"
 import { generatePairingCodeSchema } from "@/lib/validations/healthkit"
@@ -14,7 +14,7 @@ import { logAuditAction } from "@/lib/audit-log"
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getSession()
 
     if (!session || !session.user) {
       return NextResponse.json(
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
 // GET - List active pairing codes for current coach, or get specific client's code
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getSession()
 
     if (!session || !session.user) {
       return NextResponse.json(

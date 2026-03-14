@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from "next-auth/react"
+import { useSession } from "@/lib/auth-client"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { isAdmin } from "@/lib/permissions"

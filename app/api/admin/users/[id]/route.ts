@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
+    const session = await getSession()
     const { id } = await params
 
     if (!session || !session.user) {
@@ -36,8 +36,8 @@ export async function GET(
         invitedByCoachId: true,
         Account: {
           select: {
-            provider: true,
-            type: true,
+            providerId: true,
+            accountId: true,
           },
         },
         CohortMembership: {
@@ -118,7 +118,7 @@ export async function GET(
       createdAt: user.createdAt,
       onboardingComplete: user.onboardingComplete,
       hasPassword: !!user.passwordHash,
-      authProviders: user.Account.map((a: { provider: string }) => a.provider),
+      authProviders: user.Account.map((a: { providerId: string }) => a.providerId),
       cohortsMemberOf: user.CohortMembership.map((m: { Cohort: { id: string; name: string; createdAt: Date } }) => ({
         id: m.Cohort.id,
         name: m.Cohort.name,
@@ -157,7 +157,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
+    const session = await getSession()
     const { id } = await params
 
     if (!session || !session.user) {

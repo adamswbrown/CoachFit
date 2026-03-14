@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/permissions"
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getSession()
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
         passwordHash: true,
         Account: {
           select: {
-            provider: true,
+            providerId: true,
           },
         },
         CohortMembership: {
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
       // skip: 0,
     })
 
-    const formattedUsers = users.map((user: { id: string; email: string; name: string | null; roles: string[]; isTestUser: boolean; createdAt: Date; passwordHash: string | null; Account: { provider: string }[]; CohortMembership: { Cohort: { id: string; name: string } }[]; Cohort: { id: string; name: string }[] }) => ({
+    const formattedUsers = users.map((user: { id: string; email: string; name: string | null; roles: string[]; isTestUser: boolean; createdAt: Date; passwordHash: string | null; Account: { providerId: string }[]; CohortMembership: { Cohort: { id: string; name: string } }[]; Cohort: { id: string; name: string }[] }) => ({
       id: user.id,
       email: user.email,
       name: user.name,
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
       isTestUser: user.isTestUser,
       createdAt: user.createdAt,
       hasPassword: !!user.passwordHash,
-      authProviders: user.Account.map((a: { provider: string }) => a.provider),
+      authProviders: user.Account.map((a: { providerId: string }) => a.providerId),
       cohortsMemberOf: user.CohortMembership.map((m: { Cohort: { id: string; name: string } }) => ({
         id: m.Cohort.id,
         name: m.Cohort.name,

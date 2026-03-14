@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { isClient } from "@/lib/permissions"
 import { getSystemSetting } from "@/lib/system-settings"
 
@@ -8,7 +8,7 @@ import { getSystemSetting } from "@/lib/system-settings"
  * Returns onboarding configuration flags for clients
  */
 export async function GET() {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/lib/auth-client"
 import { isClient } from "@/lib/permissions"
 import { fetchWithRetry } from "@/lib/fetch-with-retry"
 import { WrappedCarousel } from "@/components/wrapped/WrappedCarousel"

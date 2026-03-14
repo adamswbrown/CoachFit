@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isCoach } from "@/lib/permissions"
 import { AttentionScoreCalculator } from "@/lib/admin/attention"
@@ -29,7 +29,7 @@ interface ClientAttentionData {
  * Returns data sorted by priority (red > amber > green)
  */
 export async function GET(req: Request) {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

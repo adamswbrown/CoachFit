@@ -1,11 +1,11 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isCoach, isAdmin } from "@/lib/permissions"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getSession()
 
     if (!session?.user?.id) {
       return NextResponse.json(

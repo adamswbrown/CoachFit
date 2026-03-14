@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
@@ -18,7 +18,7 @@ const createCoachSchema = z.object({
 // GET /api/admin/coaches - List all coaches (already exists, keep for compatibility)
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getSession()
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
 // POST /api/admin/coaches - Create a new coach user
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getSession()
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     })
 
     // Send welcome email to new coach
-    const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
+    const loginUrl = `${process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
     const isTestUserEmail = email.endsWith(".test.local")
 
     await sendSystemEmail({

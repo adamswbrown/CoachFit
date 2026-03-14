@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/lib/auth-client"
 import { ProgressBar } from "@/components/onboarding/ProgressBar"
 import { SelectionGrid } from "@/components/onboarding/SelectionGrid"
 import { UnitToggle } from "@/components/onboarding/UnitToggle"

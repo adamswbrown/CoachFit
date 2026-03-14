@@ -1,11 +1,11 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isClient } from "@/lib/permissions"
 import { NextResponse } from "next/server"
 
 export async function GET() {
   try {
-    const session = await auth()
+    const session = await getSession()
     
     if (!session?.user?.id) {
       return NextResponse.json(

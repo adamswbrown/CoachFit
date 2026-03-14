@@ -63,6 +63,10 @@ function isPublicPath(pathname: string): boolean {
 
 function getSessionCookie(req: NextRequest) {
   return (
+    // Better Auth session cookie
+    req.cookies.get("__Secure-better-auth.session_token") ||
+    req.cookies.get("better-auth.session_token") ||
+    // Legacy NextAuth cookies (for transition period)
     req.cookies.get("__Secure-authjs.session-token") ||
     req.cookies.get("authjs.session-token") ||
     req.cookies.get("__Secure-next-auth.session-token") ||

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { isClient } from "@/lib/permissions"
 import { completeOnboardingCalculation } from "@/lib/calculations/fitness"
 import { NextResponse } from "next/server"
@@ -26,7 +26,7 @@ const calculatePlanSchema = z.object({
 })
 
 export async function POST(request: Request) {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

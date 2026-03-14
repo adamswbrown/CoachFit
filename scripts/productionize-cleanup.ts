@@ -234,8 +234,8 @@ async function main() {
   const deletedScores = await prisma.attentionScore.deleteMany({})
   console.log(`  - Deleted ${deletedScores.count} attention scores`)
 
-  // VerificationToken - clear any pending tokens
-  const deletedTokens = await prisma.verificationToken.deleteMany({})
+  // Verification - clear any pending tokens
+  const deletedTokens = await prisma.verification.deleteMany({})
   console.log(`  - Deleted ${deletedTokens.count} verification tokens`)
 
   // Step 7: Update administrators for production

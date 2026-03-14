@@ -1,9 +1,9 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { NextResponse } from "next/server"
 
 export async function POST(request: Request) {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       select: {
         passwordHash: true,
         Account: {
-          select: { provider: true },
+          select: { providerId: true },
         },
       },
     })
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // Count remaining auth methods after disconnection
-    const otherAccounts = user.Account.filter((a) => a.provider !== provider)
+    const otherAccounts = user.Account.filter((a) => a.providerId !== provider)
     const hasPassword = !!user.passwordHash
     const totalAuthMethods =
       otherAccounts.length + (hasPassword ? 1 : 0)
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     await db.account.deleteMany({
       where: {
         userId: session.user.id,
-        provider: provider,
+        providerId: provider,
       },
     })
 

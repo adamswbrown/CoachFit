@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { signOut } from "next-auth/react"
+import { signOut } from "@/lib/auth-client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { usePathname } from "next/navigation"

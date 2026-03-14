@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { isAdmin, isAdminOrCoach } from "@/lib/permissions"
 import { db } from "@/lib/db"
 
@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
+    const session = await getSession()
     const { id } = await params
 
     if (!session || !session.user) {

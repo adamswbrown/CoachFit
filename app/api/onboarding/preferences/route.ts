@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isClient } from "@/lib/permissions"
 import { userPreferenceSchema } from "@/lib/validations"
@@ -9,7 +9,7 @@ import { NextResponse } from "next/server"
  * Updates user's unit and date format preferences without requiring full onboarding re-run
  */
 export async function GET() {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -44,7 +44,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await auth()
+  const session = await getSession()
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

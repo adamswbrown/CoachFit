@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isAdminOrCoach, isAdmin } from "@/lib/permissions"
 import { sendSystemEmail } from "@/lib/email"
@@ -8,7 +8,7 @@ import { logAuditAction } from "@/lib/audit-log"
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getSession()
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
     // Send reminder emails
     let sentCount = 0
     const coachName = cohort.User.name || cohort.User.email
-    const questionnaireUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/client-dashboard`
+    const questionnaireUrl = `${process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"}/client-dashboard`
 
     for (const membership of clientsNeedingReminder) {
       const client = membership.user

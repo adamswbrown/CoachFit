@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { isClient } from "@/lib/permissions"
 
 export async function POST() {
   try {
-    const session = await auth()
+    const session = await getSession()
     
     if (!session?.user?.id) {
       return NextResponse.json(

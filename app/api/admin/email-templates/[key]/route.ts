@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { isAdmin } from "@/lib/permissions"
 import {
   getEmailTemplate,
@@ -24,7 +24,7 @@ export async function GET(
   { params }: { params: Promise<{ key: string }> }
 ) {
   try {
-    const session = await auth()
+    const session = await getSession()
     const { key } = await params
 
     if (!session || !session.user) {
@@ -54,7 +54,7 @@ export async function PUT(
   { params }: { params: Promise<{ key: string }> }
 ) {
   try {
-    const session = await auth()
+    const session = await getSession()
     const { key } = await params
 
     if (!session || !session.user) {

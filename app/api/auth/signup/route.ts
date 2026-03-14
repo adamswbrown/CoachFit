@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
     })
 
     // Send welcome email (non-blocking)
-    const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
+    const loginUrl = `${process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`
     sendSystemEmail({
       templateKey: EMAIL_TEMPLATE_KEYS.WELCOME_CLIENT,
       to: user.email,
