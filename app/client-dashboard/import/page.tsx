@@ -278,16 +278,72 @@ export default function ImportPage() {
         {/* Step: Upload */}
         {step === "upload" && (
           <div className="space-y-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-semibold text-blue-900 mb-2">How to export from Cronometer</h3>
-              <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
-                <li>Log into <strong>cronometer.com</strong></li>
-                <li>Go to <strong>Profile</strong> (gear icon) &rarr; <strong>Account Settings</strong> &rarr; <strong>Export Data</strong></li>
-                <li>Select your date range</li>
-                <li>Choose <strong>&quot;Daily Nutrition&quot;</strong> export type</li>
-                <li>Download the CSV file</li>
-                <li>Upload it below</li>
-              </ol>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
+              <h3 className="font-semibold text-blue-900 mb-3 text-base">How to export your data from Cronometer</h3>
+
+              <div className="space-y-4">
+                {/* Step 1 */}
+                <div className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-200 text-blue-800 text-xs font-bold flex items-center justify-center">1</span>
+                  <div className="text-sm text-blue-800">
+                    <p>Log into your account at <strong>cronometer.com</strong> (you&apos;ll need a <strong>Gold</strong> subscription for data export).</p>
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-200 text-blue-800 text-xs font-bold flex items-center justify-center">2</span>
+                  <div className="text-sm text-blue-800">
+                    <p>Click your <strong>profile icon</strong> in the top-right corner, then select <strong>Account</strong>.</p>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-200 text-blue-800 text-xs font-bold flex items-center justify-center">3</span>
+                  <div className="text-sm text-blue-800">
+                    <p>Scroll down to the <strong>Export Data</strong> section.</p>
+                  </div>
+                </div>
+
+                {/* Step 4 */}
+                <div className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-200 text-blue-800 text-xs font-bold flex items-center justify-center">4</span>
+                  <div className="text-sm text-blue-800">
+                    <p>Set your <strong>date range</strong> &mdash; choose the period you want to import (e.g., the last 4 weeks).</p>
+                  </div>
+                </div>
+
+                {/* Step 5 */}
+                <div className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-200 text-blue-800 text-xs font-bold flex items-center justify-center">5</span>
+                  <div className="text-sm text-blue-800">
+                    <p>Under export type, select <strong>&quot;Daily Nutrition&quot;</strong>. This gives you one row per day with your total calories, protein, carbs, fat, and fiber.</p>
+                    <p className="mt-1 text-blue-600 text-xs italic">Tip: &quot;Servings&quot; exports individual food items &mdash; that&apos;s not what you need here.</p>
+                  </div>
+                </div>
+
+                {/* Step 6 */}
+                <div className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-200 text-blue-800 text-xs font-bold flex items-center justify-center">6</span>
+                  <div className="text-sm text-blue-800">
+                    <p>Click <strong>Export</strong> to download the <code className="bg-blue-100 px-1 rounded">.csv</code> file, then upload it below.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* What gets imported */}
+              <div className="mt-4 pt-3 border-t border-blue-200">
+                <p className="text-xs text-blue-700 font-medium mb-1">What gets imported:</p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Calories</span>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Protein</span>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Carbs</span>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Fat</span>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Fiber</span>
+                </div>
+                <p className="text-xs text-blue-600 mt-2">Your existing manually-entered data (steps, sleep, etc.) won&apos;t be overwritten. You&apos;ll get a chance to review everything before importing.</p>
+              </div>
             </div>
 
             <div className="border-2 border-dashed border-neutral-300 rounded-lg p-8 text-center">
