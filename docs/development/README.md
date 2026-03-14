@@ -8,10 +8,11 @@ Complete guide for contributing to CoachFit development.
 
 1. [Overview](#overview)
 2. [Getting Started](./getting-started.md)
-3. [Architecture](./architecture.md)
-4. [API Reference](./api-reference.md)
-5. [Deployment](./deployment.md)
-6. [Contributing](../misc/CONTRIBUTING.md)
+3. [Authentication Setup](./authentication.md)
+4. [Architecture](./architecture.md)
+5. [API Reference](./api-reference.md)
+6. [Deployment](./deployment.md)
+7. [Contributing](../misc/CONTRIBUTING.md)
 
 ---
 
@@ -35,7 +36,7 @@ CoachFit is built with modern web technologies and follows a full-stack parallel
 **Database & Auth**:
 - PostgreSQL via Railway
 - Prisma 6.19.1 ORM
-- NextAuth.js v5 with JWT sessions
+- Better Auth with database-backed sessions
 - bcrypt password hashing
 
 **Infrastructure**:

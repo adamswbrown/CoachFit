@@ -23,7 +23,7 @@ CoachFit uses:
 
 - **Vercel** - Frontend and API hosting
 - **Railway** - PostgreSQL database hosting
-- **NextAuth.js** - Authentication (Google OAuth, Apple Sign-In, Email/Password)
+- **Better Auth** - Authentication (Google OAuth, Email/Password)
 - **Resend** - Transactional email service
 
 ---
@@ -36,7 +36,6 @@ Before deploying, ensure you have:
 - [x] Vercel account
 - [x] Railway account
 - [x] Google OAuth credentials (for Google Sign-In)
-- [x] Apple Developer account (for Apple Sign-In) - optional
 - [x] Resend API key (for emails)
 
 ---
@@ -87,26 +86,20 @@ Create these environment variables in Vercel:
 # Database
 DATABASE_URL="postgresql://postgres:PASSWORD@containers-us-west-XXX.railway.app:5432/railway"
 
-# NextAuth.js
-NEXTAUTH_URL="https://gcgyms.com"
-NEXTAUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64 32
+# Better Auth
+BETTER_AUTH_URL="https://gcgyms.com"
+BETTER_AUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64 32
 
 # Google OAuth
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
-# Apple Sign-In (optional)
-APPLE_ID="your.apple.service.id"
-APPLE_TEAM_ID="your-team-id"
-APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
-APPLE_KEY_ID="your-key-id"
-
 # Resend (for emails)
 RESEND_API_KEY="re_your_api_key_here"
 EMAIL_FROM="CoachFit <noreply@gcgyms.com>"
 
-# Test User Suppression (optional)
-TEST_USER_EMAILS="test@example.com,coach@test.local"
+# Admin Override (optional - emergency admin access)
+# ADMIN_OVERRIDE_EMAIL="admin@example.com"
 ```
 
 ### Environment Variable Details
@@ -116,27 +109,23 @@ TEST_USER_EMAILS="test@example.com,coach@test.local"
 - Includes hostname, port, database name, username, password
 - Use connection pooling URL for better performance
 
-#### NEXTAUTH_URL
+#### BETTER_AUTH_URL
 - Full URL of your application
 - Production: `https://gcgyms.com`
 - Must match your custom domain
-- Update OAuth callback URLs to match this
+- Falls back to `NEXTAUTH_URL` if not set (for backward compatibility)
 
-#### NEXTAUTH_SECRET
-- Secret key for encrypting JWT tokens
+#### BETTER_AUTH_SECRET
+- Secret key for signing sessions
 - Generate with: `openssl rand -base64 32`
 - Keep this secret and never commit to Git
-- Must be at least 32 characters
+- Falls back to `AUTH_SECRET` → `NEXTAUTH_SECRET` if not set
 
 #### Google OAuth
 - Get from [Google Cloud Console](https://console.cloud.google.com/)
 - Create OAuth 2.0 credentials
 - Add authorized redirect URI: `https://gcgyms.com/api/auth/callback/google`
-
-#### Apple Sign-In
-- Get from [Apple Developer Portal](https://developer.apple.com)
-- Create a Service ID and Key
-- Add return URL: `https://gcgyms.com/api/auth/callback/apple`
+- See [Authentication Setup](./authentication.md) for detailed steps
 
 #### Resend
 - Get API key from [Resend Dashboard](https://resend.com/api-keys)
@@ -248,27 +237,7 @@ railway run npm run db:seed-email-templates
 8. Copy Client ID and Client Secret
 9. Add to Vercel environment variables
 
-### Apple Sign-In Setup
-
-1. Go to [Apple Developer Portal](https://developer.apple.com)
-2. Create an App ID (if you don't have one)
-3. Enable "Sign In with Apple" capability
-4. Create a Service ID:
-   - Register a new Service ID
-   - Enable "Sign In with Apple"
-   - Add return URL: `https://gcgyms.com/api/auth/callback/apple`
-5. Create a Key:
-   - Create new key
-   - Enable "Sign In with Apple"
-   - Download `.p8` key file
-   - Note the Key ID
-6. Get Team ID from membership page
-7. Convert `.p8` key to environment variable format:
-   ```bash
-   # The key should include newlines as \n
-   APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIGT...\n-----END PRIVATE KEY-----"
-   ```
-8. Add all Apple credentials to Vercel
+See **[Authentication Setup](./authentication.md)** for full details.
 
 ---
 
@@ -403,21 +372,14 @@ Recommended monitoring tools:
 3. Add both production and preview URLs if needed
 4. Include `https://` prefix
 
-**Issue**: NextAuth session not persisting
+**Issue**: Session not persisting
 
 **Solution**:
-1. Verify `NEXTAUTH_URL` matches your domain
-2. Check `NEXTAUTH_SECRET` is set correctly
-3. Ensure cookies are enabled
-4. Check browser console for errors
-
-**Issue**: Apple Sign-In fails
-
-**Solution**:
-1. Verify all Apple credentials are correct
-2. Ensure Service ID return URL matches Vercel domain
-3. Check `.p8` key format (must include `\n` for newlines)
-4. Verify Team ID and Key ID are correct
+1. Verify `BETTER_AUTH_URL` matches your domain (falls back to `NEXTAUTH_URL`)
+2. Check `BETTER_AUTH_SECRET` is set correctly (falls back to `AUTH_SECRET`/`NEXTAUTH_SECRET`)
+3. Ensure cookies are enabled — look for `better-auth.session_token`
+4. Check database `Session` table for active sessions
+5. See [Authentication Troubleshooting](./authentication.md#troubleshooting) for more details
 
 ### Email Issues
 
@@ -536,7 +498,7 @@ For breaking changes:
 
 Before going live:
 
-- [ ] `NEXTAUTH_SECRET` is strong and unique
+- [ ] `BETTER_AUTH_SECRET` is strong and unique
 - [ ] All OAuth credentials are production keys
 - [ ] `DATABASE_URL` uses SSL connection
 - [ ] No secrets committed to Git
@@ -553,10 +515,10 @@ Before going live:
 
 - [Vercel Documentation](https://vercel.com/docs)
 - [Railway Documentation](https://docs.railway.app)
-- [NextAuth.js Documentation](https://next-auth.js.org)
+- [Better Auth Documentation](https://better-auth.com)
 - [Prisma Documentation](https://www.prisma.io/docs)
 - [Resend Documentation](https://resend.com/docs)
 
 ---
 
-**Last Updated**: January 2025
+**Last Updated**: March 2026

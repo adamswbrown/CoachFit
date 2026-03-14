@@ -73,9 +73,9 @@ Create `.env.local` in the project root:
 # Database
 DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
 
-# NextAuth
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-here  # Generate with: openssl rand -base64 32
+# Better Auth
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=your-secret-here  # Generate with: openssl rand -base64 32
 
 # Google OAuth (Required)
 GOOGLE_CLIENT_ID=your-google-client-id
@@ -83,12 +83,9 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # Email Service (Resend)
 RESEND_API_KEY=re_your-resend-api-key
-
-# Apple Sign-In (Optional)
-APPLE_CLIENT_ID=your-apple-client-id
-APPLE_CLIENT_SECRET=your-apple-client-secret
-NEXT_PUBLIC_APPLE_CLIENT_ID=your-apple-client-id
 ```
+
+See **[Authentication Setup](./authentication.md)** for detailed auth configuration.
 
 ### 4. Database Setup
 
@@ -131,6 +128,8 @@ npm run db:generate
 7. Add authorized redirect URI:
    - `http://localhost:3000/api/auth/callback/google`
 8. Copy Client ID and Client Secret to `.env.local`
+
+See **[Authentication Setup](./authentication.md)** for full details including production redirect URIs.
 
 ### 7. Resend Email Setup (Optional)
 
@@ -272,10 +271,10 @@ Verify production build works.
    ```typescript
    // app/api/your-route/route.ts
    import { NextResponse } from "next/server"
-   import { auth } from "@/lib/auth"
+   import { getSession } from "@/lib/auth"
 
    export async function GET(request: Request) {
-     const session = await auth()
+     const session = await getSession()
      if (!session?.user?.id) {
        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
      }
@@ -353,9 +352,9 @@ npm run build
 
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Prisma Documentation](https://www.prisma.io/docs)
-- [NextAuth.js Documentation](https://next-auth.js.org/)
+- [Better Auth Documentation](https://better-auth.com)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 
 ---
 
-**Last Updated**: January 2025
+**Last Updated**: March 2026

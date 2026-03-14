@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CoachFit (previously CoachSync) is a comprehensive fitness tracking and coaching platform connecting coaches with clients for real-time health tracking. Built with Next.js 16 (App Router), TypeScript, Prisma ORM, PostgreSQL, and NextAuth.js v5.
+CoachFit (previously CoachSync) is a comprehensive fitness tracking and coaching platform connecting coaches with clients for real-time health tracking. Built with Next.js 16 (App Router), TypeScript, Prisma ORM, PostgreSQL, and Better Auth.
 
 **Core capabilities:**
 - **Client tracking**: Daily fitness entries (weight, steps, calories, sleep, effort), HealthKit integration, workout tracking, sleep records
@@ -196,17 +196,23 @@ npm run test:cleanup-healthkit        # Remove HealthKit demo data
 
 ### Authentication & Authorization
 
-**NextAuth.js v5 (lib/auth.ts)**
-- JWT session strategy with 1-hour duration (configurable in `authOptions.session.maxAge`)
-- Multiple providers: Google OAuth (required), Apple Sign-In (optional), Email/Password (Credentials)
-- User roles stored in JWT token and database: CLIENT, COACH, ADMIN
+**Better Auth (lib/auth.ts)**
+- Database-backed sessions with 1-hour duration (refreshed every 5 minutes)
+- Providers: Google OAuth, Email/Password (bcrypt)
+- Account linking enabled for Google (auto-links same-email accounts)
+- User roles stored in database, injected via `customSession` plugin: CLIENT, COACH, ADMIN
 - Users can have multiple roles (e.g., COACH + ADMIN)
+- Post-auth hooks via `createAuthMiddleware`: invite processing, role assignment, welcome emails
 
-**Middleware (middleware.ts)**
-- Lightweight JWT parsing to avoid Edge Function size limits (no NextAuth imports)
-- Parses JWT token manually to extract roles
-- Role-based route protection for API and pages
+**Client Auth (lib/auth-client.ts)**
+- Compatibility wrappers: `useSession()`, `signIn()`, `signOut()` match old NextAuth API shape
+- No `<SessionProvider>` wrapper needed (cookie-based sessions)
+
+**Proxy (proxy.ts)**
+- Cookie-based session detection (checks `better-auth.session_token`)
+- Route protection for API and pages
 - Public routes bypass authentication
+- Legacy NextAuth cookies supported during transition
 
 **Permissions (lib/permissions.ts)**
 - `isAdmin()`: Full admin access (can see all cohorts, assign coaches, manage users)
@@ -430,7 +436,9 @@ return NextResponse.json({ error: "Error message" }, { status: 400 })
 
 **Authentication Pattern (all protected routes)**:
 ```typescript
-const session = await auth()
+import { getSession } from "@/lib/auth"
+
+const session = await getSession()
 if (!session?.user?.id) {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 }
@@ -517,7 +525,7 @@ app/
 **Backend Structure**:
 ```
 lib/
-├── auth.ts               # NextAuth configuration
+├── auth.ts               # Better Auth configuration
 ├── db.ts                 # Prisma client instance
 ├── email.ts              # Email service (Resend)
 ├── permissions.ts        # Role-based permissions
@@ -530,7 +538,7 @@ components/
 ├── charts/               # Chart components (Recharts wrappers)
 ├── forms/                # Form components
 ├── navigation/           # Navigation components (navbar, sidebar)
-└── SessionProvider.tsx   # NextAuth session provider wrapper
+└── SessionProvider.tsx   # ErrorBoundary wrapper (no auth provider needed)
 
 prisma/
 ├── schema.prisma         # Prisma schema definition
@@ -620,8 +628,9 @@ scripts/
 - OAuth users can have passwordHash, allowing both login methods
 
 **Session Duration**:
-- JWT sessions expire after 1 hour (configurable in lib/auth.ts)
-- Can be adjusted for development: `maxAge: 30 * 24 * 60 * 60` (30 days)
+- Database sessions expire after 1 hour (configurable in lib/auth.ts `session.expiresIn`)
+- Sessions refresh every 5 minutes (`session.updateAge`)
+- Cookie cache of 5 minutes reduces DB queries (`session.cookieCache`)
 
 **Entry Upsert Behavior** (POST /api/entries):
 - Creates new entry or updates existing entry for the same date
@@ -843,8 +852,8 @@ Even for personal projects, every feature includes:
 ### Authentication & Authorization:
 - Session validation on all protected routes
 - Role-based access control (lib/permissions.ts)
-- JWT token with 1-hour expiration
-- Password hashing with bcrypt (10 rounds)
+- Database-backed sessions with 1-hour expiration
+- Password hashing with bcrypt (12 rounds)
 
 ### Secrets Management:
 - Never hard-code secrets
@@ -865,7 +874,7 @@ Even for personal projects, every feature includes:
 **Security debt compounds faster than code debt.**
 
 **Security checklist for every API route:**
-- [ ] Authentication check (`await auth()`)
+- [ ] Authentication check (`await getSession()`)
 - [ ] Authorization check (role/ownership validation)
 - [ ] Input validation (Zod schema)
 - [ ] Error messages don't leak sensitive info
@@ -943,16 +952,16 @@ Therefore:
 
 **Required**:
 - `DATABASE_URL` - PostgreSQL connection string
-- `NEXTAUTH_URL` - App URL (http://localhost:3000 for local)
-- `NEXTAUTH_SECRET` - Generate with `openssl rand -base64 32`
+- `BETTER_AUTH_URL` - App URL (http://localhost:3000 for local). Falls back to `NEXTAUTH_URL`
+- `BETTER_AUTH_SECRET` - Generate with `openssl rand -base64 32`. Falls back to `AUTH_SECRET` / `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
 - `RESEND_API_KEY` - Resend API key for emails
 
 **Optional**:
-- `APPLE_CLIENT_ID` - Apple Sign-In client ID
-- `APPLE_CLIENT_SECRET` - Apple Sign-In client secret
-- `NEXT_PUBLIC_APPLE_CLIENT_ID` - Public Apple client ID (for client-side rendering)
+- `ADMIN_OVERRIDE_EMAIL` - Emergency admin access for a specific email address
+
+See **[Authentication Setup](docs/development/authentication.md)** for full configuration guide.
 
 **Note**: `.env.local` is git-ignored and NOT deployed. For production (Vercel), configure environment variables in the dashboard.
 
@@ -1165,9 +1174,10 @@ Each batch must answer:
 - [ ] Monitor for errors in Vercel logs
 - [ ] Test critical paths in production
 
-**Edge Function Limitations**:
-- Middleware is kept lightweight (manual JWT parsing) to stay under 1MB limit
-- NextAuth imports in middleware cause bundle size issues - avoid them
+**Proxy / Route Protection**:
+- `proxy.ts` handles route protection via cookie-based session detection
+- No heavy auth imports in middleware — keeps Edge Function bundle small
+- Better Auth sessions are cookie-based, so proxy only needs to check cookie existence
 
 **Solo-friendly defaults:**
 - Boring infrastructure (Vercel, Railway)
@@ -1195,16 +1205,18 @@ Each feature may log (in comments or this doc):
 ### Example Decision Log:
 ```typescript
 // lib/auth.ts
-// Decision: Manual JWT parsing in middleware.ts to avoid Edge Function size limits
-// Pattern: NextAuth callbacks.signIn processes invites automatically on login
-// Mistake avoided: Don't import NextAuth in middleware - causes bundle bloat
+// Decision: Migrated from NextAuth v5 beta to Better Auth for stable Google OAuth
+// Pattern: Better Auth after-hooks process invites automatically on login
+// Pattern: customSession plugin injects roles/flags without per-request JWT refresh
+// Mistake avoided: Don't import heavy auth libs in middleware/proxy — check cookies only
 ```
 
 **No essays. Just future leverage.**
 
 **Key learnings for this project:**
-- Lightweight middleware = manual JWT parsing (avoid NextAuth imports in middleware.ts to stay under 1MB Edge Function limit)
-- Invitation flow = auto-process on sign-in via callbacks in lib/auth.ts
+- Lightweight proxy = cookie-based session check only (no heavy auth imports in Edge Functions)
+- Better Auth replaced NextAuth v5 beta for stable Google OAuth and database-backed sessions
+- Invitation flow = auto-process on sign-in via Better Auth after-hooks in lib/auth.ts
 - Test users = suppress emails with isTestUser flag (or emails ending in `.local`)
 - Role collapse = ADMIN doesn't replace COACH, users can have multiple roles
 - Entry upsert = one entry per user per day via unique constraint `[userId, date]`
