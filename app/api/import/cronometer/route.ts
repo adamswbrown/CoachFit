@@ -123,6 +123,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Auto-mark user as having Cronometer linked on successful import
+    if (created > 0 || merged > 0) {
+      await db.user.update({
+        where: { id: userId },
+        data: { cronometerLinked: true },
+      })
+    }
+
     return NextResponse.json({
       success: true,
       processed: rows.length,

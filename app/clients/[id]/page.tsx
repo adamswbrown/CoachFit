@@ -16,6 +16,7 @@ interface Client {
   name: string | null
   email: string
   onboardingComplete?: boolean | null
+  cronometerLinked?: boolean | null
   invitedByCoachId: string | null
   checkInFrequencyDays?: number | null
   User: {
@@ -663,6 +664,24 @@ export default function ClientOverviewPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Cronometer Status */}
+                <div>
+                  <div className="text-neutral-500">Cronometer</div>
+                  <div className="text-neutral-900 font-medium">
+                    {client.cronometerLinked ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                        Linked
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-neutral-400">
+                        <span className="inline-block w-2 h-2 rounded-full bg-neutral-300" />
+                        Not linked
+                      </span>
+                    )}
+                  </div>
+                </div>
 
                 <div>
                   <div className="text-neutral-500">Check-in Frequency Override</div>

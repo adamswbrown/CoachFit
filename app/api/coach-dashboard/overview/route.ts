@@ -71,6 +71,7 @@ export async function GET() {
                 id: true,
                 name: true,
                 email: true,
+                cronometerLinked: true,
               },
             },
           },
@@ -134,6 +135,7 @@ export async function GET() {
         email: true,
         name: true,
         createdAt: true,
+        cronometerLinked: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -163,6 +165,7 @@ export async function GET() {
         effectiveCheckInFrequencyDays?: number
         weightTrend?: "up" | "down" | "stable" | null
         latestWeight?: number | null
+        cronometerLinked?: boolean
       }
     >()
 
@@ -194,6 +197,7 @@ export async function GET() {
             status: "active",
             cohorts: [cohort.name],
             cohortFrequencyDays: cohort.checkInFrequencyDays ?? null,
+            cronometerLinked: membership.user.cronometerLinked ?? false,
           })
         }
         if (membership.user.id) {
@@ -343,6 +347,7 @@ export async function GET() {
           email: client.email,
           status: "unassigned",
           cohorts: [],
+          cronometerLinked: client.cronometerLinked ?? false,
         })
       }
     }
@@ -436,6 +441,7 @@ export async function GET() {
       effectiveCheckInFrequencyDays?: number
       weightTrend?: string | null
       latestWeight?: number | null
+      cronometerLinked?: boolean
     }
     const clients = Array.from(clientMap.values()).map((client: ClientMapValue) => ({
       id: client.id,
@@ -456,6 +462,7 @@ export async function GET() {
       effectiveCheckInFrequencyDays: client.effectiveCheckInFrequencyDays,
       weightTrend: client.weightTrend ?? undefined,
       latestWeight: client.latestWeight ?? undefined,
+      cronometerLinked: client.cronometerLinked ?? false,
     }))
 
     // Calculate stats

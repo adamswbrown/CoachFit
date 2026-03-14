@@ -219,7 +219,7 @@ export const onboardingSubmitSchema = z.object({
     "very_active",
     "extremely_active"
   ]),
-  // addBurnedCalories removed per requirements
+  cronometerLinked: z.boolean().default(false),
   weightUnit: z.enum(["lbs", "kg"]).default("lbs"),
   measurementUnit: z.enum(["inches", "cm"]).default("inches"),
   dateFormat: z.enum(["MM/dd/yyyy", "dd/MM/yyyy", "dd-MMM-yyyy", "yyyy-MM-dd", "MMM dd, yyyy"]).default("MM/dd/yyyy"),

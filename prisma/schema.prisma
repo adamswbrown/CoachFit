@@ -219,6 +219,7 @@ model User {
   activityLevel                String?
   primaryGoal                  String?
   checkInFrequencyDays         Int?
+  cronometerLinked             Boolean                       @default(false)
   Account                      Account[]
   AdminActions                 AdminAction[]                 @relation("AdminActions")
   CoachCohortMembership        CoachCohortMembership[]

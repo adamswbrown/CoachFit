@@ -94,6 +94,7 @@ export async function POST(request: Request) {
           activityLevel: data.activityLevel,
           primaryGoal: data.primaryGoal,
           onboardingComplete: true,
+          cronometerLinked: data.cronometerLinked ?? false,
         },
         select: { id: true, email: true },
       })
