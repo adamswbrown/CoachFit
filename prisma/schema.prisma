@@ -119,6 +119,10 @@ model Entry {
   customResponses   Json?
   dataSources       Json?    @default("[]")
   bodyFatPercentage Float?
+  proteinGrams      Float?
+  carbsGrams        Float?
+  fatGrams          Float?
+  fiberGrams        Float?
   User              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])

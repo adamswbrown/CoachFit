@@ -588,6 +588,14 @@ export default function ClientDashboard() {
               </Link>
             )}
             <Link
+              href="/client-dashboard/import"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors text-center"
+              title="Import nutrition data from Cronometer"
+            >
+              <span className="sm:hidden">📥</span>
+              <span className="hidden sm:inline">📥 Import</span>
+            </Link>
+            <Link
               href="/client-dashboard/settings"
               className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors text-center"
               title="Account settings"
