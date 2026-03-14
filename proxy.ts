@@ -1,14 +1,14 @@
 /**
- * Next.js 16 Proxy for centralized route protection
+ * Next.js 16 Proxy for centralized route protection (Clerk + custom logic)
  *
  * Security features:
- * - JWT validation for protected routes
- * - Role-based access control
+ * - Clerk session validation for protected routes
  * - Security headers injection
  * - Public route whitelist
  * - Proper CORS for mobile endpoints (with authentication required at route level)
  */
 
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
@@ -27,7 +27,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   // Permissions policy
   response.headers.set(
     "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    "camera=(), microphone=(), geolocation=()"
   )
   return response
 }
@@ -48,33 +48,25 @@ function isHealthKitEndpoint(pathname: string): boolean {
   return pathname.startsWith("/api/ingest") || pathname.startsWith("/api/pair")
 }
 
-function isPublicPath(pathname: string): boolean {
-  return (
-    pathname === "/" ||
-    pathname === "/login" ||
-    pathname === "/signup" ||
-    pathname === "/dashboard" ||
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/public") ||
-    pathname.startsWith("/public/") ||
-    pathname.match(/^\/.+\.(png|jpg|jpeg|svg|gif|ico|webp|avif|bmp)$/) !== null
-  )
-}
+/**
+ * Routes that don't require Clerk authentication.
+ * Clerk middleware still runs on these routes but won't block unauthenticated users.
+ */
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/login(.*)",
+  "/signup(.*)",
+  "/dashboard",
+  "/api/auth(.*)",
+  "/api/public(.*)",
+  "/api/webhooks(.*)",
+  "/api/ingest(.*)",
+  "/api/pair(.*)",
+  "/api/healthkit(.*)",
+  "/public/(.*)",
+])
 
-function getSessionCookie(req: NextRequest) {
-  return (
-    // Better Auth session cookie
-    req.cookies.get("__Secure-better-auth.session_token") ||
-    req.cookies.get("better-auth.session_token") ||
-    // Legacy NextAuth cookies (for transition period)
-    req.cookies.get("__Secure-authjs.session-token") ||
-    req.cookies.get("authjs.session-token") ||
-    req.cookies.get("__Secure-next-auth.session-token") ||
-    req.cookies.get("next-auth.session-token")
-  )
-}
-
-export async function proxy(req: NextRequest) {
+export default clerkMiddleware(async (auth, req) => {
   const pathname = req.nextUrl.pathname
 
   // Static files - pass through
@@ -95,48 +87,17 @@ export async function proxy(req: NextRequest) {
     return addMobileCorsHeaders(NextResponse.next())
   }
 
-  // Public paths - allow but add security headers
-  if (isPublicPath(pathname)) {
-    return addSecurityHeaders(NextResponse.next())
-  }
-
-  // Protected pages that should render (auth check happens client-side or in page)
-  if (
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/coach-dashboard") ||
-    pathname.startsWith("/client-dashboard") ||
-    pathname.startsWith("/cohorts") ||
-    pathname.startsWith("/clients") ||
-    pathname.startsWith("/onboarding") ||
-    pathname.startsWith("/api/onboarding")
-  ) {
-    return addSecurityHeaders(NextResponse.next())
-  }
-
-  // API routes - validate authentication
-  if (pathname.startsWith("/api/")) {
-    const tokenCookie = getSessionCookie(req)
-
-    if (!tokenCookie) {
-      return addSecurityHeaders(
-        NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-      )
-    }
-
-    // Allow request to proceed — role/expiration checks happen in route handlers via auth()
-    return addSecurityHeaders(NextResponse.next())
-  }
-
-  // Page routes - check authentication for protected pages
-  if (!getSessionCookie(req)) {
-    const loginUrl = new URL("/login", req.url)
-    loginUrl.searchParams.set("callbackUrl", pathname)
-    return NextResponse.redirect(loginUrl)
+  // Protected routes - require Clerk authentication
+  if (!isPublicRoute(req)) {
+    await auth.protect()
   }
 
   return addSecurityHeaders(NextResponse.next())
-}
+})
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    // Skip Next.js internals and static files
+    "/((?!_next/static|_next/image|favicon.ico|icons/|manifest.json|sw.js|workbox-.*\\.js).*)",
+  ],
 }

@@ -34,12 +34,7 @@ export async function GET(
         passwordHash: true,
         onboardingComplete: true,
         invitedByCoachId: true,
-        Account: {
-          select: {
-            providerId: true,
-            accountId: true,
-          },
-        },
+        // Note: Auth provider data is managed by Clerk externally
         CohortMembership: {
           select: {
             Cohort: {
@@ -118,7 +113,7 @@ export async function GET(
       createdAt: user.createdAt,
       onboardingComplete: user.onboardingComplete,
       hasPassword: !!user.passwordHash,
-      authProviders: user.Account.map((a: { providerId: string }) => a.providerId),
+      authProviders: [], // Auth providers managed by Clerk
       cohortsMemberOf: user.CohortMembership.map((m: { Cohort: { id: string; name: string; createdAt: Date } }) => ({
         id: m.Cohort.id,
         name: m.Cohort.name,

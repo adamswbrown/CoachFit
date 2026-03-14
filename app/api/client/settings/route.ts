@@ -9,19 +9,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Fetch user's own settings with connected accounts
+    // Fetch user's own settings
+    // Note: Connected OAuth accounts are managed by Clerk externally
     const user = await db.user.findUnique({
       where: { id: session.user.id },
       select: {
         id: true,
         name: true,
         email: true,
-        Account: {
-          select: {
-            providerId: true,
-            accountId: true,
-          },
-        },
       },
     })
 

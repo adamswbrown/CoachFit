@@ -107,11 +107,7 @@ export async function PATCH(
         isTestUser: true,
         createdAt: true,
         passwordHash: true,
-        Account: {
-          select: {
-            providerId: true,
-          },
-        },
+        // Note: Auth provider data is managed by Clerk externally
         CohortMembership: {
           select: {
             Cohort: {
@@ -149,7 +145,7 @@ export async function PATCH(
           isTestUser: updatedUser.isTestUser,
           createdAt: updatedUser.createdAt,
           hasPassword: !!updatedUser.passwordHash,
-          authProviders: updatedUser.Account.map((a: { providerId: string }) => a.providerId),
+          authProviders: [], // Auth providers managed by Clerk
           cohortsMemberOf: updatedUser.CohortMembership.map((m: { Cohort: { id: string; name: string } }) => ({
             id: m.Cohort.id,
             name: m.Cohort.name,

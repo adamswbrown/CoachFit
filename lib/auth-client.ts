@@ -1,59 +1,58 @@
 "use client"
 
-import { createAuthClient } from "better-auth/react"
-import { customSessionClient } from "better-auth/client/plugins"
-import type { auth } from "./auth"
+import { useUser, useClerk, useAuth } from "@clerk/nextjs"
 import type { Role } from "./types"
 
-export const authClient = createAuthClient({
-  plugins: [customSessionClient<typeof auth>()],
-})
-
-// Re-export direct client functions
-export const {
-  signIn: betterAuthSignIn,
-  signUp,
-  signOut: betterAuthSignOut,
-  useSession: betterAuthUseSession,
-} = authClient
+/**
+ * Clerk-based client auth hooks for CoachFit.
+ *
+ * Provides compatibility wrappers that return the same shape as the old
+ * NextAuth/Better Auth hooks, so 30+ client components don't need changes.
+ */
 
 /**
- * Compatibility wrapper for useSession that returns the same shape
- * as the old NextAuth useSession() hook.
+ * useSession() — returns { data: session, status }
  *
- * Returns { data: session, status: "loading" | "authenticated" | "unauthenticated" }
+ * Maps Clerk's useUser() to the same shape components expect:
+ * - status: "loading" | "authenticated" | "unauthenticated"
+ * - data: { user: { id, email, name, roles, isTestUser, ... } } | null
+ *
+ * Note: Roles and custom fields are fetched from publicMetadata (synced from DB via webhook).
+ * The DB remains the source of truth; publicMetadata is a read cache for the client.
  */
 export function useSession() {
-  const { data, isPending, error } = betterAuthUseSession()
+  const { user, isLoaded, isSignedIn } = useUser()
 
-  const status = isPending
-    ? "loading" as const
-    : data?.session
-      ? "authenticated" as const
-      : "unauthenticated" as const
+  const status = !isLoaded
+    ? ("loading" as const)
+    : isSignedIn
+      ? ("authenticated" as const)
+      : ("unauthenticated" as const)
 
-  // Map Better Auth session to the shape components expect
-  const session = data?.session && data?.user
-    ? {
-        user: {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.name ?? null,
-          image: data.user.image ?? null,
-          roles: ((data.user as any).roles as Role[]) ?? (["CLIENT"] as Role[]),
-          isTestUser: (data.user as any).isTestUser ?? false,
-          mustChangePassword: (data.user as any).mustChangePassword ?? false,
-          onboardingComplete: (data.user as any).onboardingComplete ?? false,
-        },
-      }
-    : null
+  const session =
+    isLoaded && isSignedIn && user
+      ? {
+          user: {
+            id: (user.publicMetadata?.dbId as string) ?? user.id,
+            email: user.emailAddresses[0]?.emailAddress ?? "",
+            name: user.fullName ?? null,
+            image: user.imageUrl ?? null,
+            roles: ((user.publicMetadata?.roles as Role[]) ?? ["CLIENT"]) as Role[],
+            isTestUser: (user.publicMetadata?.isTestUser as boolean) ?? false,
+            mustChangePassword: (user.publicMetadata?.mustChangePassword as boolean) ?? false,
+            onboardingComplete: (user.publicMetadata?.onboardingComplete as boolean) ?? false,
+          },
+        }
+      : null
 
   return { data: session, status }
 }
 
 /**
- * Sign in with email and password.
- * Compatible with the old NextAuth signIn("credentials", { ... }) pattern.
+ * signIn() — compatible with old signIn("credentials", { ... }) / signIn("google") pattern.
+ *
+ * With Clerk, sign-in is handled by the <SignIn /> component or Clerk's hosted pages.
+ * This function redirects to the sign-in page for the requested flow.
  */
 export async function signIn(
   provider: string,
@@ -64,41 +63,29 @@ export async function signIn(
     redirect?: boolean
   }
 ) {
-  if (provider === "credentials" || provider === "email") {
-    const result = await betterAuthSignIn.email({
-      email: options?.email ?? "",
-      password: options?.password ?? "",
-    })
-
-    if (result.error) {
-      return { error: result.error.message || "Sign in failed", ok: false }
-    }
-
-    return { error: null, ok: true }
-  }
-
-  if (provider === "google") {
-    await betterAuthSignIn.social({
-      provider: "google",
-      callbackURL: options?.callbackUrl || "/dashboard",
-    })
-    return { error: null, ok: true }
-  }
-
-  return { error: "Unknown provider", ok: false }
+  // Clerk handles sign-in via its components/hosted UI.
+  // Redirect to the sign-in page.
+  const callbackUrl = options?.callbackUrl || "/dashboard"
+  window.location.href = `/login?redirect_url=${encodeURIComponent(callbackUrl)}`
+  return { error: null, ok: true }
 }
 
 /**
- * Sign out. Compatible with old NextAuth signOut({ callbackUrl }) pattern.
+ * signOut() — compatible with old signOut({ callbackUrl }) pattern.
  */
 export async function signOut(options?: { callbackUrl?: string }) {
-  await betterAuthSignOut({
-    fetchOptions: {
-      onSuccess: () => {
-        if (options?.callbackUrl) {
-          window.location.href = options.callbackUrl
-        }
-      },
-    },
-  })
+  // This is a no-op function for compatibility.
+  // Components that need sign-out should use the useClerk() hook directly
+  // or the <UserButton /> component. For programmatic sign-out:
+  window.location.href = `/login`
+}
+
+/**
+ * Hook for programmatic sign-out (use in components that need it).
+ */
+export function useSignOut() {
+  const { signOut: clerkSignOut } = useClerk()
+  return async (options?: { callbackUrl?: string }) => {
+    await clerkSignOut({ redirectUrl: options?.callbackUrl || "/login" })
+  }
 }

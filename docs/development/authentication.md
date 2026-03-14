@@ -1,126 +1,89 @@
 # Authentication Setup Guide
 
-CoachFit uses [Better Auth](https://better-auth.com) for authentication, supporting Google OAuth and email/password login.
+CoachFit uses [Clerk](https://clerk.com) for managed authentication, supporting Google OAuth and email/password login.
 
 ---
 
 ## Overview
 
-- **Library**: Better Auth (replaced NextAuth.js v5 beta)
-- **Session strategy**: Database-backed sessions (PostgreSQL via Prisma)
-- **Providers**: Google OAuth, email/password
-- **Account linking**: Enabled — Google and email/password accounts with the same email are automatically linked
-- **Session duration**: 1 hour (refreshed every 5 minutes)
+- **Service**: Clerk (managed auth — no self-hosted auth infrastructure)
+- **Providers**: Google OAuth, Email/Password (configured in Clerk Dashboard)
+- **Session management**: Handled entirely by Clerk (cookie-based)
+- **User data**: Synced from Clerk to local PostgreSQL via webhooks
+- **Free tier**: 10,000 monthly active users
 
 ---
 
-## Environment Variables
+## Setup (3 Steps)
 
-Add these to `.env.local` (local development) or your hosting provider (production):
+### 1. Create Clerk Account
+
+1. Go to [clerk.com](https://clerk.com) and sign up
+2. Create a new application, name it "CoachFit"
+3. Under **Social Connections**, enable **Google** (Clerk manages the OAuth credentials — no Google Cloud Console needed)
+4. Under **Authentication**, enable **Email/Password**
+
+### 2. Set Environment Variables
+
+Copy your API keys from the Clerk Dashboard (**API Keys** page) into `.env.local`:
 
 ```env
-# Better Auth (Required)
-BETTER_AUTH_URL=http://localhost:3000          # Your app URL
-BETTER_AUTH_SECRET=your-secret-here            # Generate with: openssl rand -base64 32
-
-# Google OAuth (Required)
-GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-
-# Database (Required)
-DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
 ```
 
-### Legacy Fallbacks
+That's it. No `GOOGLE_CLIENT_ID`, no `AUTH_SECRET`, no database session tables.
 
-Better Auth config falls back to these if `BETTER_AUTH_*` vars are not set:
+### 3. Set Up Webhook (For User Sync)
 
-- `BETTER_AUTH_URL` → `NEXTAUTH_URL`
-- `BETTER_AUTH_SECRET` → `AUTH_SECRET` → `NEXTAUTH_SECRET`
-
-This means existing deployments with NextAuth env vars will continue to work without changes.
-
----
-
-## Google OAuth Setup
-
-### 1. Create Google Cloud Project
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the **Google+ API** (or "Google Identity" API)
-
-### 2. Create OAuth Credentials
-
-1. Navigate to **APIs & Services** → **Credentials**
-2. Click **Create Credentials** → **OAuth 2.0 Client ID**
-3. Select **Web application** as the application type
-4. Set a name (e.g., "CoachFit")
-
-### 3. Configure Redirect URIs
-
-Add these **Authorized redirect URIs**:
-
-```
-# Local development
-http://localhost:3000/api/auth/callback/google
-
-# Production (replace with your domain)
-https://your-domain.com/api/auth/callback/google
-```
-
-**Important**: Better Auth uses the same callback path as NextAuth (`/api/auth/callback/google`), so existing Google Cloud configurations work without changes.
-
-### 4. Copy Credentials
-
-Copy the **Client ID** and **Client Secret** into your environment variables:
+1. In Clerk Dashboard, go to **Webhooks** → **Add Endpoint**
+2. Set the URL to `https://your-domain.com/api/webhooks`
+3. Subscribe to events: `user.created`, `user.updated`
+4. Copy the **Signing Secret** and add to `.env.local`:
 
 ```env
-GOOGLE_CLIENT_ID=123456789-abcdefg.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=GOCSPX-your-secret-here
+CLERK_WEBHOOK_SIGNING_SECRET=whsec_...
 ```
 
----
-
-## Email/Password Setup
-
-Email/password authentication works out of the box. No additional configuration needed.
-
-### Password Requirements
-
-- Minimum: 8 characters
-- Maximum: 128 characters
-- Hashing: bcrypt (12 rounds)
-
-### Setting Passwords for Existing Users
-
-```bash
-npm run password:set user@example.com newpassword123
-```
-
-### Test User Passwords
-
-After seeding:
-
-```bash
-npm run db:seed
-npm run password:set coach@test.local coach123
-npm run password:set client@test.local client123
-```
+For local development, use [ngrok](https://ngrok.com) or skip webhooks (users are auto-created on first API call).
 
 ---
 
 ## How It Works
 
+### Architecture
+
+```
+Clerk (managed service)          Your Database (PostgreSQL)
+┌──────────────────────┐         ┌──────────────────────┐
+│ Users & Sessions     │         │ User table           │
+│ Google OAuth         │  sync   │  - id (UUID)         │
+│ Email/Password       │ ──────→ │  - clerkId           │
+│ Password hashing     │ webhook │  - email             │
+│ Session cookies      │         │  - roles[]           │
+└──────────────────────┘         │  - isTestUser        │
+                                 │  - onboardingComplete│
+                                 └──────────────────────┘
+```
+
+- **Clerk** manages authentication (sign-in, sign-up, sessions, OAuth)
+- **Your database** stores business data (roles, cohorts, entries, etc.)
+- **Webhooks** sync new users from Clerk to your database
+- **`getSession()`** looks up the Clerk user, then enriches with database data (roles, etc.)
+
 ### Key Files
 
 | File | Purpose |
 |------|---------|
-| `lib/auth.ts` | Server-side auth config (Better Auth instance, hooks, plugins) |
-| `lib/auth-client.ts` | Client-side auth hooks (`useSession`, `signIn`, `signOut`) |
-| `app/api/auth/[...all]/route.ts` | Auth API route handler |
-| `proxy.ts` | Route protection (cookie-based session check) |
-| `components/SessionProvider.tsx` | ErrorBoundary wrapper (no auth provider needed) |
+| `lib/auth.ts` | Server-side: `getSession()` — returns enriched session from Clerk + DB |
+| `lib/auth-client.ts` | Client-side: `useSession()`, `signIn()`, `signOut()` wrappers |
+| `app/api/webhooks/route.ts` | Clerk webhook handler — syncs users, processes invites |
+| `proxy.ts` | Clerk middleware + security headers + CORS |
+| `app/layout.tsx` | `<ClerkProvider>` wrapper |
+| `app/login/page.tsx` | Clerk `<SignIn />` component |
+| `app/signup/page.tsx` | Clerk `<SignUp />` component |
 
 ### Server-Side Usage
 
@@ -136,11 +99,11 @@ if (!session?.user?.id) {
 // Session shape:
 // {
 //   user: {
-//     id: string
+//     id: string          // Local DB user ID (UUID)
 //     email: string
 //     name: string | null
 //     image: string | null
-//     roles: Role[]          // ["CLIENT"], ["COACH"], ["ADMIN"], etc.
+//     roles: Role[]       // ["CLIENT"], ["COACH"], ["ADMIN"], etc.
 //     isTestUser: boolean
 //     mustChangePassword: boolean
 //     onboardingComplete: boolean
@@ -152,83 +115,58 @@ if (!session?.user?.id) {
 
 ```typescript
 "use client"
-import { useSession, signIn, signOut } from "@/lib/auth-client"
+import { useSession } from "@/lib/auth-client"
 
 function MyComponent() {
   const { data: session, status } = useSession()
   // status: "loading" | "authenticated" | "unauthenticated"
+  // session.user.roles, session.user.id, etc.
+}
+```
 
-  // Sign in with Google
-  await signIn("google", { callbackUrl: "/dashboard" })
+For sign-out in components:
+```typescript
+import { useSignOut } from "@/lib/auth-client"
 
-  // Sign in with email/password
-  await signIn("credentials", {
-    email: "user@example.com",
-    password: "password123",
-    callbackUrl: "/dashboard",
-    redirect: false,  // Returns result instead of redirecting
-  })
-
-  // Sign out
-  await signOut({ callbackUrl: "/login" })
+function LogoutButton() {
+  const signOut = useSignOut()
+  return <button onClick={() => signOut({ callbackUrl: "/login" })}>Sign out</button>
 }
 ```
 
 ---
 
-## Session & Cookies
+## User Sync Flow
 
-Better Auth uses database-backed sessions with cookies:
+When a user signs up via Clerk:
 
-- **Cookie name**: `better-auth.session_token` (or `__Secure-better-auth.session_token` on HTTPS)
-- **Session duration**: 1 hour
-- **Refresh interval**: Every 5 minutes
-- **Cookie cache**: 5 minutes (reduces DB queries)
+1. Clerk creates the user and fires a `user.created` webhook
+2. Our webhook handler (`app/api/webhooks/route.ts`):
+   - Creates a local `User` record with `clerkId`
+   - Sets default `CLIENT` role
+   - Processes pending coach/cohort invites
+   - Syncs roles to Clerk's `publicMetadata` (so client-side can read them)
+   - Sends welcome email via Resend
 
-The `proxy.ts` middleware checks for the session cookie on protected routes and redirects unauthenticated users to `/login`.
+If the webhook hasn't fired yet when the user makes their first API call, `getSession()` auto-creates the local user record.
 
 ---
 
-## Account Linking
+## Roles & Permissions
 
-When a user signs up with email/password and later signs in with Google (or vice versa) using the same email address, Better Auth automatically links both accounts. This is configured via:
+Roles are stored in our database (`User.roles[]`), NOT in Clerk. Clerk's `publicMetadata` holds a copy for client-side access, but the DB is the source of truth.
 
+When roles change (via admin panel), update both:
 ```typescript
-account: {
-  accountLinking: {
-    enabled: true,
-    trustedProviders: ["google"],
-  },
-},
+// Update DB
+await db.user.update({ where: { id }, data: { roles: newRoles } })
+
+// Sync to Clerk metadata
+const client = await clerkClient()
+await client.users.updateUserMetadata(clerkId, {
+  publicMetadata: { roles: newRoles }
+})
 ```
-
-Only providers listed in `trustedProviders` are auto-linked. This prevents untrusted OAuth providers from hijacking accounts.
-
----
-
-## Hooks (Post-Auth Events)
-
-Better Auth hooks run after authentication events:
-
-### After Sign-In (`/sign-in/social` or `/sign-in/email`)
-- Processes pending coach invites (sets `invitedByCoachId` on User)
-- Processes pending cohort invites (creates `CohortMembership`)
-
-### After Sign-Up (`/sign-up/email` or `/sign-in/social` for new users)
-- Sets default `CLIENT` role if user has no roles
-- Sends welcome email (fire-and-forget, suppressed for test users)
-
----
-
-## Custom Session Data
-
-The `customSession` plugin enriches every session with data from the database:
-
-- `roles` — User's role array from the `User` table
-- `isTestUser` — Whether this is a test account
-- `mustChangePassword` — Whether the user needs to change their password
-- `onboardingComplete` — Whether onboarding is finished
-- Admin override check — Grants `ADMIN` role if `ADMIN_OVERRIDE_EMAIL` matches
 
 ---
 
@@ -238,10 +176,11 @@ The `customSession` plugin enriches every session with data from the database:
 
 1. **Set environment variables** on your hosting provider:
    ```
-   BETTER_AUTH_URL=https://your-domain.com
-   BETTER_AUTH_SECRET=<generated-secret>
-   GOOGLE_CLIENT_ID=<your-client-id>
-   GOOGLE_CLIENT_SECRET=<your-client-secret>
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
+   CLERK_SECRET_KEY=sk_live_...
+   CLERK_WEBHOOK_SIGNING_SECRET=whsec_...
+   NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+   NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
    DATABASE_URL=<your-postgres-url>
    ```
 
@@ -250,56 +189,39 @@ The `customSession` plugin enriches every session with data from the database:
    npx prisma migrate deploy
    ```
 
-3. **Update Google OAuth redirect URI** in Google Cloud Console:
-   ```
-   https://your-domain.com/api/auth/callback/google
-   ```
+3. **Configure Clerk webhook**:
+   - Add production webhook URL in Clerk Dashboard
+   - Subscribe to `user.created` and `user.updated` events
 
 4. **Create first admin**:
    ```bash
    npm run admin:set your-email@example.com
    ```
 
-### Migrating from NextAuth
-
-If upgrading an existing deployment:
-
-1. The database migration (`20260314200000_migrate_to_better_auth`) handles schema changes automatically
-2. Existing `NEXTAUTH_URL` / `NEXTAUTH_SECRET` env vars still work as fallbacks
-3. Users will need to sign in again (new session format)
-4. Existing password hashes are compatible (both use bcrypt)
-5. Google OAuth callback URL path is unchanged (`/api/auth/callback/google`)
-
 ---
 
 ## Troubleshooting
 
-### Google OAuth: "redirect_uri_mismatch"
-
-The redirect URI in Google Cloud Console doesn't match your app URL. Ensure:
-- `http://localhost:3000/api/auth/callback/google` for local dev
-- `https://your-domain.com/api/auth/callback/google` for production
-- No trailing slash
-- Protocol matches exactly (http vs https)
-
-### Session Not Persisting
-
-1. Check `BETTER_AUTH_URL` matches the URL you're accessing (including port)
-2. Verify `BETTER_AUTH_SECRET` is set
-3. Check browser cookies — look for `better-auth.session_token`
-4. Check database — `Session` table should have active sessions
-
 ### "Unauthorized" on API Routes
 
-1. Verify the session cookie is being sent with requests
-2. Check that `getSession()` is imported from `@/lib/auth` (not from Better Auth directly)
-3. Look at server logs for `[AUTH] Error getting session` messages
+1. Verify Clerk env vars are set (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`)
+2. Check that `getSession()` is imported from `@/lib/auth`
+3. If user exists in Clerk but gets null session, check that the webhook created the local DB user
 
-### Account Linking Not Working
+### User Signed Up but No Roles
 
-1. Ensure the email addresses match exactly (case-insensitive)
-2. Check that `google` is in the `trustedProviders` array
-3. Verify the user has an existing account with that email
+The webhook may not have fired. Check:
+1. Webhook endpoint is configured in Clerk Dashboard
+2. `CLERK_WEBHOOK_SIGNING_SECRET` is correct
+3. Webhook URL is accessible from the internet (use ngrok for local dev)
+
+If the webhook didn't fire, `getSession()` auto-creates the user with `CLIENT` role on first API call.
+
+### Google Sign-In Not Working
+
+Google OAuth is configured entirely in Clerk Dashboard → Social Connections. No Google Cloud Console credentials needed. If it's not working:
+1. Check that Google is enabled in Clerk Dashboard
+2. Verify your Clerk application is in production mode (not development) for production domains
 
 ---
 

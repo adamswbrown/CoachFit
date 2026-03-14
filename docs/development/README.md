@@ -36,7 +36,7 @@ CoachFit is built with modern web technologies and follows a full-stack parallel
 **Database & Auth**:
 - PostgreSQL via Railway
 - Prisma 6.19.1 ORM
-- Better Auth with database-backed sessions
+- Clerk (managed auth — Google OAuth, email/password)
 - bcrypt password hashing
 
 **Infrastructure**:

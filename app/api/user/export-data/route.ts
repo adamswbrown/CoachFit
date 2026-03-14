@@ -22,7 +22,6 @@ export async function GET(request: NextRequest) {
     const user = await (db.user.findUnique as any)({
       where: { id: session.user.id },
       include: {
-        Account: true,
         Entry: {
           orderBy: { date: "desc" },
         },
@@ -56,10 +55,7 @@ export async function GET(request: NextRequest) {
         createdAt: user.createdAt,
         roles: user.roles,
       },
-      accounts: user.Account.map((acc) => ({
-        provider: acc.provider,
-        connectedAt: acc.id,
-      })),
+      // Note: OAuth account/provider data is managed by Clerk and not stored locally
       entries: user.Entry.map((entry) => ({
         date: entry.date,
         weight: entry.weightLbs,

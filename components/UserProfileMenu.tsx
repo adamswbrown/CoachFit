@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { signOut } from "@/lib/auth-client"
+import { useSignOut } from "@/lib/auth-client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -50,6 +50,7 @@ export function UserProfileMenu({
   showRoleSwitcher = false,
   showAdminLink = false 
 }: UserProfileMenuProps) {
+  const signOut = useSignOut()
   const [isOpen, setIsOpen] = useState(false)
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false)
   const [isResetting, setIsResetting] = useState(false)

@@ -76,11 +76,7 @@ export async function GET(req: NextRequest) {
           isTestUser: true,
           createdAt: true,
           passwordHash: true,
-          Account: {
-            select: {
-              providerId: true,
-            },
-          },
+          // Note: Auth provider data is managed by Clerk externally
           CohortMembership: {
             select: {
               Cohort: {
@@ -129,7 +125,7 @@ export async function GET(req: NextRequest) {
     })
 
     // Format users
-    const formattedUsers = users.map((user: { id: string; email: string; name: string | null; roles: string[]; isTestUser: boolean; createdAt: Date; passwordHash: string | null; Account: { providerId: string }[]; CohortMembership: { Cohort: { id: string; name: string } }[]; Cohort: { id: string; name: string }[] }) => ({
+    const formattedUsers = users.map((user: { id: string; email: string; name: string | null; roles: string[]; isTestUser: boolean; createdAt: Date; passwordHash: string | null; CohortMembership: { Cohort: { id: string; name: string } }[]; Cohort: { id: string; name: string }[] }) => ({
       id: user.id,
       email: user.email,
       name: user.name,
@@ -137,7 +133,7 @@ export async function GET(req: NextRequest) {
       isTestUser: user.isTestUser,
       createdAt: user.createdAt,
       hasPassword: !!user.passwordHash,
-      authProviders: user.Account.map((a) => a.providerId),
+      authProviders: [], // Auth providers managed by Clerk
       cohortsMemberOf: user.CohortMembership.map((m) => ({
         id: m.Cohort.id,
         name: m.Cohort.name,

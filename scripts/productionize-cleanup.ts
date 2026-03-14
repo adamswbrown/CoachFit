@@ -177,17 +177,7 @@ async function main() {
   })
   console.log(`  - Deleted ${deletedConsents.count} user consents`)
 
-  // OAuth accounts
-  const deletedAccounts = await prisma.account.deleteMany({
-    where: { userId: { in: nonAdminIds } },
-  })
-  console.log(`  - Deleted ${deletedAccounts.count} OAuth accounts`)
-
-  // Sessions
-  const deletedSessions = await prisma.session.deleteMany({
-    where: { userId: { in: nonAdminIds } },
-  })
-  console.log(`  - Deleted ${deletedSessions.count} sessions`)
+  // Note: OAuth accounts and sessions are managed by Clerk externally
 
   // Admin actions (by non-admin users - shouldn't exist but clean anyway)
   const deletedAdminActions = await prisma.adminAction.deleteMany({
@@ -234,9 +224,7 @@ async function main() {
   const deletedScores = await prisma.attentionScore.deleteMany({})
   console.log(`  - Deleted ${deletedScores.count} attention scores`)
 
-  // Verification - clear any pending tokens
-  const deletedTokens = await prisma.verification.deleteMany({})
-  console.log(`  - Deleted ${deletedTokens.count} verification tokens`)
+  // Note: Verification tokens, OAuth accounts, and sessions are managed by Clerk externally
 
   // Step 7: Update administrators for production
   console.log("\nStep 6: Preparing administrators for production...")

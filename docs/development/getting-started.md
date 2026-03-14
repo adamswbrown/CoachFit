@@ -73,13 +73,11 @@ Create `.env.local` in the project root:
 # Database
 DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
 
-# Better Auth
-BETTER_AUTH_URL=http://localhost:3000
-BETTER_AUTH_SECRET=your-secret-here  # Generate with: openssl rand -base64 32
-
-# Google OAuth (Required)
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+# Clerk Authentication (get from https://dashboard.clerk.com → API Keys)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
 
 # Email Service (Resend)
 RESEND_API_KEY=re_your-resend-api-key
@@ -117,19 +115,17 @@ npm run db:migrate
 npm run db:generate
 ```
 
-### 6. Google OAuth Setup
+### 6. Authentication Setup (Clerk)
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing
-3. Enable **Google+ API**
-4. Navigate to **APIs & Services** → **Credentials**
-5. Create **OAuth 2.0 Client ID**
-6. Set application type to **Web application**
-7. Add authorized redirect URI:
-   - `http://localhost:3000/api/auth/callback/google`
-8. Copy Client ID and Client Secret to `.env.local`
+Google OAuth is configured entirely in the Clerk Dashboard — no Google Cloud Console setup needed.
 
-See **[Authentication Setup](./authentication.md)** for full details including production redirect URIs.
+1. Go to [clerk.com](https://clerk.com) and create an account
+2. Create a new application named "CoachFit"
+3. Enable **Google** under Social Connections
+4. Enable **Email/Password** under Authentication
+5. Copy API keys to `.env.local`
+
+See **[Authentication Setup](./authentication.md)** for full details.
 
 ### 7. Resend Email Setup (Optional)
 
@@ -352,7 +348,7 @@ npm run build
 
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Prisma Documentation](https://www.prisma.io/docs)
-- [Better Auth Documentation](https://better-auth.com)
+- [Clerk Documentation](https://clerk.com/docs)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 
 ---

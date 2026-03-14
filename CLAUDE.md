@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CoachFit (previously CoachSync) is a comprehensive fitness tracking and coaching platform connecting coaches with clients for real-time health tracking. Built with Next.js 16 (App Router), TypeScript, Prisma ORM, PostgreSQL, and Better Auth.
+CoachFit (previously CoachSync) is a comprehensive fitness tracking and coaching platform connecting coaches with clients for real-time health tracking. Built with Next.js 16 (App Router), TypeScript, Prisma ORM, PostgreSQL, and Clerk (managed auth).
 
 **Core capabilities:**
 - **Client tracking**: Daily fitness entries (weight, steps, calories, sleep, effort), HealthKit integration, workout tracking, sleep records
@@ -196,23 +196,25 @@ npm run test:cleanup-healthkit        # Remove HealthKit demo data
 
 ### Authentication & Authorization
 
-**Better Auth (lib/auth.ts)**
-- Database-backed sessions with 1-hour duration (refreshed every 5 minutes)
-- Providers: Google OAuth, Email/Password (bcrypt)
-- Account linking enabled for Google (auto-links same-email accounts)
-- User roles stored in database, injected via `customSession` plugin: CLIENT, COACH, ADMIN
-- Users can have multiple roles (e.g., COACH + ADMIN)
-- Post-auth hooks via `createAuthMiddleware`: invite processing, role assignment, welcome emails
+**Clerk (Managed Auth)**
+- Managed service — Google OAuth, email/password, sessions all handled by Clerk
+- No self-hosted auth infrastructure, no OAuth credentials to manage
+- User data synced from Clerk to local DB via webhooks (`app/api/webhooks/route.ts`)
+- Roles stored in DB (`User.roles[]`), synced to Clerk `publicMetadata` for client access
+
+**Server Auth (lib/auth.ts)**
+- `getSession()` — looks up Clerk session + enriches with DB data (roles, isTestUser, etc.)
+- Same return shape as old NextAuth/Better Auth — 98 API routes unchanged
 
 **Client Auth (lib/auth-client.ts)**
-- Compatibility wrappers: `useSession()`, `signIn()`, `signOut()` match old NextAuth API shape
-- No `<SessionProvider>` wrapper needed (cookie-based sessions)
+- `useSession()`, `signIn()`, `signOut()` — compatibility wrappers over Clerk hooks
+- `<ClerkProvider>` in root layout
+- `<SignIn />` / `<SignUp />` components on login/signup pages
 
 **Proxy (proxy.ts)**
-- Cookie-based session detection (checks `better-auth.session_token`)
-- Route protection for API and pages
-- Public routes bypass authentication
-- Legacy NextAuth cookies supported during transition
+- Clerk middleware (`clerkMiddleware()`) for session validation
+- Security headers and CORS for mobile endpoints
+- Public route whitelist via `createRouteMatcher()`
 
 **Permissions (lib/permissions.ts)**
 - `isAdmin()`: Full admin access (can see all cohorts, assign coaches, manage users)
@@ -525,7 +527,7 @@ app/
 **Backend Structure**:
 ```
 lib/
-├── auth.ts               # Better Auth configuration
+├── auth.ts               # Clerk auth wrapper (getSession)
 ├── db.ts                 # Prisma client instance
 ├── email.ts              # Email service (Resend)
 ├── permissions.ts        # Role-based permissions
@@ -628,9 +630,8 @@ scripts/
 - OAuth users can have passwordHash, allowing both login methods
 
 **Session Duration**:
-- Database sessions expire after 1 hour (configurable in lib/auth.ts `session.expiresIn`)
-- Sessions refresh every 5 minutes (`session.updateAge`)
-- Cookie cache of 5 minutes reduces DB queries (`session.cookieCache`)
+- Sessions managed by Clerk (configurable in Clerk Dashboard)
+- Default: long-lived sessions with automatic refresh
 
 **Entry Upsert Behavior** (POST /api/entries):
 - Creates new entry or updates existing entry for the same date
@@ -852,8 +853,8 @@ Even for personal projects, every feature includes:
 ### Authentication & Authorization:
 - Session validation on all protected routes
 - Role-based access control (lib/permissions.ts)
-- Database-backed sessions with 1-hour expiration
-- Password hashing with bcrypt (12 rounds)
+- Clerk-managed sessions (no self-hosted session infrastructure)
+- Password hashing managed by Clerk
 
 ### Secrets Management:
 - Never hard-code secrets
@@ -952,13 +953,12 @@ Therefore:
 
 **Required**:
 - `DATABASE_URL` - PostgreSQL connection string
-- `BETTER_AUTH_URL` - App URL (http://localhost:3000 for local). Falls back to `NEXTAUTH_URL`
-- `BETTER_AUTH_SECRET` - Generate with `openssl rand -base64 32`. Falls back to `AUTH_SECRET` / `NEXTAUTH_SECRET`
-- `GOOGLE_CLIENT_ID` - Google OAuth client ID
-- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk publishable key (from dashboard.clerk.com)
+- `CLERK_SECRET_KEY` - Clerk secret key (from dashboard.clerk.com)
 - `RESEND_API_KEY` - Resend API key for emails
 
 **Optional**:
+- `CLERK_WEBHOOK_SIGNING_SECRET` - For Clerk webhook verification (user sync)
 - `ADMIN_OVERRIDE_EMAIL` - Emergency admin access for a specific email address
 
 See **[Authentication Setup](docs/development/authentication.md)** for full configuration guide.
@@ -1175,9 +1175,9 @@ Each batch must answer:
 - [ ] Test critical paths in production
 
 **Proxy / Route Protection**:
-- `proxy.ts` handles route protection via cookie-based session detection
-- No heavy auth imports in middleware — keeps Edge Function bundle small
-- Better Auth sessions are cookie-based, so proxy only needs to check cookie existence
+- `proxy.ts` uses Clerk's `clerkMiddleware()` for session validation
+- `createRouteMatcher()` defines public routes
+- Security headers and CORS injected alongside Clerk middleware
 
 **Solo-friendly defaults:**
 - Boring infrastructure (Vercel, Railway)
@@ -1205,18 +1205,18 @@ Each feature may log (in comments or this doc):
 ### Example Decision Log:
 ```typescript
 // lib/auth.ts
-// Decision: Migrated from NextAuth v5 beta to Better Auth for stable Google OAuth
-// Pattern: Better Auth after-hooks process invites automatically on login
-// Pattern: customSession plugin injects roles/flags without per-request JWT refresh
-// Mistake avoided: Don't import heavy auth libs in middleware/proxy — check cookies only
+// Decision: Migrated to Clerk (managed auth) for zero-config Google OAuth
+// Pattern: Clerk webhooks sync users to local DB for business data (roles, invites)
+// Pattern: getSession() enriches Clerk session with DB data (roles, isTestUser)
+// Pattern: Compatibility wrappers (useSession, signIn, signOut) minimize migration blast radius
 ```
 
 **No essays. Just future leverage.**
 
 **Key learnings for this project:**
-- Lightweight proxy = cookie-based session check only (no heavy auth imports in Edge Functions)
-- Better Auth replaced NextAuth v5 beta for stable Google OAuth and database-backed sessions
-- Invitation flow = auto-process on sign-in via Better Auth after-hooks in lib/auth.ts
+- Clerk (managed auth) = zero-config Google OAuth, no self-hosted auth infrastructure
+- Invitation flow = auto-process via Clerk webhooks in app/api/webhooks/route.ts
+- getSession() wrapper enriches Clerk session with DB data (roles, custom fields)
 - Test users = suppress emails with isTestUser flag (or emails ending in `.local`)
 - Role collapse = ADMIN doesn't replace COACH, users can have multiple roles
 - Entry upsert = one entry per user per day via unique constraint `[userId, date]`

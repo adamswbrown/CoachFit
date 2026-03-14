@@ -23,7 +23,7 @@ CoachFit uses:
 
 - **Vercel** - Frontend and API hosting
 - **Railway** - PostgreSQL database hosting
-- **Better Auth** - Authentication (Google OAuth, Email/Password)
+- **Clerk** - Managed authentication (Google OAuth, Email/Password)
 - **Resend** - Transactional email service
 
 ---
@@ -86,13 +86,12 @@ Create these environment variables in Vercel:
 # Database
 DATABASE_URL="postgresql://postgres:PASSWORD@containers-us-west-XXX.railway.app:5432/railway"
 
-# Better Auth
-BETTER_AUTH_URL="https://gcgyms.com"
-BETTER_AUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64 32
-
-# Google OAuth
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
+# Clerk Authentication (from dashboard.clerk.com → API Keys)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_live_..."
+CLERK_SECRET_KEY="sk_live_..."
+CLERK_WEBHOOK_SIGNING_SECRET="whsec_..."
+NEXT_PUBLIC_CLERK_SIGN_IN_URL="/login"
+NEXT_PUBLIC_CLERK_SIGN_UP_URL="/signup"
 
 # Resend (for emails)
 RESEND_API_KEY="re_your_api_key_here"
@@ -109,22 +108,9 @@ EMAIL_FROM="CoachFit <noreply@gcgyms.com>"
 - Includes hostname, port, database name, username, password
 - Use connection pooling URL for better performance
 
-#### BETTER_AUTH_URL
-- Full URL of your application
-- Production: `https://gcgyms.com`
-- Must match your custom domain
-- Falls back to `NEXTAUTH_URL` if not set (for backward compatibility)
-
-#### BETTER_AUTH_SECRET
-- Secret key for signing sessions
-- Generate with: `openssl rand -base64 32`
-- Keep this secret and never commit to Git
-- Falls back to `AUTH_SECRET` → `NEXTAUTH_SECRET` if not set
-
-#### Google OAuth
-- Get from [Google Cloud Console](https://console.cloud.google.com/)
-- Create OAuth 2.0 credentials
-- Add authorized redirect URI: `https://gcgyms.com/api/auth/callback/google`
+#### Clerk Authentication
+- Get API keys from [Clerk Dashboard](https://dashboard.clerk.com) → API Keys
+- Google OAuth is configured in Clerk Dashboard → Social Connections (no Google Cloud Console needed)
 - See [Authentication Setup](./authentication.md) for detailed steps
 
 #### Resend
@@ -221,21 +207,15 @@ railway run npm run db:seed-email-templates
 
 ## OAuth Configuration
 
-### Google OAuth Setup
+### Authentication Setup (Clerk)
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project (or use existing)
-3. Enable Google+ API
-4. Go to "Credentials"
-5. Create "OAuth 2.0 Client ID"
-6. Choose "Web application"
-7. Add authorized redirect URIs:
-   ```
-   https://gcgyms.com/api/auth/callback/google
-   http://localhost:3000/api/auth/callback/google  # for local dev
-   ```
-8. Copy Client ID and Client Secret
-9. Add to Vercel environment variables
+Google OAuth is managed entirely by Clerk — no Google Cloud Console setup needed.
+
+1. Go to [Clerk Dashboard](https://dashboard.clerk.com)
+2. Enable **Google** under Social Connections
+3. Enable **Email/Password** under Authentication
+4. Copy API keys to Vercel environment variables
+5. Set up webhook endpoint for user sync
 
 See **[Authentication Setup](./authentication.md)** for full details.
 
@@ -375,11 +355,10 @@ Recommended monitoring tools:
 **Issue**: Session not persisting
 
 **Solution**:
-1. Verify `BETTER_AUTH_URL` matches your domain (falls back to `NEXTAUTH_URL`)
-2. Check `BETTER_AUTH_SECRET` is set correctly (falls back to `AUTH_SECRET`/`NEXTAUTH_SECRET`)
-3. Ensure cookies are enabled — look for `better-auth.session_token`
-4. Check database `Session` table for active sessions
-5. See [Authentication Troubleshooting](./authentication.md#troubleshooting) for more details
+1. Verify `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` are set
+2. Ensure Clerk is in the correct mode (development vs production) for your domain
+3. Check browser cookies — Clerk manages session cookies automatically
+4. See [Authentication Troubleshooting](./authentication.md#troubleshooting) for more details
 
 ### Email Issues
 
@@ -498,7 +477,7 @@ For breaking changes:
 
 Before going live:
 
-- [ ] `BETTER_AUTH_SECRET` is strong and unique
+- [ ] `CLERK_SECRET_KEY` is set (from Clerk Dashboard)
 - [ ] All OAuth credentials are production keys
 - [ ] `DATABASE_URL` uses SSL connection
 - [ ] No secrets committed to Git
@@ -515,7 +494,7 @@ Before going live:
 
 - [Vercel Documentation](https://vercel.com/docs)
 - [Railway Documentation](https://docs.railway.app)
-- [Better Auth Documentation](https://better-auth.com)
+- [Clerk Documentation](https://clerk.com/docs)
 - [Prisma Documentation](https://www.prisma.io/docs)
 - [Resend Documentation](https://resend.com/docs)
 
