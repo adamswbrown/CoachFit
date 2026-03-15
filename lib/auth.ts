@@ -113,6 +113,15 @@ export async function getSession(): Promise<AuthSession | null> {
       }
     }
 
+    // Sync metadata to Clerk publicMetadata (fire-and-forget) so client-side useSession() is current
+    syncMetadataToClerk(userId, {
+      dbId: dbUser.id,
+      roles,
+      isTestUser: dbUser.isTestUser ?? false,
+      mustChangePassword: dbUser.mustChangePassword ?? false,
+      onboardingComplete: dbUser.onboardingComplete ?? false,
+    }).catch(() => {}) // silent fail — this is a best-effort sync
+
     return {
       user: {
         id: dbUser.id,
@@ -128,6 +137,32 @@ export async function getSession(): Promise<AuthSession | null> {
   } catch (error) {
     console.error("[AUTH] Error getting session:", error)
     return null
+  }
+}
+
+/**
+ * Sync user metadata from DB to Clerk publicMetadata.
+ * This keeps the client-side useSession() in sync with DB state.
+ * Fire-and-forget — failures are logged but don't break auth.
+ */
+async function syncMetadataToClerk(
+  clerkUserId: string,
+  metadata: {
+    dbId: string
+    roles: Role[]
+    isTestUser: boolean
+    mustChangePassword: boolean
+    onboardingComplete: boolean
+  }
+) {
+  try {
+    const { clerkClient } = await import("@clerk/nextjs/server")
+    const client = await clerkClient()
+    await client.users.updateUserMetadata(clerkUserId, {
+      publicMetadata: metadata,
+    })
+  } catch (err) {
+    console.error("[AUTH] Failed to sync metadata to Clerk:", err)
   }
 }
 

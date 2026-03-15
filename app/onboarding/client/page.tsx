@@ -72,8 +72,8 @@ export default function ClientOnboarding() {
       router.push("/login")
     }
     if (status === "authenticated") {
-      const isOnboardingComplete = (session?.user as any)?.isOnboardingComplete ?? false
-      if (isOnboardingComplete) {
+      const onboardingDone = (session?.user as any)?.onboardingComplete ?? false
+      if (onboardingDone) {
         router.push("/client-dashboard")
       }
     }
@@ -188,8 +188,13 @@ export default function ClientOnboarding() {
     setShowSkipConfirm(true)
   }
 
-  const handleConfirmSkip = () => {
+  const handleConfirmSkip = async () => {
     setShowSkipConfirm(false)
+    try {
+      await fetch("/api/onboarding/complete", { method: "POST" })
+    } catch (err) {
+      console.error("Error marking onboarding complete:", err)
+    }
     router.push("/client-dashboard")
   }
 

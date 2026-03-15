@@ -1,6 +1,7 @@
 "use client"
 
 import { useUser, useClerk, useAuth } from "@clerk/nextjs"
+import { useMemo } from "react"
 import type { Role } from "./types"
 
 /**
@@ -29,21 +30,23 @@ export function useSession() {
       ? ("authenticated" as const)
       : ("unauthenticated" as const)
 
-  const session =
-    isLoaded && isSignedIn && user
-      ? {
-          user: {
-            id: (user.publicMetadata?.dbId as string) ?? user.id,
-            email: user.emailAddresses[0]?.emailAddress ?? "",
-            name: user.fullName ?? null,
-            image: user.imageUrl ?? null,
-            roles: ((user.publicMetadata?.roles as Role[]) ?? ["CLIENT"]) as Role[],
-            isTestUser: (user.publicMetadata?.isTestUser as boolean) ?? false,
-            mustChangePassword: (user.publicMetadata?.mustChangePassword as boolean) ?? false,
-            onboardingComplete: (user.publicMetadata?.onboardingComplete as boolean) ?? false,
-          },
-        }
-      : null
+  // Memoize to prevent infinite re-render loops in useEffect([session]) consumers
+  const session = useMemo(() => {
+    if (!(isLoaded && isSignedIn && user)) return null
+
+    return {
+      user: {
+        id: (user.publicMetadata?.dbId as string) ?? user.id,
+        email: user.emailAddresses[0]?.emailAddress ?? "",
+        name: user.fullName ?? null,
+        image: user.imageUrl ?? null,
+        roles: ((user.publicMetadata?.roles as Role[]) ?? ["CLIENT"]) as Role[],
+        isTestUser: (user.publicMetadata?.isTestUser as boolean) ?? false,
+        mustChangePassword: (user.publicMetadata?.mustChangePassword as boolean) ?? false,
+        onboardingComplete: (user.publicMetadata?.onboardingComplete as boolean) ?? false,
+      },
+    }
+  }, [isLoaded, isSignedIn, user?.id, user?.fullName, user?.imageUrl, user?.publicMetadata, user?.emailAddresses])
 
   return { data: session, status }
 }
