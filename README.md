@@ -228,21 +228,13 @@ npm run db:generate
 # Seed email templates (REQUIRED for emails to work)
 npm run db:seed-email-templates
 
-# Seed test data
-npm run db:seed
-npm run test:generate
-
-# Set passwords for test users
-npm run password:set coach@test.local coach123
-npm run password:set client@test.local client123
-
-# Start development server (auto-starts local Postgres if needed)
-npm run dev:local
+# Start development server
+npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and login with:
-- Coach: `coach@test.local` / `coach123`
-- Client: `client@test.local` / `client123`
+Open [http://localhost:3000](http://localhost:3000) and sign in via Clerk (Google or email/password).
+
+Authentication is managed by Clerk — no test user passwords needed. See [Authentication Setup](./docs/development/authentication.md).
 
 ### Test Environment Setup (Step-by-Step)
 

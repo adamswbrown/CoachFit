@@ -157,7 +157,7 @@ npm run db:generate      # Generate Prisma Client (run after schema changes)
 npm run db:push          # Push schema changes to database (for prototyping)
 npm run db:migrate       # Run database migrations (for production)
 npm run db:studio        # Open Prisma Studio (database GUI)
-npm run db:seed          # Seed test users (coach@test.local, client@test.local, etc.)
+npm run db:seed          # Seed initial data (email templates, system settings)
 ```
 
 ### Test Data Generation
@@ -545,7 +545,7 @@ components/
 prisma/
 ├── schema.prisma         # Prisma schema definition
 ├── migrations/           # Database migrations
-└── seed.ts               # Seed script for test users
+└── seed.ts               # Seed script for initial data
 
 scripts/
 ├── generate-test-data.ts                # Generate basic test data (15 clients, 5 cohorts)
@@ -622,12 +622,12 @@ scripts/
 **Test User Email Suppression**:
 - Users with `isTestUser: true` don't receive emails
 - Emails are logged to console instead
-- All seed script users are test users by default (emails ending in `.local`)
+- Users with `isTestUser: true` have emails suppressed (logged to console instead)
 
 **Password Authentication**:
 - Seed script users don't have passwords set by default
-- Use `npm run password:set <email> <password>` to enable email/password login
-- OAuth users can have passwordHash, allowing both login methods
+- Clerk manages all password authentication — no local passwordHash needed for new users
+- Legacy `passwordHash` field kept for backward compatibility
 
 **Session Duration**:
 - Sessions managed by Clerk (configurable in Clerk Dashboard)
@@ -967,26 +967,13 @@ See **[Authentication Setup](docs/development/authentication.md)** for full conf
 
 ### Testing Locally
 
-1. **Setup Test Users**:
+1. **Sign in via Clerk** — use Google or email/password at `/login`
+2. **Grant yourself roles** if needed:
    ```bash
-   npm run db:seed  # Creates coach@test.local, client@test.local, etc.
-   npm run password:set coach@test.local coach123
-   npm run password:set client@test.local client123
+   npm run admin:set your-email@example.com
+   npm run grant:role your-email@example.com COACH
    ```
-
-2. **Generate Test Data**:
-   ```bash
-   npm run test:generate  # Creates 5 cohorts, 15 clients, entries
-   ```
-
-3. **Login and Test**:
-   - Coach: `coach@test.local` / `coach123`
-   - Client: `client@test.local` / `client123`
-
-4. **Cleanup**:
-   ```bash
-   npm run test:cleanup  # Removes all test data
-   ```
+3. **No test users needed** — Clerk manages authentication, no `.local` test accounts required
 
 ## 🔀 GITHUB WORKFLOW
 
@@ -1294,7 +1281,7 @@ Each feature may log (in comments or this doc):
 npm run dev                    # Start dev server
 npm run db:studio              # View database
 npm run test:generate          # Generate test data
-npm run password:set [email] [password]  # Set test user password
+npm run grant:role [email] [role]           # Grant role to user
 
 # For large/complex work: Create issue first
 gh issue create --title "Feature: [name]" --body "[implementation guide]"
