@@ -93,6 +93,25 @@ export const ingestSleepSchema = z.object({
 export type IngestSleepInput = z.infer<typeof ingestSleepSchema>
 export type SleepRecordItem = z.infer<typeof sleepRecordSchema>
 
+// ==================== Entry (Check-in) Schemas ====================
+
+export const ingestEntrySchema = z.object({
+  client_id: uuidSchema,
+  date: dateOnlySchema,
+  weightLbs: z.number().positive("Weight must be greater than 0").max(1000).optional(),
+  steps: z.number().int().nonnegative().max(200000).optional(),
+  calories: z.number().int().nonnegative().max(20000).optional(),
+  proteinGrams: z.number().nonnegative().max(1000).optional(),
+  carbsGrams: z.number().nonnegative().max(2000).optional(),
+  fatGrams: z.number().nonnegative().max(1000).optional(),
+  fiberGrams: z.number().nonnegative().max(500).optional(),
+  sleepQuality: z.number().int().min(1).max(10).optional(),
+  perceivedStress: z.number().int().min(1).max(10).optional(),
+  notes: z.string().max(2000).optional(),
+})
+
+export type IngestEntryInput = z.infer<typeof ingestEntrySchema>
+
 // ==================== Pairing Schemas ====================
 
 export const pairingCodeSchema = z.object({

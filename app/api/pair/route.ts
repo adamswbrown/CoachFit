@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { validateAndUsePairingCode } from "@/lib/healthkit/pairing"
 import { db } from "@/lib/db"
 import { pairingCodeSchema } from "@/lib/validations/healthkit"
+import { randomBytes } from "crypto"
 
 // Simple schema for iOS pairing request - only needs the code
 const iosPairingSchema = pairingCodeSchema
@@ -37,16 +38,26 @@ export async function POST(req: NextRequest) {
 
     const { clientId, coachId, pairingCode } = result
 
-    // Update client's invitedByCoachId if not already set
-    await db.user.update({
-      where: { id: clientId },
-      data: { invitedByCoachId: coachId },
-    })
+    // Generate a long-lived device token for the iOS app to use instead of the short-lived pairing code
+    const deviceToken = randomBytes(32).toString("hex") // 64-char hex string
+
+    // Store device token on the pairing code record and update client's coach link
+    await Promise.all([
+      db.pairingCode.update({
+        where: { id: pairingCode.id },
+        data: { deviceToken },
+      }),
+      db.user.update({
+        where: { id: clientId },
+        data: { invitedByCoachId: coachId },
+      }),
+    ])
 
     const response = NextResponse.json({
       success: true,
       message: "Successfully paired with coach",
       client_id: clientId,
+      device_token: deviceToken,
       coach: pairingCode.Coach,
       client: pairingCode.Client,
       paired_at: pairingCode.usedAt,

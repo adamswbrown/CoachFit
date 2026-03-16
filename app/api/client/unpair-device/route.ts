@@ -36,7 +36,7 @@ export async function POST() {
     }
 
     // Revoke all previously paired tokens for this client.
-    // Setting usedAt to null ensures ingest auth can no longer validate them.
+    // Setting usedAt to null and clearing deviceToken ensures ingest auth can no longer validate them.
     await db.pairingCode.updateMany({
       where: {
         clientId: session.user.id,
@@ -45,6 +45,7 @@ export async function POST() {
       data: {
         usedAt: null,
         expiresAt: new Date(),
+        deviceToken: null,
       },
     })
 
