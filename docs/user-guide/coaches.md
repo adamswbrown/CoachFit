@@ -191,13 +191,26 @@ Your dashboard shows all your clients with:
 
 ### Viewing Client Details
 
-Click on a client's name to:
+Click on a client's name to access the client detail page with the following tabs:
 
-- View all their entries
-- See analytics and trends
-- View progress charts
-- Add coach notes
-- View weekly summaries
+- **Overview** — Summary analytics and progress at a glance
+- **Entries** — All check-in entries with date filtering
+- **Weekly Review** — Weekly review notes (only visible for clients enrolled in a cohort)
+- **Training** — Workout visualization from the iOS companion app (see below)
+- **Settings** — Client account settings
+
+**Note**: Independent gym members (clients not enrolled in any cohort) will not show the Weekly Review tab. This is expected behavior.
+
+### Training Tab
+
+The Training tab shows workout data synced from the client's iOS companion app via Apple Health:
+
+- **Summary Stats** — Total workouts, total time, calories burned, average duration, average heart rate
+- **Weekly Volume Chart** — Bar chart showing workout count per week
+- **Workout Type Breakdown** — Donut chart showing time distribution across workout types (running, strength training, cycling, etc.)
+- **Full Workout List** — Every workout with date, duration, calories, distance, and heart rate data
+
+Use the date range filter (7d, 14d, 30d, 60d, 90d) to adjust the time window. If no workouts appear, the client may not have paired their iOS app yet or may not have recorded workouts in the selected period.
 
 ### Client Analytics
 
@@ -336,4 +349,4 @@ For detailed client analytics:
 
 ---
 
-**Last Updated**: January 2025
+**Last Updated**: March 2026

@@ -432,12 +432,14 @@ export default function ClientOverviewPage() {
             >
               Entries
             </Link>
-            <Link
-              href={`/clients/${clientId}/weekly-review`}
-              className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap"
-            >
-              Weekly Review
-            </Link>
+            {client?.CohortMembership && client.CohortMembership.length > 0 && (
+              <Link
+                href={`/clients/${clientId}/weekly-review`}
+                className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap"
+              >
+                Weekly Review
+              </Link>
+            )}
             <Link
               href={`/clients/${clientId}/training`}
               className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap"

@@ -22,8 +22,9 @@ CoachFit is built with modern web technologies and follows a full-stack parallel
 
 ### Current Status
 
-- HealthKit ingestion APIs and coach-facing views are in development and may change.
-- iOS app integration is planned but not yet shipped; see `../misc/IOS_APP_INTEGRATION_PLAN.md`.
+- iOS companion app backend (Phase 1) is shipped: device token auth, daily check-in ingestion, Cronometer CSV import.
+- HealthKit ingestion APIs are stable. Coach-facing views include the new Training tab for workout visualization.
+- See `../misc/IOS_APP_INTEGRATION_PLAN.md` for the full integration roadmap.
 
 ### Tech Stack
 
@@ -93,7 +94,11 @@ CoachFit/Web/
 │   ├── db.ts                   # Prisma client
 │   ├── email.ts                # Email service
 │   ├── permissions.ts          # Role-based permissions
-│   └── validations.ts          # Zod schemas
+│   ├── security/               # Security utilities
+│   │   └── ingest-auth.ts     # Device token + pairing code dual auth for iOS app endpoints
+│   ├── validations.ts          # Zod schemas
+│   └── validations/            # Domain-specific Zod schemas
+│       └── healthkit.ts       # HealthKit/ingest validation schemas
 ├── prisma/                      # Database schema and migrations
 ├── scripts/                     # Utility scripts
 ├── docs/                        # Documentation

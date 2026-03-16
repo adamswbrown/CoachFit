@@ -295,6 +295,8 @@ npm run test:cleanup-healthkit        # Remove HealthKit demo data
     - Coaches generate codes for clients to pair mobile apps
     - Codes expire after set duration
     - Links coach to client via `coachId` and `clientId`
+    - `deviceToken`: 64-char hex token generated at pairing time (POST /api/pair), used for long-lived iOS app auth
+    - Token revocation: clearing `deviceToken` on unpair invalidates the iOS app session
 
 15. **QuestionnaireBundle**: SurveyJS questionnaire configuration
     - Links to cohorts for weekly questionnaires
@@ -311,29 +313,46 @@ npm run test:cleanup-healthkit        # Remove HealthKit demo data
     - `isPublic`: Whether visible to all coaches or admin-only
     - Used by Cohort model via `customCohortTypeId`
 
-### HealthKit Integration
+### HealthKit Integration & iOS Companion App
+
+**Pairing & Device Token Auth (Phase 1)**:
+1. Coach generates pairing code: POST /api/pairing-codes (8-char alphanumeric)
+2. iOS app pairs: POST /api/pair — validates code, generates 64-char hex device token, stores on PairingCode model
+3. Response includes `device_token` for the iOS app to persist locally
+4. All subsequent API calls use `X-Pairing-Token` header with the device token
+5. On unpair, `deviceToken` is cleared (token revocation)
+
+**Dual Auth** (`lib/security/ingest-auth.ts` — `validateIngestAuth()`):
+- Accepts **either** 8-char pairing codes **or** 64-char device tokens via `X-Pairing-Token` header
+- Distinguishes by length + hex regex: 64-char `[a-f0-9]` = device token, otherwise pairing code
+- Device tokens are matched case-insensitively against `PairingCode.deviceToken`
+- Pairing codes are matched case-insensitively against `PairingCode.code`
 
 **Data Flow**:
-1. Mobile app (iOS) connects via pairing code
-2. Coach generates code: POST /api/pairing-codes
-3. Client validates code: POST /api/pair (links clientId to coachId)
-4. Mobile app syncs HealthKit data: POST /api/healthkit (batch upload)
-5. Backend merges HealthKit data with manual entries
+1. Mobile app (iOS) connects via pairing code, receives device token
+2. iOS app syncs HealthKit data: POST /api/healthkit (batch upload)
+3. iOS app submits daily check-ins: POST /api/ingest/entry
+4. iOS app imports Cronometer CSV: POST /api/ingest/cronometer
+5. Backend merges data with manual entries (never overwrites existing fields)
 
 **Supported Data Types**:
 - **Workouts**: type, duration, calories, distance, heart rate (Workout model)
 - **Sleep**: total sleep, sleep stages (core/deep/REM), in-bed time (SleepRecord model)
 - **Daily metrics**: steps, calories (merged into Entry model via dataSources)
+- **Daily check-ins**: weight, steps, calories, macros, sleepQuality, perceivedStress, notes
 
 **Data Source Tracking**:
 - `dataSources` field (JSON array) on Entry model tracks all sources
-- Examples: `["manual"]`, `["healthkit"]`, `["manual", "healthkit"]`
+- Examples: `["manual"]`, `["healthkit"]`, `["manual", "cronometer"]`
 - Prevents data conflicts and shows data provenance
+- Merge strategy: only fill null fields on existing entries (never overwrite)
 
-**HealthKit Data Endpoints**:
-- POST /api/healthkit - Batch ingest (requires pairing code validation)
-- GET /api/ingest/workouts - Fetch workout data for date range
-- GET /api/ingest/sleep - Fetch sleep data for date range
+**Ingest Endpoints** (device token auth via `X-Pairing-Token`):
+- POST /api/ingest/entry — Daily check-in from iOS app (weight, steps, calories, macros, sleepQuality, perceivedStress, notes)
+- POST /api/ingest/cronometer — Cronometer CSV import (calories, macros, weight)
+- POST /api/healthkit — Batch HealthKit ingest (workouts, sleep, steps)
+- GET /api/ingest/workouts — Fetch workout data for date range
+- GET /api/ingest/sleep — Fetch sleep data for date range
 
 ### Questionnaire System (SurveyJS)
 
@@ -498,8 +517,9 @@ app/
 │   └── analytics/         # Advanced cohort analytics
 ├── clients/[id]/          # Individual client views (coach perspective)
 │   ├── entries/           # Client entry history
+│   ├── training/          # Training tab — workout visualization (summary stats, weekly volume chart, type breakdown donut, workout list)
 │   ├── settings/          # Client settings
-│   └── weekly-review/     # Weekly review for specific client
+│   └── weekly-review/     # Weekly review (conditional — only shown for clients enrolled in a cohort)
 ├── api/                   # API routes organized by resource
 │   ├── admin/            # Admin API endpoints (users, insights, actions, audit, email templates, cohort types)
 │   ├── auth/             # Authentication routes
@@ -512,7 +532,7 @@ app/
 │   ├── custom-cohort-types/ # Custom cohort type management
 │   ├── entries/          # Entry logging APIs
 │   ├── healthkit/        # HealthKit data ingestion
-│   ├── ingest/           # Data ingestion endpoints (workouts, sleep)
+│   ├── ingest/           # Data ingestion endpoints (workouts, sleep, entry check-ins, cronometer CSV)
 │   ├── invites/          # Invitation APIs
 │   ├── onboarding/       # Onboarding flow APIs
 │   ├── pair/             # Pairing code validation
@@ -531,9 +551,15 @@ lib/
 ├── db.ts                 # Prisma client instance
 ├── email.ts              # Email service (Resend)
 ├── permissions.ts        # Role-based permissions
+├── security/
+│   ├── ingest-auth.ts    # Dual auth for iOS app (device token + pairing code via X-Pairing-Token header)
+│   ├── rate-limit.ts     # In-memory rate limiting
+│   └── cors.ts           # CORS helpers for mobile endpoints
 ├── types.ts              # TypeScript types
 ├── utils.ts              # Helper functions
-└── validations.ts        # Zod validation schemas
+├── validations.ts        # Zod validation schemas
+└── validations/
+    └── healthkit.ts      # HealthKit/ingest Zod schemas (workouts, sleep, steps, entry, pairing)
 
 components/
 ├── ui/                   # Reusable UI components (buttons, inputs, cards)
@@ -641,9 +667,11 @@ scripts/
 
 **HealthKit Data Ingestion**:
 - POST /api/healthkit endpoint accepts batch data from mobile apps
-- Requires pairing code validation (links client to coach)
-- Automatically merges HealthKit data with manual entries
-- `dataSources` array tracks all sources (e.g., `["healthkit", "manual"]`)
+- Requires pairing token validation via `X-Pairing-Token` header (device token or pairing code)
+- Automatically merges HealthKit data with manual entries (fill-only: never overwrites existing fields)
+- `dataSources` array tracks all sources (e.g., `["healthkit", "manual", "cronometer"]`)
+- POST /api/ingest/entry — daily check-in from iOS app (same fields as POST /api/entries but uses device token auth)
+- POST /api/ingest/cronometer — Cronometer CSV import via device token auth
 
 **Cohort Membership Assignment**:
 - **CRITICAL CONSTRAINT**: Each user can only be in ONE cohort at a time
@@ -663,7 +691,16 @@ scripts/
 - Coaches generate codes via POST /api/pairing-codes
 - Clients validate codes via POST /api/pair
 - Codes expire after set duration (default: 24 hours)
-- Used to link mobile apps to coach accounts
+- On successful pairing, a 64-char hex `deviceToken` is generated and returned
+- iOS app stores `device_token` locally and uses it for all subsequent ingest API calls
+- Token revocation: clearing `deviceToken` on unpair invalidates the iOS app session
+
+**Independent Gym Members**:
+- The platform supports clients who attend the gym without being assigned to a coach
+- These clients won't be in a cohort — this is expected and the UI handles it gracefully
+- Client detail page tabs for unassigned clients: Overview, Entries, Training, Settings
+- Weekly Review tab is **conditional** — only shown when the client has a CohortMembership
+- Cohort-enrolled clients see: Overview, Entries, Weekly Review, Training, Settings
 
 **Questionnaire System**:
 - Questionnaires are built using SurveyJS library

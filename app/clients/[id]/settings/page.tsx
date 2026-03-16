@@ -13,6 +13,7 @@ interface Client {
   id: string
   name: string | null
   email: string
+  CohortMembership?: { Cohort: { id: string; name: string } }[]
 }
 
 export default function ClientSettingsPage() {
@@ -239,15 +240,20 @@ export default function ClientSettingsPage() {
             >
               Entries
             </Link>
+            {client?.CohortMembership && client.CohortMembership.length > 0 && (
+              <Link
+                href={`/clients/${clientId}/weekly-review`}
+                className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap"
+              >
+                Weekly Review
+              </Link>
+            )}
             <Link
-              href={`/clients/${clientId}/weekly-review`}
+              href={`/clients/${clientId}/training`}
               className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap"
             >
-              Weekly Review
-            </Link>
-            <span className="px-1 py-3 text-sm font-medium text-neutral-400 -mb-px whitespace-nowrap">
               Training
-            </span>
+            </Link>
             <span className="px-1 py-3 text-sm font-medium text-neutral-400 -mb-px whitespace-nowrap">
               Tasks
             </span>
