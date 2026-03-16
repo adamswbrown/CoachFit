@@ -1,7 +1,8 @@
 # Plan: CoachFit iOS Companion App
 
 **Date:** 2026-03-16
-**Status:** Approved design — ready for implementation planning
+**Status:** In progress
+**Branch:** `feature/ios-companion-app`
 **Estimated effort:** 60-80 hours
 
 ## What it is
@@ -176,15 +177,60 @@ Host at `gcgyms.com/privacy` — a simple static page is fine. This same page sa
 - Keychain for token storage
 - No third-party dependencies if possible
 
-## Existing backend infrastructure (already built)
+## Implementation progress
 
-All of these endpoints are production-ready:
-- `POST /api/pair` — pairing code validation
+### Phase 1: Backend API changes — DONE (2026-03-16)
+
+All four backend additions are complete and deployed to the database:
+
+- [x] **Device token auth** — `PairingCode.deviceToken` column (64-char hex, unique). Generated on `POST /api/pair`, stored in Keychain by iOS app, used via `X-Pairing-Token` header. `validateIngestAuth()` accepts either pairing codes or device tokens. Unpair nulls out `deviceToken` to revoke.
+- [x] **`POST /api/ingest/entry`** — Daily check-in via pairing token auth. Merge strategy: only fills null fields, appends `"manual"` to `dataSources`. Validation via `ingestEntrySchema`.
+- [x] **`POST /api/ingest/cronometer`** — Cronometer CSV import via pairing token auth. Same merge logic as web version. Extends `cronometerImportSchema` with `client_id`.
+- [x] **Token revocation** — `POST /api/client/unpair-device` clears `deviceToken` alongside existing `usedAt`/`expiresAt` nullification.
+
+Files changed: `prisma/schema.prisma`, `lib/security/ingest-auth.ts`, `lib/validations/healthkit.ts`, `app/api/pair/route.ts`, `app/api/client/unpair-device/route.ts`
+Files created: `app/api/ingest/entry/route.ts`, `app/api/ingest/cronometer/route.ts`
+
+### Phase 2: iOS project scaffold + auth — NEXT
+
+- [ ] Create Xcode project (SwiftUI, iOS 16+, no third-party deps)
+- [ ] Info.plist: HealthKit entitlement, `NSHealthShareUsageDescription`
+- [ ] `KeychainService` — store/retrieve/delete device token
+- [ ] `APIClient` — URLSession networking layer, `X-Pairing-Token` header injection, centralized 401 interceptor (clears Keychain → pairing screen)
+- [ ] `AppState` — Observable object routing: has token → home, no token → pairing
+- [ ] Pairing screen — 8-char code input, calls `POST /api/pair`, stores `device_token`
+
+### Phase 3: HealthKit sync engine
+
+- [ ] `HealthKitManager` — request permissions, observer queries for each data type
+- [ ] `HKObserverQuery` + `enableBackgroundDelivery` for workouts, sleep, weight
+- [ ] `BGAppRefreshTask` fallback (daily catch-up sync)
+- [ ] Foreground catch-up on `scenePhase == .active`
+- [ ] Offline queue (UserDefaults, batch on retry, respect rate limits)
+- [ ] Initial 30-day backfill after pairing
+
+### Phase 4: UI screens (Today + Import + More)
+
+- [ ] Today tab — check-in form, HealthKit pre-population (read-only "from Apple Health" badge), last 5 entries list
+- [ ] Import tab — file picker for CSV, parse + preview, upload via `POST /api/ingest/cronometer`
+- [ ] More tab — sync status, deep links to web, unpair device, app version
+
+### Phase 5: Privacy policy + TestFlight prep
+
+- [ ] Privacy policy page at `gcgyms.com/privacy`
+- [ ] Final Info.plist review
+- [ ] Archive, upload to App Store Connect, add testers
+
+---
+
+## Backend infrastructure (all production-ready)
+
+- `POST /api/pair` — pairing code validation + device token generation
 - `POST /api/ingest/workouts` — workout sync
 - `POST /api/ingest/sleep` — sleep sync
 - `POST /api/ingest/steps` — step sync
 - `POST /api/ingest/profile` — body metrics sync
-- `POST /api/import/cronometer` — CSV import (needs pairing token variant)
-- `POST /api/entries` — check-in submission (needs pairing token variant)
+- `POST /api/ingest/entry` — daily check-in (pairing token auth)
+- `POST /api/ingest/cronometer` — CSV import (pairing token auth)
 - `lib/healthkit/pairing.ts` — pairing code generation/validation
-- `lib/security/ingest-auth.ts` — pairing token auth middleware
+- `lib/security/ingest-auth.ts` — pairing token + device token auth middleware
