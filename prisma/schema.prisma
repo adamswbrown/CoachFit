@@ -162,19 +162,21 @@ model SleepRecord {
 }
 
 model PairingCode {
-  id        String    @id @default(uuid())
-  code      String    @unique
-  coachId   String
-  clientId  String?
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-  Client    User?     @relation("ClientPairingCodes", fields: [clientId], references: [id])
-  Coach     User      @relation("CoachPairingCodes", fields: [coachId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid())
+  code        String    @unique
+  coachId     String
+  clientId    String?
+  expiresAt   DateTime
+  usedAt      DateTime?
+  deviceToken String?   @unique // Long-lived token for iOS app auth (64-char hex)
+  createdAt   DateTime  @default(now())
+  Client      User?     @relation("ClientPairingCodes", fields: [clientId], references: [id])
+  Coach       User      @relation("CoachPairingCodes", fields: [coachId], references: [id], onDelete: Cascade)
 
   @@index([code])
   @@index([coachId])
   @@index([expiresAt])
+  @@index([deviceToken])
 }
 
 // Session model removed — Clerk manages sessions externally.

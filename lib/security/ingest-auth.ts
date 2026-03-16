@@ -68,22 +68,39 @@ export async function validateIngestAuth(
     }
   }
 
-  // Validate pairing token
-  // The token should be the pairing code that was used to establish the relationship
-  const pairingCode = await db.pairingCode.findFirst({
-    where: {
-      clientId: clientId,
-      usedAt: { not: null }, // Must be a used (validated) pairing code
-    },
-    select: {
-      coachId: true,
-      clientId: true,
-      code: true,
-    },
-    orderBy: {
-      usedAt: "desc", // Most recent pairing
-    },
-  })
+  // Validate pairing token — accept either the original pairing code or a long-lived device token.
+  // Device tokens are 64-char hex strings generated at pairing time; pairing codes are 8-char alphanumeric.
+  const isDeviceToken = pairingToken.length === 64 && /^[a-f0-9]{64}$/i.test(pairingToken)
+
+  const pairingCode = isDeviceToken
+    ? await db.pairingCode.findFirst({
+        where: {
+          clientId: clientId,
+          deviceToken: pairingToken.toLowerCase(),
+          usedAt: { not: null },
+        },
+        select: {
+          coachId: true,
+          clientId: true,
+          code: true,
+          deviceToken: true,
+        },
+      })
+    : await db.pairingCode.findFirst({
+        where: {
+          clientId: clientId,
+          usedAt: { not: null },
+        },
+        select: {
+          coachId: true,
+          clientId: true,
+          code: true,
+          deviceToken: true,
+        },
+        orderBy: {
+          usedAt: "desc",
+        },
+      })
 
   if (!pairingCode) {
     return {
@@ -93,12 +110,22 @@ export async function validateIngestAuth(
     }
   }
 
-  // Verify the token matches the pairing code
-  if (pairingCode.code !== pairingToken.toUpperCase()) {
-    return {
-      success: false,
-      error: "Invalid pairing token",
-      status: 401,
+  // Verify the token matches — either device token or pairing code
+  if (isDeviceToken) {
+    if (pairingCode.deviceToken !== pairingToken.toLowerCase()) {
+      return {
+        success: false,
+        error: "Invalid pairing token",
+        status: 401,
+      }
+    }
+  } else {
+    if (pairingCode.code !== pairingToken.toUpperCase()) {
+      return {
+        success: false,
+        error: "Invalid pairing token",
+        status: 401,
+      }
     }
   }
 
