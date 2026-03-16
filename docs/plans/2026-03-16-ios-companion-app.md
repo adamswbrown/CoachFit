@@ -34,6 +34,7 @@ On successful pair, `POST /api/pair` returns user info and a long-lived device t
 - If already submitted today, shows the entry with an "Edit" option
 - Below the form: last 5 entries as a simple list (date, weight, steps, calories)
 - Cronometer hint below calories field (same text as web)
+- If HealthKit has already synced steps/weight for today, pre-populate those fields (read-only with "from Apple Health" badge) so the user only fills in what's missing
 
 **Tab 2 — Import**
 - "Import from Cronometer" button
@@ -68,24 +69,51 @@ No settings screen, no charts, no coach features. Detail lives on the web.
 | Steps | `POST /api/ingest/steps` | Daily midnight rollup |
 | Weight | `POST /api/ingest/profile` | On new measurement |
 
-**Deduplication:** Server-side via unique constraints. App can safely re-send.
+**Background delivery reliability:**
+
+`HKObserverQuery` with `enableBackgroundDelivery` is the primary mechanism, but iOS is not guaranteed to wake the app — especially for step count, which updates frequently and may be coalesced or delayed by the system. Two mitigations:
+
+1. **`BGAppRefreshTask` fallback.** Register a background app refresh task (`BGTaskScheduler`) that runs a catch-up sync for all data types. Schedule it to run at least once daily. This covers the case where HealthKit background delivery doesn't fire (common after device restart, low power mode, or extended periods without app launch).
+
+2. **Foreground catch-up.** Every time the app enters the foreground (`scenePhase == .active`), run a lightweight sync for data since the last successful sync timestamp. This is the most reliable path and ensures data is never more than one app-open behind.
+
+The step count "daily midnight rollup" is the most likely to be unreliable via background delivery alone. The `BGAppRefreshTask` + foreground catch-up combination handles this.
+
+**Deduplication:** Server-side via unique constraints. App can safely re-send. The ingest endpoints return `207` for partial failures — the app should parse the response and only re-queue failed records.
 
 **Initial sync:** After pairing, backfill last 30 days of HealthKit data.
 
-**Offline handling:** Queue failed requests locally (UserDefaults array), retry on next sync.
+**Offline handling:** Queue failed requests locally (UserDefaults array of serialized request payloads), retry on next sync or foreground entry. For v1 with 10-15 users this is sufficient. If the queue grows beyond ~50 items (e.g., device offline for a week with heavy workout activity), batch them into the maximum allowed per endpoint (100 workouts, 400 sleep/step records) and send sequentially. The server-side rate limit is 100 requests/minute/client — stay well under this.
 
 ## API changes needed (backend)
 
-Three additions to the existing backend:
+Four additions to the existing backend:
 
 ### 1. `POST /api/ingest/entry`
 Daily check-in submission via pairing token auth. Same validation as `POST /api/entries` but uses `X-Pairing-Token` instead of Clerk session. Follows existing ingest auth pattern.
 
+Must set `dataSources: ["manual"]` on create (matching web behavior) and preserve existing `dataSources` on update. If HealthKit has already written steps/calories for that date, a manual check-in should merge — not overwrite. Follow the same merge strategy as `/api/ingest/sleep` and `/api/ingest/steps`: only fill null fields, append `"manual"` to the `dataSources` array if not already present.
+
 ### 2. `POST /api/ingest/cronometer`
 Cronometer CSV import via pairing token auth. Same logic as `POST /api/import/cronometer` but with ingest auth.
 
-### 3. Extend `POST /api/pair` response
-Return a persistent device token (not the 15-min pairing code). Stored against the PairingCode record. App uses this for all future requests.
+### 3. Extend `POST /api/pair` response — device token
+
+The current system reuses the 8-char pairing code as the `X-Pairing-Token` for all subsequent requests. This works (the ingest auth middleware looks up the most recent used pairing code for the client), but the pairing code expires in 15 minutes and was designed as a one-time validation code, not a long-lived credential.
+
+**Change:** Generate a separate `deviceToken` (a 64-char `crypto.randomBytes(32).toString('hex')`) when pairing succeeds. Add a `deviceToken` column to the `PairingCode` model. Return it in the `/api/pair` response. Update `validateIngestAuth()` to accept either the pairing code OR the device token in the `X-Pairing-Token` header.
+
+This way:
+- The pairing code stays short-lived (15 min) and single-use as intended
+- The device token is long-lived and stored in Keychain
+- Unpairing (`POST /api/client/unpair-device`) already nullifies `usedAt` and expires the code — also null out `deviceToken` to revoke
+
+### 4. Handle token revocation gracefully
+
+When a coach unpairs a client (or the client unpairs themselves), all subsequent API calls from the app will return 401. The app must handle this:
+
+- On any 401 response from an ingest/entry/cronometer endpoint, clear the Keychain token and navigate back to the pairing screen with a message: "Your device has been unpaired. Enter a new pairing code to reconnect."
+- This is a global behavior — implement as a centralized response interceptor in the networking layer, not per-endpoint.
 
 Everything else (workout, sleep, steps, profile ingest) already works with pairing token auth.
 
@@ -110,7 +138,24 @@ Initial distribution to 10-15 gym members via TestFlight. No App Store listing n
 
 **When ready to go public:** submit the same build to the App Store with screenshots, description, and privacy policy. The TestFlight build and App Store build can coexist.
 
-**Privacy policy:** required even for TestFlight. Needs to cover HealthKit data collection, what's stored, what's shared with the coach. Can be a simple page hosted on gcgyms.com.
+**Privacy policy:** required even for TestFlight external testers. Must be hosted at a public URL before the first TestFlight submission.
+
+Apple has specific requirements for apps that access HealthKit:
+
+1. **HealthKit usage descriptions** (in Info.plist):
+   - `NSHealthShareUsageDescription` — why the app reads health data ("CoachFit reads your workouts, sleep, steps, and weight to share with your coach for fitness tracking.")
+   - `NSHealthUpdateUsageDescription` — only needed if the app writes to HealthKit (we don't, so omit this)
+
+2. **Privacy policy must explicitly state:**
+   - What HealthKit data is collected (workouts, sleep analysis, step count, body mass, height)
+   - That data is transmitted to CoachFit servers and shared with the user's assigned coach
+   - That HealthKit data is NOT used for advertising or sold to third parties (Apple rejects apps that do this)
+   - That HealthKit data is NOT stored in iCloud or any third-party analytics service
+   - How long data is retained and how to request deletion (unpair device + contact coach)
+
+3. **App Store review guideline 27.4**: Apps must not store HealthKit data in iCloud. Our architecture is fine (data goes to our PostgreSQL backend, not iCloud), but the privacy policy should confirm this.
+
+Host at `gcgyms.com/privacy` — a simple static page is fine. This same page satisfies the App Store listing requirement when you go public later.
 
 ---
 
