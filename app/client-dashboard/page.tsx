@@ -593,7 +593,7 @@ export default function ClientDashboard() {
               title="Import nutrition data from Cronometer"
             >
               <span className="sm:hidden">📥</span>
-              <span className="hidden sm:inline">📥 Import</span>
+              <span className="hidden sm:inline">📥 Import from Cronometer</span>
             </Link>
             <Link
               href="/client-dashboard/settings"
