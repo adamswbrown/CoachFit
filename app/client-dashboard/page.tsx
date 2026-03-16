@@ -1015,6 +1015,13 @@ export default function ClientDashboard() {
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">kcal</span>
                     </div>
+                    <p className="mt-1.5 text-xs text-neutral-400">
+                      For accurate tracking, we recommend{" "}
+                      <a href="https://cronometer.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 underline">Cronometer</a>{" "}
+                      (free). You can{" "}
+                      <a href="/client-dashboard/import" className="text-blue-500 hover:text-blue-600 underline">import your data</a>{" "}
+                      anytime.
+                    </p>
                   </div>
                 </div>
 

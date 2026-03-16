@@ -631,34 +631,29 @@ export default function ClientOnboarding() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Track your nutrition</h2>
                 <p className="text-gray-600 mb-6">
-                  We use <strong>Cronometer</strong> to track what you eat. It gives your coach detailed
-                  insight into your calories, protein, carbs, fat, and fiber intake.
+                  You&apos;ll log your daily calories as part of your check-ins. You can type them in
+                  manually, or for more accurate tracking we recommend a free app like{" "}
+                  <a href="https://cronometer.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">Cronometer</a>.
                 </p>
 
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-6">
-                  <h3 className="font-semibold text-emerald-900 mb-3">Getting started with Cronometer</h3>
-                  <ol className="space-y-3">
-                    <li className="flex gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center">1</span>
-                      <span className="text-sm text-emerald-800">
-                        Create a free account at <strong>cronometer.com</strong> (or download the app)
-                      </span>
+                  <h3 className="font-semibold text-emerald-900 mb-3">Why use Cronometer? (optional)</h3>
+                  <ul className="space-y-2 text-sm text-emerald-800">
+                    <li className="flex gap-2">
+                      <span>&#10003;</span>
+                      <span>Huge food database makes logging quick and accurate</span>
                     </li>
-                    <li className="flex gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center">2</span>
-                      <span className="text-sm text-emerald-800">
-                        Log your meals each day &mdash; Cronometer has a huge food database to make this quick
-                      </span>
+                    <li className="flex gap-2">
+                      <span>&#10003;</span>
+                      <span>Tracks calories, protein, carbs, fat, and fibre automatically</span>
                     </li>
-                    <li className="flex gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center">3</span>
-                      <span className="text-sm text-emerald-800">
-                        Periodically export your data and import it into CoachFit using the <strong>Import</strong> feature on your dashboard
-                      </span>
+                    <li className="flex gap-2">
+                      <span>&#10003;</span>
+                      <span>You can export your data and import it into CoachFit from your dashboard</span>
                     </li>
-                  </ol>
+                  </ul>
                   <p className="text-xs text-emerald-600 mt-3 italic">
-                    Tip: Cronometer Gold ($5.99/mo) enables CSV exports. The free version works great for daily logging.
+                    This is completely optional &mdash; you can always just enter your calories manually during check-ins.
                   </p>
                 </div>
 
@@ -672,9 +667,9 @@ export default function ClientOnboarding() {
                         : "border-gray-200 hover:border-gray-300 text-gray-700"
                     }`}
                   >
-                    <span className="font-medium">I have a Cronometer account</span>
+                    <span className="font-medium">I&apos;ll use Cronometer</span>
                     <p className="text-sm text-gray-500 mt-0.5">
-                      I&apos;m set up and ready to start logging
+                      I have an account or I&apos;ll set one up
                     </p>
                   </button>
                   <button
@@ -686,9 +681,9 @@ export default function ClientOnboarding() {
                         : "border-gray-200 hover:border-gray-300 text-gray-700"
                     }`}
                   >
-                    <span className="font-medium">I&apos;ll set it up later</span>
+                    <span className="font-medium">I&apos;ll enter calories manually</span>
                     <p className="text-sm text-gray-500 mt-0.5">
-                      You can always link your account from the dashboard
+                      I&apos;ll type in my daily calories during check-ins
                     </p>
                   </button>
                 </div>
