@@ -89,6 +89,31 @@ Return a persistent device token (not the 15-min pairing code). Stored against t
 
 Everything else (workout, sleep, steps, profile ingest) already works with pairing token auth.
 
+## Distribution: TestFlight
+
+Initial distribution to 10-15 gym members via TestFlight. No App Store listing needed.
+
+**Requirements:**
+- Apple Developer account ($99/year)
+- Xcode on a Mac
+
+**Process:**
+1. Build and archive in Xcode
+2. Upload to App Store Connect
+3. Add testers by email in TestFlight section
+4. Testers receive email invite → download TestFlight app → install CoachFit
+5. Builds auto-expire after 90 days (push a new build to refresh)
+
+**Internal testers** (your own Apple ID, up to 100 people): no Apple review needed, instant access.
+
+**External testers** (anyone else, up to 10,000): lightweight Apple review, usually approved within a day. This is the route for gym members.
+
+**When ready to go public:** submit the same build to the App Store with screenshots, description, and privacy policy. The TestFlight build and App Store build can coexist.
+
+**Privacy policy:** required even for TestFlight. Needs to cover HealthKit data collection, what's stored, what's shared with the coach. Can be a simple page hosted on gcgyms.com.
+
+---
+
 ## What's NOT in v1
 
 - Push notifications (email reminders already work)
