@@ -21,7 +21,9 @@ As a client, CoachFit helps you track your daily fitness progress and share it w
 
 ### What You Can Do
 
-- ✅ Log daily check-ins (weight, steps, calories, sleep quality)
+- ✅ Log daily check-ins (weight, steps, calories, sleep quality, perceived effort)
+- ✅ Sync data automatically from Apple Health via the CoachFit iOS companion app
+- ✅ Import nutrition data from Cronometer via the iOS app
 - ✅ View your progress history
 - ✅ See trends and charts
 - ✅ Work with your coach through data-driven insights
@@ -85,6 +87,43 @@ The check-in form allows you to log:
 - **Partial entries are fine** - You don't need to fill in every field every time
 - **Use the increment/decrement buttons** - The form has up/down arrows next to number fields for easy adjustment
 - **Notes are helpful** - Use the notes field to add context (e.g., "felt tired today", "great workout")
+
+---
+
+## iOS Companion App & HealthKit Sync
+
+### Pairing with Your Coach
+
+If your coach provides a pairing code, you can connect the CoachFit iOS companion app:
+
+1. Open the CoachFit iOS app on your iPhone
+2. Enter the 8-character pairing code provided by your coach
+3. The app will confirm a successful pairing and securely store a device token
+4. From this point, your Apple Health data syncs automatically
+
+### What Syncs from Apple Health
+
+Once paired, the iOS app can sync:
+
+- **Workouts** — type, duration, calories burned, distance, heart rate
+- **Steps** — daily step counts
+- **Sleep** — total sleep time and sleep stages (core, deep, REM)
+- **Daily check-ins** — submit weight, calories, sleep quality, perceived stress, and notes directly from the app
+
+### Cronometer Import
+
+If you use Cronometer to track nutrition, you can import your data through the iOS app:
+
+- Export your Cronometer data as CSV
+- Import it via the iOS app — the data (calories, protein, carbs, fat, fiber, weight) is uploaded to CoachFit
+- Imported data merges with your existing entries without overwriting manually entered values
+
+### Data Merge Behavior
+
+When data arrives from multiple sources (manual check-in, HealthKit, Cronometer), CoachFit follows a **fill-only** merge strategy:
+- New data only fills in fields that are currently empty
+- Existing values are never overwritten
+- Your coach can see which sources contributed to each entry
 
 ---
 
@@ -206,4 +245,4 @@ View your account details:
 
 ---
 
-**Last Updated**: January 2025
+**Last Updated**: March 2026

@@ -34,7 +34,7 @@ CoachFit enables:
 - ✅ Cohort management for coaches
 - ✅ Comprehensive analytics and reporting
 - ✅ Beautiful, responsive UI
-- 🧪 iOS app + HealthKit sync is planned but not yet available
+- ✅ iOS companion app with HealthKit sync and Cronometer import (Phase 1 — device token auth, daily check-ins, data ingestion)
 
 ---
 
@@ -531,5 +531,5 @@ This platform is in **pre-alpha** status. While core functionality is working, s
 
 ---
 
-**Last Updated**: January 2025
-**Version**: 1.0.0
+**Last Updated**: March 2026
+**Version**: 1.1.0

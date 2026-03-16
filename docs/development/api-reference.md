@@ -747,6 +747,131 @@ Assign coach to cohort.
 
 ---
 
+## iOS Companion App Endpoints (Device Token Auth)
+
+These endpoints use `X-Pairing-Token` header authentication instead of Clerk sessions. They accept either an 8-char pairing code or a 64-char hex device token.
+
+### POST /api/pair
+
+Pair an iOS app with a coach using a pairing code. Returns a long-lived device token for subsequent API calls.
+
+**Auth Required**: None (pairing code acts as auth)
+
+**Request Body**:
+```json
+{
+  "code": "AB3KM7NP"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Successfully paired with coach",
+  "client_id": "uuid",
+  "device_token": "64-char-hex-string",
+  "coach": { "id": "uuid", "name": "Coach Name" },
+  "client": { "id": "uuid", "name": "Client Name" },
+  "paired_at": "2025-01-15T10:00:00Z"
+}
+```
+
+**Behavior**:
+- Validates the 8-char pairing code
+- Generates a 64-char hex device token (stored on PairingCode.deviceToken)
+- Links client to coach via `invitedByCoachId`
+- iOS app should persist `device_token` for all future API calls
+
+### POST /api/ingest/entry
+
+Submit a daily check-in from the iOS app.
+
+**Auth Required**: `X-Pairing-Token` header (device token or pairing code)
+
+**Request Body**:
+```json
+{
+  "client_id": "uuid",
+  "date": "2025-01-15",
+  "weightLbs": 175.5,
+  "steps": 10000,
+  "calories": 2000,
+  "proteinGrams": 150,
+  "carbsGrams": 200,
+  "fatGrams": 70,
+  "fiberGrams": 30,
+  "sleepQuality": 8,
+  "perceivedStress": 4,
+  "notes": "Good day"
+}
+```
+
+All fields except `client_id` and `date` are optional.
+
+**Response** (created):
+```json
+{
+  "success": true,
+  "action": "created",
+  "entry_id": "uuid"
+}
+```
+
+**Response** (merged with existing entry):
+```json
+{
+  "success": true,
+  "action": "merged",
+  "fields_updated": ["weightLbs", "steps"],
+  "entry_id": "uuid"
+}
+```
+
+**Merge strategy**: Only fills null fields on existing entries. Never overwrites data from HealthKit or Cronometer.
+
+### POST /api/ingest/cronometer
+
+Import Cronometer CSV data via device token auth.
+
+**Auth Required**: `X-Pairing-Token` header (device token or pairing code)
+
+**Request Body**:
+```json
+{
+  "client_id": "uuid",
+  "rows": [
+    {
+      "date": "2025-01-15",
+      "calories": 2000,
+      "proteinGrams": 150,
+      "carbsGrams": 200,
+      "fatGrams": 70,
+      "fiberGrams": 30,
+      "weightLbs": 175.5
+    }
+  ]
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "processed": 5,
+  "created": 3,
+  "merged": 2,
+  "skipped": 0,
+  "results": [
+    { "date": "2025-01-15", "action": "created", "fieldsUpdated": ["calories", "proteinGrams"] }
+  ]
+}
+```
+
+**Behavior**: Same merge strategy as POST /api/ingest/entry. On success, sets `cronometerLinked: true` on the user.
+
+---
+
 ## Common Patterns
 
 ### Authentication Pattern

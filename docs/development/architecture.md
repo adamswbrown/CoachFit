@@ -189,6 +189,16 @@ if (resource.coachId !== session.user.id && !isAdmin(session.user)) {
 }
 ```
 
+### Device Token Auth (iOS Companion App)
+
+In addition to Clerk session auth, the platform supports **device token authentication** for iOS app endpoints:
+
+- iOS app pairs via POST /api/pair using an 8-char pairing code
+- On success, a 64-char hex device token is generated and returned
+- iOS app sends `X-Pairing-Token: <device_token>` header on all ingest API calls
+- `validateIngestAuth()` in `lib/security/ingest-auth.ts` handles dual auth (pairing code or device token)
+- Token revocation: clearing `deviceToken` on the PairingCode record invalidates the session
+
 ### Role-Based Access Control
 
 - **CLIENT**: Submit entries, view own data
@@ -272,9 +282,22 @@ app/
 ├── coach-dashboard/        # Coach views
 ├── admin/                  # Admin views
 ├── cohorts/[id]/          # Cohort details
-├── clients/[id]/          # Client details
+├── clients/[id]/          # Client details (coach perspective)
+│   ├── entries/           # Entry history
+│   ├── training/          # Training tab (workout visualization)
+│   ├── weekly-review/     # Weekly review (conditional — cohort members only)
+│   └── settings/          # Client settings
 └── api/                   # API routes
 ```
+
+**Client Detail Tabs** (`/clients/[id]/...`):
+- **Overview** — Client summary and analytics
+- **Entries** — Check-in entry history
+- **Weekly Review** — Conditional: only shown if client has a CohortMembership (enrolled in a cohort)
+- **Training** — Workout visualization: summary stats, weekly volume bar chart, workout type breakdown donut chart, full workout list. Uses GET /api/healthkit/workouts.
+- **Settings** — Client account settings
+
+Independent gym members (not enrolled in any cohort) see: Overview, Entries, Training, Settings.
 
 ### Server vs Client Components
 

@@ -38,6 +38,7 @@ interface ClientInfo {
   id: string
   name: string | null
   email: string
+  CohortMembership?: { Cohort: { id: string; name: string } }[]
 }
 
 const WORKOUT_EMOJI: Record<string, string> = {
@@ -200,7 +201,9 @@ export default function ClientTrainingPage() {
           <nav className="flex gap-6 overflow-x-auto">
             <Link href={`/clients/${clientId}`} className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap">Overview</Link>
             <Link href={`/clients/${clientId}/entries`} className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap">Entries</Link>
-            <Link href={`/clients/${clientId}/weekly-review`} className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap">Weekly Review</Link>
+            {client?.CohortMembership && client.CohortMembership.length > 0 && (
+              <Link href={`/clients/${clientId}/weekly-review`} className="px-1 py-3 text-sm font-medium text-neutral-600 hover:text-neutral-900 -mb-px whitespace-nowrap">Weekly Review</Link>
+            )}
             <Link href={`/clients/${clientId}/training`} className="px-1 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600 -mb-px whitespace-nowrap">Training</Link>
             <span className="px-1 py-3 text-sm font-medium text-neutral-400 -mb-px whitespace-nowrap">Tasks</span>
             <span className="px-1 py-3 text-sm font-medium text-neutral-400 -mb-px whitespace-nowrap">Metrics</span>
