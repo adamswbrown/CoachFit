@@ -103,7 +103,7 @@ export default function ClientSelfSignupOnboardingPage() {
         throw new Error("Failed to complete onboarding")
       }
 
-      // Redirect to client dashboard (which will show the "waiting for coach" state)
+      // Redirect to client dashboard — full access for independent tracking
       router.push("/client-dashboard")
     } catch (err: any) {
       setError(err.message || "An error occurred. Please try again.")
@@ -126,7 +126,7 @@ export default function ClientSelfSignupOnboardingPage() {
               Welcome, {firstName}!
             </h1>
             <p className="text-slate-600">
-              CoachSync works best with a coach
+              Start tracking your fitness journey
             </p>
           </div>
 
@@ -135,57 +135,29 @@ export default function ClientSelfSignupOnboardingPage() {
             <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
               <h2 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
                 <span className="text-blue-600">💡</span>
-                How CoachSync Works
+                How CoachFit Works
               </h2>
               <p className="text-slate-700 text-sm leading-relaxed mb-4">
-                CoachSync is designed for coach-guided fitness programs. Here's how it works:
+                CoachFit helps you track your fitness progress and stay accountable.
               </p>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <span className="text-blue-600 font-medium">•</span>
                   <p className="text-slate-700 text-sm">
-                    <strong>Coaches guide your plans</strong> and create personalized programs for you
+                    <strong>Log daily check-ins</strong> to track your weight, steps, calories, and more
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-blue-600 font-medium">•</span>
                   <p className="text-slate-700 text-sm">
-                    <strong>You check in regularly</strong> to track your progress (weight, steps, calories, etc.)
+                    <strong>See your progress</strong> with charts and trends over time
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-blue-600 font-medium">•</span>
                   <p className="text-slate-700 text-sm">
-                    <strong>Your coach reviews and provides feedback</strong> to help you reach your goals
+                    <strong>Join challenges</strong> to work with a coach and get personalised feedback
                   </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-amber-50 rounded-xl p-6 border border-amber-200">
-              <h3 className="font-semibold text-amber-900 mb-2">Next Steps</h3>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <span className="text-amber-600 font-medium">✓</span>
-                  <div>
-                    <p className="text-amber-900 text-sm font-medium mb-1">
-                      I already have a coach
-                    </p>
-                    <p className="text-amber-800 text-xs">
-                      Your coach will add you to their program soon. You'll receive a notification when they do.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-amber-600 font-medium">✓</span>
-                  <div>
-                    <p className="text-amber-900 text-sm font-medium mb-1">
-                      I don't have a coach yet
-                    </p>
-                    <p className="text-amber-800 text-xs">
-                      When you're assigned to a coach, you'll be able to start tracking your progress. You'll see a notification when this happens.
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -294,7 +266,7 @@ export default function ClientSelfSignupOnboardingPage() {
               )}
             </button>
             <p className="text-center text-xs text-slate-500">
-              Your dashboard will show when your coach adds you
+              You can start logging check-ins straight away
             </p>
           </div>
         </div>

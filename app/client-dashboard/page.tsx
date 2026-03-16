@@ -495,7 +495,6 @@ export default function ClientDashboard() {
   const isSubmitDisabled = useMemo(() => {
     return (
       submitting ||
-      (hasCoach === false && !(entryMode === "edit" && existingEntry)) ||
       (entryMode === "add" && existingEntry !== null) ||
       (entryMode === "edit" && !existingEntry) ||
       !(
@@ -571,13 +570,11 @@ export default function ClientDashboard() {
               {greeting}, {firstName}
             </h1>
             <p className="text-sm text-neutral-600">
-              {hasCoach === false 
-                ? "Your coach will add you to their program soon."
-                : "Track your progress and stay on top of your goals."}
+              Track your progress and stay on top of your goals.
             </p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
-            {healthkitEnabled && hasCoach !== false && (
+            {healthkitEnabled && (
               <Link
                 href="/client-dashboard/pairing"
                 className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors text-center"
@@ -606,25 +603,16 @@ export default function ClientDashboard() {
           </div>
         </div>
 
-        {/* No Coach Warning */}
+        {/* Independent tracking info (no cohort) */}
         {hasCoach === false && (
-          <div className="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-lg">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <span className="text-2xl">⏳</span>
-              </div>
-              <div>
-                <h3 className="font-semibold text-amber-900 mb-1">Waiting for your coach</h3>
-                <p className="text-amber-800 text-sm">
-                  You're all signed up! Your coach will add you to their program soon.
-                  Once connected, you'll be able to log your daily entries here.
-                </p>
-              </div>
-            </div>
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-blue-800 text-sm">
+              You&apos;re tracking independently. When you join a challenge, your coach will see your progress here too.
+            </p>
           </div>
         )}
 
-        {hasCoach !== false && selectedCohortId && (
+        {selectedCohortId && (
           <div className="mb-6 bg-white border border-neutral-200 rounded-lg p-5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
@@ -678,7 +666,7 @@ export default function ClientDashboard() {
         )}
 
         {/* Quick Stats */}
-        {hasCoach !== false && entries.length > 0 && (
+        {entries.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div className="bg-white rounded-lg p-5 border border-neutral-200">
               <div className="text-sm text-neutral-500 mb-1">Latest Weight</div>
@@ -727,7 +715,7 @@ export default function ClientDashboard() {
         )}
 
         {/* Weekly Questionnaire Card (Sundays only) - Hidden when wrapped is available */}
-        {hasCoach !== false && selectedCohortId && isQuestionnaireDay() && !wrappedEligible && (
+        {selectedCohortId && isQuestionnaireDay() && !wrappedEligible && (
           <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <div>
@@ -776,7 +764,7 @@ export default function ClientDashboard() {
           </div>
         )}
 
-        {hasCoach !== false && !selectedCohortId && (
+        {hasCoach && !selectedCohortId && (
           <div className="mb-6 bg-white border border-neutral-200 rounded-lg p-6">
             <p className="text-sm text-neutral-600">
               You’re not assigned to a program yet. Ask your coach to add you so you can complete questionnaires.
@@ -927,7 +915,7 @@ export default function ClientDashboard() {
                       setFormData({ ...formData, date: e.target.value })
                     }}
                     max={new Date().toISOString().split("T")[0]}
-                    disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
+                    disabled={submitting}
                     className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                   />
                 </div>
@@ -966,7 +954,7 @@ export default function ClientDashboard() {
                           startTransition(() => setFormData({ ...formData, weightLbs: e.target.value }))
                         }
                         required
-                        disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
+                        disabled={submitting}
                         className="w-full px-4 py-2.5 pr-12 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">lbs</span>
@@ -988,7 +976,7 @@ export default function ClientDashboard() {
                           startTransition(() => setFormData({ ...formData, steps: e.target.value }))
                         }
                         required
-                        disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
+                        disabled={submitting}
                         className="w-full px-4 py-2.5 pr-16 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">steps</span>
@@ -1010,7 +998,7 @@ export default function ClientDashboard() {
                           startTransition(() => setFormData({ ...formData, calories: e.target.value }))
                         }
                         required
-                        disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
+                        disabled={submitting}
                         className="w-full px-4 py-2.5 pr-14 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none">kcal</span>
@@ -1040,7 +1028,7 @@ export default function ClientDashboard() {
                         startTransition(() => setFormData({ ...formData, perceivedStress: e.target.value }))
                       }
                       required
-                      disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
+                      disabled={submitting}
                       className="flex-1 h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
                     />
                     <span className="text-lg font-semibold text-neutral-900 min-w-[3rem] text-center">
@@ -1068,7 +1056,7 @@ export default function ClientDashboard() {
                       onChange={(e) =>
                         startTransition(() => setFormData({ ...formData, notes: e.target.value }))
                       }
-                      disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
+                      disabled={submitting}
                       className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed resize-none"
                     />
                     <p className="text-xs text-neutral-500 mt-1 text-right">
@@ -1094,7 +1082,7 @@ export default function ClientDashboard() {
                             onChange={(e) => {
                               startTransition(() => setFormData({ ...formData, perceivedStress: e.target.value }))
                             }}
-                            disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
+                            disabled={submitting}
                             className="flex-1 h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
                           />
                           <span className="text-lg font-semibold text-neutral-900 min-w-[3rem] text-center">
@@ -1117,7 +1105,7 @@ export default function ClientDashboard() {
                         onChange={(e) =>
                           startTransition(() => setFormData({ ...formData, notes: e.target.value }))
                         }
-                        disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
+                        disabled={submitting}
                         className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed resize-none"
                       />
                     )}
@@ -1129,7 +1117,7 @@ export default function ClientDashboard() {
                         onChange={(e) =>
                           startTransition(() => setFormData({ ...formData, steps: e.target.value }))
                         }
-                        disabled={hasCoach === false && !(entryMode === "edit" && existingEntry)}
+                        disabled={submitting}
                         className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-500 focus:border-neutral-500 transition-all disabled:bg-neutral-50 disabled:cursor-not-allowed"
                       />
                     )}
@@ -1183,9 +1171,7 @@ export default function ClientDashboard() {
                   </div>
                   <h3 className="font-medium text-neutral-900 mb-1 text-sm">No entries yet</h3>
                   <p className="text-xs text-neutral-500">
-                    {hasCoach === false 
-                      ? "You'll be able to log entries once your coach adds you."
-                      : "Start tracking your progress!"}
+                    Start tracking your progress!
                   </p>
                 </div>
               ) : (
