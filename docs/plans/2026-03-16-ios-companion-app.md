@@ -191,29 +191,37 @@ All four backend additions are complete and deployed to the database:
 Files changed: `prisma/schema.prisma`, `lib/security/ingest-auth.ts`, `lib/validations/healthkit.ts`, `app/api/pair/route.ts`, `app/api/client/unpair-device/route.ts`
 Files created: `app/api/ingest/entry/route.ts`, `app/api/ingest/cronometer/route.ts`
 
-### Phase 2: iOS project scaffold + auth — NEXT
+### Phase 2: iOS project scaffold + auth — DONE (2026-03-16)
 
-- [ ] Create Xcode project (SwiftUI, iOS 16+, no third-party deps)
-- [ ] Info.plist: HealthKit entitlement, `NSHealthShareUsageDescription`
-- [ ] `KeychainService` — store/retrieve/delete device token
-- [ ] `APIClient` — URLSession networking layer, `X-Pairing-Token` header injection, centralized 401 interceptor (clears Keychain → pairing screen)
-- [ ] `AppState` — Observable object routing: has token → home, no token → pairing
-- [ ] Pairing screen — 8-char code input, calls `POST /api/pair`, stores `device_token`
+- [x] **Xcode project** — SwiftUI, iOS 26+, no third-party deps. `PBXFileSystemSynchronizedRootGroup` (auto-discovers files). Bundle ID: `com.askadam.CoachFit`.
+- [x] **Info.plist** — `NSHealthShareUsageDescription`, background modes (`fetch`, `processing`), `BGTaskSchedulerPermittedIdentifiers` for HealthKit sync.
+- [x] **Entitlements** — HealthKit enabled. Removed CloudKit/push (not needed, and CloudKit violates Apple guideline 27.4 for HealthKit data).
+- [x] **`KeychainService`** — `kSecAttrAccessibleAfterFirstUnlock` for background access. Stores `deviceToken`, `clientId`, `clientName`, `coachName`. `clearAll()` for unpair.
+- [x] **`APIClient`** — `@Observable`, URLSession-based. `X-Pairing-Token` header injection. Centralized `onUnauthorized` callback (401 → clears Keychain → pairing screen). Base URL: `localhost:3000` (debug) / `gcgyms.com` (release).
+- [x] **`AppState`** — `@Observable` routing. Checks Keychain on init → `.home` or `.pairing`. `pair(code:)` stores credentials, `signOut()` clears everything.
+- [x] **Pairing screen** — 8-char code input (auto-uppercase, character limit), calls `POST /api/pair`, stores `device_token`. Error/loading states. Shows unpair message if returning from revoked session.
 
-### Phase 3: HealthKit sync engine
+Files created: `CoachFitApp.swift`, `Services/KeychainService.swift`, `Services/APIClient.swift`, `Models/AppState.swift`, `Views/PairingView.swift`, `Views/HomeView.swift`
 
-- [ ] `HealthKitManager` — request permissions, observer queries for each data type
-- [ ] `HKObserverQuery` + `enableBackgroundDelivery` for workouts, sleep, weight
-- [ ] `BGAppRefreshTask` fallback (daily catch-up sync)
-- [ ] Foreground catch-up on `scenePhase == .active`
-- [ ] Offline queue (UserDefaults, batch on retry, respect rate limits)
-- [ ] Initial 30-day backfill after pairing
+### Phase 3: HealthKit sync engine — DONE (2026-03-16)
 
-### Phase 4: UI screens (Today + Import + More)
+- [x] **`HealthKitManager`** — Requests read-only permissions (workouts, sleep, steps, bodyMass, height). `isHealthDataAvailable()` guard on all operations. Fetches workouts via `HKSampleQuery`, sleep via `HKSampleQuery` with per-date aggregation (core/deep/REM/awake stages), steps via `HKStatisticsCollectionQuery` (daily sums), weight/height via `HKSampleQuery`. `fetchTodayData()` for check-in pre-population. `HKWorkoutActivityType` → API string mapping (25+ activity types).
+- [x] **`HKObserverQuery` + `enableBackgroundDelivery`** — Registered per data type: workouts/weight `.immediate`, sleep/steps `.hourly`. Completion handler always called (Apple requirement). Triggers `SyncEngine.syncType()`.
+- [x] **`BGAppRefreshTask` fallback** — Registered as `.backgroundTask(.appRefresh(...))` in SwiftUI. Scheduled every 6 hours via `BGAppRefreshTaskRequest`. Runs `syncAll()`.
+- [x] **Foreground catch-up** — `scenePhase == .active` → `appState.onForegroundEntry()` → `syncEngine.syncAll()`.
+- [x] **Offline queue** — UserDefaults-based, capped at 50 items. Failed `URLError` requests queued automatically. Retried at start of every sync. 401 during retry clears queue and triggers unpair.
+- [x] **Initial 30-day backfill** — After pairing + HealthKit auth, resets all sync dates to 30 days ago and runs `syncAll()`.
+- [x] **`SyncEngine`** — `@Observable`, coordinates all sync. Batches to API limits (100 workouts, 400 sleep/steps, 50 profile metrics). Payloads match Zod schemas exactly. Per-type sync date tracking in UserDefaults. Parallel sync via `TaskGroup`. Server handles dedup via unique constraints.
 
-- [ ] Today tab — check-in form, HealthKit pre-population (read-only "from Apple Health" badge), last 5 entries list
-- [ ] Import tab — file picker for CSV, parse + preview, upload via `POST /api/ingest/cronometer`
-- [ ] More tab — sync status, deep links to web, unpair device, app version
+Files created: `Services/HealthKitManager.swift`, `Services/SyncEngine.swift`
+
+### Phase 4: UI screens (Today + Import + More) — DONE (2026-03-16)
+
+- [x] **Today tab** — Form with weight, steps, calories, sleep quality (1-10 picker), perceived stress (1-10 picker), notes. HealthKit pre-population: if today's steps/weight available, shown as read-only with red "Apple Health" badge; manual fields hidden for pre-populated data. Submits via `POST /api/ingest/entry`. Shows "Submitted for today" state with Update option.
+- [x] **Import tab** — "Import from Cronometer" empty state with instructions. iOS file picker (`.commaSeparatedText`, `.plainText`). `CronometerCSVParser` ported to Swift — flexible column matching (Energy (kcal), Protein (g), etc.), date normalization (YYYY-MM-DD, MM/DD/YYYY), handles quoted fields. Preview screen shows row count, warnings, first 10 rows with macro breakdown. Upload via `POST /api/ingest/cronometer`. Success screen shows created/merged/skipped counts.
+- [x] **More tab** — Live sync status (syncing spinner / relative time since last sync / error display). HealthKit availability warning. Coach name. Deep links to web dashboard and questionnaire. Unpair with confirmation dialog. App version.
+
+Files created: `Views/TodayTab.swift`, `Views/ImportTab.swift`, `Services/CronometerCSVParser.swift`
 
 ### Phase 5: Privacy policy + TestFlight prep
 
