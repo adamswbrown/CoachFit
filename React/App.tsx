@@ -11,6 +11,7 @@ import { ScannerScreen } from './src/screens/ScannerScreen';
 import { ProductScreen } from './src/screens/ProductScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { HealthDashboardScreen } from './src/screens/HealthDashboardScreen';
+import { CheckInScreen } from './src/screens/CheckInScreen';
 import { colors } from './src/constants/theme';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -49,6 +50,11 @@ function AppNavigator() {
               name="Home"
               component={HomeScreen}
               options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="CheckIn"
+              component={CheckInScreen}
+              options={{ title: 'Daily Check-In' }}
             />
             <Stack.Screen
               name="Scanner"

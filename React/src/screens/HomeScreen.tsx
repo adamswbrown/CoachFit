@@ -64,6 +64,13 @@ export function HomeScreen() {
 
       <View style={styles.buttonRow}>
         <TouchableOpacity
+          style={styles.checkInButton}
+          onPress={() => navigation.navigate('CheckIn')}
+        >
+          <Text style={styles.checkInButtonText}>Daily Check-In</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={styles.scanButton}
           onPress={() => navigation.navigate('Scanner')}
         >
@@ -166,6 +173,23 @@ const styles = StyleSheet.create({
   buttonRow: {
     marginHorizontal: spacing.lg,
     marginTop: -spacing.md,
+  },
+  checkInButton: {
+    backgroundColor: colors.accent,
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.xl,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+    marginBottom: spacing.sm,
+  },
+  checkInButtonText: {
+    color: colors.textLight,
+    fontSize: fontSize.xl,
+    fontWeight: '700',
   },
   scanButton: {
     backgroundColor: colors.primary,

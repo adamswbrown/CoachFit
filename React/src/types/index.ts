@@ -58,6 +58,7 @@ export interface CustomServing {
 export type RootStackParamList = {
   Pairing: undefined;
   Home: undefined;
+  CheckIn: undefined;
   Scanner: undefined;
   Product: { barcode: string };
   History: undefined;
