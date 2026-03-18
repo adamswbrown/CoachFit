@@ -36,6 +36,31 @@ export function ClientLayout({ children }: ClientLayoutProps) {
         </div>
       </header>
 
+      {/* Navigation tabs */}
+      <nav className="bg-white border-b border-neutral-200 px-3 sm:px-4 md:px-6">
+        <div className="flex gap-1 overflow-x-auto">
+          {[
+            { name: "Dashboard", href: "/client-dashboard" },
+            { name: "Settings", href: "/client-dashboard/settings" },
+          ].map((tab) => {
+            const isActive = pathname === tab.href
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`px-3 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                  isActive
+                    ? "border-green-600 text-green-700"
+                    : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300"
+                }`}
+              >
+                {tab.name}
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
+
       {/* Main content */}
       <main className="p-4 sm:p-6 md:p-8">{children}</main>
     </div>
