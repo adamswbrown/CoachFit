@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClerkClient } from "@clerk/nextjs/server"
-
-const clerk = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY!,
-})
+import { verifyToken } from "@clerk/backend"
 
 /**
  * Mobile handoff endpoint.
@@ -25,7 +21,7 @@ export async function GET(request: NextRequest) {
 
   // Verify the JWT is valid
   try {
-    await clerk.verifyToken(token)
+    await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY! })
   } catch {
     return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 })
   }

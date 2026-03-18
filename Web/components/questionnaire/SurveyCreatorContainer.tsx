@@ -19,8 +19,9 @@ export function SurveyCreatorContainer({
 
   useEffect(() => {
     // Create survey creator
-    const creator = new SurveyCreator(DEFAULT_CREATOR_CONFIG)
-    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const creator = new SurveyCreator(DEFAULT_CREATOR_CONFIG) as any
+
     // Set initial JSON if provided
     if (json) {
       creator.JSON = json
@@ -35,7 +36,7 @@ export function SurveyCreatorContainer({
         ],
       }
     }
-    
+
     // Add save button handler
     if (onSaveClick) {
       creator.saveSurveyFunc = (saveNo: number, callback: (num: number, status: boolean) => void) => {
