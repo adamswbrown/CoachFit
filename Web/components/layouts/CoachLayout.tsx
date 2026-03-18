@@ -152,6 +152,11 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     navigation.push(
       { name: "Weekly Review", href: "/coach-dashboard/weekly-review", icon: CalendarIcon, hasDropdown: false, dropdownKey: "weekly-review" }
     )
+
+    // Add Compliance dashboard
+    navigation.push(
+      { name: "Compliance", href: "/coach-dashboard/compliance", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>, hasDropdown: false, dropdownKey: "compliance" }
+    )
     
     // Add Measurement Tracker for Gav
     if (session?.user?.email === "coachgav@gcgyms.com") {

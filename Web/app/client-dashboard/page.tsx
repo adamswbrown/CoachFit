@@ -15,6 +15,8 @@ import { QuestionnaireProgress } from "@/components/questionnaire/QuestionnaireP
 import { WeekNumber } from "@/lib/surveyjs-config"
 import { WrappedModal } from "@/components/wrapped/WrappedModal"
 import type { WrappedSummary } from "@/lib/types"
+import { StreakCard } from "@/components/streak/StreakCard"
+import { MilestonesList } from "@/components/streak/MilestonesList"
 
 interface Entry {
   id: string
@@ -664,6 +666,12 @@ export default function ClientDashboard() {
             </div>
           </div>
         )}
+
+        {/* Streak & Milestones */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <StreakCard />
+          <MilestonesList />
+        </div>
 
         {/* Quick Stats */}
         {entries.length > 0 && (

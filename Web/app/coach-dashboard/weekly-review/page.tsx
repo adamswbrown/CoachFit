@@ -19,8 +19,16 @@ type SortKey =
   | "name"
   | "checkIns"
   | "score"
+  | "streak"
   | "lastCheckIn"
   | "lastEvaluated"
+
+interface ClientStreak {
+  clientId: string
+  currentStreak: number
+  daysSinceLastCheckIn: number
+  status: "green" | "amber" | "red"
+}
 
 const DEFAULT_ADHERENCE: AdherenceThresholds = {
   greenMinimum: 6,
@@ -198,6 +206,7 @@ export default function WeeklyReviewPage() {
     updatedAt: string
     submittedAt?: string | null
   }[]>>({})
+  const [streakData, setStreakData] = useState<Record<string, ClientStreak>>({})
   const [sendingReminder, setSendingReminder] = useState(false)
   const [reminderToast, setReminderToast] = useState<string | null>(null)
   const [bulkToast, setBulkToast] = useState<string | null>(null)
@@ -363,6 +372,21 @@ export default function WeeklyReviewPage() {
         } catch (err) {
           console.error('Failed to fetch questionnaire status:', err)
         }
+
+        // Fetch client streaks
+        try {
+          const streakRes = await fetch(`/api/coach-dashboard/client-streaks`)
+          if (streakRes.ok) {
+            const streakResponse = await streakRes.json()
+            const streakByClient: Record<string, ClientStreak> = {}
+            for (const s of streakResponse.clients || []) {
+              streakByClient[s.clientId] = s
+            }
+            setStreakData(streakByClient)
+          }
+        } catch (err) {
+          console.error('Failed to fetch client streaks:', err)
+        }
       } catch (err) {
         console.error("Error fetching data:", err)
         setData(null)
@@ -507,6 +531,21 @@ export default function WeeklyReviewPage() {
       } catch (err) {
         console.error('Failed to fetch questionnaire status:', err)
       }
+
+      // Fetch client streaks
+      try {
+        const streakRes = await fetch(`/api/coach-dashboard/client-streaks`)
+        if (streakRes.ok) {
+          const streakResponse = await streakRes.json()
+          const streakByClient: Record<string, ClientStreak> = {}
+          for (const s of streakResponse.clients || []) {
+            streakByClient[s.clientId] = s
+          }
+          setStreakData(streakByClient)
+        }
+      } catch (err) {
+        console.error('Failed to fetch client streaks:', err)
+      }
     } catch (err) {
       console.error("Error recalculating:", err)
     } finally {
@@ -627,9 +666,11 @@ export default function WeeklyReviewPage() {
 
     const baseRows = data.clients.map((client) => {
       const attention = attentionByClient.get(client.clientId)
+      const streak = streakData[client.clientId] || null
         return {
           client,
           attention,
+          streak,
           priority: getDisplayPriority(
             attention?.attentionScore || null,
             client.stats.checkInCount,
@@ -664,6 +705,8 @@ export default function WeeklyReviewPage() {
           return (a.client.stats.checkInCount - b.client.stats.checkInCount) * direction
         case "score":
           return (a.score - b.score) * direction
+        case "streak":
+          return ((a.streak?.currentStreak ?? 0) - (b.streak?.currentStreak ?? 0)) * direction
         case "lastCheckIn": {
           const aTime = a.client.lastCheckInDate ? new Date(a.client.lastCheckInDate).getTime() : 0
           const bTime = b.client.lastCheckInDate ? new Date(b.client.lastCheckInDate).getTime() : 0
@@ -997,6 +1040,12 @@ export default function WeeklyReviewPage() {
                       </th>
                       <th
                         className="text-left px-4 py-3 font-medium cursor-pointer"
+                        onClick={() => handleSort("streak")}
+                      >
+                        Streak
+                      </th>
+                      <th
+                        className="text-left px-4 py-3 font-medium cursor-pointer"
                         onClick={() => handleSort("lastCheckIn")}
                       >
                         Last check-in
@@ -1073,6 +1122,24 @@ export default function WeeklyReviewPage() {
                             <td className="px-4 py-3 text-neutral-700">
                               {client.stats.checkInCount}/{client.stats.expectedCheckIns ?? 7} ({Math.round(client.stats.checkInRate * 100)}%)
                             </td>
+                            <td className="px-4 py-3">
+                              {row.streak ? (
+                                <span
+                                  className={`inline-flex items-center gap-1 text-sm font-medium ${
+                                    row.streak.status === "green"
+                                      ? "text-green-700"
+                                      : row.streak.status === "amber"
+                                      ? "text-amber-700"
+                                      : "text-red-700"
+                                  }`}
+                                  title={`${row.streak.daysSinceLastCheckIn} day(s) since last check-in`}
+                                >
+                                  {"\uD83D\uDD25"} {row.streak.currentStreak}
+                                </span>
+                              ) : (
+                                <span className="text-neutral-400">—</span>
+                              )}
+                            </td>
                             <td className="px-4 py-3 text-neutral-700">
                               {client.lastCheckInDate
                                 ? new Date(client.lastCheckInDate).toLocaleDateString()
@@ -1102,7 +1169,7 @@ export default function WeeklyReviewPage() {
                           </tr>
                           {isExpanded && (
                             <tr className="border-t border-neutral-100">
-                              <td colSpan={10} className="p-4 bg-white">
+                              <td colSpan={11} className="p-4 bg-white">
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                   <div className="lg:col-span-2 space-y-4">
                                     <div>
