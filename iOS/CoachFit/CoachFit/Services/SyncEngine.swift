@@ -259,6 +259,39 @@ final class SyncEngine {
         }
     }
 
+    // MARK: - Nutrition Sync
+
+    func syncScannedProduct(name: String, brand: String?, servingGrams: Double,
+                             calories: Double, protein: Double, fat: Double, carbs: Double,
+                             date: String) async {
+        guard let clientId = KeychainService.clientId else { return }
+
+        struct NutritionPayload: Encodable {
+            let client_id: String
+            let rows: [Row]
+            struct Row: Encodable {
+                let date: String
+                let calories: Int?
+                let proteinGrams: Double?
+                let carbsGrams: Double?
+                let fatGrams: Double?
+            }
+        }
+
+        let payload = NutritionPayload(
+            client_id: clientId,
+            rows: [.init(
+                date: date,
+                calories: Int(calories),
+                proteinGrams: protein,
+                carbsGrams: carbs,
+                fatGrams: fat
+            )]
+        )
+
+        try? await sendOrQueue(path: "/api/ingest/cronometer", payload: payload)
+    }
+
     // MARK: - Network + Offline Queue
 
     private func sendOrQueue(path: String, payload: some Encodable) async throws {

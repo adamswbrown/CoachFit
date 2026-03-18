@@ -1,4 +1,5 @@
 import BackgroundTasks
+import SwiftData
 import SwiftUI
 import ClerkKit
 
@@ -30,6 +31,7 @@ struct CoachFitApp: App {
                 }
             }
         }
+        .modelContainer(for: FoodLogEntry.self)
         .backgroundTask(.appRefresh("com.askadam.CoachFit.healthkit-sync")) {
             await appState.syncEngine.syncAll()
             await Self.scheduleNextBackgroundSync()

@@ -4,16 +4,40 @@ import UIKit
 struct HomeView: View {
     @Environment(AppState.self) private var appState
 
+    @State private var scannedBarcode: String?
+    @State private var showProduct = false
+
     var body: some View {
         TabView {
             Tab("Today", systemImage: "checkmark.circle") {
                 TodayTab()
             }
-
-            Tab("Import", systemImage: "square.and.arrow.down") {
-                ImportTab()
+            Tab("Scan", systemImage: "barcode.viewfinder") {
+                NavigationStack {
+                    ScannerView { barcode in
+                        scannedBarcode = barcode
+                        showProduct = true
+                    }
+                    .navigationTitle("Scan")
+                    .navigationDestination(isPresented: $showProduct) {
+                        if let barcode = scannedBarcode {
+                            ProductView(barcode: barcode)
+                        }
+                    }
+                }
             }
-
+            Tab("Food", systemImage: "fork.knife") {
+                NavigationStack {
+                    FoodLogView()
+                        .navigationTitle("Food Log")
+                }
+            }
+            Tab("Health", systemImage: "heart.text.square") {
+                NavigationStack {
+                    HealthDashboardView()
+                        .navigationTitle("Health")
+                }
+            }
             Tab("More", systemImage: "ellipsis.circle") {
                 MoreTab()
             }
@@ -27,6 +51,7 @@ private struct MoreTab: View {
     @Environment(AppState.self) private var appState
 
     @State private var showUnpairConfirmation = false
+    @State private var streakData: StreakService.StreakData?
 
     private var syncIsStale: Bool {
         guard let lastSync = appState.syncEngine.lastSyncTime else { return false }
@@ -36,6 +61,24 @@ private struct MoreTab: View {
     var body: some View {
         NavigationStack {
             List {
+                if let streak = streakData {
+                    Section {
+                        StreakBanner(currentStreak: streak.currentStreak, longestStreak: streak.longestStreak)
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                    }
+
+                    if !streak.milestones.isEmpty {
+                        Section("Recent Milestones") {
+                            ForEach(streak.milestones.prefix(3)) { milestone in
+                                MilestoneCard(milestone: milestone)
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowBackground(Color.clear)
+                            }
+                        }
+                    }
+                }
+
                 if let coachName = appState.coachName {
                     Section {
                         LabeledContent("Coach", value: coachName)
@@ -130,6 +173,11 @@ private struct MoreTab: View {
                 }
             } message: {
                 Text("You'll need to sign in again to reconnect.")
+            }
+            .task {
+                if KeychainService.deviceToken != nil {
+                    streakData = try? await StreakService.fetch(using: appState.apiClient)
+                }
             }
         }
     }
