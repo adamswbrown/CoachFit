@@ -10,6 +10,7 @@ import { isAdmin, isAdminOrCoach } from "@/lib/permissions"
 import { Role } from "@/lib/types"
 import { cmToInches, kgToLbs } from "@/lib/utils/unit-conversions"
 import type { AttentionQueueItem } from "@/lib/admin/attention"
+import { ClientComplianceCard } from "@/components/streak/ClientComplianceCard"
 
 interface Client {
   id: string
@@ -729,6 +730,9 @@ export default function ClientOverviewPage() {
                 </div>
               </div>
             </div>
+
+            {/* Compliance & Streak */}
+            <ClientComplianceCard clientId={clientId} />
 
             {/* Updates */}
             <div className="bg-white border border-neutral-200 rounded-lg p-4">
