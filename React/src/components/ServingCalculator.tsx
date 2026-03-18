@@ -6,12 +6,24 @@ import { colors, spacing, fontSize, borderRadius } from '../constants/theme';
 
 interface Props {
   product: Product;
+  onServingChange?: (grams: number) => void;
 }
 
 const PRESETS = [25, 50, 100, 150, 200];
 
-export function ServingCalculator({ product }: Props) {
-  const [inputValue, setInputValue] = useState('');
+export function ServingCalculator({ product, onServingChange }: Props) {
+  const [inputValue, setInputValue] = useState(String(product.servingSizeGrams));
+
+  // Notify parent of initial serving size
+  React.useEffect(() => {
+    onServingChange?.(product.servingSizeGrams);
+  }, []);
+
+  function handleChange(value: string) {
+    setInputValue(value);
+    const grams = parseFloat(value) || 0;
+    if (grams > 0) onServingChange?.(grams);
+  }
 
   const customGrams = parseFloat(inputValue) || 0;
   const result = useMemo(
@@ -30,7 +42,7 @@ export function ServingCalculator({ product }: Props) {
           placeholderTextColor={colors.textSecondary}
           keyboardType="numeric"
           value={inputValue}
-          onChangeText={setInputValue}
+          onChangeText={handleChange}
         />
         <Text style={styles.unitLabel}>g</Text>
       </View>
@@ -43,7 +55,7 @@ export function ServingCalculator({ product }: Props) {
               styles.presetButton,
               customGrams === amount && styles.presetButtonActive,
             ]}
-            onPress={() => setInputValue(String(amount))}
+            onPress={() => handleChange(String(amount))}
           >
             <Text
               style={[

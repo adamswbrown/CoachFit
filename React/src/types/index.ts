@@ -43,6 +43,7 @@ export interface Product {
   fiberPer100g: number;
   sodiumPer100g: number;
   scannedAt: string;
+  source?: 'openfoodfacts' | 'manual';
 }
 
 export interface CustomServing {
@@ -63,4 +64,5 @@ export type RootStackParamList = {
   Product: { barcode: string };
   History: undefined;
   HealthDashboard: undefined;
+  FoodLog: undefined;
 };

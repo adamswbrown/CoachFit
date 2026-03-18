@@ -7,11 +7,13 @@ import type { RootStackParamList } from '../types';
 import { useProductLookup } from '../hooks/useProductLookup';
 import { NutritionCard } from '../components/NutritionCard';
 import { ServingCalculator } from '../components/ServingCalculator';
-import { ProductNotFound } from '../components/ProductNotFound';
+import { ManualProductEntry } from '../components/ManualProductEntry';
 import { writeScannedProduct } from '../services/health';
 import { syncScannedProduct } from '../services/nutritionSync';
+import { logFood } from '../services/foodLog';
 import { useAuth } from '../contexts/AuthContext';
 import { colors, spacing, fontSize, borderRadius } from '../constants/theme';
+import type { Product } from '../types';
 
 type RouteType = RouteProp<RootStackParamList, 'Product'>;
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Product'>;
@@ -20,27 +22,42 @@ export function ProductScreen() {
   const route = useRoute<RouteType>();
   const navigation = useNavigation<Nav>();
   const { barcode } = route.params;
-  const state = useProductLookup(barcode);
+  const lookupState = useProductLookup(barcode);
+  const [manualProduct, setManualProduct] = useState<Product | null>(null);
+  const state = manualProduct ? { status: 'found' as const, product: manualProduct } : lookupState;
   const { auth } = useAuth();
   const [healthLogged, setHealthLogged] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'failed'>('idle');
+  const [servingGrams, setServingGrams] = useState(0);
 
-  async function handleLogToHealth() {
+  async function handleLogFood() {
     if (state.status !== 'found') return;
+    const grams = servingGrams > 0 ? servingGrams : state.product.servingSizeGrams;
+    const cals = Math.round((state.product.caloriesPer100g * grams) / 100);
+
     try {
-      await writeScannedProduct(state.product, state.product.servingSizeGrams);
+      // Log to food diary
+      await logFood(state.product, grams);
+
+      // Write to HealthKit (optional — don't block on failure)
+      try {
+        await writeScannedProduct(state.product, grams);
+      } catch {
+        // HealthKit not connected
+      }
+
       setHealthLogged(true);
 
       // Sync to CoachFit platform if paired
       if (auth.status === 'paired') {
         setSyncStatus('syncing');
-        const result = await syncScannedProduct(state.product, state.product.servingSizeGrams);
+        const result = await syncScannedProduct(state.product, grams);
         setSyncStatus(result.synced ? 'synced' : 'failed');
       }
 
-      Alert.alert('Logged', `${state.product.name} logged to Health (${state.product.caloriesPerServing} kcal)`);
+      Alert.alert('Logged', `${state.product.name} logged (${cals} kcal)`);
     } catch {
-      Alert.alert('Error', 'Could not log to Health. Make sure Health is connected in the Health tab.');
+      Alert.alert('Error', 'Could not log food. Please try again.');
     }
   }
 
@@ -56,9 +73,10 @@ export function ProductScreen() {
 
   if (state.status === 'not_found') {
     return (
-      <ProductNotFound
+      <ManualProductEntry
         barcode={barcode}
-        onScanAgain={() => navigation.navigate('Scanner')}
+        onProductSaved={(product) => setManualProduct(product)}
+        onCancel={() => navigation.navigate('Scanner')}
       />
     );
   }
@@ -80,14 +98,14 @@ export function ProductScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <NutritionCard product={state.product} />
-      <ServingCalculator product={state.product} />
+      <ServingCalculator product={state.product} onServingChange={setServingGrams} />
       <TouchableOpacity
         style={[styles.healthButton, healthLogged && styles.healthButtonLogged]}
-        onPress={handleLogToHealth}
+        onPress={handleLogFood}
         disabled={healthLogged}
       >
         <Text style={styles.healthButtonText}>
-          {healthLogged ? 'Logged to Health' : 'Log to Health'}
+          {healthLogged ? 'Logged' : 'Log Food'}
         </Text>
       </TouchableOpacity>
       {syncStatus !== 'idle' && (

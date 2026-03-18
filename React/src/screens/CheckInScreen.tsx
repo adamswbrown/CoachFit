@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { submitEntry } from '../services/apiClient';
 import { isHealthAvailable, getTodaySummary } from '../services/health';
+import { getDayCalories } from '../services/foodLog';
 import { RatingPicker } from '../components/RatingPicker';
 import { colors, spacing, fontSize, borderRadius } from '../constants/theme';
 import type { DailyHealthSummary } from '../types/health';
@@ -36,6 +37,7 @@ export function CheckInScreen() {
   // HealthKit state
   const [healthData, setHealthData] = useState<DailyHealthSummary | null>(null);
   const [healthAvailable, setHealthAvailable] = useState(false);
+  const [caloriesFromLog, setCaloriesFromLog] = useState(false);
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,20 +49,30 @@ export function CheckInScreen() {
   const caloriesRef = useRef<TextInput>(null);
   const notesRef = useRef<TextInput>(null);
 
-  // Fetch HealthKit data on mount
+  // Fetch HealthKit data and food log totals on mount
   useEffect(() => {
     (async () => {
+      // Pre-populate calories from food log
+      try {
+        const todayCals = await getDayCalories(formatDate(new Date()));
+        if (todayCals > 0) {
+          setCalories(String(todayCals));
+          setCaloriesFromLog(true);
+        }
+      } catch {
+        // No food log data — user will enter manually
+      }
+
+      // Fetch HealthKit data
       try {
         const available = await isHealthAvailable();
         setHealthAvailable(available);
         if (available) {
           const summary = await getTodaySummary();
           setHealthData(summary);
-          // Auto-populate steps from HealthKit
           if (summary.steps != null && summary.steps > 0) {
             setSteps(String(summary.steps));
           }
-          // Auto-populate weight (DailyHealthSummary.weight is in kg, convert to lbs)
           if (summary.weight != null && summary.weight > 0) {
             setWeight(String(Math.round(summary.weight * 2.20462 * 10) / 10));
           }
@@ -145,7 +157,7 @@ export function CheckInScreen() {
             />
           )}
           {submittedData.calories != null && (
-            <SummaryRow label="Calories" value={`${submittedData.calories} kcal`} />
+            <SummaryRow label="Calories consumed today" value={`${submittedData.calories} kcal`} />
           )}
           {submittedData.sleepQuality != null && (
             <SummaryRow label="Sleep Quality" value={`${submittedData.sleepQuality}/10`} />
@@ -231,7 +243,10 @@ export function CheckInScreen() {
 
         {/* Calories */}
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Calories</Text>
+          <View style={styles.labelRow}>
+            <Text style={styles.fieldLabel}>Calories consumed today</Text>
+            {caloriesFromLog && <FoodLogBadge />}
+          </View>
           <TextInput
             ref={caloriesRef}
             style={styles.input}
@@ -302,6 +317,14 @@ function HealthBadge() {
   return (
     <View style={styles.badge}>
       <Text style={styles.badgeText}>Apple Health</Text>
+    </View>
+  );
+}
+
+function FoodLogBadge() {
+  return (
+    <View style={styles.foodLogBadge}>
+      <Text style={styles.foodLogBadgeText}>From food log</Text>
     </View>
   );
 }
@@ -378,6 +401,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
     paddingVertical: spacing.sm,
+  },
+
+  // Food log badge
+  foodLogBadge: {
+    backgroundColor: '#E8EAF6',
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    marginLeft: spacing.sm,
+  },
+  foodLogBadgeText: {
+    fontSize: fontSize.sm,
+    color: '#5C6BC0',
+    fontWeight: '600',
   },
 
   // Health badge

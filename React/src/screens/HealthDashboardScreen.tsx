@@ -53,11 +53,19 @@ export function HealthDashboardScreen() {
         setLoading(false);
         return;
       }
-      setConnectionState('needs_permission');
+      // Try to initialize — if permissions were already granted, this succeeds silently
+      const status = await requestAllHealthPermissions();
+      console.log('[HealthDashboard] auto-init status:', status);
+      if (status === 'granted') {
+        setConnectionState('connected');
+        await loadData();
+      } else {
+        setConnectionState('needs_permission');
+      }
       setLoading(false);
     } catch (e) {
       console.error('[HealthDashboard] checkHealth error:', e);
-      setConnectionState('error');
+      setConnectionState('needs_permission');
       setLoading(false);
     }
   }

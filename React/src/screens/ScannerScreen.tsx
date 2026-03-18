@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,10 +14,19 @@ type Nav = NativeStackNavigationProp<RootStackParamList, 'Scanner'>;
 export function ScannerScreen() {
   const navigation = useNavigation<Nav>();
   const [permission, requestPermission] = useCameraPermissions();
+  const [manualBarcode, setManualBarcode] = useState('');
+  const [showManualInput, setShowManualInput] = useState(false);
 
   const { handleBarCodeScanned } = useBarcodeScan((barcode) => {
     navigation.navigate('Product', { barcode });
   });
+
+  function handleManualSubmit() {
+    const trimmed = manualBarcode.trim();
+    if (trimmed.length > 0) {
+      navigation.navigate('Product', { barcode: trimmed });
+    }
+  }
 
   if (!permission) {
     return (
@@ -49,6 +58,31 @@ export function ScannerScreen() {
         onBarcodeScanned={handleBarCodeScanned}
       />
       <ScanOverlay />
+      {/* Manual barcode input */}
+      <View style={styles.manualSection}>
+        {showManualInput ? (
+          <View style={styles.manualInputRow}>
+            <TextInput
+              style={styles.manualInput}
+              value={manualBarcode}
+              onChangeText={setManualBarcode}
+              placeholder="Enter barcode number"
+              placeholderTextColor="rgba(255,255,255,0.5)"
+              keyboardType="number-pad"
+              returnKeyType="go"
+              onSubmitEditing={handleManualSubmit}
+              autoFocus
+            />
+            <TouchableOpacity style={styles.manualGoButton} onPress={handleManualSubmit}>
+              <Text style={styles.manualGoText}>Go</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity onPress={() => setShowManualInput(true)}>
+            <Text style={styles.manualLink}>Type barcode manually</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
@@ -84,5 +118,41 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     fontSize: fontSize.lg,
     fontWeight: '600',
+  },
+  manualSection: {
+    position: 'absolute',
+    bottom: 40,
+    left: spacing.lg,
+    right: spacing.lg,
+    alignItems: 'center',
+  },
+  manualLink: {
+    color: colors.textLight,
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  manualInputRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+  },
+  manualInput: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    fontSize: fontSize.lg,
+    color: colors.textLight,
+  },
+  manualGoButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    justifyContent: 'center',
+  },
+  manualGoText: {
+    color: colors.textLight,
+    fontSize: fontSize.lg,
+    fontWeight: '700',
   },
 });

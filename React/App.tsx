@@ -12,6 +12,7 @@ import { ProductScreen } from './src/screens/ProductScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { HealthDashboardScreen } from './src/screens/HealthDashboardScreen';
 import { CheckInScreen } from './src/screens/CheckInScreen';
+import { FoodLogScreen } from './src/screens/FoodLogScreen';
 import { colors } from './src/constants/theme';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -70,6 +71,11 @@ function AppNavigator() {
               name="History"
               component={HistoryScreen}
               options={{ title: 'Scan History' }}
+            />
+            <Stack.Screen
+              name="FoodLog"
+              component={FoodLogScreen}
+              options={{ title: 'Food Log' }}
             />
             <Stack.Screen
               name="HealthDashboard"

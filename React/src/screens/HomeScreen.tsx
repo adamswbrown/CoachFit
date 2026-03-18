@@ -9,8 +9,9 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList, Product } from '../types';
-import { getHistory } from '../services/database';
+import type { RootStackParamList } from '../types';
+import { getDayLog } from '../services/foodLog';
+import type { FoodLogEntry } from '../services/foodLog';
 import { useAuth } from '../contexts/AuthContext';
 import { colors, spacing, fontSize, borderRadius } from '../constants/theme';
 
@@ -19,7 +20,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 export function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const { auth, unpair } = useAuth();
-  const [recentScans, setRecentScans] = useState<Product[]>([]);
+  const [recentFood, setRecentFood] = useState<FoodLogEntry[]>([]);
 
   function handleDisconnect() {
     Alert.alert(
@@ -34,7 +35,8 @@ export function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      getHistory(5).then(setRecentScans).catch(() => {});
+      const today = new Date().toISOString().split('T')[0];
+      getDayLog(today).then((entries) => setRecentFood(entries.slice(0, 5))).catch(() => {});
     }, [])
   );
 
@@ -79,6 +81,13 @@ export function HomeScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={styles.foodLogButton}
+          onPress={() => navigation.navigate('FoodLog')}
+        >
+          <Text style={styles.foodLogButtonText}>Food Log</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={styles.healthButton}
           onPress={() => navigation.navigate('HealthDashboard')}
         >
@@ -86,36 +95,33 @@ export function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {recentScans.length > 0 && (
+      {recentFood.length > 0 && (
         <View style={styles.recentSection}>
           <View style={styles.recentHeader}>
-            <Text style={styles.recentTitle}>Recent Scans</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('History')}>
+            <Text style={styles.recentTitle}>Today's Food</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('FoodLog')}>
               <Text style={styles.viewAll}>View All</Text>
             </TouchableOpacity>
           </View>
 
           <FlatList
-            data={recentScans}
-            keyExtractor={(item) => item.barcode}
+            data={recentFood}
+            keyExtractor={(item) => String(item.id)}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.recentItem}
-                onPress={() => navigation.navigate('Product', { barcode: item.barcode })}
-              >
+              <View style={styles.recentItem}>
                 <View style={styles.recentInfo}>
                   <Text style={styles.recentName} numberOfLines={1}>
                     {item.name}
                   </Text>
-                  <Text style={styles.recentBrand}>{item.brand}</Text>
+                  <Text style={styles.recentBrand}>{item.brand} · {item.servingGrams}g</Text>
                 </View>
                 <View style={styles.recentCalories}>
                   <Text style={styles.recentCalValue}>
-                    {item.caloriesPerServing}
+                    {item.calories}
                   </Text>
-                  <Text style={styles.recentCalUnit}>kcal/srv</Text>
+                  <Text style={styles.recentCalUnit}>kcal</Text>
                 </View>
-              </TouchableOpacity>
+              </View>
             )}
           />
         </View>
@@ -201,6 +207,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
+  },
+  foodLogButton: {
+    backgroundColor: '#5C6BC0',
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  foodLogButtonText: {
+    color: colors.textLight,
+    fontSize: fontSize.lg,
+    fontWeight: '600',
   },
   healthButton: {
     backgroundColor: '#E91E63',

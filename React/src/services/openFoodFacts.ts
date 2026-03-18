@@ -83,6 +83,7 @@ function normalizeProduct(code: string, data: OpenFoodFactsResponse): Product | 
     fiberPer100g: p.nutriments.fiber_100g ?? 0,
     sodiumPer100g: p.nutriments.sodium_100g ?? 0,
     scannedAt: new Date().toISOString(),
+    source: 'openfoodfacts',
   };
 }
 
