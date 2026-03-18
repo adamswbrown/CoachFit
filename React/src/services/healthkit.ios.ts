@@ -1,8 +1,4 @@
-import AppleHealthKit, {
-  HealthKitPermissions,
-  HealthInputOptions,
-  HealthValue,
-} from 'react-native-health';
+import { NativeModules } from 'react-native';
 import type {
   HealthService,
   HealthPermissions,
@@ -32,36 +28,80 @@ import type {
   DailyHealthSummary,
 } from '../types/health';
 
+// Access the native module directly — bypasses react-native-health's broken ESM/CJS export
+const AppleHealthKit = NativeModules.AppleHealthKit as Record<string, any>;
+
+type HealthInputOptions = Record<string, unknown>;
+type HealthValue = { value: number; startDate: string; endDate: string };
+
+if (!AppleHealthKit) {
+  console.error(
+    '[HealthKit] NativeModules.AppleHealthKit is undefined. Available modules:',
+    Object.keys(NativeModules).filter(k => /health|apple|kit/i.test(k))
+  );
+}
+
+// Permission string constants (from react-native-health/src/constants)
+const Permissions = {
+  Steps: 'Steps',
+  ActiveEnergyBurned: 'ActiveEnergyBurned',
+  BasalEnergyBurned: 'BasalEnergyBurned',
+  DistanceWalkingRunning: 'DistanceWalkingRunning',
+  FlightsClimbed: 'FlightsClimbed',
+  Workout: 'Workout',
+  HeartRate: 'HeartRate',
+  RestingHeartRate: 'RestingHeartRate',
+  BloodPressureSystolic: 'BloodPressureSystolic',
+  BloodPressureDiastolic: 'BloodPressureDiastolic',
+  BloodGlucose: 'BloodGlucose',
+  OxygenSaturation: 'OxygenSaturation',
+  RespiratoryRate: 'RespiratoryRate',
+  BodyTemperature: 'BodyTemperature',
+  Weight: 'Weight',
+  Height: 'Height',
+  BodyFatPercentage: 'BodyFatPercentage',
+  LeanBodyMass: 'LeanBodyMass',
+  BasalMetabolicRate: 'BasalMetabolicRate',
+  WaistCircumference: 'WaistCircumference',
+  SleepAnalysis: 'SleepAnalysis',
+  Water: 'Water',
+};
+
+const Units = {
+  gram: 'gram',
+  inch: 'inch',
+};
+
 // Map our data types to Apple HealthKit permissions
-const PERMISSIONS: HealthKitPermissions = {
+const PERMISSIONS = {
   permissions: {
     read: [
-      AppleHealthKit.Constants.Permissions.Steps,
-      AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
-      AppleHealthKit.Constants.Permissions.BasalEnergyBurned,
-      AppleHealthKit.Constants.Permissions.DistanceWalkingRunning,
-      AppleHealthKit.Constants.Permissions.FlightsClimbed,
-      AppleHealthKit.Constants.Permissions.Workout,
-      AppleHealthKit.Constants.Permissions.HeartRate,
-      AppleHealthKit.Constants.Permissions.RestingHeartRate,
-      AppleHealthKit.Constants.Permissions.BloodPressureSystolic,
-      AppleHealthKit.Constants.Permissions.BloodPressureDiastolic,
-      AppleHealthKit.Constants.Permissions.BloodGlucose,
-      AppleHealthKit.Constants.Permissions.OxygenSaturation,
-      AppleHealthKit.Constants.Permissions.RespiratoryRate,
-      AppleHealthKit.Constants.Permissions.BodyTemperature,
-      AppleHealthKit.Constants.Permissions.Weight,
-      AppleHealthKit.Constants.Permissions.Height,
-      AppleHealthKit.Constants.Permissions.BodyFatPercentage,
-      AppleHealthKit.Constants.Permissions.LeanBodyMass,
-      AppleHealthKit.Constants.Permissions.BasalMetabolicRate,
-      AppleHealthKit.Constants.Permissions.WaistCircumference,
-      AppleHealthKit.Constants.Permissions.SleepAnalysis,
-      AppleHealthKit.Constants.Permissions.Water,
+      Permissions.Steps,
+      Permissions.ActiveEnergyBurned,
+      Permissions.BasalEnergyBurned,
+      Permissions.DistanceWalkingRunning,
+      Permissions.FlightsClimbed,
+      Permissions.Workout,
+      Permissions.HeartRate,
+      Permissions.RestingHeartRate,
+      Permissions.BloodPressureSystolic,
+      Permissions.BloodPressureDiastolic,
+      Permissions.BloodGlucose,
+      Permissions.OxygenSaturation,
+      Permissions.RespiratoryRate,
+      Permissions.BodyTemperature,
+      Permissions.Weight,
+      Permissions.Height,
+      Permissions.BodyFatPercentage,
+      Permissions.LeanBodyMass,
+      Permissions.BasalMetabolicRate,
+      Permissions.WaistCircumference,
+      Permissions.SleepAnalysis,
+      Permissions.Water,
     ],
     write: [
-      AppleHealthKit.Constants.Permissions.Weight,
-      AppleHealthKit.Constants.Permissions.Water,
+      Permissions.Weight,
+      Permissions.Water,
     ],
   },
 };
@@ -89,19 +129,35 @@ function opts(startDate: Date, endDate: Date): HealthInputOptions {
 // ── iOS HealthKit Service Implementation ────────────────────────────
 export const iosHealthService: HealthService = {
   async isAvailable(): Promise<boolean> {
+    console.log('[HealthKit] AppleHealthKit module:', typeof AppleHealthKit);
+    console.log('[HealthKit] isAvailable fn:', typeof AppleHealthKit?.isAvailable);
+    console.log('[HealthKit] Constants:', typeof AppleHealthKit?.Constants);
     return new Promise((resolve) => {
-      AppleHealthKit.isAvailable((err: Object, available: boolean) => {
-        resolve(!err && available);
-      });
+      try {
+        AppleHealthKit.isAvailable((err: Object, available: boolean) => {
+          console.log('[HealthKit] isAvailable result:', { err, available });
+          resolve(!err && available);
+        });
+      } catch (e) {
+        console.error('[HealthKit] isAvailable threw:', e);
+        resolve(false);
+      }
     });
   },
 
   async requestPermissions(_permissions: HealthPermissions): Promise<HealthPermissionStatus> {
+    console.log('[HealthKit] Calling initHealthKit...');
     return new Promise((resolve) => {
-      AppleHealthKit.initHealthKit(PERMISSIONS, (err: string) => {
-        if (err) resolve('denied');
-        else resolve('granted');
-      });
+      try {
+        AppleHealthKit.initHealthKit(PERMISSIONS, (err: string) => {
+          console.log('[HealthKit] initHealthKit result:', { err });
+          if (err) resolve('denied');
+          else resolve('granted');
+        });
+      } catch (e) {
+        console.error('[HealthKit] initHealthKit threw:', e);
+        resolve('denied');
+      }
     });
   },
 
@@ -278,7 +334,7 @@ export const iosHealthService: HealthService = {
   async getWeight(startDate: Date, endDate: Date): Promise<WeightData[]> {
     const results = await promisify<HealthValue[]>(
       AppleHealthKit.getWeightSamples,
-      { ...opts(startDate, endDate), unit: AppleHealthKit.Constants.Units.gram }
+      { ...opts(startDate, endDate), unit: Units.gram }
     );
     return results.map((r) => ({
       date: dateStr(r.startDate),
@@ -289,7 +345,7 @@ export const iosHealthService: HealthService = {
   async getHeight(startDate: Date, endDate: Date): Promise<HeightData[]> {
     const results = await promisify<HealthValue[]>(
       AppleHealthKit.getHeightSamples,
-      { ...opts(startDate, endDate), unit: AppleHealthKit.Constants.Units.inch }
+      { ...opts(startDate, endDate), unit: Units.inch }
     );
     return results.map((r) => ({
       date: dateStr(r.startDate),
