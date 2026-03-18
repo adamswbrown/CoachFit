@@ -70,6 +70,14 @@
         {
           "cameraPermission": "Allow CoachFit to use the camera to scan barcodes."
         }
+      ],
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "CoachFit reads your health data to display activity, nutrition, and body metrics.",
+          "NSHealthUpdateUsageDescription": "CoachFit writes nutrition entries from scanned foods to your Health data.",
+          "background": true
+        }
       ]
     ]
   }

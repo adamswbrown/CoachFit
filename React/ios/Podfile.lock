@@ -79,6 +79,29 @@ PODS:
   - hermes-engine (0.14.1):
     - hermes-engine/Pre-built (= 0.14.1)
   - hermes-engine/Pre-built (0.14.1)
+  - NitroModules (0.35.2):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-callinvoker
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RCTDeprecation (0.83.2)
   - RCTRequired (0.83.2)
   - RCTSwiftUI (0.83.2)
@@ -1925,8 +1948,30 @@ PODS:
     - React-utils (= 0.83.2)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.83.2)
-  - RNAppleHealthKit (1.7.0):
-    - React
+  - ReactNativeHealthkit (13.3.1):
+    - hermes-engine
+    - NitroModules
+    - RCTRequired
+    - RCTTypeSafety
+    - React-callinvoker
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNScreens (4.23.0):
     - hermes-engine
     - RCTRequired
@@ -1997,6 +2042,7 @@ DEPENDENCIES:
   - ExpoSQLite (from `../node_modules/expo-sqlite/ios`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
+  - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
   - RCTRequired (from `../node_modules/react-native/Libraries/Required`)
   - RCTSwiftUI (from `../node_modules/react-native/ReactApple/RCTSwiftUI`)
@@ -2069,7 +2115,7 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios/ReactCodegen`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
-  - RNAppleHealthKit (from `../node_modules/react-native-health`)
+  - "ReactNativeHealthkit (from `../node_modules/@kingstinct/react-native-healthkit`)"
   - RNScreens (from `../node_modules/react-native-screens`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -2109,6 +2155,8 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-v0.14.1
+  NitroModules:
+    :path: "../node_modules/react-native-nitro-modules"
   RCTDeprecation:
     :path: "../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation"
   RCTRequired:
@@ -2251,8 +2299,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   ReactNativeDependencies:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
-  RNAppleHealthKit:
-    :path: "../node_modules/react-native-health"
+  ReactNativeHealthkit:
+    :path: "../node_modules/@kingstinct/react-native-healthkit"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   Yoga:
@@ -2274,6 +2322,7 @@ SPEC CHECKSUMS:
   ExpoSQLite: 77506d3d056c57118280d1e2a2d76cc06e4926b3
   FBLazyVector: 32e9ed0301d0fcbc1b2b341dd7fcbf291f51eb83
   hermes-engine: f6efff0ec9fcc1c611d4cfd94c82a90c9af4080e
+  NitroModules: 76063cb7bc1a21cf46d11b25abfcf1759bf0be47
   RCTDeprecation: a522c536d2c7be8f518dd834883cf6dce1d4f545
   RCTRequired: 44337def23abb244c025e9e7ab58f9cd3d63ec7d
   RCTSwiftUI: b2f0c2f2761631b8cd605767536cbb1cbf8d020f
@@ -2345,7 +2394,7 @@ SPEC CHECKSUMS:
   ReactCodegen: e67cb698a2107da1da9efa55174861d724666a3e
   ReactCommon: 8868269b67561136a7970be188b40738135af077
   ReactNativeDependencies: 0231b497f0dbc5c7b0d3c6ac70db5767899f264e
-  RNAppleHealthKit: 86ef7ab70f762b802f5c5289372de360cca701f9
+  ReactNativeHealthkit: b06f23893b9ccc7de3a12e74bc2509f9fd902542
   RNScreens: 14243fa0d9842ffa7f8bb2d00b6c3cfd3ca817e8
   Yoga: dd994d8c85dca5cc9b10f5df8c01f9ef1d0da191
   ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5

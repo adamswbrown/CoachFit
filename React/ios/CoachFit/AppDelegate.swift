@@ -21,12 +21,7 @@ class AppDelegate: ExpoAppDelegate {
     reactNativeFactory = factory
 
 #if os(iOS) || os(tvOS)
-    if let windowScene = UIApplication.shared.connectedScenes
-      .compactMap({ $0 as? UIWindowScene }).first {
-      window = UIWindow(windowScene: windowScene)
-    } else {
-      window = UIWindow(frame: UIScreen.main.bounds)
-    }
+    window = UIWindow(frame: UIScreen.main.bounds)
     factory.startReactNative(
       withModuleName: "main",
       in: window,

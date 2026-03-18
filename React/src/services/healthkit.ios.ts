@@ -1,4 +1,18 @@
-import { NativeModules } from 'react-native';
+import {
+  isHealthDataAvailable,
+  requestAuthorization,
+  queryQuantitySamples,
+  queryCategorySamples,
+  queryWorkoutSamples,
+  saveQuantitySample,
+  WorkoutActivityType,
+} from '@kingstinct/react-native-healthkit';
+import type {
+  QuantityTypeIdentifier,
+  CategoryTypeIdentifier,
+  ObjectTypeIdentifier,
+  SampleTypeIdentifierWriteable,
+} from '@kingstinct/react-native-healthkit';
 import type {
   HealthService,
   HealthPermissions,
@@ -28,174 +42,166 @@ import type {
   DailyHealthSummary,
 } from '../types/health';
 
-// Access the native module directly — bypasses react-native-health's broken ESM/CJS export
-const AppleHealthKit = NativeModules.AppleHealthKit as Record<string, any>;
-
-type HealthInputOptions = Record<string, unknown>;
-type HealthValue = { value: number; startDate: string; endDate: string };
-
-if (!AppleHealthKit) {
-  console.error(
-    '[HealthKit] NativeModules.AppleHealthKit is undefined. Available modules:',
-    Object.keys(NativeModules).filter(k => /health|apple|kit/i.test(k))
-  );
-}
-
-// Permission string constants (from react-native-health/src/constants)
-const Permissions = {
-  Steps: 'Steps',
-  ActiveEnergyBurned: 'ActiveEnergyBurned',
-  BasalEnergyBurned: 'BasalEnergyBurned',
-  DistanceWalkingRunning: 'DistanceWalkingRunning',
-  FlightsClimbed: 'FlightsClimbed',
-  Workout: 'Workout',
-  HeartRate: 'HeartRate',
-  RestingHeartRate: 'RestingHeartRate',
-  BloodPressureSystolic: 'BloodPressureSystolic',
-  BloodPressureDiastolic: 'BloodPressureDiastolic',
-  BloodGlucose: 'BloodGlucose',
-  OxygenSaturation: 'OxygenSaturation',
-  RespiratoryRate: 'RespiratoryRate',
-  BodyTemperature: 'BodyTemperature',
-  Weight: 'Weight',
-  Height: 'Height',
-  BodyFatPercentage: 'BodyFatPercentage',
-  LeanBodyMass: 'LeanBodyMass',
-  BasalMetabolicRate: 'BasalMetabolicRate',
-  WaistCircumference: 'WaistCircumference',
-  SleepAnalysis: 'SleepAnalysis',
-  Water: 'Water',
-};
-
-const Units = {
-  gram: 'gram',
-  inch: 'inch',
-};
-
-// Map our data types to Apple HealthKit permissions
-const PERMISSIONS = {
-  permissions: {
-    read: [
-      Permissions.Steps,
-      Permissions.ActiveEnergyBurned,
-      Permissions.BasalEnergyBurned,
-      Permissions.DistanceWalkingRunning,
-      Permissions.FlightsClimbed,
-      Permissions.Workout,
-      Permissions.HeartRate,
-      Permissions.RestingHeartRate,
-      Permissions.BloodPressureSystolic,
-      Permissions.BloodPressureDiastolic,
-      Permissions.BloodGlucose,
-      Permissions.OxygenSaturation,
-      Permissions.RespiratoryRate,
-      Permissions.BodyTemperature,
-      Permissions.Weight,
-      Permissions.Height,
-      Permissions.BodyFatPercentage,
-      Permissions.LeanBodyMass,
-      Permissions.BasalMetabolicRate,
-      Permissions.WaistCircumference,
-      Permissions.SleepAnalysis,
-      Permissions.Water,
-    ],
-    write: [
-      Permissions.Weight,
-      Permissions.Water,
-    ],
-  },
-};
-
-function promisify<T>(
-  fn: (options: HealthInputOptions, callback: (err: string, results: T) => void) => void,
-  options: HealthInputOptions
-): Promise<T> {
-  return new Promise((resolve, reject) => {
-    fn.call(AppleHealthKit, options, (err: string, results: T) => {
-      if (err) reject(new Error(err));
-      else resolve(results);
-    });
-  });
-}
-
 function dateStr(d: Date | string): string {
   return typeof d === 'string' ? d.split('T')[0] : d.toISOString().split('T')[0];
 }
 
-function opts(startDate: Date, endDate: Date): HealthInputOptions {
-  return { startDate: startDate.toISOString(), endDate: endDate.toISOString() };
+function isoStr(d: Date | string): string {
+  return typeof d === 'string' ? d : d.toISOString();
+}
+
+// HealthKit quantity type identifier strings
+const QTI = {
+  stepCount: 'HKQuantityTypeIdentifierStepCount' as QuantityTypeIdentifier,
+  activeEnergyBurned: 'HKQuantityTypeIdentifierActiveEnergyBurned' as QuantityTypeIdentifier,
+  basalEnergyBurned: 'HKQuantityTypeIdentifierBasalEnergyBurned' as QuantityTypeIdentifier,
+  distanceWalkingRunning: 'HKQuantityTypeIdentifierDistanceWalkingRunning' as QuantityTypeIdentifier,
+  flightsClimbed: 'HKQuantityTypeIdentifierFlightsClimbed' as QuantityTypeIdentifier,
+  heartRate: 'HKQuantityTypeIdentifierHeartRate' as QuantityTypeIdentifier,
+  restingHeartRate: 'HKQuantityTypeIdentifierRestingHeartRate' as QuantityTypeIdentifier,
+  bloodPressureSystolic: 'HKQuantityTypeIdentifierBloodPressureSystolic' as QuantityTypeIdentifier,
+  bloodPressureDiastolic: 'HKQuantityTypeIdentifierBloodPressureDiastolic' as QuantityTypeIdentifier,
+  bloodGlucose: 'HKQuantityTypeIdentifierBloodGlucose' as QuantityTypeIdentifier,
+  oxygenSaturation: 'HKQuantityTypeIdentifierOxygenSaturation' as QuantityTypeIdentifier,
+  respiratoryRate: 'HKQuantityTypeIdentifierRespiratoryRate' as QuantityTypeIdentifier,
+  bodyTemperature: 'HKQuantityTypeIdentifierBodyTemperature' as QuantityTypeIdentifier,
+  bodyMass: 'HKQuantityTypeIdentifierBodyMass' as QuantityTypeIdentifier,
+  height: 'HKQuantityTypeIdentifierHeight' as QuantityTypeIdentifier,
+  bodyFatPercentage: 'HKQuantityTypeIdentifierBodyFatPercentage' as QuantityTypeIdentifier,
+  leanBodyMass: 'HKQuantityTypeIdentifierLeanBodyMass' as QuantityTypeIdentifier,
+  basalBodyTemperature: 'HKQuantityTypeIdentifierBasalBodyTemperature' as QuantityTypeIdentifier,
+  waistCircumference: 'HKQuantityTypeIdentifierWaistCircumference' as QuantityTypeIdentifier,
+  dietaryWater: 'HKQuantityTypeIdentifierDietaryWater' as QuantityTypeIdentifier,
+  dietaryEnergyConsumed: 'HKQuantityTypeIdentifierDietaryEnergyConsumed' as QuantityTypeIdentifier,
+  dietaryProtein: 'HKQuantityTypeIdentifierDietaryProtein' as QuantityTypeIdentifier,
+  dietaryFatTotal: 'HKQuantityTypeIdentifierDietaryFatTotal' as QuantityTypeIdentifier,
+  dietaryCarbohydrates: 'HKQuantityTypeIdentifierDietaryCarbohydrates' as QuantityTypeIdentifier,
+  dietarySugar: 'HKQuantityTypeIdentifierDietarySugar' as QuantityTypeIdentifier,
+  dietaryFiber: 'HKQuantityTypeIdentifierDietaryFiber' as QuantityTypeIdentifier,
+  dietaryFatSaturated: 'HKQuantityTypeIdentifierDietaryFatSaturated' as QuantityTypeIdentifier,
+  dietaryCholesterol: 'HKQuantityTypeIdentifierDietaryCholesterol' as QuantityTypeIdentifier,
+  dietarySodium: 'HKQuantityTypeIdentifierDietarySodium' as QuantityTypeIdentifier,
+  dietaryPotassium: 'HKQuantityTypeIdentifierDietaryPotassium' as QuantityTypeIdentifier,
+  dietaryCalcium: 'HKQuantityTypeIdentifierDietaryCalcium' as QuantityTypeIdentifier,
+  dietaryIron: 'HKQuantityTypeIdentifierDietaryIron' as QuantityTypeIdentifier,
+  dietaryVitaminA: 'HKQuantityTypeIdentifierDietaryVitaminA' as QuantityTypeIdentifier,
+  dietaryVitaminC: 'HKQuantityTypeIdentifierDietaryVitaminC' as QuantityTypeIdentifier,
+} as const;
+
+const CTI = {
+  sleepAnalysis: 'HKCategoryTypeIdentifierSleepAnalysis' as CategoryTypeIdentifier,
+} as const;
+
+// All HealthKit types we read
+const READ_IDENTIFIERS: readonly ObjectTypeIdentifier[] = [
+  QTI.stepCount,
+  QTI.activeEnergyBurned,
+  QTI.basalEnergyBurned,
+  QTI.distanceWalkingRunning,
+  QTI.flightsClimbed,
+  QTI.heartRate,
+  QTI.restingHeartRate,
+  QTI.bloodPressureSystolic,
+  QTI.bloodPressureDiastolic,
+  QTI.bloodGlucose,
+  QTI.oxygenSaturation,
+  QTI.respiratoryRate,
+  QTI.bodyTemperature,
+  QTI.bodyMass,
+  QTI.height,
+  QTI.bodyFatPercentage,
+  QTI.leanBodyMass,
+  QTI.basalBodyTemperature,
+  QTI.dietaryWater,
+  QTI.dietaryEnergyConsumed,
+  CTI.sleepAnalysis,
+];
+
+// Types we write
+const WRITE_IDENTIFIERS: readonly SampleTypeIdentifierWriteable[] = [
+  QTI.bodyMass as SampleTypeIdentifierWriteable,
+  QTI.dietaryWater as SampleTypeIdentifierWriteable,
+  QTI.dietaryEnergyConsumed as SampleTypeIdentifierWriteable,
+  QTI.dietaryProtein as SampleTypeIdentifierWriteable,
+  QTI.dietaryFatTotal as SampleTypeIdentifierWriteable,
+  QTI.dietaryCarbohydrates as SampleTypeIdentifierWriteable,
+];
+
+/** Build the filter/limit options for queryQuantitySamples */
+function quantityQueryOptions(startDate: Date, endDate: Date, unit?: string) {
+  return {
+    filter: { date: { startDate, endDate } },
+    limit: 0,
+    ...(unit ? { unit } : {}),
+  };
+}
+
+/** Build the filter/limit options for queryCategorySamples */
+function categoryQueryOptions(startDate: Date, endDate: Date) {
+  return {
+    filter: { date: { startDate, endDate } },
+    limit: 0,
+  };
+}
+
+/** Map WorkoutActivityType enum value to a human-readable string */
+function workoutTypeName(activityType: WorkoutActivityType): string {
+  const name = WorkoutActivityType[activityType];
+  return name || 'Unknown';
 }
 
 // ── iOS HealthKit Service Implementation ────────────────────────────
 export const iosHealthService: HealthService = {
   async isAvailable(): Promise<boolean> {
-    console.log('[HealthKit] AppleHealthKit module:', typeof AppleHealthKit);
-    console.log('[HealthKit] isAvailable fn:', typeof AppleHealthKit?.isAvailable);
-    console.log('[HealthKit] Constants:', typeof AppleHealthKit?.Constants);
-    return new Promise((resolve) => {
-      try {
-        AppleHealthKit.isAvailable((err: Object, available: boolean) => {
-          console.log('[HealthKit] isAvailable result:', { err, available });
-          resolve(!err && available);
-        });
-      } catch (e) {
-        console.error('[HealthKit] isAvailable threw:', e);
-        resolve(false);
-      }
-    });
+    try {
+      return isHealthDataAvailable();
+    } catch {
+      return false;
+    }
   },
 
   async requestPermissions(_permissions: HealthPermissions): Promise<HealthPermissionStatus> {
-    console.log('[HealthKit] Calling initHealthKit...');
-    return new Promise((resolve) => {
-      try {
-        AppleHealthKit.initHealthKit(PERMISSIONS, (err: string) => {
-          console.log('[HealthKit] initHealthKit result:', { err });
-          if (err) resolve('denied');
-          else resolve('granted');
-        });
-      } catch (e) {
-        console.error('[HealthKit] initHealthKit threw:', e);
-        resolve('denied');
-      }
-    });
+    try {
+      await requestAuthorization({
+        toRead: READ_IDENTIFIERS,
+        toShare: WRITE_IDENTIFIERS,
+      });
+      return 'granted';
+    } catch {
+      return 'denied';
+    }
   },
 
   // ── Activity ────────────────────────────────────────────────────
   async getSteps(startDate: Date, endDate: Date): Promise<StepsData[]> {
-    const results = await promisify<Array<{ value: number; startDate: string }>>(
-      AppleHealthKit.getDailyStepCountSamples,
-      opts(startDate, endDate)
-    );
-    // Aggregate by date — HealthKit may return multiple samples per day (e.g. iPhone + Apple Watch)
+    const samples = await queryQuantitySamples(QTI.stepCount, quantityQueryOptions(startDate, endDate));
     const byDate = new Map<string, number>();
-    for (const r of results) {
-      const d = dateStr(r.startDate);
-      byDate.set(d, (byDate.get(d) || 0) + r.value);
+    for (const s of samples) {
+      const d = dateStr(s.startDate);
+      byDate.set(d, (byDate.get(d) || 0) + s.quantity);
     }
     return Array.from(byDate.entries()).map(([date, value]) => ({ date, value: Math.round(value) }));
   },
 
   async getCaloriesBurned(startDate: Date, endDate: Date): Promise<CaloriesBurnedData[]> {
     const [active, basal] = await Promise.all([
-      promisify<HealthValue[]>(AppleHealthKit.getActiveEnergyBurned, opts(startDate, endDate)),
-      promisify<HealthValue[]>(AppleHealthKit.getBasalEnergyBurned, opts(startDate, endDate)),
+      queryQuantitySamples(QTI.activeEnergyBurned, quantityQueryOptions(startDate, endDate)),
+      queryQuantitySamples(QTI.basalEnergyBurned, quantityQueryOptions(startDate, endDate)),
     ]);
 
-    // Group by date
     const byDate = new Map<string, { active: number; basal: number }>();
 
     for (const a of active) {
       const d = dateStr(a.startDate);
       const entry = byDate.get(d) || { active: 0, basal: 0 };
-      entry.active += a.value;
+      entry.active += a.quantity;
       byDate.set(d, entry);
     }
 
     for (const b of basal) {
       const d = dateStr(b.startDate);
       const entry = byDate.get(d) || { active: 0, basal: 0 };
-      entry.basal += b.value;
+      entry.basal += b.quantity;
       byDate.set(d, entry);
     }
 
@@ -208,59 +214,43 @@ export const iosHealthService: HealthService = {
   },
 
   async getDistance(startDate: Date, endDate: Date): Promise<DistanceData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getDailyDistanceWalkingRunningSamples,
-      opts(startDate, endDate)
-    );
-    return results.map((r) => ({
-      date: dateStr(r.startDate),
-      distanceMeters: Math.round(r.value * 1000), // km to m
+    const samples = await queryQuantitySamples(QTI.distanceWalkingRunning, quantityQueryOptions(startDate, endDate, 'm'));
+    const byDate = new Map<string, number>();
+    for (const s of samples) {
+      const d = dateStr(s.startDate);
+      byDate.set(d, (byDate.get(d) || 0) + s.quantity);
+    }
+    return Array.from(byDate.entries()).map(([date, meters]) => ({
+      date,
+      distanceMeters: Math.round(meters),
     }));
   },
 
   async getExerciseSessions(startDate: Date, endDate: Date): Promise<ExerciseSession[]> {
-    const results = await promisify<
-      Array<{
-        activityName: string;
-        start: string;
-        end: string;
-        calories: number;
-        distance: number;
-      }>
-    >(AppleHealthKit.getSamples, {
-      ...opts(startDate, endDate),
-      type: 'Workout',
+    const workouts = await queryWorkoutSamples({
+      filter: { date: { startDate, endDate } },
+      limit: 0,
     });
 
-    return results.map((w) => {
-      const start = new Date(w.start);
-      const end = new Date(w.end);
-      return {
-        startDate: w.start,
-        endDate: w.end,
-        type: w.activityName || 'Unknown',
-        durationMinutes: Math.round((end.getTime() - start.getTime()) / 60000),
-        caloriesBurned: w.calories ? Math.round(w.calories) : undefined,
-        distanceMeters: w.distance ? Math.round(w.distance * 1000) : undefined,
-      };
-    });
+    return workouts.map((w) => ({
+      startDate: isoStr(w.startDate),
+      endDate: isoStr(w.endDate),
+      type: workoutTypeName(w.workoutActivityType),
+      durationMinutes: Math.round(w.duration.quantity / 60),
+      caloriesBurned: w.totalEnergyBurned ? Math.round(w.totalEnergyBurned.quantity) : undefined,
+      distanceMeters: w.totalDistance ? Math.round(w.totalDistance.quantity * 1000) : undefined,
+    }));
   },
 
   async getFloorsClimbed(startDate: Date, endDate: Date): Promise<FloorsClimbedData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getFlightsClimbed,
-      opts(startDate, endDate)
-    );
-    return results.map((r) => ({ date: dateStr(r.startDate), floors: r.value }));
+    const samples = await queryQuantitySamples(QTI.flightsClimbed, quantityQueryOptions(startDate, endDate));
+    return samples.map((s) => ({ date: dateStr(s.startDate), floors: s.quantity }));
   },
 
   // ── Heart & Vitals ──────────────────────────────────────────────
   async getHeartRate(startDate: Date, endDate: Date): Promise<HeartRateData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getHeartRateSamples,
-      opts(startDate, endDate)
-    );
-    return results.map((r) => ({ date: r.startDate, bpm: Math.round(r.value) }));
+    const samples = await queryQuantitySamples(QTI.heartRate, quantityQueryOptions(startDate, endDate));
+    return samples.map((s) => ({ date: isoStr(s.startDate), bpm: Math.round(s.quantity) }));
   },
 
   async getHeartRateSummary(startDate: Date, endDate: Date): Promise<HeartRateSummary[]> {
@@ -283,186 +273,147 @@ export const iosHealthService: HealthService = {
   },
 
   async getRestingHeartRate(startDate: Date, endDate: Date): Promise<HeartRateData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getRestingHeartRate,
-      opts(startDate, endDate)
-    );
-    return results.map((r) => ({ date: r.startDate, bpm: Math.round(r.value) }));
+    const samples = await queryQuantitySamples(QTI.restingHeartRate, quantityQueryOptions(startDate, endDate));
+    return samples.map((s) => ({ date: isoStr(s.startDate), bpm: Math.round(s.quantity) }));
   },
 
   async getBloodPressure(startDate: Date, endDate: Date): Promise<BloodPressureData[]> {
-    const results = await promisify<
-      Array<{ bloodPressureSystolicValue: number; bloodPressureDiastolicValue: number; startDate: string }>
-    >(AppleHealthKit.getBloodPressureSamples, opts(startDate, endDate));
-    return results.map((r) => ({
-      date: r.startDate,
-      systolic: r.bloodPressureSystolicValue,
-      diastolic: r.bloodPressureDiastolicValue,
+    const [systolic, diastolic] = await Promise.all([
+      queryQuantitySamples(QTI.bloodPressureSystolic, quantityQueryOptions(startDate, endDate)),
+      queryQuantitySamples(QTI.bloodPressureDiastolic, quantityQueryOptions(startDate, endDate)),
+    ]);
+
+    return systolic.map((s, i) => ({
+      date: isoStr(s.startDate),
+      systolic: Math.round(s.quantity),
+      diastolic: diastolic[i] ? Math.round(diastolic[i].quantity) : 0,
     }));
   },
 
   async getBloodGlucose(startDate: Date, endDate: Date): Promise<BloodGlucoseData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getBloodGlucoseSamples,
-      opts(startDate, endDate)
-    );
-    return results.map((r) => ({ date: r.startDate, mgPerDL: r.value }));
+    const samples = await queryQuantitySamples(QTI.bloodGlucose, quantityQueryOptions(startDate, endDate));
+    return samples.map((s) => ({ date: isoStr(s.startDate), mgPerDL: s.quantity }));
   },
 
   async getOxygenSaturation(startDate: Date, endDate: Date): Promise<OxygenSaturationData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getOxygenSaturationSamples,
-      opts(startDate, endDate)
-    );
-    return results.map((r) => ({
-      date: r.startDate,
-      percentage: r.value * 100, // HealthKit returns 0-1
+    const samples = await queryQuantitySamples(QTI.oxygenSaturation, quantityQueryOptions(startDate, endDate));
+    return samples.map((s) => ({
+      date: isoStr(s.startDate),
+      percentage: s.quantity * 100,
     }));
   },
 
   async getRespiratoryRate(startDate: Date, endDate: Date): Promise<RespiratoryRateData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getRespiratoryRateSamples,
-      opts(startDate, endDate)
-    );
-    return results.map((r) => ({ date: r.startDate, breathsPerMinute: r.value }));
+    const samples = await queryQuantitySamples(QTI.respiratoryRate, quantityQueryOptions(startDate, endDate));
+    return samples.map((s) => ({ date: isoStr(s.startDate), breathsPerMinute: s.quantity }));
   },
 
   async getBodyTemperature(startDate: Date, endDate: Date): Promise<BodyTemperatureData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getBodyTemperatureSamples,
-      opts(startDate, endDate)
-    );
-    return results.map((r) => ({ date: r.startDate, celsius: r.value }));
+    const samples = await queryQuantitySamples(QTI.bodyTemperature, quantityQueryOptions(startDate, endDate));
+    return samples.map((s) => ({ date: isoStr(s.startDate), celsius: s.quantity }));
   },
 
   // ── Body Measurements ───────────────────────────────────────────
   async getWeight(startDate: Date, endDate: Date): Promise<WeightData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getWeightSamples,
-      { ...opts(startDate, endDate), unit: Units.gram }
-    );
-    return results.map((r) => ({
-      date: dateStr(r.startDate),
-      kilograms: Math.round(r.value / 100) / 10, // grams → kg, 1 decimal
+    const samples = await queryQuantitySamples(QTI.bodyMass, quantityQueryOptions(startDate, endDate, 'kg'));
+    return samples.map((s) => ({
+      date: dateStr(s.startDate),
+      kilograms: Math.round(s.quantity * 10) / 10,
     }));
   },
 
   async getHeight(startDate: Date, endDate: Date): Promise<HeightData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getHeightSamples,
-      { ...opts(startDate, endDate), unit: Units.inch }
-    );
-    return results.map((r) => ({
-      date: dateStr(r.startDate),
-      centimeters: Math.round(r.value * 2.54 * 10) / 10,
+    const samples = await queryQuantitySamples(QTI.height, quantityQueryOptions(startDate, endDate, 'cm'));
+    return samples.map((s) => ({
+      date: dateStr(s.startDate),
+      centimeters: Math.round(s.quantity * 10) / 10,
     }));
   },
 
   async getBodyFat(startDate: Date, endDate: Date): Promise<BodyFatData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getBodyFatPercentageSamples,
-      opts(startDate, endDate)
-    );
-    return results.map((r) => ({
-      date: dateStr(r.startDate),
-      percentage: Math.round(r.value * 1000) / 10,
+    const samples = await queryQuantitySamples(QTI.bodyFatPercentage, quantityQueryOptions(startDate, endDate));
+    return samples.map((s) => ({
+      date: dateStr(s.startDate),
+      percentage: Math.round(s.quantity * 1000) / 10,
     }));
   },
 
   async getLeanBodyMass(startDate: Date, endDate: Date): Promise<LeanBodyMassData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getLeanBodyMassSamples,
-      opts(startDate, endDate)
-    );
-    return results.map((r) => ({
-      date: dateStr(r.startDate),
-      kilograms: Math.round(r.value * 10) / 10,
+    const samples = await queryQuantitySamples(QTI.leanBodyMass, quantityQueryOptions(startDate, endDate, 'kg'));
+    return samples.map((s) => ({
+      date: dateStr(s.startDate),
+      kilograms: Math.round(s.quantity * 10) / 10,
     }));
   },
 
   async getBodyWaterMass(_startDate: Date, _endDate: Date): Promise<BodyWaterMassData[]> {
-    // Not directly available in Apple HealthKit
     return [];
   },
 
   async getBasalMetabolicRate(startDate: Date, endDate: Date): Promise<BasalMetabolicRateData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getBasalMetabolicRate,
-      opts(startDate, endDate)
-    );
-    return results.map((r) => ({
-      date: dateStr(r.startDate),
-      kcalPerDay: Math.round(r.value),
+    const samples = await queryQuantitySamples(QTI.basalEnergyBurned, quantityQueryOptions(startDate, endDate, 'kcal'));
+    const byDate = new Map<string, number>();
+    for (const s of samples) {
+      const d = dateStr(s.startDate);
+      byDate.set(d, (byDate.get(d) || 0) + s.quantity);
+    }
+    return Array.from(byDate.entries()).map(([date, kcal]) => ({
+      date,
+      kcalPerDay: Math.round(kcal),
     }));
   },
 
   async getWaistCircumference(startDate: Date, endDate: Date): Promise<WaistCircumferenceData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getWaistCircumferenceSamples,
-      opts(startDate, endDate)
-    );
-    return results.map((r) => ({
-      date: dateStr(r.startDate),
-      centimeters: Math.round(r.value * 10) / 10,
+    const samples = await queryQuantitySamples(QTI.waistCircumference, quantityQueryOptions(startDate, endDate, 'cm'));
+    return samples.map((s) => ({
+      date: dateStr(s.startDate),
+      centimeters: Math.round(s.quantity * 10) / 10,
     }));
   },
 
   // ── Nutrition ───────────────────────────────────────────────────
   async getNutrition(startDate: Date, endDate: Date): Promise<NutritionEntry[]> {
-    // HealthKit stores nutrition as individual nutrient samples.
-    // We read calories and combine with available macro data.
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getSamples,
-      { ...opts(startDate, endDate), type: 'DietaryEnergyConsumed' }
-    );
-    return results.map((r) => ({
-      date: r.startDate,
-      calories: Math.round(r.value),
+    const samples = await queryQuantitySamples(QTI.dietaryEnergyConsumed, quantityQueryOptions(startDate, endDate, 'kcal'));
+    return samples.map((s) => ({
+      date: isoStr(s.startDate),
+      calories: Math.round(s.quantity),
     }));
   },
 
   async writeNutrition(entry: NutritionEntry): Promise<void> {
-    // Write calorie sample to HealthKit
-    return new Promise((resolve, reject) => {
-      AppleHealthKit.saveFood(
-        {
-          foodName: entry.foodName || 'Scanned Food',
-          calories: entry.calories,
-          protein: entry.protein || 0,
-          totalFat: entry.totalFat || 0,
-          carbohydrates: entry.carbohydrates || 0,
-          satFat: entry.saturatedFat || 0,
-          cholesterol: entry.cholesterol || 0,
-          fiber: entry.fiber || 0,
-          sugar: entry.sugar || 0,
-          sodium: entry.sodium || 0,
-          vitaminA: entry.vitaminA || 0,
-          vitaminC: entry.vitaminC || 0,
-          calcium: entry.calcium || 0,
-          iron: entry.iron || 0,
-          potassium: entry.potassium || 0,
-          date: entry.date,
-        },
-        (err: string, result: boolean) => {
-          if (err) reject(new Error(err));
-          else resolve();
-        }
-      );
-    });
+    const date = new Date(entry.date);
+    const nutritionSamples: Array<{ identifier: QuantityTypeIdentifier; unit: string; value: number }> = [
+      { identifier: QTI.dietaryEnergyConsumed, unit: 'kcal', value: entry.calories },
+    ];
+
+    if (entry.protein) nutritionSamples.push({ identifier: QTI.dietaryProtein, unit: 'g', value: entry.protein });
+    if (entry.totalFat) nutritionSamples.push({ identifier: QTI.dietaryFatTotal, unit: 'g', value: entry.totalFat });
+    if (entry.carbohydrates) nutritionSamples.push({ identifier: QTI.dietaryCarbohydrates, unit: 'g', value: entry.carbohydrates });
+    if (entry.sugar) nutritionSamples.push({ identifier: QTI.dietarySugar, unit: 'g', value: entry.sugar });
+    if (entry.fiber) nutritionSamples.push({ identifier: QTI.dietaryFiber, unit: 'g', value: entry.fiber });
+    if (entry.saturatedFat) nutritionSamples.push({ identifier: QTI.dietaryFatSaturated, unit: 'g', value: entry.saturatedFat });
+    if (entry.cholesterol) nutritionSamples.push({ identifier: QTI.dietaryCholesterol, unit: 'mg', value: entry.cholesterol });
+    if (entry.sodium) nutritionSamples.push({ identifier: QTI.dietarySodium, unit: 'mg', value: entry.sodium });
+    if (entry.potassium) nutritionSamples.push({ identifier: QTI.dietaryPotassium, unit: 'mg', value: entry.potassium });
+    if (entry.calcium) nutritionSamples.push({ identifier: QTI.dietaryCalcium, unit: 'mg', value: entry.calcium });
+    if (entry.iron) nutritionSamples.push({ identifier: QTI.dietaryIron, unit: 'mg', value: entry.iron });
+    if (entry.vitaminA) nutritionSamples.push({ identifier: QTI.dietaryVitaminA, unit: 'mcg', value: entry.vitaminA });
+    if (entry.vitaminC) nutritionSamples.push({ identifier: QTI.dietaryVitaminC, unit: 'mg', value: entry.vitaminC });
+
+    await Promise.all(
+      nutritionSamples.map((n) =>
+        saveQuantitySample(n.identifier as any, n.unit, n.value, date, date)
+      )
+    );
   },
 
   async getHydration(startDate: Date, endDate: Date): Promise<HydrationData[]> {
-    const results = await promisify<HealthValue[]>(
-      AppleHealthKit.getWaterSamples,
-      opts(startDate, endDate)
-    );
+    const samples = await queryQuantitySamples(QTI.dietaryWater, quantityQueryOptions(startDate, endDate, 'mL'));
 
-    // Group by date
     const byDate = new Map<string, number>();
-    for (const r of results) {
-      const d = dateStr(r.startDate);
-      byDate.set(d, (byDate.get(d) || 0) + r.value);
+    for (const s of samples) {
+      const d = dateStr(s.startDate);
+      byDate.set(d, (byDate.get(d) || 0) + s.quantity);
     }
 
     return Array.from(byDate.entries()).map(([date, ml]) => ({
@@ -472,48 +423,34 @@ export const iosHealthService: HealthService = {
   },
 
   async writeHydration(entry: HydrationData): Promise<void> {
-    return new Promise((resolve, reject) => {
-      AppleHealthKit.saveWater(
-        { value: entry.liters * 1000, date: entry.date }, // liters → ml
-        (err: string) => {
-          if (err) reject(new Error(err));
-          else resolve();
-        }
-      );
-    });
+    const date = new Date(entry.date);
+    await saveQuantitySample(QTI.dietaryWater as any, 'mL', entry.liters * 1000, date, date);
   },
 
   async writeWeight(entry: WeightData): Promise<void> {
-    return new Promise((resolve, reject) => {
-      AppleHealthKit.saveWeight(
-        { value: entry.kilograms * 2.20462, date: entry.date }, // kg → lbs (HealthKit default)
-        (err: Object, result: any) => {
-          if (err) reject(new Error(String(err)));
-          else resolve();
-        }
-      );
-    });
+    const date = new Date(entry.date);
+    await saveQuantitySample(QTI.bodyMass as any, 'kg', entry.kilograms, date, date);
   },
 
   // ── Sleep ───────────────────────────────────────────────────────
   async getSleep(startDate: Date, endDate: Date): Promise<SleepSession[]> {
-    const results = await promisify<
-      Array<{ value: string; startDate: string; endDate: string }>
-    >(AppleHealthKit.getSleepSamples, opts(startDate, endDate));
+    const samples = await queryCategorySamples(CTI.sleepAnalysis, categoryQueryOptions(startDate, endDate));
 
-    // Group by night (cluster samples within a few hours)
     const sessions: SleepSession[] = [];
     let currentSession: SleepSession | null = null;
 
-    for (const r of results) {
-      const start = new Date(r.startDate);
-      const end = new Date(r.endDate);
+    for (const s of samples) {
+      const start = new Date(s.startDate);
+      const end = new Date(s.endDate);
       const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
 
-      const stage = r.value === 'INBED' ? 'awake' as const :
-                    r.value === 'ASLEEP' ? 'light' as const :
-                    r.value === 'DEEP' ? 'deep' as const :
-                    r.value === 'REM' ? 'rem' as const : 'unknown' as const;
+      // CategoryValueSleepAnalysis: inBed=0, asleepUnspecified=1, awake=2, asleepCore=3, asleepDeep=4, asleepREM=5
+      const stage = s.value === 2 ? 'awake' as const :
+                    s.value === 1 ? 'light' as const :
+                    s.value === 3 ? 'light' as const :
+                    s.value === 4 ? 'deep' as const :
+                    s.value === 5 ? 'rem' as const :
+                    'unknown' as const;
 
       if (
         !currentSession ||
@@ -521,18 +458,18 @@ export const iosHealthService: HealthService = {
       ) {
         if (currentSession) sessions.push(currentSession);
         currentSession = {
-          startDate: r.startDate,
-          endDate: r.endDate,
+          startDate: isoStr(s.startDate),
+          endDate: isoStr(s.endDate),
           totalMinutes: durationMinutes,
-          stages: [{ stage, startDate: r.startDate, endDate: r.endDate, durationMinutes }],
+          stages: [{ stage, startDate: isoStr(s.startDate), endDate: isoStr(s.endDate), durationMinutes }],
         };
       } else {
-        currentSession.endDate = r.endDate;
+        currentSession.endDate = isoStr(s.endDate);
         currentSession.totalMinutes += durationMinutes;
         currentSession.stages?.push({
           stage,
-          startDate: r.startDate,
-          endDate: r.endDate,
+          startDate: isoStr(s.startDate),
+          endDate: isoStr(s.endDate),
           durationMinutes,
         });
       }
