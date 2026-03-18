@@ -1,45 +1,52 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies
+node_modules/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# Next.js
+Web/.next/
+Web/out/
+Web/build/
 
-# testing
-/coverage
+# Testing
+Web/coverage/
+Web/test-results/
+Web/playwright-report/
+Web/blob-report/
+Web/playwright/.cache/
+Web/playwright/.auth/
 
-# next.js
-/.next/
-/out/
+# Environment
+.env
+.env*.local
 
-# production
-/build
-
-# misc
+# Misc
 .DS_Store
 *.pem
+.pnp
+.pnp.js
 
-# debug
+# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
-.env
-
-# vercel
+# Vercel
 .vercel
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
 
-# Playwright
-node_modules/
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-/playwright/.auth/
+# React Native / Expo
+React/ios/Pods/
+React/ios/build/
+React/android/app/build/
+React/android/build/
+React/.expo/
+
+# Xcode
+*.xcuserstate
+xcuserdata/
+
+# CLAUDE.md
 CLAUDE.md
+Web/CLAUDE.md
