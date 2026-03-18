@@ -47,6 +47,7 @@ export function HealthDashboardScreen() {
   async function checkHealth() {
     try {
       const available = await isHealthAvailable();
+      console.log('[HealthDashboard] isAvailable:', available);
       if (!available) {
         setConnectionState('unavailable');
         setLoading(false);
@@ -54,7 +55,8 @@ export function HealthDashboardScreen() {
       }
       setConnectionState('needs_permission');
       setLoading(false);
-    } catch {
+    } catch (e) {
+      console.error('[HealthDashboard] checkHealth error:', e);
       setConnectionState('error');
       setLoading(false);
     }
@@ -64,15 +66,17 @@ export function HealthDashboardScreen() {
     setLoading(true);
     try {
       const status: HealthPermissionStatus = await requestAllHealthPermissions();
+      console.log('[HealthDashboard] permission status:', status);
       if (status === 'granted') {
         setConnectionState('connected');
         await loadData();
       } else {
-        Alert.alert('Permission Denied', 'Health data access was not granted.');
+        Alert.alert('Permission Denied', 'Health data access was not granted. Please enable in Settings > Health > CoachFit.');
         setConnectionState('needs_permission');
       }
     } catch (e) {
-      Alert.alert('Error', 'Failed to connect to health services.');
+      console.error('[HealthDashboard] connect error:', e);
+      Alert.alert('Error', `Failed to connect to health services: ${e instanceof Error ? e.message : String(e)}`);
       setConnectionState('error');
     }
     setLoading(false);

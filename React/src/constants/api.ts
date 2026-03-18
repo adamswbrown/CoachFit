@@ -1,7 +1,5 @@
 // CoachFit platform API
-export const COACHFIT_API_BASE_URL = __DEV__
-  ? 'http://localhost:3000'
-  : 'https://gcgyms.com';
+export const COACHFIT_API_BASE_URL = 'https://gcgyms.com';
 
 export const OPEN_FOOD_FACTS_BASE_URL = 'https://world.openfoodfacts.net/api/v2/product';
 
