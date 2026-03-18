@@ -6,11 +6,12 @@
 
 ## Overview
 
-The CoachFit mobile app is a companion to the web platform at gcgyms.com. It provides three core capabilities:
+The CoachFit mobile app is a companion to the web platform at gcgyms.com. It provides four core capabilities:
 
-1. **Daily Check-In** -- manual health logging (weight, steps, calories, sleep quality, perceived stress, notes) with HealthKit auto-population
-2. **Barcode Nutrition Scanner** -- scan food products, look up nutrition data from OpenFoodFacts, log to HealthKit and sync to the platform
-3. **Health Data Sync** -- read HealthKit data (workouts, steps, sleep, body metrics) and sync to the CoachFit platform
+1. **Daily Check-In** -- manual health logging (weight, steps, calories, sleep quality, perceived stress, notes) with HealthKit auto-population and food log calorie pre-fill
+2. **Food Logging** -- scan barcodes or enter products manually, track serving sizes, view daily/weekly food diary with calorie totals
+3. **Barcode Nutrition Scanner** -- scan food products, look up nutrition data from OpenFoodFacts, add products manually when not found
+4. **Health Data Sync** -- read HealthKit data (workouts, steps, sleep, body metrics) and sync to the CoachFit platform
 
 All data syncs to the production backend at `https://gcgyms.com` via device token authentication.
 
@@ -51,11 +52,13 @@ All data syncs to the production backend at `https://gcgyms.com` via device toke
 ### Home Screen
 - Main hub after pairing
 - Shows connection status (client name, coach name, green dot)
-- Three action buttons:
+- Five action buttons:
   - **Daily Check-In** (accent orange) -- navigates to check-in form
   - **Scan Barcode** (green) -- opens barcode scanner
+  - **Food Log** (indigo) -- opens food diary
   - **Health Data** (pink) -- opens health dashboard
-- Displays 5 most recent barcode scans from local database
+- Displays **"Today's Food"** -- last 5 food log entries for today with calories
+- "View All" links to full Food Log screen
 - Disconnect button to unpair device
 
 ### Check-In Screen
@@ -63,30 +66,53 @@ All data syncs to the production backend at `https://gcgyms.com` via device toke
 - **Fields**:
   - Weight (lbs) -- auto-populated from HealthKit if available, shown read-only with "Apple Health" badge
   - Steps -- auto-populated from HealthKit if available
-  - Calories -- always manual entry
+  - Calories consumed today -- **auto-populated from food log** with "From food log" badge, editable to override
   - Sleep Quality -- 1-10 rating picker (tap to select, tap again to deselect)
   - Perceived Stress -- 1-10 rating picker
   - Notes -- multiline free text
 - Submit button disabled until at least one field is filled
 - **Submits to**: `POST /api/ingest/entry` via `submitEntry()`
-- **Success view**: read-only summary with "Apple Health" badges for auto-populated fields, "Edit Entry" button to return to form
-- **Error handling**: displays error message, submit button shows loading spinner
+- **Success view**: read-only summary with source badges, "Edit Entry" button to return to form
 
 ### Scanner Screen
 - Uses `expo-camera` CameraView for real-time barcode scanning
 - Supported barcode types: EAN-13, EAN-8, UPC-A, UPC-E
 - 2-second debounce between duplicate scans
-- On scan: navigates to Product screen with barcode
+- **Manual barcode input**: "Type barcode manually" link at bottom opens a number input with "Go" button for barcodes that won't scan
+- On scan or manual entry: navigates to Product screen with barcode
 
 ### Product Screen
 - Displays full nutrition information for scanned product
 - **Lookup flow**: SQLite cache check -> OpenFoodFacts API -> save to cache
 - Shows: product name, brand, image, calories (per serving/per 100g/per package), macros
-- **Serving Calculator**: custom gram input with preset buttons (25g, 50g, 100g, 150g, 200g), real-time calorie/macro calculation
-- **"Log to Health" button**:
-  - Writes nutrition entry to HealthKit/Health Connect
-  - If paired: syncs accumulated daily nutrition totals to platform
-  - Shows sync status indicator (syncing/synced/failed)
+- **Serving Calculator**: custom gram input (defaults to label serving size) with preset buttons (25g, 50g, 100g, 150g, 200g), real-time calorie/macro calculation. Reports actual serving grams to parent for logging.
+- **"Log Food" button**:
+  1. Logs to food diary (food_log SQLite table) with the actual serving size from the calculator
+  2. Writes nutrition entry to HealthKit/Health Connect (optional, non-blocking)
+  3. If paired: syncs accumulated daily nutrition totals to platform
+  4. Shows sync status indicator (syncing/synced/failed)
+- **Product not found**: shows manual product entry form instead of dead end
+
+### Manual Product Entry (barcode fallback)
+- Shown when a barcode is not found in OpenFoodFacts
+- Displays the scanned barcode number
+- **Fields**:
+  - Product Name (required)
+  - Brand (optional, defaults to "Unknown")
+  - Serving Size in grams (required)
+  - **Per 100g / Per Serving toggle** -- user chooses how to enter values; per-serving values are converted to per-100g for storage
+  - Calories (required)
+  - Protein, Fat, Carbs (optional, default 0)
+- On save: creates a `Product` with `source: 'manual'`, saves to SQLite products table keyed by the scanned barcode
+- **Re-scanning works**: the manual product is found in cache on subsequent scans
+- After save: displays the product with the same NutritionCard and ServingCalculator experience as API-found products
+
+### Food Log Screen
+- **Today/Week toggle** at top
+- **Today view**: daily calorie total banner + list of all food entries with name, brand, serving size, time, and calories
+- **Week view**: grouped by day with section headers showing date, total calories, and item count. Expandable to see individual items.
+- **Long-press to delete** any entry with confirmation dialog
+- Entries show: product name, brand, serving grams, time logged, calories
 
 ### History Screen
 - Lists all scanned products (up to 100) ordered by scan date
@@ -95,6 +121,7 @@ All data syncs to the production backend at `https://gcgyms.com` via device toke
 - "Clear History" button with confirmation
 
 ### Health Dashboard Screen
+- **Auto-reconnect**: if HealthKit permissions were previously granted, connects automatically without requiring user to tap "Connect" again
 - **Permission flow**: checks HealthKit availability, requests permissions
 - **Today's Summary** (grid tiles): steps, active calories, total burned, distance, exercise minutes, weight, body fat %, BMR, sleep hours, water, net calories
 - **Recent Workouts** (7 days): type, duration, calories, distance, date
@@ -104,11 +131,48 @@ All data syncs to the production backend at `https://gcgyms.com` via device toke
 
 ---
 
+## Food Logging Flow
+
+The food log is the central tracking mechanism for nutrition. It records individual food entries with exact serving sizes and calories.
+
+### How Food Gets Logged
+
+```
+Scan barcode (camera or manual entry)
+  -> ProductScreen: lookup product (cache -> OpenFoodFacts -> manual entry)
+  -> User adjusts serving size in ServingCalculator
+  -> User taps "Log Food"
+    -> logFood(product, servingGrams) writes to food_log SQLite table
+    -> writeScannedProduct() writes to HealthKit (optional, non-blocking)
+    -> syncScannedProduct() syncs daily totals to platform (if paired)
+```
+
+### How the Check-In Uses the Food Log
+
+```
+CheckInScreen mounts
+  -> getDayCalories(today) queries food_log for today's total
+  -> If total > 0: pre-fills "Calories consumed today" field
+  -> Shows "From food log" badge
+  -> User can override the value before submitting
+```
+
+### Food Log Entry
+
+Each food log entry records:
+- Date (YYYY-MM-DD)
+- Product barcode, name, brand
+- Serving size in grams (from ServingCalculator)
+- Calculated calories, protein, fat, carbs for that serving
+- Timestamp when logged
+
+---
+
 ## Barcode Scanning & Nutrition Data
 
 ### Data Source: OpenFoodFacts
 
-All barcode nutrition data comes from the **OpenFoodFacts** open database.
+Barcode nutrition data comes from the **OpenFoodFacts** open database, with **manual entry as fallback**.
 
 - **API**: `https://world.openfoodfacts.net/api/v2/product/{barcode}`
 - **Fields requested**: `product_name`, `brands`, `image_url`, `serving_size`, `serving_quantity`, `product_quantity`, `nutriments`
@@ -120,30 +184,22 @@ All barcode nutrition data comes from the **OpenFoodFacts** open database.
 ### Lookup Pipeline
 
 ```
-Barcode scanned
-  -> useBarcodeScan (2s debounce)
+Barcode scanned (camera) or entered (manual input)
+  -> useBarcodeScan (2s debounce, camera only)
   -> Navigate to ProductScreen
   -> useProductLookup hook
     -> Check SQLite cache (getCachedProduct)
-    -> If cached: return product, update scanned_at
+    -> If cached: return product (includes manual entries from previous scans)
     -> If not cached:
       -> GET OpenFoodFacts API
       -> normalizeProduct (parse serving sizes, calculate per-serving values)
-      -> saveProduct to SQLite cache
-  -> Display NutritionCard
+      -> saveProduct to SQLite cache with source: 'openfoodfacts'
+    -> If not found in API:
+      -> Show ManualProductEntry form
+      -> User enters nutrition from label
+      -> saveProduct to SQLite cache with source: 'manual'
+  -> Display NutritionCard + ServingCalculator
 ```
-
-### Nutrition Logging Flow
-
-```
-User taps "Log to Health"
-  -> writeScannedProduct() writes to HealthKit/Health Connect
-  -> If paired to coach:
-    -> addScannedNutrition() accumulates daily totals in SQLite
-    -> submitEntry() sends accumulated totals to POST /api/ingest/entry
-```
-
-The daily accumulator uses `INSERT ... ON CONFLICT(date) DO UPDATE` to maintain running totals per day. Each scan adds to the day's totals rather than replacing them.
 
 ### Product Data Model
 
@@ -166,6 +222,7 @@ interface Product {
   fiberPer100g: number;
   sodiumPer100g: number;
   scannedAt: string;
+  source?: 'openfoodfacts' | 'manual';
 }
 ```
 
@@ -209,13 +266,17 @@ syncHealthData()
   5. Return SyncResult with counts
 ```
 
-### Check-In HealthKit Auto-Population
+### HealthKit Auto-Reconnect
 
-On the Check-In screen, the app calls `getTodaySummary()` which reads:
-- **Steps**: today's step count (auto-fills Steps field)
-- **Weight**: most recent weight in kg, converted to lbs (auto-fills Weight field)
+The Health Dashboard automatically re-initializes HealthKit on each visit. If permissions were previously granted, it goes straight to the connected state and loads data -- no need to tap "Connect" again.
 
-When HealthKit data is available for a field, the manual input is hidden and replaced with a read-only display with an "Apple Health" badge.
+### Check-In Auto-Population
+
+On the Check-In screen:
+- **From HealthKit**: Steps (today's count), Weight (recent, converted kg to lbs) -- shown with "Apple Health" badge
+- **From Food Log**: Calories consumed today (sum of all food_log entries for today) -- shown with "From food log" badge
+
+All auto-populated fields are editable -- the user can override any value before submitting.
 
 ---
 
@@ -226,7 +287,7 @@ All requests to `https://gcgyms.com` with `X-Pairing-Token` header (except `/api
 | Endpoint | Method | Trigger | Payload |
 |----------|--------|---------|---------|
 | `/api/pair` | POST | Pairing screen | `{code: string}` |
-| `/api/ingest/entry` | POST | Check-in submit, nutrition log | `IngestEntryPayload` |
+| `/api/ingest/entry` | POST | Check-in submit, food log sync | `IngestEntryPayload` |
 | `/api/ingest/workouts` | POST | Health sync | `IngestWorkoutsPayload` |
 | `/api/ingest/steps` | POST | Health sync | `IngestStepsPayload` |
 | `/api/ingest/sleep` | POST | Health sync | `IngestSleepPayload` |
@@ -263,18 +324,36 @@ All requests to `https://gcgyms.com` with `X-Pairing-Token` header (except `/api
 
 ### SQLite Database (`coachfit.db`)
 
-**products** -- Barcode scan cache
+**products** -- Barcode product cache (includes both OpenFoodFacts and manual entries)
 ```sql
 CREATE TABLE products (
   barcode TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   brand TEXT NOT NULL,
-  data TEXT NOT NULL,     -- full Product JSON
+  data TEXT NOT NULL,     -- full Product JSON (includes source field)
   scanned_at TEXT NOT NULL
 );
 ```
 
-**daily_nutrition** -- Accumulated daily nutrition from barcode scans
+**food_log** -- Individual food entries (the food diary)
+```sql
+CREATE TABLE food_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT NOT NULL,            -- YYYY-MM-DD
+  barcode TEXT NOT NULL,
+  name TEXT NOT NULL,
+  brand TEXT NOT NULL,
+  serving_grams REAL NOT NULL,
+  calories REAL NOT NULL,
+  protein REAL NOT NULL DEFAULT 0,
+  fat REAL NOT NULL DEFAULT 0,
+  carbs REAL NOT NULL DEFAULT 0,
+  logged_at TEXT NOT NULL        -- ISO 8601 timestamp
+);
+CREATE INDEX idx_food_log_date ON food_log(date);
+```
+
+**daily_nutrition** -- Accumulated daily nutrition totals (for platform sync)
 ```sql
 CREATE TABLE daily_nutrition (
   date TEXT PRIMARY KEY,  -- YYYY-MM-DD
@@ -322,20 +401,23 @@ React/
   src/
     screens/
       PairingScreen.tsx            -- Device pairing
-      HomeScreen.tsx               -- Main hub
+      HomeScreen.tsx               -- Main hub with today's food
       CheckInScreen.tsx            -- Daily check-in form
-      ScannerScreen.tsx            -- Barcode camera
-      ProductScreen.tsx            -- Nutrition display + log
+      ScannerScreen.tsx            -- Barcode camera + manual barcode input
+      ProductScreen.tsx            -- Nutrition display + log food
+      FoodLogScreen.tsx            -- Food diary (today/week view)
       HistoryScreen.tsx            -- Scan history
       HealthDashboardScreen.tsx    -- Health data + sync
     components/
       RatingPicker.tsx             -- 1-10 toggle button component
       NutritionCard.tsx            -- Product nutrition display
-      ServingCalculator.tsx        -- Custom serving input
+      ServingCalculator.tsx        -- Custom serving input (reports grams to parent)
+      ManualProductEntry.tsx       -- Manual product entry form (barcode fallback)
       ScanOverlay.tsx              -- Camera UI overlay
-      ProductNotFound.tsx          -- Error state
+      ProductNotFound.tsx          -- Legacy error state (replaced by ManualProductEntry)
     services/
       apiClient.ts                 -- HTTP layer (auth, offline queue)
+      foodLog.ts                   -- Food diary (logFood, getDayLog, getWeekTotals, getDayCalories)
       health.ts                    -- Platform-agnostic health abstraction
       healthkit.ios.ts             -- Apple HealthKit implementation
       healthkit.android.ts         -- Google Health Connect implementation
@@ -355,7 +437,7 @@ React/
     contexts/
       AuthContext.tsx               -- Pairing state management
     types/
-      index.ts                     -- Product, navigation types
+      index.ts                     -- Product (with source field), navigation types
       api.ts                       -- API request/response types
       health.ts                    -- Health data types, HealthService interface
     constants/
@@ -396,7 +478,7 @@ npx expo run:ios
 
 ## Relationship to iOS Native App
 
-The React Native app replaces the iOS Swift/SwiftUI app at `/iOS/`. Both apps provide the same core features:
+The React Native app replaces the iOS Swift/SwiftUI app at `/iOS/`. It provides all the same features plus additional capabilities:
 
 | Feature | iOS Native | React Native |
 |---------|-----------|--------------|
@@ -405,7 +487,11 @@ The React Native app replaces the iOS Swift/SwiftUI app at `/iOS/`. Both apps pr
 | HealthKit Auto-Population | Yes | Yes |
 | HealthKit Sync | Yes | Yes |
 | Barcode Scanner | No | Yes |
-| Nutrition Logging | No | Yes (OpenFoodFacts) |
+| Manual Product Entry | No | Yes (barcode fallback) |
+| Manual Barcode Input | No | Yes (type barcode number) |
+| Food Log / Diary | No | Yes (today + week view) |
+| Nutrition Logging | No | Yes (OpenFoodFacts + manual) |
+| Calorie Pre-Fill at Check-In | No | Yes (from food log) |
 | Offline Queue | No | Yes |
 | Android Support | No | Yes (Health Connect) |
 
