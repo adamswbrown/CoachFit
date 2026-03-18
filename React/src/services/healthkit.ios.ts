@@ -167,7 +167,13 @@ export const iosHealthService: HealthService = {
       AppleHealthKit.getDailyStepCountSamples,
       opts(startDate, endDate)
     );
-    return results.map((r) => ({ date: dateStr(r.startDate), value: r.value }));
+    // Aggregate by date — HealthKit may return multiple samples per day (e.g. iPhone + Apple Watch)
+    const byDate = new Map<string, number>();
+    for (const r of results) {
+      const d = dateStr(r.startDate);
+      byDate.set(d, (byDate.get(d) || 0) + r.value);
+    }
+    return Array.from(byDate.entries()).map(([date, value]) => ({ date, value: Math.round(value) }));
   },
 
   async getCaloriesBurned(startDate: Date, endDate: Date): Promise<CaloriesBurnedData[]> {
@@ -556,7 +562,9 @@ export const iosHealthService: HealthService = {
         this.getExerciseSessions(startOfDay, endOfDay),
       ]);
 
-    const stepsVal = steps.status === 'fulfilled' && steps.value[0]?.value;
+    const stepsVal = steps.status === 'fulfilled' && steps.value.length > 0
+      ? steps.value.reduce((sum, s) => sum + s.value, 0)
+      : undefined;
     const calsVal = calories.status === 'fulfilled' && calories.value[0];
     const distVal = distance.status === 'fulfilled' && distance.value[0]?.distanceMeters;
     const weightVal = weight.status === 'fulfilled' && weight.value[0]?.kilograms;
@@ -570,7 +578,7 @@ export const iosHealthService: HealthService = {
 
     return {
       date: dateStr(date),
-      steps: stepsVal || undefined,
+      steps: stepsVal,
       activeCalories: calsVal ? calsVal.activeCalories : undefined,
       basalCalories: calsVal ? calsVal.basalCalories : undefined,
       totalCaloriesBurned: calsVal ? calsVal.totalCalories : undefined,

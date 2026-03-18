@@ -161,10 +161,17 @@ export class AttentionScoreCalculator {
       }
     }
 
-    if (daysSinceLastEntry !== null && daysSinceLastEntry >= Math.max(1, frequencyDays) && daysSinceLastEntry < 14) {
-      score = Math.max(score, 30)
-      reasons.push(`No entry in the last ${Math.max(1, frequencyDays)} day${frequencyDays === 1 ? "" : "s"}`)
-      suggestedActions.push("Check in with client")
+    // 1-day alert: AMBER if missed yesterday, RED if missed 2+ days
+    if (daysSinceLastEntry !== null && daysSinceLastEntry >= 1 && daysSinceLastEntry < 14) {
+      if (daysSinceLastEntry >= 2) {
+        score = Math.max(score, 60) // RED
+        reasons.push(`No check-in for ${daysSinceLastEntry} days`)
+        suggestedActions.push("Urgent: contact client — missed multiple days")
+      } else {
+        score = Math.max(score, 30) // AMBER
+        reasons.push("Missed yesterday's check-in")
+        suggestedActions.push("Send encouragement to client")
+      }
       metadata.daysSinceLastEntry = daysSinceLastEntry
     }
 

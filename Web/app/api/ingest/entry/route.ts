@@ -19,6 +19,7 @@ import {
   createIngestSuccessResponse,
   handleIngestPreflight,
 } from "@/lib/security/ingest-auth"
+import { calculateStreak, checkStreakMilestones } from "@/lib/streak"
 
 export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin")
@@ -130,6 +131,9 @@ export async function POST(req: NextRequest) {
       const entry = await db.entry.create({
         data: createData as any,
       })
+
+      // Check streak milestones (fire-and-forget)
+      checkStreakMilestonesForClient(validated.client_id).catch(() => {})
 
       return createIngestSuccessResponse(
         {

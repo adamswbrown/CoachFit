@@ -46,6 +46,7 @@ model Cohort {
   questionnaireBundle          QuestionnaireBundle?
   weeklyQuestionnaireResponses WeeklyQuestionnaireResponse[]
   customCohortType             CustomCohortType?             @relation(fields: [customCohortTypeId], references: [id], onDelete: Restrict)
+  milestones                   Milestone[]
 
   @@unique([coachId, name])
   @@index([coachId])
@@ -236,6 +237,8 @@ model User {
   CreditProducts               CreditProduct[]               @relation("OwnedCreditProducts")
   WeeklyQuestionnaireResponses WeeklyQuestionnaireResponse[]
   CustomCohortType             CustomCohortType[]
+  MilestonesAsCoach            Milestone[]                   @relation("MilestoneCoach")
+  MilestonesAsClient           Milestone[]                   @relation("MilestoneClient")
 
   @@index([invitedByCoachId])
   @@index([createdAt])
@@ -768,6 +771,29 @@ enum CreditSubmissionStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+model Milestone {
+  id          String    @id @default(uuid())
+  coachId     String
+  clientId    String?
+  cohortId    String?
+  title       String
+  description String?
+  type        String    // "streak" | "custom"
+  targetValue Int?
+  achievedAt  DateTime?
+  message     String?
+  createdAt   DateTime  @default(now())
+
+  coach       User      @relation("MilestoneCoach", fields: [coachId], references: [id], onDelete: Cascade)
+  client      User?     @relation("MilestoneClient", fields: [clientId], references: [id], onDelete: Cascade)
+  cohort      Cohort?   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([coachId])
+  @@index([cohortId])
+  @@index([type, achievedAt])
 }
 
 enum CreditLedgerReason {
