@@ -167,3 +167,30 @@ export async function OPTIONS(req: NextRequest) {
   const origin = req.headers.get("origin")
   return handleIngestPreflight(origin)
 }
+
+/** Check streak milestones after a check-in. Runs async, non-blocking. */
+async function checkStreakMilestonesForClient(clientId: string) {
+  try {
+    const streak = await calculateStreak(clientId)
+    if (streak.currentStreak <= 0) return
+
+    // Find the client's coach (via invitedByCoachId or cohort)
+    const user = await db.user.findUnique({
+      where: { id: clientId },
+      select: {
+        invitedByCoachId: true,
+        CohortMembership: { select: { Cohort: { select: { coachId: true } } } },
+      },
+    })
+
+    const coachId =
+      user?.invitedByCoachId ??
+      user?.CohortMembership?.[0]?.Cohort?.coachId
+
+    if (!coachId) return
+
+    await checkStreakMilestones(clientId, coachId, streak.currentStreak)
+  } catch (err) {
+    console.error("[streak] Milestone check failed:", err)
+  }
+}

@@ -12,6 +12,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types';
 import { getDayLog } from '../services/foodLog';
 import type { FoodLogEntry } from '../services/foodLog';
+import { getStreak } from '../services/streak';
+import type { StreakData, MilestoneData } from '../services/streak';
+import { StreakBanner } from '../components/StreakBanner';
+import { MilestoneCard } from '../components/MilestoneCard';
 import { useAuth } from '../contexts/AuthContext';
 import { colors, spacing, fontSize, borderRadius } from '../constants/theme';
 
@@ -21,6 +25,8 @@ export function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const { auth, unpair } = useAuth();
   const [recentFood, setRecentFood] = useState<FoodLogEntry[]>([]);
+  const [streakData, setStreakData] = useState<StreakData | null>(null);
+  const [recentMilestones, setRecentMilestones] = useState<MilestoneData[]>([]);
 
   function handleDisconnect() {
     Alert.alert(
@@ -37,7 +43,20 @@ export function HomeScreen() {
     useCallback(() => {
       const today = new Date().toISOString().split('T')[0];
       getDayLog(today).then((entries) => setRecentFood(entries.slice(0, 5))).catch(() => {});
-    }, [])
+
+      // Fetch streak from platform (if paired)
+      if (auth.status === 'paired') {
+        getStreak()
+          .then((data) => {
+            setStreakData(data);
+            // Show most recent 3 milestones with coach messages
+            setRecentMilestones(
+              data.milestones.filter((m) => m.coachMessage).slice(0, 3)
+            );
+          })
+          .catch(() => {});
+      }
+    }, [auth.status])
   );
 
   return (
@@ -63,6 +82,19 @@ export function HomeScreen() {
           <Text style={styles.subtitle}>Scan a barcode to get nutrition info</Text>
         )}
       </View>
+
+      {/* Streak */}
+      {streakData && (
+        <StreakBanner
+          currentStreak={streakData.currentStreak}
+          longestStreak={streakData.longestStreak}
+        />
+      )}
+
+      {/* Coach milestones */}
+      {recentMilestones.map((m) => (
+        <MilestoneCard key={m.id} milestone={m} />
+      ))}
 
       <View style={styles.buttonRow}>
         <TouchableOpacity
