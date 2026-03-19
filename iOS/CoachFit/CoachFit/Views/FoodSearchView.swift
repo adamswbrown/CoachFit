@@ -245,8 +245,8 @@ struct FoodSearchView: View {
                                     Text("P \(Int(product.proteinPer100g))g  F \(Int(product.fatPer100g))g  C \(Int(product.carbsPer100g))g")
                                         .font(.caption2)
                                         .foregroundStyle(.secondary)
-                                    Text("per 100g")
-                                        .font(.caption2)
+                                    Text(product.source.rawValue)
+                                        .font(.system(size: 9))
                                         .foregroundStyle(.tertiary)
                                 }
                             }

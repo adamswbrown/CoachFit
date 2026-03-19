@@ -53,7 +53,8 @@ enum BarcodeService {
             carbsPer100g: nutriments["carbohydrates_100g"] as? Double ?? 0,
             sugarsPer100g: nutriments["sugars_100g"] as? Double ?? 0,
             fiberPer100g: nutriments["fiber_100g"] as? Double ?? 0,
-            sodiumPer100g: (nutriments["sodium_100g"] as? Double ?? 0) * 1000
+            sodiumPer100g: (nutriments["sodium_100g"] as? Double ?? 0) * 1000,
+            source: .openFoodFacts
         )
     }
 
@@ -100,7 +101,8 @@ enum BarcodeService {
                 carbsPer100g: nutriments["carbohydrates_100g"] as? Double ?? 0,
                 sugarsPer100g: nutriments["sugars_100g"] as? Double ?? 0,
                 fiberPer100g: nutriments["fiber_100g"] as? Double ?? 0,
-                sodiumPer100g: (nutriments["sodium_100g"] as? Double ?? 0) * 1000
+                sodiumPer100g: (nutriments["sodium_100g"] as? Double ?? 0) * 1000,
+                source: .openFoodFacts
             )
         }
     }
@@ -198,7 +200,8 @@ enum BarcodeService {
                 carbsPer100g: carbs,
                 sugarsPer100g: sugars,
                 fiberPer100g: fiber,
-                sodiumPer100g: sodium
+                sodiumPer100g: sodium,
+                source: .usda
             )
         }
     }
@@ -206,10 +209,29 @@ enum BarcodeService {
     // MARK: - UK Food Facts (Primary Restaurant Search)
 
     private static func searchUKFoodFacts(query: String) async throws -> [Product] {
-        guard let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "https://uk-calories.vercel.app/api/data?q=\(encoded)") else {
+        // Search by item name AND by restaurant name concurrently
+        guard let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
             return []
         }
+
+        // Try both: item search and restaurant filter
+        async let itemResults = fetchUKFoodFacts(urlString: "https://uk-calories.vercel.app/api/data?q=\(encoded)")
+        async let restaurantResults = fetchUKFoodFacts(urlString: "https://uk-calories.vercel.app/api/data?restaurant=\(encoded)")
+
+        let items = (try? await itemResults) ?? []
+        let byRestaurant = (try? await restaurantResults) ?? []
+
+        // Merge: restaurant results first, then item results (deduplicated)
+        if !byRestaurant.isEmpty {
+            let existingNames = Set(byRestaurant.map { $0.name.lowercased() })
+            let extras = items.filter { !existingNames.contains($0.name.lowercased()) }
+            return byRestaurant + extras
+        }
+        return items
+    }
+
+    private static func fetchUKFoodFacts(urlString: String) async throws -> [Product] {
+        guard let url = URL(string: urlString) else { return [] }
 
         let request = URLRequest(url: url)
 
@@ -253,7 +275,8 @@ enum BarcodeService {
                 carbsPer100g: num("carbs_g"),
                 sugarsPer100g: 0,
                 fiberPer100g: num("fibre_g"),
-                sodiumPer100g: num("salt_g") * 1000
+                sodiumPer100g: num("salt_g") * 1000,
+                source: .ukFoodFacts
             )
         }
     }
@@ -425,7 +448,8 @@ enum BarcodeService {
                 carbsPer100g: parsed.carbs,
                 sugarsPer100g: 0,
                 fiberPer100g: 0,
-                sodiumPer100g: 0
+                sodiumPer100g: 0,
+                source: .fatSecret
             )
         }
     }
