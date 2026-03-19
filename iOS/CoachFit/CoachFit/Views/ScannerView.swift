@@ -8,6 +8,8 @@ struct ScannerView: View {
     @State private var manualBarcode = ""
     @State private var cameraPermission: AVAuthorizationStatus = .notDetermined
     @State private var showFoodSearch = false
+    @State private var scannedBarcode: String?
+    @State private var showProduct = false
 
     var body: some View {
         ZStack {
@@ -34,11 +36,18 @@ struct ScannerView: View {
     private var authorizedContent: some View {
         VStack(spacing: 0) {
             CameraPreview { barcode in
+                scannedBarcode = barcode
+                showProduct = true
                 onScan(barcode)
             }
             .ignoresSafeArea(edges: .top)
 
             manualEntryBar
+        }
+        .navigationDestination(isPresented: $showProduct) {
+            if let barcode = scannedBarcode {
+                ProductView(barcode: barcode)
+            }
         }
     }
 
@@ -87,6 +96,8 @@ struct ScannerView: View {
                 Button("Submit") {
                     let trimmed = manualBarcode.trimmingCharacters(in: .whitespaces)
                     guard !trimmed.isEmpty else { return }
+                    scannedBarcode = trimmed
+                    showProduct = true
                     onScan(trimmed)
                 }
                 .buttonStyle(.borderedProminent)
@@ -157,7 +168,7 @@ private final class CameraViewController: UIViewController, AVCaptureVideoDataOu
         let request = VNDetectBarcodesRequest { [weak self] request, error in
             self?.handleBarcodeResults(request: request, error: error)
         }
-        request.symbologies = [.ean13, .ean8, .upce]
+        request.symbologies = [.ean13, .ean8, .upce, .code128, .code39, .code93, .itf14, .dataMatrix, .qr]
         return request
     }()
 

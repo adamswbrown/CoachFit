@@ -1,7 +1,9 @@
 import SwiftUI
+import SwiftData
 
 struct TodayTab: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.modelContext) private var modelContext
     @FocusState private var focusedField: Field?
 
     @State private var weight = ""
@@ -12,6 +14,7 @@ struct TodayTab: View {
     @State private var notes = ""
 
     @State private var healthData: HealthKitManager.TodayHealthData?
+    @State private var foodLogCalories: Int?
 
     @State private var isSubmitting = false
     @State private var showCheckIn = false
@@ -190,15 +193,25 @@ struct TodayTab: View {
                 }
 
                 // Calories
-                HStack {
-                    Label("Calories", systemImage: "fork.knife")
-                        .font(.subheadline.weight(.medium))
-                    Spacer()
-                    TextField("Enter", text: $calories)
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 100)
-                        .focused($focusedField, equals: .calories)
+                VStack(spacing: 4) {
+                    HStack {
+                        Label("Calories", systemImage: "fork.knife")
+                            .font(.subheadline.weight(.medium))
+                        Spacer()
+                        TextField("Enter", text: $calories)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 100)
+                            .focused($focusedField, equals: .calories)
+                    }
+                    if let logged = foodLogCalories, logged > 0 {
+                        HStack {
+                            Text("From food log: \(logged) kcal")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                        }
+                    }
                 }
 
                 // Weight (only if not from HealthKit)
@@ -394,6 +407,9 @@ struct TodayTab: View {
             print("[TodayTab] Failed to load HealthKit data: \(error.localizedDescription)")
         }
 
+        // Load today's food log calories
+        loadFoodLogCalories()
+
         // Restore submitted state
         if submittedToday {
             // Load saved values
@@ -401,6 +417,24 @@ struct TodayTab: View {
             sleepQuality = defaults.object(forKey: "\(todayKey)_sleep") as? Int
             perceivedStress = defaults.object(forKey: "\(todayKey)_stress") as? Int
             notes = defaults.string(forKey: "\(todayKey)_notes") ?? ""
+        }
+    }
+
+    private func loadFoodLogCalories() {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        let todayStr = f.string(from: .now)
+
+        let descriptor = FetchDescriptor<FoodLogEntry>(
+            predicate: #Predicate { $0.date == todayStr }
+        )
+        if let entries = try? modelContext.fetch(descriptor), !entries.isEmpty {
+            let total = Int(entries.reduce(0) { $0 + $1.calories })
+            foodLogCalories = total
+            if calories.isEmpty {
+                calories = "\(total)"
+            }
         }
     }
 
