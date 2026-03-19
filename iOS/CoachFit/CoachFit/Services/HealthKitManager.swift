@@ -396,9 +396,8 @@ final class HealthKitManager {
         let latestWeight = weights.last
         let latestWeightLbs = latestWeight.map { $0.weightKg * 2.20462 }
 
-        // Fetch recent workouts (last 7 days)
-        let sevenDaysAgo = calendar.date(byAdding: .day, value: -7, to: .now)!
-        let workouts = try await fetchWorkouts(since: sevenDaysAgo)
+        // Fetch today's workouts only
+        let workouts = try await fetchWorkouts(since: startOfDay)
 
         // Fetch last night's sleep
         let yesterday = calendar.date(byAdding: .day, value: -1, to: startOfDay)!
