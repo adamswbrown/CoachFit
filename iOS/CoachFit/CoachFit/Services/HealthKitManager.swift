@@ -4,7 +4,7 @@ import HealthKit
 final class HealthKitManager {
     private let store = HKHealthStore()
 
-    private(set) var isAuthorized = false
+    private(set) var isAuthorized: Bool
 
     // Types we read from HealthKit
     private let readTypes: Set<HKObjectType> = [
@@ -41,6 +41,18 @@ final class HealthKitManager {
 
     var isAvailable: Bool {
         HKHealthStore.isHealthDataAvailable()
+    }
+
+    init() {
+        // Check write authorization for bodyMass — if it's not .notDetermined,
+        // the user has previously seen the HealthKit permission prompt
+        if HKHealthStore.isHealthDataAvailable() {
+            let store = HKHealthStore()
+            let status = store.authorizationStatus(for: HKQuantityType(.bodyMass))
+            isAuthorized = (status != .notDetermined)
+        } else {
+            isAuthorized = false
+        }
     }
 
     // MARK: - Authorization
@@ -511,14 +523,15 @@ final class HealthKitManager {
             }
         } catch {}
 
-        // Fetch most recent weight
-        if let val = try? await fetchQuantityMostRecent(type: HKQuantityType(.bodyMass), unit: .gramUnit(with: .kilo), start: startOfDay, end: endOfDay) {
-            summary.weight = val
+        // Fetch most recent weight (look back 30 days for the latest reading)
+        let thirtyDaysAgo = calendar.date(byAdding: .day, value: -30, to: startOfDay)!
+        if let val = try? await fetchQuantityMostRecent(type: HKQuantityType(.bodyMass), unit: .gramUnit(with: .kilo), start: thirtyDaysAgo, end: endOfDay) {
+            summary.weight = round(val * 10) / 10
         }
 
-        // Fetch most recent body fat percentage
-        if let val = try? await fetchQuantityMostRecent(type: HKQuantityType(.bodyFatPercentage), unit: .percent(), start: startOfDay, end: endOfDay) {
-            summary.bodyFatPercentage = val * 100.0 // Convert from 0-1 to percentage
+        // Fetch most recent body fat percentage (look back 30 days)
+        if let val = try? await fetchQuantityMostRecent(type: HKQuantityType(.bodyFatPercentage), unit: .percent(), start: thirtyDaysAgo, end: endOfDay) {
+            summary.bodyFatPercentage = round(val * 1000) / 10 // Convert from 0-1 to percentage
         }
 
         // Fetch sleep (look at previous night — sleep ending in this day)

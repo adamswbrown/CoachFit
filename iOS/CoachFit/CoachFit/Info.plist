@@ -4,6 +4,10 @@
 <dict>
 	<key>NSHealthShareUsageDescription</key>
 	<string>CoachFit reads your workouts, sleep, steps, and weight to share with your coach for fitness tracking.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>CoachFit uses the camera to scan food barcodes for nutrition tracking.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>CoachFit writes nutrition from scanned foods, water intake, and weight entries to your Health data.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
