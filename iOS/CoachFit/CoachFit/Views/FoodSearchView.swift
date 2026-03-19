@@ -1,13 +1,15 @@
 import SwiftUI
 
-enum FoodSearchType {
+enum FoodSearchType: Equatable {
     case products     // OpenFoodFacts — packaged food
     case ingredients  // USDA — raw/generic food
+    case restaurant   // FatSecret — restaurant & chain food
 
     var title: String {
         switch self {
         case .products: "Search Products"
         case .ingredients: "Search Ingredients"
+        case .restaurant: "Search Restaurants"
         }
     }
 
@@ -15,6 +17,7 @@ enum FoodSearchType {
         switch self {
         case .products: "Search packaged foods (e.g. Heinz beans)"
         case .ingredients: "Search ingredients (e.g. mushrooms, chicken)"
+        case .restaurant: "Search restaurant food (e.g. Nandos half chicken)"
         }
     }
 
@@ -22,6 +25,7 @@ enum FoodSearchType {
         switch self {
         case .products: "Search for packaged food by name or brand"
         case .ingredients: "Search for raw foods and ingredients"
+        case .restaurant: "Search for meals from restaurants and chains"
         }
     }
 
@@ -29,6 +33,7 @@ enum FoodSearchType {
         switch self {
         case .products: "cart"
         case .ingredients: "carrot"
+        case .restaurant: "fork.knife.circle"
         }
     }
 }
@@ -41,7 +46,22 @@ struct FoodSearchView: View {
     @State private var hasSearched = false
     @State private var searchTask: Task<Void, Never>?
     @State private var errorMessage: String?
+    @State private var maxCalories: Double = 2000
+    @State private var showFilters = false
+    @State private var filterActive = false
+    @State private var sortByProtein = false
     @Environment(\.dismiss) private var dismiss
+
+    private var filteredResults: [Product] {
+        var filtered = results
+        if filterActive && searchType == .restaurant {
+            filtered = filtered.filter { $0.caloriesPer100g <= maxCalories }
+        }
+        if sortByProtein && searchType == .restaurant {
+            filtered = filtered.sorted { $0.proteinPer100g > $1.proteinPer100g }
+        }
+        return filtered
+    }
 
     var body: some View {
         NavigationStack {
@@ -63,7 +83,78 @@ struct FoodSearchView: View {
                 .padding(12)
                 .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
-                .padding()
+                .padding(.horizontal)
+                .padding(.top)
+
+                // Filters (restaurant only, when results exist)
+                if searchType == .restaurant && !results.isEmpty {
+                    VStack(spacing: 10) {
+                        // Sort picker
+                        HStack {
+                            Text("Sort by")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Picker("Sort", selection: $sortByProtein) {
+                                Text("Default").tag(false)
+                                Text("Highest Protein").tag(true)
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                        .padding(.horizontal)
+
+                        // Calorie limit
+                        VStack(spacing: 4) {
+                            HStack {
+                                Toggle(isOn: $filterActive) {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "flame")
+                                            .foregroundStyle(filterActive ? .orange : .secondary)
+                                        Text("Limit calories")
+                                            .font(.subheadline)
+                                    }
+                                }
+                                .toggleStyle(.switch)
+                                .tint(.orange)
+                            }
+
+                            if filterActive {
+                                HStack {
+                                    Text("Under")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Slider(value: $maxCalories, in: 100...2000, step: 50)
+                                        .tint(.orange)
+                                    Text("\(Int(maxCalories)) kcal")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(.orange)
+                                        .frame(width: 70, alignment: .trailing)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+
+                        // Result count
+                        if filterActive || sortByProtein {
+                            HStack {
+                                Text("Showing \(filteredResults.count) of \(results.count) items")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                if filterActive || sortByProtein {
+                                    Button("Clear filters") {
+                                        filterActive = false
+                                        sortByProtein = false
+                                        maxCalories = 2000
+                                    }
+                                    .font(.caption)
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .background(Color(.systemGray6))
+                }
 
                 // Content
                 if isSearching {
@@ -91,6 +182,8 @@ struct FoodSearchView: View {
                         .buttonStyle(.borderedProminent)
                     }
                     Spacer()
+                } else if results.isEmpty && searchType == .restaurant {
+                    restaurantPicker
                 } else if results.isEmpty {
                     Spacer()
                     VStack(spacing: 8) {
@@ -101,9 +194,23 @@ struct FoodSearchView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
+                } else if filteredResults.isEmpty && !results.isEmpty {
+                    // Filters removed all results
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                            .font(.largeTitle)
+                            .foregroundStyle(.secondary)
+                        Text("No meals match your filters")
+                            .font(.headline)
+                        Text("Try increasing the calorie limit")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
                 } else {
-                    List(results.indices, id: \.self) { index in
-                        let product = results[index]
+                    List(filteredResults.indices, id: \.self) { index in
+                        let product = filteredResults[index]
                         NavigationLink {
                             ProductView(product: product)
                         } label: {
@@ -179,6 +286,8 @@ struct FoodSearchView: View {
                 results = try await BarcodeService.search(query: query)
             case .ingredients:
                 results = try await BarcodeService.searchIngredients(query: query)
+            case .restaurant:
+                results = try await BarcodeService.searchRestaurant(query: query)
             }
         } catch {
             results = []
@@ -186,5 +295,64 @@ struct FoodSearchView: View {
         }
         isSearching = false
         hasSearched = true
+    }
+
+    // MARK: - Restaurant Quick Pick
+
+    private static let popularChains: [(emoji: String, name: String, search: String)] = [
+        ("🍗", "Nando's", "nandos"),
+        ("🍔", "McDonald's", "mcdonalds"),
+        ("🍗", "KFC", "kfc"),
+        ("🥖", "Greggs", "greggs"),
+        ("🥪", "Subway", "subway"),
+        ("🥐", "Pret", "pret a manger"),
+        ("🍜", "Wagamama", "wagamama"),
+        ("🍕", "Pizza Hut", "pizza hut"),
+        ("🍕", "Domino's", "dominos"),
+        ("🍔", "Burger King", "burger king"),
+        ("☕", "Costa", "costa coffee"),
+        ("☕", "Starbucks", "starbucks"),
+        ("🍕", "Pizza Express", "pizza express"),
+        ("🍔", "Five Guys", "five guys"),
+        ("🥗", "Leon", "leon"),
+        ("🌯", "Tortilla", "tortilla"),
+    ]
+
+    private var restaurantPicker: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Popular Chains")
+                    .font(.headline)
+                    .padding(.horizontal)
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 10)], spacing: 10) {
+                    ForEach(Self.popularChains, id: \.search) { chain in
+                        Button {
+                            query = chain.search
+                        } label: {
+                            VStack(spacing: 4) {
+                                Text(chain.emoji)
+                                    .font(.title2)
+                                Text(chain.name)
+                                    .font(.caption.weight(.medium))
+                                    .lineLimit(1)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(.ultraThinMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal)
+
+                Text("Or type any restaurant name above")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity)
+            }
+            .padding(.vertical)
+        }
     }
 }

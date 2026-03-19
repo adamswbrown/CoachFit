@@ -4,7 +4,7 @@ struct FoodLogEntryView: View {
     @State private var selectedOption: FoodEntryOption?
 
     enum FoodEntryOption: Identifiable {
-        case scan, searchProducts, searchIngredients, manual
+        case scan, searchProducts, searchIngredients, searchRestaurants, manual
         var id: Self { self }
     }
 
@@ -47,6 +47,16 @@ struct FoodLogEntryView: View {
                         selectedOption = .searchIngredients
                     }
 
+                    // Search Restaurants
+                    entryCard(
+                        icon: "fork.knife.circle",
+                        title: "Search Restaurants",
+                        subtitle: "Nandos, McDonald's, Wagamama & more",
+                        color: .red
+                    ) {
+                        selectedOption = .searchRestaurants
+                    }
+
                     // Manual Entry
                     entryCard(
                         icon: "square.and.pencil",
@@ -80,6 +90,8 @@ struct FoodLogEntryView: View {
                     FoodSearchView(searchType: .products)
                 case .searchIngredients:
                     FoodSearchView(searchType: .ingredients)
+                case .searchRestaurants:
+                    FoodSearchView(searchType: .restaurant)
                 case .manual:
                     NavigationStack {
                         ProductView(barcode: "")
