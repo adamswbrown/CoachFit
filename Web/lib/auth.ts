@@ -85,13 +85,36 @@ export async function getSession(): Promise<AuthSession | null> {
         },
       })
 
+      let newUserRoles = (newUser.roles as Role[]) ?? [Role.CLIENT]
+
+      // Check for admin override on new users too
+      if (!newUserRoles.includes(Role.ADMIN) && newUser.email) {
+        const { isAdminWithOverride } = await import("./permissions-server")
+        const hasOverride = await isAdminWithOverride({
+          roles: newUserRoles,
+          email: newUser.email,
+        })
+        if (hasOverride) {
+          newUserRoles = [...newUserRoles, Role.ADMIN]
+        }
+      }
+
+      // Sync metadata to Clerk
+      syncMetadataToClerk(userId, {
+        dbId: newUser.id,
+        roles: newUserRoles,
+        isTestUser: newUser.isTestUser ?? false,
+        mustChangePassword: newUser.mustChangePassword ?? false,
+        onboardingComplete: newUser.onboardingComplete ?? false,
+      }).catch(() => {})
+
       return {
         user: {
           id: newUser.id,
           email: newUser.email,
           name: newUser.name ?? null,
           image: newUser.image ?? null,
-          roles: (newUser.roles as Role[]) ?? [Role.CLIENT],
+          roles: newUserRoles,
           isTestUser: newUser.isTestUser ?? false,
           mustChangePassword: newUser.mustChangePassword ?? false,
           onboardingComplete: newUser.onboardingComplete ?? false,
