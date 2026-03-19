@@ -20,7 +20,11 @@ enum StreakService {
     }
 
     static func fetch(using apiClient: APIClient) async throws -> StreakData {
-        let (data, _) = try await apiClient.authenticatedRequest(path: "/api/client/streak")
+        let (data, response) = try await apiClient.authenticatedRequest(path: "/api/client/streak")
+
+        if let raw = String(data: data, encoding: .utf8) {
+            print("[StreakService] GET /api/client/streak (\(response.statusCode)): \(raw)")
+        }
 
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return StreakData(currentStreak: 0, longestStreak: 0, lastCheckInDate: nil, milestones: [])

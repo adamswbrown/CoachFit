@@ -51,6 +51,15 @@ struct TodayTab: View {
                 }
             }
             .navigationTitle("Today")
+            .toolbar {
+                if submittedToday && showCheckIn {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            showCheckIn = false
+                        }
+                    }
+                }
+            }
             .task { await loadHealthKitData() }
             .refreshable { await loadHealthKitData() }
             .overlay {

@@ -47,20 +47,12 @@ private struct MoreTab: View {
     var body: some View {
         NavigationStack {
             List {
-                if let streak = streakData {
-                    Section {
-                        StreakBanner(currentStreak: streak.currentStreak, longestStreak: streak.longestStreak)
-                            .listRowInsets(EdgeInsets())
-                            .listRowBackground(Color.clear)
-                    }
-
-                    if !streak.milestones.isEmpty {
-                        Section("Recent Milestones") {
-                            ForEach(streak.milestones.prefix(3)) { milestone in
-                                MilestoneCard(milestone: milestone)
-                                    .listRowInsets(EdgeInsets())
-                                    .listRowBackground(Color.clear)
-                            }
+                if let streak = streakData, !streak.milestones.isEmpty {
+                    Section("Recent Milestones") {
+                        ForEach(streak.milestones.prefix(3)) { milestone in
+                            MilestoneCard(milestone: milestone)
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.clear)
                         }
                     }
                 }
@@ -160,11 +152,18 @@ private struct MoreTab: View {
             } message: {
                 Text("You'll need to sign in again to reconnect.")
             }
-            .task {
-                if KeychainService.deviceToken != nil {
-                    streakData = try? await StreakService.fetch(using: appState.apiClient)
-                }
+            .task(id: "streak") {
+                await refreshStreak()
             }
+            .onAppear {
+                Task { await refreshStreak() }
+            }
+        }
+    }
+
+    private func refreshStreak() async {
+        if KeychainService.deviceToken != nil {
+            streakData = try? await StreakService.fetch(using: appState.apiClient)
         }
     }
 
