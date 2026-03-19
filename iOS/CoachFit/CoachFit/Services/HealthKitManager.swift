@@ -45,6 +45,7 @@ final class HealthKitManager {
 
     // MARK: - Authorization
 
+    @MainActor
     func requestAuthorization() async throws {
         guard isAvailable else { return }
         try await store.requestAuthorization(toShare: writeTypes, read: readTypes)

@@ -18,6 +18,8 @@ struct CoachFitApp: App {
                 switch appState.currentScreen {
                 case .signIn, .registeringDevice:
                     SignInView()
+                case .onboarding:
+                    OnboardingFlow()
                 case .home:
                     HomeView()
                 }

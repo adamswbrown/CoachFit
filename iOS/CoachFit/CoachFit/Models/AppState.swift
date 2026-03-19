@@ -7,7 +7,15 @@ final class AppState {
     enum Screen: Equatable {
         case signIn
         case registeringDevice  // Signed in via Clerk, fetching device token
+        case onboarding
         case home
+    }
+
+    private static let onboardingCompleteKey = "onboardingComplete"
+
+    var onboardingComplete: Bool {
+        get { UserDefaults.standard.bool(forKey: Self.onboardingCompleteKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.onboardingCompleteKey) }
     }
 
     private(set) var currentScreen: Screen
@@ -22,7 +30,7 @@ final class AppState {
 
     init() {
         if KeychainService.deviceToken != nil {
-            currentScreen = .home
+            currentScreen = UserDefaults.standard.bool(forKey: Self.onboardingCompleteKey) ? .home : .onboarding
             clientName = KeychainService.clientName
             coachName = KeychainService.coachName
             clientId = KeychainService.clientId
@@ -68,10 +76,7 @@ final class AppState {
             clientName = response.clientName
             coachName = response.coachName
             unpairMessage = nil
-            currentScreen = .home
-
-            // Request HealthKit permissions and backfill
-            await requestHealthKitAndBackfill()
+            currentScreen = .onboarding
         } catch {
             registrationError = error.localizedDescription
             currentScreen = .signIn
@@ -92,9 +97,7 @@ final class AppState {
         clientName = response.client?.name
         coachName = response.coach?.name
         unpairMessage = nil
-        currentScreen = .home
-
-        await requestHealthKitAndBackfill()
+        currentScreen = .onboarding
     }
 
     func signOut(message: String? = nil) {
@@ -111,6 +114,46 @@ final class AppState {
     /// Get a Clerk session token for authenticated web views
     func getSessionToken() async -> String? {
         try? await Clerk.shared.auth.getToken()
+    }
+
+    // MARK: - Onboarding
+
+    func completeOnboarding() async {
+        onboardingComplete = true
+        currentScreen = .home
+
+        // Now do HealthKit setup if authorized
+        if healthKit.isAuthorized {
+            setupHealthKitDelivery()
+            await syncEngine.performInitialBackfill()
+            CoachFitApp.scheduleNextBackgroundSync()
+        }
+    }
+
+    func submitOnboardingProfile(goal: String?, heightCm: Double?, weightKg: Double?, activityLevel: String?) async {
+        guard let clientId = KeychainService.clientId else { return }
+
+        struct ProfilePayload: Encodable {
+            let client_id: String
+            let goal: String?
+            let height_cm: Double?
+            let weight_kg: Double?
+            let activity_level: String?
+        }
+
+        let payload = ProfilePayload(
+            client_id: clientId,
+            goal: goal,
+            height_cm: heightCm,
+            weight_kg: weightKg,
+            activity_level: activityLevel
+        )
+
+        _ = try? await apiClient.authenticatedRequest(
+            path: "/api/ingest/profile",
+            method: "POST",
+            body: payload
+        )
     }
 
     // MARK: - HealthKit
