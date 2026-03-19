@@ -176,7 +176,7 @@ final class APIClient {
             let errorBody = try? JSONDecoder().decode(ErrorResponse.self, from: data)
             throw APIError.server(
                 statusCode: response.statusCode,
-                message: errorBody?.error ?? "Failed to submit entry (HTTP \(response.statusCode))"
+                message: errorBody?.fullMessage ?? errorBody?.error ?? "Failed to submit entry (HTTP \(response.statusCode))"
             )
         }
     }
@@ -202,6 +202,22 @@ final class APIClient {
 
     private struct ErrorResponse: Decodable {
         let error: String
+        let details: [ValidationDetail]?
+
+        struct ValidationDetail: Decodable {
+            let message: String?
+            let path: [String]?
+        }
+
+        var fullMessage: String {
+            guard let details, !details.isEmpty else { return error }
+            let fieldErrors = details.compactMap { d -> String? in
+                let path = d.path?.joined(separator: ".") ?? ""
+                let msg = d.message ?? ""
+                return path.isEmpty ? msg : "\(path): \(msg)"
+            }
+            return "\(error): \(fieldErrors.joined(separator: ", "))"
+        }
     }
 }
 

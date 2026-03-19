@@ -11,6 +11,16 @@ struct ProductView: View {
     @State private var state: ViewState = .loading
     @State private var servingGrams: Double = 100
     @State private var product: Product?
+    @State private var initialProduct: Product?
+
+    init(barcode: String) {
+        self.barcode = barcode
+    }
+
+    init(product: Product) {
+        self.barcode = product.barcode
+        _initialProduct = State(initialValue: product)
+    }
 
     // Manual entry fields
     @State private var manualName = ""
@@ -74,22 +84,22 @@ struct ProductView: View {
     private func productCardSection(_ product: Product) -> some View {
         Section {
             HStack(spacing: 14) {
-                AsyncImage(url: product.imageURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    case .failure:
-                        Image(systemName: "fork.knife.circle")
-                            .font(.system(size: 36))
-                            .foregroundStyle(.secondary)
-                    default:
-                        ProgressView()
+                if let imageURL = product.imageURL {
+                    AsyncImage(url: imageURL) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                        case .failure:
+                            EmptyView()
+                        default:
+                            ProgressView()
+                        }
                     }
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
-                .frame(width: 80, height: 80)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(product.name)
@@ -251,6 +261,13 @@ struct ProductView: View {
     // MARK: - Actions
 
     private func lookupProduct() async {
+        if let initialProduct {
+            product = initialProduct
+            servingGrams = initialProduct.servingGrams
+            state = .found
+            return
+        }
+
         do {
             let found = try await BarcodeService.lookup(barcode: barcode)
             product = found

@@ -7,6 +7,7 @@ struct ScannerView: View {
 
     @State private var manualBarcode = ""
     @State private var cameraPermission: AVAuthorizationStatus = .notDetermined
+    @State private var showFoodSearch = false
 
     var body: some View {
         ZStack {
@@ -77,18 +78,31 @@ struct ScannerView: View {
     // MARK: - Manual Entry
 
     private var manualEntryBar: some View {
-        HStack(spacing: 12) {
-            TextField("Enter barcode manually", text: $manualBarcode)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
+        VStack(spacing: 10) {
+            HStack(spacing: 12) {
+                TextField("Enter barcode manually", text: $manualBarcode)
+                    .keyboardType(.numberPad)
+                    .textFieldStyle(.roundedBorder)
 
-            Button("Submit") {
-                let trimmed = manualBarcode.trimmingCharacters(in: .whitespaces)
-                guard !trimmed.isEmpty else { return }
-                onScan(trimmed)
+                Button("Submit") {
+                    let trimmed = manualBarcode.trimmingCharacters(in: .whitespaces)
+                    guard !trimmed.isEmpty else { return }
+                    onScan(trimmed)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(manualBarcode.trimmingCharacters(in: .whitespaces).isEmpty)
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(manualBarcode.trimmingCharacters(in: .whitespaces).isEmpty)
+
+            Button {
+                showFoodSearch = true
+            } label: {
+                Label("Search by Name", systemImage: "magnifyingglass")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .sheet(isPresented: $showFoodSearch) {
+                FoodSearchView()
+            }
         }
         .padding()
         .background(.ultraThinMaterial)

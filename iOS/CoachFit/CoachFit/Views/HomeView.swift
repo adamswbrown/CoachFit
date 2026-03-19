@@ -4,27 +4,13 @@ import UIKit
 struct HomeView: View {
     @Environment(AppState.self) private var appState
 
-    @State private var scannedBarcode: String?
-    @State private var showProduct = false
-
     var body: some View {
         TabView {
             Tab("Today", systemImage: "checkmark.circle") {
                 TodayTab()
             }
-            Tab("Scan", systemImage: "barcode.viewfinder") {
-                NavigationStack {
-                    ScannerView { barcode in
-                        scannedBarcode = barcode
-                        showProduct = true
-                    }
-                    .navigationTitle("Scan")
-                    .navigationDestination(isPresented: $showProduct) {
-                        if let barcode = scannedBarcode {
-                            ProductView(barcode: barcode)
-                        }
-                    }
-                }
+            Tab("Log Food", systemImage: "plus.circle") {
+                FoodLogEntryView()
             }
             Tab("Food", systemImage: "fork.knife") {
                 NavigationStack {

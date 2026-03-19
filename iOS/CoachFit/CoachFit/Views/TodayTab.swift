@@ -52,6 +52,7 @@ struct TodayTab: View {
             }
             .navigationTitle("Today")
             .task { await loadHealthKitData() }
+            .refreshable { await loadHealthKitData() }
             .overlay {
                 if showSuccessAnimation {
                     successOverlay
@@ -402,6 +403,8 @@ struct TodayTab: View {
 
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.timeZone = .current
         let today = dateFormatter.string(from: .now)
 
         let entry = APIClient.SubmitEntryRequest(
