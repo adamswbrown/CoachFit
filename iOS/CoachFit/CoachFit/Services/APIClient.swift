@@ -181,6 +181,35 @@ final class APIClient {
         }
     }
 
+    // MARK: - Meal Suggestion
+
+    struct MealSuggestion: Encodable {
+        let client_id: String
+        let restaurant: String
+        let item: String
+        let calories_kcal: Double
+        let protein_g: Double?
+        let carbs_g: Double?
+        let fat_g: Double?
+        let fibre_g: Double?
+        let salt_g: Double?
+        let category: String?
+    }
+
+    func submitMealSuggestion(_ suggestion: MealSuggestion) async throws {
+        let (data, response) = try await authenticatedRequest(
+            path: "api/ingest/meal-suggestion",
+            method: "POST",
+            body: suggestion
+        )
+
+        if let raw = String(data: data, encoding: .utf8) {
+            print("[APIClient] POST /api/ingest/meal-suggestion (\(response.statusCode)): \(raw)")
+        }
+
+        // Don't throw on non-200 — this is best-effort, the meal is already logged locally
+    }
+
     // MARK: - Types
 
     enum APIError: LocalizedError {

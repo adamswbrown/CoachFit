@@ -176,8 +176,15 @@ struct FoodSearchView: View {
                         } else {
                             Text("No results for \"\(query)\"")
                                 .font(.headline)
+                            if searchType == .restaurant {
+                                Text("Log it below and we'll add it to the database for others")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                            }
                         }
-                        NavigationLink("Log Manually") {
+                        NavigationLink(searchType == .restaurant ? "Add This Meal" : "Log Manually") {
                             ProductView(barcode: "")
                         }
                         .buttonStyle(.borderedProminent)

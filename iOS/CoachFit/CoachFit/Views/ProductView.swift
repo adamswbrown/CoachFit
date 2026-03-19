@@ -23,6 +23,7 @@ struct ProductView: View {
     }
 
     // Manual entry fields
+    @State private var restaurantName = ""
     @State private var manualName = ""
     @State private var manualBrand = ""
     @State private var manualServing = "100"
@@ -184,6 +185,7 @@ struct ProductView: View {
             }
 
             Section("Product Info") {
+                TextField("Restaurant name (optional)", text: $restaurantName)
                 TextField("Product name", text: $manualName)
                 TextField("Brand (optional)", text: $manualBrand)
                 HStack {
@@ -361,6 +363,26 @@ struct ProductView: View {
                 fat: scaled.fat,
                 carbs: scaled.carbs
             )
+        }
+
+        // Submit meal suggestion to the database if restaurant name is provided
+        if !restaurantName.isEmpty, let clientId = appState.clientId {
+            Task {
+                try? await appState.apiClient.submitMealSuggestion(
+                    APIClient.MealSuggestion(
+                        client_id: clientId,
+                        restaurant: restaurantName,
+                        item: manualName,
+                        calories_kcal: scaled.calories,
+                        protein_g: scaled.protein,
+                        carbs_g: scaled.carbs,
+                        fat_g: scaled.fat,
+                        fibre_g: nil,
+                        salt_g: nil,
+                        category: nil
+                    )
+                )
+            }
         }
 
         state = .logged
