@@ -9,7 +9,7 @@ struct FoodTrackingStep: View {
 
             Image(systemName: "barcode.viewfinder")
                 .font(.system(size: 80))
-                .foregroundStyle(.accent)
+                .foregroundStyle(.tint)
 
             VStack(spacing: 12) {
                 Text("Scan to Track")
@@ -35,7 +35,7 @@ struct FoodTrackingStep: View {
                     Spacer()
                     Text("130 cal")
                         .font(.title3.bold())
-                        .foregroundStyle(.accent)
+                        .foregroundStyle(.tint)
                 }
                 .padding()
                 .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 12))

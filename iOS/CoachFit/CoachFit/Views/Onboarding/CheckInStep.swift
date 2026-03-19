@@ -9,7 +9,7 @@ struct CheckInStep: View {
 
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 80))
-                .foregroundStyle(.accent)
+                .foregroundStyle(.tint)
 
             VStack(spacing: 12) {
                 Text("Daily Check-In")
@@ -54,7 +54,7 @@ private struct CheckInPreviewRow: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundStyle(.accent)
+                .foregroundStyle(.tint)
                 .frame(width: 24)
             Text(label)
             Spacer()

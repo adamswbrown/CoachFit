@@ -60,7 +60,7 @@ private struct SummaryRow: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundStyle(.accent)
+                .foregroundStyle(.tint)
                 .frame(width: 24)
             Text(label)
                 .foregroundStyle(.secondary)

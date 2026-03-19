@@ -10,7 +10,7 @@ struct WelcomeStep: View {
 
             Image(systemName: "figure.run.circle.fill")
                 .font(.system(size: 80))
-                .foregroundStyle(.accent)
+                .foregroundStyle(.tint)
 
             VStack(spacing: 12) {
                 Text("Welcome to CoachFit!")

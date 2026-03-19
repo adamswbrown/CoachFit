@@ -37,7 +37,7 @@ struct GoalStep: View {
                             Spacer()
                             if selectedGoal == value {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(.accent)
+                                    .foregroundStyle(.tint)
                             }
                         }
                         .padding()
