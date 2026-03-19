@@ -203,7 +203,62 @@ enum BarcodeService {
         }
     }
 
-    // MARK: - FatSecret Restaurant Search
+    // MARK: - UK Food Facts (Primary Restaurant Search)
+
+    private static func searchUKFoodFacts(query: String) async throws -> [Product] {
+        guard let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "https://uk-calories.vercel.app/api/data?q=\(encoded)") else {
+            return []
+        }
+
+        let request = URLRequest(url: url)
+
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw LookupError.networkError(error)
+        }
+
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            return []
+        }
+
+        guard let items = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            return []
+        }
+
+        return parseUKFoodFactsItems(items)
+    }
+
+    private static func parseUKFoodFactsItems(_ items: [[String: Any]]) -> [Product] {
+        items.compactMap { item -> Product? in
+            let name = item["item"] as? String ?? ""
+            guard !name.isEmpty else { return nil }
+
+            func num(_ key: String) -> Double {
+                item[key] as? Double ?? (item[key] as? Int).map(Double.init) ?? 0
+            }
+
+            return Product(
+                barcode: "",
+                name: name,
+                brand: item["restaurant"] as? String ?? "",
+                imageURL: nil,
+                servingLabel: "per serving",
+                servingGrams: 100,
+                caloriesPer100g: num("calories_kcal"),
+                proteinPer100g: num("protein_g"),
+                fatPer100g: num("fat_g"),
+                carbsPer100g: num("carbs_g"),
+                sugarsPer100g: 0,
+                fiberPer100g: num("fibre_g"),
+                sodiumPer100g: num("salt_g") * 1000
+            )
+        }
+    }
+
+    // MARK: - FatSecret Restaurant Search (Fallback)
 
     // TODO: Replace FatSecret credentials after testing
     private static let fatSecretConsumerKey = "24d92fa48a384363aa06b7ed16f17f16"
@@ -242,7 +297,50 @@ enum BarcodeService {
         )
     }
 
+    /// Search by restaurant name — returns all items for that chain
+    static func searchByRestaurant(name: String) async throws -> [Product] {
+        guard let encoded = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "https://uk-calories.vercel.app/api/data?restaurant=\(encoded)") else {
+            return []
+        }
+
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(from: url)
+        } catch {
+            throw LookupError.networkError(error)
+        }
+
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200,
+              let items = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            return []
+        }
+
+        return parseUKFoodFactsItems(items)
+    }
+
+    /// Combined restaurant search: UK Food Facts (primary) + FatSecret (fallback)
     static func searchRestaurant(query: String) async throws -> [Product] {
+        // Search both sources concurrently
+        async let ukffResults = searchUKFoodFacts(query: query)
+        async let fsResults = searchFatSecretAPI(query: query)
+
+        let primary = (try? await ukffResults) ?? []
+        let fallback = (try? await fsResults) ?? []
+
+        // If ukfoodfacts has results, use those and deduplicate FatSecret additions
+        if !primary.isEmpty {
+            // Build set of item names from primary to avoid duplicates
+            let primaryNames = Set(primary.map { $0.name.lowercased() })
+            let extras = fallback.filter { !primaryNames.contains($0.name.lowercased()) }
+            return primary + extras
+        }
+
+        // If ukfoodfacts returned nothing, use FatSecret entirely
+        return fallback
+    }
+
+    private static func searchFatSecretAPI(query: String) async throws -> [Product] {
         let baseURL = "https://platform.fatsecret.com/rest/server.api"
 
         // API parameters

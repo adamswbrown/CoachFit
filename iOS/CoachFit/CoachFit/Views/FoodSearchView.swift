@@ -46,6 +46,7 @@ struct FoodSearchView: View {
     @State private var hasSearched = false
     @State private var searchTask: Task<Void, Never>?
     @State private var errorMessage: String?
+    @State private var selectedRestaurant: String?
     @State private var maxCalories: Double = 2000
     @State private var showFilters = false
     @State private var filterActive = false
@@ -277,6 +278,19 @@ struct FoodSearchView: View {
         }
     }
 
+    private func loadRestaurantMenu(_ restaurantName: String) async {
+        isSearching = true
+        errorMessage = nil
+        do {
+            results = try await BarcodeService.searchByRestaurant(name: restaurantName)
+        } catch {
+            results = []
+            errorMessage = error.localizedDescription
+        }
+        isSearching = false
+        hasSearched = true
+    }
+
     private func performSearch(_ query: String) async {
         isSearching = true
         errorMessage = nil
@@ -299,23 +313,27 @@ struct FoodSearchView: View {
 
     // MARK: - Restaurant Quick Pick
 
-    private static let popularChains: [(emoji: String, name: String, search: String)] = [
-        ("🍗", "Nando's", "nandos"),
-        ("🍔", "McDonald's", "mcdonalds"),
-        ("🍗", "KFC", "kfc"),
-        ("🥖", "Greggs", "greggs"),
-        ("🥪", "Subway", "subway"),
-        ("🥐", "Pret", "pret a manger"),
-        ("🍜", "Wagamama", "wagamama"),
-        ("🍕", "Pizza Hut", "pizza hut"),
-        ("🍕", "Domino's", "dominos"),
-        ("🍔", "Burger King", "burger king"),
-        ("☕", "Costa", "costa coffee"),
-        ("☕", "Starbucks", "starbucks"),
-        ("🍕", "Pizza Express", "pizza express"),
-        ("🍔", "Five Guys", "five guys"),
-        ("🥗", "Leon", "leon"),
-        ("🌯", "Tortilla", "tortilla"),
+    // Exact restaurant names matching the ukfoodfacts database
+    private static let popularChains: [(emoji: String, name: String, dbName: String)] = [
+        ("🍗", "Nando's", "Nandos"),
+        ("🍔", "McDonald's", "McDonalds"),
+        ("🍗", "KFC", "KFC"),
+        ("🥖", "Greggs", "Greggs"),
+        ("🥪", "Subway", "Subway"),
+        ("🥐", "Pret", "Pret A Manger"),
+        ("🍜", "Wagamama", "Wagamama"),
+        ("🍕", "Pizza Hut", "Pizza Hut"),
+        ("🍕", "Domino's", "Dominos"),
+        ("🍔", "Burger King", "Burger King"),
+        ("☕", "Costa", "Costa Coffee"),
+        ("☕", "Starbucks", "Starbucks"),
+        ("🍕", "Pizza Express", "Pizza Express"),
+        ("🍔", "Five Guys", "Five Guys"),
+        ("🥗", "Leon", "Leon"),
+        ("🌯", "Tortilla", "Tortilla"),
+        ("🌮", "Taco Bell", "Taco Bell"),
+        ("🍕", "Zizzi", "Zizzi"),
+        ("🍺", "Wetherspoons", "Wetherspoons"),
     ]
 
     private var restaurantPicker: some View {
@@ -326,9 +344,11 @@ struct FoodSearchView: View {
                     .padding(.horizontal)
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 10)], spacing: 10) {
-                    ForEach(Self.popularChains, id: \.search) { chain in
+                    ForEach(Self.popularChains, id: \.dbName) { chain in
                         Button {
-                            query = chain.search
+                            selectedRestaurant = chain.dbName
+                            query = chain.name
+                            Task { await loadRestaurantMenu(chain.dbName) }
                         } label: {
                             VStack(spacing: 4) {
                                 Text(chain.emoji)
