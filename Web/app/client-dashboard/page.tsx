@@ -114,7 +114,10 @@ export default function ClientDashboard() {
       return
     }
 
-    if (session?.user && activeRole !== null) {
+    // Only redirect if user doesn't have CLIENT role at all
+    // Users with multiple roles (e.g. COACH+CLIENT) should be able
+    // to access client-dashboard via the role switcher
+    if (session?.user && !session.user.roles.includes(Role.CLIENT)) {
       if (activeRole === Role.ADMIN) {
         router.push("/admin/overview")
         return
