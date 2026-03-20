@@ -34,35 +34,38 @@ const WORKOUT_ICONS: Record<string, string> = {
   Default: "workout",
 }
 
+// Keyed by HealthKit display name (output of normalizeWorkoutType)
+const WORKOUT_EMOJI: Record<string, string> = {
+  Running: "\ud83c\udfc3",
+  Walking: "\ud83d\udeb6",
+  Cycling: "\ud83d\udeb4",
+  Swimming: "\ud83c\udfca",
+  "Traditional Strength Training": "\ud83c\udfcb\ufe0f",
+  "Functional Strength Training": "\ud83e\udd3c",
+  "High Intensity Interval Training": "\ud83d\udd25",
+  Yoga: "\ud83e\uddd8",
+  Hiking: "\ud83e\udd7e",
+  Dance: "\ud83d\udc83",
+  "Social Dance": "\ud83d\udc83",
+  Tennis: "\ud83c\udfbe",
+  Basketball: "\ud83c\udfc0",
+  Soccer: "\u26bd",
+  Golf: "\u26f3",
+  Rowing: "\ud83d\udea3",
+  Elliptical: "\ud83e\uddcd",
+  "Stair Stepper": "\ud83e\uddf1",
+  "Core Training": "\ud83e\uddcd",
+  "Mixed Cardio": "\ud83d\udcaa",
+  Pilates: "\ud83e\uddd8",
+  Cooldown: "\u2744\ufe0f",
+  "Mind and Body": "\ud83e\uddd8",
+  "Preparation and Recovery": "\ud83d\udca4",
+  "Cross Training": "\ud83c\udfcb\ufe0f",
+}
+
 function getWorkoutEmoji(type: string): string {
-  const icons: Record<string, string> = {
-    Running: "\ud83c\udfc3",
-    Walking: "\ud83d\udeb6",
-    Cycling: "\ud83d\udeb4",
-    Swimming: "\ud83c\udfca",
-    "Strength Training": "\ud83c\udfcb\ufe0f",
-    "High Intensity Interval Training": "\u26a1",
-    Yoga: "\ud83e\uddd8",
-    Hiking: "\ud83e\udd7e",
-    Dance: "\ud83d\udc83",
-    Tennis: "\ud83c\udfbe",
-    Basketball: "\ud83c\udfc0",
-    Soccer: "\u26bd",
-    Golf: "\u26f3",
-    Rowing: "\ud83d\udea3",
-    Elliptical: "\ud83e\uddcd",
-    StairStepper: "\ud83e\uddf1",
-    TraditionalStrengthTraining: "\ud83c\udfcb\ufe0f",
-    FunctionalStrengthTraining: "\ud83e\udd3c",
-    Core: "\ud83e\uddcd",
-    MixedCardio: "\ud83d\udcaa",
-    Pilates: "\ud83e\uddd8",
-    SocialDance: "\ud83d\udc83",
-    Cooldown: "\u2744\ufe0f",
-    MindAndBody: "\ud83e\uddd8",
-  }
-  // Try direct match, then normalized label match
-  return icons[type] || icons[normalizeWorkoutType(type)] || "\ud83c\udfc3"
+  const normalized = normalizeWorkoutType(type)
+  return WORKOUT_EMOJI[normalized] || "\ud83c\udfc3"
 }
 
 function formatDuration(secs: number): string {

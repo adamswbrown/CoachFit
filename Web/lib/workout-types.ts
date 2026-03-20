@@ -1,26 +1,26 @@
 /**
- * Normalize HealthKit workout type enum names to human-readable labels.
+ * Normalize workout type names to match HealthKit's official display names.
  *
  * HealthKit sends PascalCase enum values (e.g. "HighIntensityIntervalTraining")
- * while Apple Watch sends short names (e.g. "Hiit"). This normalizer ensures
- * consistent display across all sources.
+ * while Apple Watch sends short names (e.g. "Hiit"). This normalizer maps all
+ * variants to the names Apple uses in the Fitness app for consistency with iOS.
  */
 
 const WORKOUT_TYPE_LABELS: Record<string, string> = {
-  HighIntensityIntervalTraining: "HIIT",
-  Hiit: "HIIT",
-  HIIT: "HIIT",
-  TraditionalStrengthTraining: "Strength Training",
-  FunctionalStrengthTraining: "Functional Strength",
+  // HealthKit enum → Apple Fitness display name
+  HighIntensityIntervalTraining: "High Intensity Interval Training",
+  Hiit: "High Intensity Interval Training",
+  HIIT: "High Intensity Interval Training",
+  TraditionalStrengthTraining: "Traditional Strength Training",
+  FunctionalStrengthTraining: "Functional Strength Training",
   MixedCardio: "Mixed Cardio",
   StairStepper: "Stair Stepper",
   SocialDance: "Social Dance",
-  MindAndBody: "Mind & Body",
+  MindAndBody: "Mind and Body",
   CrossTraining: "Cross Training",
-  PreparationAndRecovery: "Recovery",
+  PreparationAndRecovery: "Preparation and Recovery",
   CoreTraining: "Core Training",
-  "Strength Training": "Strength Training",
-  "High Intensity Interval Training": "HIIT",
+  "Strength Training": "Traditional Strength Training",
   Elliptical: "Elliptical",
   Cooldown: "Cooldown",
   Pilates: "Pilates",
@@ -36,7 +36,7 @@ const WORKOUT_TYPE_LABELS: Record<string, string> = {
   Basketball: "Basketball",
   Soccer: "Soccer",
   Golf: "Golf",
-  Core: "Core",
+  Core: "Core Training",
 }
 
 export function normalizeWorkoutType(type: string): string {

@@ -42,28 +42,33 @@ interface ClientInfo {
   CohortMembership?: { Cohort: { id: string; name: string } }[]
 }
 
+// Keyed by HealthKit display name (output of normalizeWorkoutType)
 const WORKOUT_EMOJI: Record<string, string> = {
-  running: "🏃",
-  walking: "🚶",
-  cycling: "🚴",
-  swimming: "🏊",
-  strength_training: "🏋️",
-  hiit: "🔥",
-  yoga: "🧘",
-  hiking: "🥾",
-  rowing: "🚣",
-  dance: "💃",
-  pilates: "🤸",
-  elliptical: "🏃",
-  cross_training: "⚡",
-  core_training: "💪",
-  flexibility: "🤸",
-  cooldown: "❄️",
-  mixed_cardio: "❤️",
-  jump_rope: "🪢",
-  stair_climbing: "🪜",
-  stairs: "🪜",
-  other: "🏅",
+  Running: "🏃",
+  Walking: "🚶",
+  Cycling: "🚴",
+  Swimming: "🏊",
+  "Traditional Strength Training": "🏋️",
+  "Functional Strength Training": "🤼",
+  "High Intensity Interval Training": "🔥",
+  Yoga: "🧘",
+  Hiking: "🥾",
+  Rowing: "🚣",
+  Dance: "💃",
+  "Social Dance": "💃",
+  Pilates: "🤸",
+  Elliptical: "🏃",
+  "Cross Training": "⚡",
+  "Core Training": "💪",
+  "Mixed Cardio": "❤️",
+  Cooldown: "❄️",
+  "Mind and Body": "🧘",
+  "Preparation and Recovery": "💤",
+  "Stair Stepper": "🪜",
+}
+
+function getEmoji(type: string): string {
+  return WORKOUT_EMOJI[normalizeWorkoutType(type)] || "🏅"
 }
 
 const TYPE_COLORS = [
@@ -297,7 +302,7 @@ export default function ClientTrainingPage() {
                       {typeBreakdown.map((t, i) => (
                         <div key={t.name} className="flex items-center gap-2 text-sm">
                           <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: TYPE_COLORS[i % TYPE_COLORS.length] }} />
-                          <span className="flex-1">{WORKOUT_EMOJI[t.name.toLowerCase().replace(/ /g, "_")] || "🏅"} {t.name}</span>
+                          <span className="flex-1">{getEmoji(t.name)} {t.name}</span>
                           <span className="text-neutral-500">{t.count}× · {formatDuration(t.minutes * 60)}</span>
                         </div>
                       ))}
@@ -319,7 +324,7 @@ export default function ClientTrainingPage() {
                   .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
                   .map(w => (
                     <div key={w.id} className="px-6 py-4 flex items-center gap-4">
-                      <span className="text-2xl">{WORKOUT_EMOJI[w.workoutType] || "🏅"}</span>
+                      <span className="text-2xl">{getEmoji(w.workoutType)}</span>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-neutral-900">{formatType(w.workoutType)}</div>
                         <div className="text-sm text-neutral-500">
