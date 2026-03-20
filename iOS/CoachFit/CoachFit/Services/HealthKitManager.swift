@@ -122,7 +122,7 @@ final class HealthKitManager {
                 sampleType: HKWorkoutType.workoutType(),
                 predicate: predicate,
                 limit: HKObjectQueryNoLimit,
-                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]
             ) { _, results, error in
                 if let error {
                     continuation.resume(throwing: error)
