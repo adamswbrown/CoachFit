@@ -3,7 +3,12 @@ import { getSession } from "@/lib/auth"
 import { Role } from "@/lib/types"
 
 export default async function DashboardPage() {
-  const session = await getSession()
+  let session
+  try {
+    session = await getSession()
+  } catch {
+    redirect("/login")
+  }
 
   if (!session?.user) {
     redirect("/login")
