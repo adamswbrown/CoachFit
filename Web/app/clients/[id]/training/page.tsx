@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useSession } from "@/lib/auth-client"
 import { useRouter, useParams } from "next/navigation"
+import { normalizeWorkoutType } from "@/lib/workout-types"
 import Link from "next/link"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { Role } from "@/lib/types"
@@ -85,7 +86,7 @@ function formatDistance(meters: number | null): string | null {
 }
 
 function formatType(type: string): string {
-  return type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+  return normalizeWorkoutType(type)
 }
 
 export default function ClientTrainingPage() {

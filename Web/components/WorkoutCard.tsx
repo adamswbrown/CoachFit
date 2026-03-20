@@ -2,6 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
+import { normalizeWorkoutType } from "@/lib/workout-types"
 
 interface Workout {
   id: string
@@ -60,7 +61,8 @@ function getWorkoutEmoji(type: string): string {
     Cooldown: "\u2744\ufe0f",
     MindAndBody: "\ud83e\uddd8",
   }
-  return icons[type] || "\ud83c\udfc3"
+  // Try direct match, then normalized label match
+  return icons[type] || icons[normalizeWorkoutType(type)] || "\ud83c\udfc3"
 }
 
 function formatDuration(secs: number): string {
@@ -139,7 +141,7 @@ export function WorkoutCard({ workouts, clientId, loading = false, compact = fal
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-neutral-900 text-sm truncate">
-                  {workout.workoutType}
+                  {normalizeWorkoutType(workout.workoutType)}
                 </div>
                 <div className="text-xs text-neutral-500 flex items-center gap-2">
                   <span>{formatDate(workout.startTime)}</span>

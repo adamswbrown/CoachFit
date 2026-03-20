@@ -13,6 +13,7 @@ import { Role } from "@/lib/types"
 import { QuestionnaireModal } from "@/components/questionnaire/QuestionnaireModal"
 import { QuestionnaireProgress } from "@/components/questionnaire/QuestionnaireProgress"
 import { WeekNumber } from "@/lib/surveyjs-config"
+import { normalizeWorkoutType } from "@/lib/workout-types"
 import { WrappedModal } from "@/components/wrapped/WrappedModal"
 import type { WrappedSummary } from "@/lib/types"
 import { StreakCard } from "@/components/streak/StreakCard"
@@ -805,7 +806,7 @@ export default function ClientDashboard() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <h3 className="font-medium text-neutral-900 text-sm mb-1">
-                          {workout.workoutType}
+                          {normalizeWorkoutType(workout.workoutType)}
                         </h3>
                         <p className="text-xs text-neutral-500">{dateLabel}</p>
                       </div>

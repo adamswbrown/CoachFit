@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSession } from "@/lib/auth-client"
 import { useRouter } from "next/navigation"
+import { normalizeWorkoutType } from "@/lib/workout-types"
 import Link from "next/link"
 import { isAdminOrCoach } from "@/lib/permissions"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
@@ -572,7 +573,7 @@ export default function HealthKitDataExplorer() {
                                   <span className="text-xl">{getWorkoutIcon(workout.workoutType)}</span>
                                   <div>
                                     <span className="font-medium text-neutral-900">
-                                      {workout.workoutType}
+                                      {normalizeWorkoutType(workout.workoutType)}
                                     </span>
                                     <div className="text-xs text-neutral-500 sm:hidden">
                                       {formatDateTime(workout.startTime)}
