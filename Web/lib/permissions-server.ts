@@ -13,6 +13,7 @@ async function checkAdminOverride(email: string): Promise<boolean> {
   try {
     const envOverrideEmail = process.env.ADMIN_OVERRIDE_EMAIL
     if (envOverrideEmail && envOverrideEmail.toLowerCase() === email.toLowerCase()) {
+      console.warn(`[SECURITY] Admin override triggered via environment variable for email: ${email}`)
       return true
     }
 
@@ -20,11 +21,16 @@ async function checkAdminOverride(email: string): Promise<boolean> {
     if (!settings || !settings.adminOverrideEmail) {
       return false
     }
-    return settings.adminOverrideEmail.toLowerCase() === email.toLowerCase()
+    const matched = settings.adminOverrideEmail.toLowerCase() === email.toLowerCase()
+    if (matched) {
+      console.warn(`[SECURITY] Admin override triggered via database SystemSettings for email: ${email}`)
+    }
+    return matched
   } catch (error) {
     console.error("Error checking admin override:", error)
     const envOverrideEmail = process.env.ADMIN_OVERRIDE_EMAIL
     if (envOverrideEmail && envOverrideEmail.toLowerCase() === email.toLowerCase()) {
+      console.warn(`[SECURITY] Admin override triggered via environment variable for email: ${email}`)
       return true
     }
     return false

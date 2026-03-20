@@ -11,11 +11,14 @@ import { validateAndUsePairingCode } from "@/lib/healthkit/pairing"
 import { db } from "@/lib/db"
 import { pairingCodeSchema } from "@/lib/validations/healthkit"
 import { randomBytes } from "crypto"
+import { addCorsHeaders, createCorsPreflightResponse } from "@/lib/security/cors"
 
 // Simple schema for iOS pairing request - only needs the code
 const iosPairingSchema = pairingCodeSchema
 
 export async function POST(req: NextRequest) {
+  const origin = req.headers.get("origin")
+
   try {
     const body = await req.json()
 
@@ -30,10 +33,7 @@ export async function POST(req: NextRequest) {
         { error: (result as { success: false; error: string }).error },
         { status: 400 }
       )
-      response.headers.set("Access-Control-Allow-Origin", "*")
-      response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS")
-      response.headers.set("Access-Control-Allow-Headers", "Content-Type")
-      return response
+      return addCorsHeaders(response, origin, { allowMobileOrigin: true })
     }
 
     const { clientId, coachId, pairingCode } = result
@@ -63,43 +63,32 @@ export async function POST(req: NextRequest) {
       paired_at: pairingCode.usedAt,
     }, { status: 200 })
 
-    // Add CORS headers
-    response.headers.set("Access-Control-Allow-Origin", "*")
-    response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS")
-    response.headers.set("Access-Control-Allow-Headers", "Content-Type")
+    return addCorsHeaders(response, origin, { allowMobileOrigin: true })
 
-    return response
-
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in /api/pair:", error)
 
-    if (error.name === "ZodError") {
+    if (error && typeof error === "object" && "name" in error && error.name === "ZodError") {
       const response = NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error" },
         { status: 400 }
       )
-      response.headers.set("Access-Control-Allow-Origin", "*")
-      response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS")
-      response.headers.set("Access-Control-Allow-Headers", "Content-Type")
-      return response
+      return addCorsHeaders(response, origin, { allowMobileOrigin: true })
     }
 
     const response = NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     )
-    response.headers.set("Access-Control-Allow-Origin", "*")
-    response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS")
-    response.headers.set("Access-Control-Allow-Headers", "Content-Type")
-    return response
+    return addCorsHeaders(response, origin, { allowMobileOrigin: true })
   }
 }
 
 // Handle OPTIONS for CORS preflight
-export async function OPTIONS() {
-  const response = new NextResponse(null, { status: 200 })
-  response.headers.set("Access-Control-Allow-Origin", "*")
-  response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS")
-  response.headers.set("Access-Control-Allow-Headers", "Content-Type")
-  return response
+export async function OPTIONS(req: NextRequest) {
+  const origin = req.headers.get("origin")
+  return createCorsPreflightResponse(origin, {
+    allowMobileOrigin: true,
+    headers: ["Content-Type"],
+  })
 }

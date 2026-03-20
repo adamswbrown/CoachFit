@@ -8,11 +8,15 @@ import bcrypt from "bcryptjs"
 import { sendSystemEmail } from "@/lib/email"
 import { EMAIL_TEMPLATE_KEYS } from "@/lib/email-templates"
 import { logAuditAction } from "@/lib/audit-log"
+import { passwordSchema } from "@/lib/validations"
+
+// bcrypt cost factor — 12 rounds for strong security
+const BCRYPT_ROUNDS = 12
 
 const createCoachSchema = z.object({
   email: z.string().email("Invalid email format"),
   name: z.string().min(1, "Name is required"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: passwordSchema,
 })
 
 // GET /api/admin/coaches - List all coaches (already exists, keep for compatibility)
@@ -80,7 +84,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 10)
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
 
     // Create user with COACH role
     const newCoach = await db.user.create({

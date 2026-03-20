@@ -5,6 +5,10 @@ import { isAdminOrCoach } from "@/lib/permissions"
 import { Role } from "@/lib/types"
 import { logAuditAction } from "@/lib/audit-log"
 import bcrypt from "bcryptjs"
+import { passwordSchema } from "@/lib/validations"
+
+// bcrypt cost factor — 12 rounds for strong security
+const BCRYPT_ROUNDS = 12
 
 export async function POST(
   req: NextRequest,
@@ -32,9 +36,10 @@ export async function POST(
       )
     }
 
-    if (newPassword.length < 8) {
+    const passwordValidation = passwordSchema.safeParse(newPassword)
+    if (!passwordValidation.success) {
       return NextResponse.json(
-        { error: "Password must be at least 8 characters long" },
+        { error: passwordValidation.error.issues[0]?.message || "Password must be at least 12 characters and include uppercase, lowercase, number, and special character" },
         { status: 400 }
       )
     }
@@ -68,7 +73,7 @@ export async function POST(
     }
 
     // Hash the new password
-    const passwordHash = await bcrypt.hash(newPassword, 10)
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS)
 
     // Update the client's password
     await db.user.update({

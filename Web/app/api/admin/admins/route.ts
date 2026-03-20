@@ -6,11 +6,15 @@ import { Role } from "@/lib/types"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
 import { logAuditAction } from "@/lib/audit-log"
+import { passwordSchema } from "@/lib/validations"
+
+// bcrypt cost factor — 12 rounds for strong security
+const BCRYPT_ROUNDS = 12
 
 const createAdminSchema = z.object({
   email: z.string().email("Invalid email format"),
   name: z.string().min(1, "Name is required"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: passwordSchema,
 })
 
 // POST /api/admin/admins - Create a new admin user
@@ -42,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 10)
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
 
     // Create user with ADMIN role only
     const newAdmin = await db.user.create({
