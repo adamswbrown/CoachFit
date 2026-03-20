@@ -961,9 +961,12 @@ function CoachDashboardContent() {
 export default function CoachDashboard() {
   return (
     <Suspense fallback={
-      <CoachLayout>
-        <DashboardSkeleton />
-      </CoachLayout>
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-neutral-600">Loading...</p>
+        </div>
+      </div>
     }>
       <CoachDashboardContent />
     </Suspense>
