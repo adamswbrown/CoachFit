@@ -3,12 +3,7 @@ import { getSession } from "@/lib/auth"
 import { Role } from "@/lib/types"
 
 export default async function DashboardPage() {
-  let session
-  try {
-    session = await getSession()
-  } catch {
-    redirect("/login")
-  }
+  const session = await getSession()
 
   if (!session?.user) {
     redirect("/login")
@@ -33,7 +28,5 @@ export default async function DashboardPage() {
     redirect("/client-dashboard")
   }
 
-  // Fallback: authenticated but no recognized roles — default to client dashboard
-  // instead of /login which would cause a redirect loop
   redirect("/client-dashboard")
 }
