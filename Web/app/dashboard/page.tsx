@@ -1,50 +1,34 @@
-"use client"
-
-import { useEffect } from "react"
-import { useSession } from "@/lib/auth-client"
-import { useRouter } from "next/navigation"
+import { redirect } from "next/navigation"
+import { getSession } from "@/lib/auth"
 import { Role } from "@/lib/types"
 
-export default function DashboardPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
+export default async function DashboardPage() {
+  const session = await getSession()
 
-  useEffect(() => {
-    if (status === "loading") return
+  if (!session?.user) {
+    redirect("/login")
+  }
 
-    if (!session || !session.user) {
-      router.push("/login")
-      return
+  const user = session.user
+
+  if (user.mustChangePassword) {
+    redirect("/client-dashboard/settings")
+  }
+
+  const userRoles = user.roles || []
+
+  if (userRoles.includes(Role.COACH)) {
+    redirect("/coach-dashboard")
+  } else if (userRoles.includes(Role.ADMIN)) {
+    redirect("/admin")
+  } else if (userRoles.includes(Role.CLIENT)) {
+    if (!user.onboardingComplete) {
+      redirect("/onboarding/client")
     }
+    redirect("/client-dashboard")
+  }
 
-    if ((session.user as any).mustChangePassword) {
-      router.push("/client-dashboard/settings")
-      return
-    }
-
-    // Redirect based on role (COACH takes priority over ADMIN)
-    const userRoles = session.user.roles || []
-
-    if (userRoles.includes(Role.COACH)) {
-      router.push("/coach-dashboard")
-    } else if (userRoles.includes(Role.ADMIN)) {
-      router.push("/admin")
-    } else if (userRoles.includes(Role.CLIENT)) {
-      // Check if client has completed onboarding
-      const onboardingDone = (session.user as any)?.onboardingComplete ?? false
-      if (!onboardingDone) {
-        router.push("/onboarding/client")
-      } else {
-        router.push("/client-dashboard")
-      }
-    } else {
-      router.push("/login")
-    }
-  }, [session, status, router])
-
-  return (
-    <div className="min-h-screen flex items-start sm:items-center justify-center bg-gray-50 overflow-y-auto">
-      <div className="text-gray-600">Redirecting...</div>
-    </div>
-  )
+  // Fallback: authenticated but no recognized roles — default to client dashboard
+  // instead of /login which would cause a redirect loop
+  redirect("/client-dashboard")
 }
