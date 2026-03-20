@@ -39,8 +39,6 @@ const securityHeaders = [
 ]
 
 const nextConfig = {
-  // Enable source maps in production to debug React error #310
-  productionBrowserSourceMaps: true,
   // Use Turbopack (default in Next.js 16)
   // Browser extension errors are handled by ErrorBoundary component
   turbopack: {
