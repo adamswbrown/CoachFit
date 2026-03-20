@@ -68,9 +68,11 @@ export async function POST(req: NextRequest) {
     const validated = signupSchema.parse(body)
     const consent = signupConsentSchema.parse(body)
 
-    // Check if user already exists locally
+    const normalizedEmail = validated.email.toLowerCase().trim()
+
+    // Check if user already exists locally (case-insensitive via normalized email)
     const existingUser = await db.user.findUnique({
-      where: { email: validated.email },
+      where: { email: normalizedEmail },
     })
 
     if (existingUser) {
@@ -81,7 +83,6 @@ export async function POST(req: NextRequest) {
     }
 
     const temporaryPassword = generateTemporaryPassword()
-    const normalizedEmail = validated.email.toLowerCase().trim()
 
     // Create user in Clerk
     let clerkUserId: string | null = null

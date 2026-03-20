@@ -62,7 +62,65 @@ export async function getSession(): Promise<AuthSession | null> {
       const clerkUser = await currentUser()
       if (!clerkUser?.emailAddresses?.[0]?.emailAddress) return null
 
-      const email = clerkUser.emailAddresses[0].emailAddress
+      const email = clerkUser.emailAddresses[0].emailAddress.toLowerCase().trim()
+
+      // Check if user already exists by email (case-insensitive) — may have been
+      // created by webhook or signup route with different clerkId or casing
+      const existingByEmail = await db.user.findFirst({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          image: true,
+          roles: true,
+          isTestUser: true,
+          mustChangePassword: true,
+          onboardingComplete: true,
+          clerkId: true,
+        },
+      })
+
+      if (existingByEmail) {
+        // Link clerkId if missing
+        if (!existingByEmail.clerkId) {
+          await db.user.update({
+            where: { id: existingByEmail.id },
+            data: { clerkId: userId },
+          })
+        }
+
+        let existingRoles = (existingByEmail.roles as Role[]) ?? [Role.CLIENT]
+        if (!existingRoles.includes(Role.ADMIN) && existingByEmail.email) {
+          const { isAdminWithOverride } = await import("./permissions-server")
+          const hasOverride = await isAdminWithOverride({
+            roles: existingRoles,
+            email: existingByEmail.email,
+          })
+          if (hasOverride) existingRoles = [...existingRoles, Role.ADMIN]
+        }
+
+        syncMetadataToClerk(userId, {
+          dbId: existingByEmail.id,
+          roles: existingRoles,
+          isTestUser: existingByEmail.isTestUser ?? false,
+          mustChangePassword: existingByEmail.mustChangePassword ?? false,
+          onboardingComplete: existingByEmail.onboardingComplete ?? false,
+        }).catch(() => {})
+
+        return {
+          user: {
+            id: existingByEmail.id,
+            email: existingByEmail.email,
+            name: existingByEmail.name ?? null,
+            image: existingByEmail.image ?? null,
+            roles: existingRoles,
+            isTestUser: existingByEmail.isTestUser ?? false,
+            mustChangePassword: existingByEmail.mustChangePassword ?? false,
+            onboardingComplete: existingByEmail.onboardingComplete ?? false,
+          },
+        }
+      }
 
       // Create local user record
       const newUser = await db.user.create({

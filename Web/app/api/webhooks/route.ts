@@ -28,8 +28,9 @@ export async function POST(req: NextRequest) {
       const name = [first_name, last_name].filter(Boolean).join(" ") || null
 
       // Check if user already exists (by email — may have been created via signup API)
-      let user = await db.user.findUnique({
-        where: { email: normalizedEmail },
+      // Use case-insensitive search to catch records stored with different casing
+      let user = await db.user.findFirst({
+        where: { email: { equals: normalizedEmail, mode: "insensitive" } },
         select: { id: true, clerkId: true, roles: true },
       })
 
