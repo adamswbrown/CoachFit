@@ -27,7 +27,7 @@ export default function LoginPage() {
         <div className="flex justify-center">
           <SignIn
             routing="hash"
-            forceRedirectUrl="/dashboard"
+            forceRedirectUrl="/"
             appearance={{
               elements: {
                 rootBox: "w-full",

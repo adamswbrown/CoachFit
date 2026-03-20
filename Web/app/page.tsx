@@ -1,19 +1,33 @@
-"use client"
+import { redirect } from "next/navigation"
+import { getSession } from "@/lib/auth"
+import { Role } from "@/lib/types"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+export const dynamic = "force-dynamic"
 
-export default function HomePage() {
-  const router = useRouter()
+export default async function HomePage() {
+  const session = await getSession()
 
-  useEffect(() => {
-    // Redirect to dashboard which will handle role-based routing
-    router.push("/dashboard")
-  }, [router])
+  if (!session?.user) {
+    redirect("/login")
+  }
 
-  return (
-    <div className="min-h-screen flex items-start sm:items-center justify-center bg-gray-50 overflow-y-auto">
-      <div className="text-gray-600">Redirecting...</div>
-    </div>
-  )
+  const user = session.user
+  const userRoles = user.roles || []
+
+  if (user.mustChangePassword) {
+    redirect("/client-dashboard/settings")
+  }
+
+  if (userRoles.includes(Role.COACH)) {
+    redirect("/coach-dashboard")
+  } else if (userRoles.includes(Role.ADMIN)) {
+    redirect("/admin")
+  } else if (userRoles.includes(Role.CLIENT)) {
+    if (!user.onboardingComplete) {
+      redirect("/onboarding/client")
+    }
+    redirect("/client-dashboard")
+  }
+
+  redirect("/client-dashboard")
 }
