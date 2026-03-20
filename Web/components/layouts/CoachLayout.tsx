@@ -77,23 +77,8 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     fetchCohorts()
   }, [session?.user?.id])
 
-  if (!session) return null
-
-  const firstName = session?.user?.name?.split(" ")[0] || session?.user?.email || "there"
-
-  const isClientsActive = pathname === "/coach-dashboard" || pathname?.startsWith("/clients/") || pathname?.startsWith("/coach-dashboard/")
-
-  const clientFilters: { value: ClientFilter; label: string }[] = [
-    { value: "all", label: "All Clients" },
-    { value: "active", label: "Connected" },
-    { value: "pending", label: "Pending" },
-    { value: "offline", label: "Offline" },
-    { value: "unassigned", label: "Unassigned" },
-    { value: "invited", label: "Invited" },
-    { value: "needs-attention", label: "Needs Attention" },
-  ]
-
   // Close dropdowns when clicking outside
+  // IMPORTANT: This hook must be before any early returns to maintain consistent hook count
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (clientsDropdownRef.current && !clientsDropdownRef.current.contains(event.target as Node)) {
@@ -111,6 +96,22 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [clientsDropdownOpen, cohortsDropdownOpen])
+
+  if (!session) return null
+
+  const firstName = session?.user?.name?.split(" ")[0] || session?.user?.email || "there"
+
+  const isClientsActive = pathname === "/coach-dashboard" || pathname?.startsWith("/clients/") || pathname?.startsWith("/coach-dashboard/")
+
+  const clientFilters: { value: ClientFilter; label: string }[] = [
+    { value: "all", label: "All Clients" },
+    { value: "active", label: "Connected" },
+    { value: "pending", label: "Pending" },
+    { value: "offline", label: "Offline" },
+    { value: "unassigned", label: "Unassigned" },
+    { value: "invited", label: "Invited" },
+    { value: "needs-attention", label: "Needs Attention" },
+  ]
 
   const handleFilterChange = (filter: ClientFilter) => {
     const params = new URLSearchParams(searchParams.toString())
