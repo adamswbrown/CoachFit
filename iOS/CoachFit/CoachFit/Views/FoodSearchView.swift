@@ -217,49 +217,58 @@ struct FoodSearchView: View {
                     }
                     Spacer()
                 } else {
-                    List(filteredResults.indices, id: \.self) { index in
-                        let product = filteredResults[index]
-                        NavigationLink {
-                            ProductView(product: product)
-                        } label: {
-                            HStack {
-                                if let url = product.imageURL {
-                                    AsyncImage(url: url) { image in
-                                        image.resizable().scaledToFill()
-                                    } placeholder: {
-                                        Color.secondary.opacity(0.2)
+                    VStack(spacing: 0) {
+                        List(filteredResults.indices, id: \.self) { index in
+                            let product = filteredResults[index]
+                            NavigationLink {
+                                ProductView(product: product)
+                            } label: {
+                                HStack {
+                                    if let url = product.imageURL {
+                                        AsyncImage(url: url) { image in
+                                            image.resizable().scaledToFill()
+                                        } placeholder: {
+                                            Color.secondary.opacity(0.2)
+                                        }
+                                        .frame(width: 40, height: 40)
+                                        .clipShape(RoundedRectangle(cornerRadius: 6))
                                     }
-                                    .frame(width: 40, height: 40)
-                                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                                }
 
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(product.name)
-                                        .font(.subheadline.weight(.medium))
-                                        .lineLimit(2)
-                                    if !product.brand.isEmpty {
-                                        Text(product.brand)
-                                            .font(.caption)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(product.name)
+                                            .font(.subheadline.weight(.medium))
+                                            .lineLimit(2)
+                                        if !product.brand.isEmpty {
+                                            Text(product.brand)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+
+                                    Spacer()
+
+                                    VStack(alignment: .trailing, spacing: 2) {
+                                        Text("\(Int(product.caloriesPer100g)) kcal")
+                                            .font(.subheadline.weight(.semibold))
+                                        Text("P \(Int(product.proteinPer100g))g  F \(Int(product.fatPer100g))g  C \(Int(product.carbsPer100g))g")
+                                            .font(.caption2)
                                             .foregroundStyle(.secondary)
+                                        Text(product.source.rawValue)
+                                            .font(.system(size: 9))
+                                            .foregroundStyle(.tertiary)
                                     }
-                                }
-
-                                Spacer()
-
-                                VStack(alignment: .trailing, spacing: 2) {
-                                    Text("\(Int(product.caloriesPer100g)) kcal")
-                                        .font(.subheadline.weight(.semibold))
-                                    Text("P \(Int(product.proteinPer100g))g  F \(Int(product.fatPer100g))g  C \(Int(product.carbsPer100g))g")
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                    Text(product.source.rawValue)
-                                        .font(.system(size: 9))
-                                        .foregroundStyle(.tertiary)
                                 }
                             }
                         }
+                        .listStyle(.plain)
+
+                        // Persistent add meal button below results (restaurant only)
+                        if searchType == .restaurant {
+                            addMealButton
+                                .padding(.vertical, 10)
+                                .background(Color(.systemBackground))
+                        }
                     }
-                    .listStyle(.plain)
                 }
             }
             .navigationTitle(searchType.title)
@@ -343,9 +352,39 @@ struct FoodSearchView: View {
         ("🍺", "Wetherspoons", "Wetherspoons"),
     ]
 
+    private var addMealButton: some View {
+        NavigationLink {
+            ProductView(barcode: "")
+        } label: {
+            HStack {
+                Image(systemName: "plus.circle.fill")
+                Text("Add a Meal")
+                    .fontWeight(.medium)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(Color.accentColor)
+            .foregroundStyle(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .padding(.horizontal)
+    }
+
     private var restaurantPicker: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                // Persistent add meal button
+                VStack(spacing: 4) {
+                    addMealButton
+                    Text("Can't find your meal? Add it manually")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+                }
+
+                Divider()
+                    .padding(.horizontal)
+
                 Text("Popular Chains")
                     .font(.headline)
                     .padding(.horizontal)
