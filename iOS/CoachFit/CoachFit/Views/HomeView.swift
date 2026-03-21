@@ -16,12 +16,10 @@ struct HomeView: View {
                     Label("Check-in", systemImage: "checkmark.circle")
                 }
 
-            NavigationStack {
-                FoodLogEntryView()
-            }
-            .tabItem {
-                Label("Log Food", systemImage: "plus.circle")
-            }
+            FoodTab()
+                .tabItem {
+                    Label("Food", systemImage: "fork.knife")
+                }
 
             if appState.hasActiveChallenge || !appState.challengeCheckComplete {
                 ChallengesView()
@@ -44,21 +42,9 @@ struct HomeView: View {
 // MARK: - Check-in Tab
 
 private struct CheckInTab: View {
-    @Environment(AppState.self) private var appState
-
     var body: some View {
         NavigationStack {
             TodayTab()
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink {
-                            FoodLogView()
-                                .navigationTitle("Food Log")
-                        } label: {
-                            Label("Food Log", systemImage: "fork.knife")
-                        }
-                    }
-                }
         }
     }
 }
@@ -83,19 +69,6 @@ private struct AccountTab: View {
                 }
 
                 Section {
-                    NavigationLink {
-                        FoodLogEntryView()
-                    } label: {
-                        Label("Log Food", systemImage: "plus.circle")
-                    }
-
-                    NavigationLink {
-                        FoodLogView()
-                            .navigationTitle("Food Log")
-                    } label: {
-                        Label("Food Log", systemImage: "fork.knife")
-                    }
-
                     NavigationLink {
                         HealthDashboardView()
                             .navigationTitle("Health")
