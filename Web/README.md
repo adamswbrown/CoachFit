@@ -59,6 +59,9 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 
 #### For Clients
 - ✅ **Daily Check-Ins**: Log weight, steps, calories, sleep quality, perceived stress, and notes
+- ✅ **Class Booking**: 14-day schedule view with tap-to-book, credit debit, cancellation with refund policy
+- ✅ **Credit System**: View balance, purchase packs, transaction history
+- ✅ **Challenge Participation**: Join challenges, track progress with streak calendar and progress ring
 - ✅ **Personal Dashboard**: Quick stats and entry history with visual tracking
 - ✅ **Data Source Tracking**: Automatic tracking of data sources (HealthKit, manual entry, etc.)
 - ✅ **Self-Service Settings**: Change password, view OAuth connections, manage account
@@ -66,6 +69,9 @@ See [CLAUDE.md](./CLAUDE.md) for the complete operating contract.
 - ✅ **Terms & Consent**: Consent management with version tracking, IP/user-agent logging, and admin-managed legal content
 
 #### For Coaches
+- ✅ **Class Schedule Management**: Week view, create/edit sessions, assign instructors
+- ✅ **Credit Management**: View client balances, manual adjustments, submission approval queue
+- ✅ **Challenge Management**: Create challenge cohorts, track participant compliance with heat grid
 - ✅ **Cohort Management**: Create and manage multiple client cohorts with co-coach support
 - ✅ **Cohort Start Dates**: Weekly questionnaire availability driven by cohort start date
 - ✅ **Two-Tier Invitations**: Global coach invites + cohort-specific invites
@@ -311,8 +317,11 @@ npm run db:migrate       # Run migrations (for production)
 npm run db:push          # Push schema changes (for prototyping)
 npm run db:studio        # Open Prisma Studio (database GUI)
 
+# Seeding
+npm run db:seed          # Create basic test users + class templates/sessions
+npm run seed:classes     # Seed class templates + sessions from TeamUp data (idempotent)
+
 # Test Data
-npm run db:seed          # Create basic test users
 npm run test:generate    # Generate full test dataset (15 clients, 5 cohorts, entries)
 npm run test:cleanup     # Remove all test data
 npx tsx scripts/reset-and-seed-comprehensive-multi-coach.ts  # Comprehensive reset + seed (100 clients, ~10 cohorts, questionnaires)
@@ -375,6 +384,16 @@ Weekly questionnaires are bundled per cohort using SurveyJS templates and surfac
 - `AttentionScore` - Calculated attention scores for prioritization
 - `AdminAction` - Audit trail for admin operations
 - `SystemSettings` - Configurable system parameters, feature flags, and legal content
+
+**Class Booking & Credit Models**:
+- `ClassTemplate` - Reusable class definitions (HIIT, CORE, Strength) with booking rules and capacity
+- `ClassSession` - Individual class occurrences with instructor assignment and status tracking
+- `ClassBooking` - Client bookings with lifecycle (BOOKED → ATTENDED/CANCELLED/NO_SHOW)
+- `CreditProduct` - Purchasable credit packs and subscriptions
+- `ClientCreditAccount` - Per-client credit balance (atomic operations, race-condition safe)
+- `ClientCreditLedger` - Append-only credit transaction journal
+- `CreditSubmission` - Credit purchase submissions with approval workflow
+- `ClientCreditSubscription` - Recurring credit subscription tracking
 
 **HealthKit & iOS Models**:
 - `Workout` - HealthKit workout data (type, duration, calories, heart rate, distance, metadata)
@@ -447,9 +466,9 @@ See [CLAUDE.md](./CLAUDE.md) for the complete development workflow and operating
 
 ## 📊 Project Stats
 
-- **Lines of Code**: ~20,000+ (TypeScript + React + Prisma)
-- **API Endpoints**: 60+ RESTful routes
-- **Database Tables**: 18 models (11 core + 4 HealthKit + 3 admin/compliance)
+- **Lines of Code**: ~25,000+ (TypeScript + React + Prisma)
+- **API Endpoints**: 85+ RESTful routes
+- **Database Tables**: 26 models (11 core + 8 booking/credit + 4 HealthKit + 3 admin/compliance)
 - **User Roles**: 3 (CLIENT, COACH, ADMIN) with multi-role support
 - **Development Time**: ~5 months (with AI assistance)
 - **Deployment**: Continuous (Vercel auto-deploy on merge to main)
