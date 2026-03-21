@@ -44,8 +44,15 @@ function addMobileCorsHeaders(response: NextResponse): NextResponse {
   return addSecurityHeaders(response)
 }
 
-function isHealthKitEndpoint(pathname: string): boolean {
-  return pathname.startsWith("/api/ingest") || pathname.startsWith("/api/pair")
+function isMobileEndpoint(pathname: string): boolean {
+  return (
+    pathname.startsWith("/api/ingest") ||
+    pathname.startsWith("/api/pair") ||
+    pathname.startsWith("/api/classes") ||
+    pathname.startsWith("/api/credits") ||
+    pathname.startsWith("/api/challenges") ||
+    pathname.startsWith("/api/client")
+  )
 }
 
 /**
@@ -62,6 +69,10 @@ const isPublicRoute = createRouteMatcher([
   "/api/ingest(.*)",
   "/api/pair(.*)",
   "/api/healthkit(.*)",
+  "/api/classes(.*)",
+  "/api/credits(.*)",
+  "/api/challenges(.*)",
+  "/api/client(.*)",
   "/public/(.*)",
 ])
 
@@ -77,12 +88,12 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // CORS preflight for mobile endpoints
-  if (isHealthKitEndpoint(pathname) && req.method === "OPTIONS") {
+  if (isMobileEndpoint(pathname) && req.method === "OPTIONS") {
     return addMobileCorsHeaders(new NextResponse(null, { status: 204 }))
   }
 
   // Mobile app endpoints - add CORS but authentication happens at route level
-  if (isHealthKitEndpoint(pathname)) {
+  if (isMobileEndpoint(pathname)) {
     return addMobileCorsHeaders(NextResponse.next())
   }
 

@@ -5,7 +5,14 @@ struct ScheduleView: View {
     @Environment(AppState.self) private var appState
 
     @State private var classService: ClassService?
+    @State private var bookingService: BookingService?
     @State private var selectedDate: Date = .now
+    @State private var viewMode: ViewMode = .calendar
+
+    enum ViewMode: String, CaseIterable {
+        case calendar = "Classes"
+        case bookings = "My Bookings"
+    }
 
     private var dateStrip: [Date] {
         let calendar = Calendar.current
@@ -38,46 +45,35 @@ struct ScheduleView: View {
                 Color(hex: "#111111").ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    dateStripView
-                        .padding(.vertical, 8)
+                    // Segmented control
+                    Picker("View", selection: $viewMode) {
+                        ForEach(ViewMode.allCases, id: \.self) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
 
-                    if let service = classService, service.isLoading && service.sessions.isEmpty {
-                        Spacer()
-                        ProgressView()
-                            .tint(.white)
-                        Spacer()
-                    } else if let service = classService, service.sessions.isEmpty {
-                        Spacer()
-                        VStack(spacing: 8) {
-                            Image(systemName: "calendar.badge.exclamationmark")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                            Text("No classes today — check another day")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                    } else {
-                        ScrollView {
-                            LazyVStack(alignment: .leading, spacing: 16) {
-                                sessionSection("Morning", sessions: morningSessions)
-                                sessionSection("Afternoon", sessions: afternoonSessions)
-                                sessionSection("Evening", sessions: eveningSessions)
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.top, 8)
-                            .padding(.bottom, 24)
-                        }
-                        .refreshable {
-                            await loadData()
-                        }
+                    switch viewMode {
+                    case .calendar:
+                        calendarContent
+                    case .bookings:
+                        bookingsContent
                     }
                 }
 
-                // Error banner
-                if let errorMessage = classService?.errorMessage {
+                // Error banners
+                if let errorMessage = classService?.errorMessage, viewMode == .calendar {
                     ErrorBanner(message: errorMessage) {
                         classService?.errorMessage = nil
+                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(100)
+                }
+                if let errorMessage = bookingService?.errorMessage, viewMode == .bookings {
+                    ErrorBanner(message: errorMessage) {
+                        bookingService?.errorMessage = nil
                     }
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .zIndex(100)
@@ -95,10 +91,119 @@ struct ScheduleView: View {
             if classService == nil {
                 classService = ClassService(apiClient: appState.apiClient)
             }
-            await loadData()
+            if bookingService == nil {
+                bookingService = BookingService(api: appState.apiClient)
+            }
+            await loadCalendarData()
+            await loadBookingsData()
         }
         .onChange(of: selectedDate) {
-            Task { await loadData() }
+            Task { await loadCalendarData() }
+        }
+    }
+
+    // MARK: - Calendar Content
+
+    private var calendarContent: some View {
+        VStack(spacing: 0) {
+            dateStripView
+                .padding(.vertical, 8)
+
+            if let service = classService, service.isLoading && service.sessions.isEmpty {
+                Spacer()
+                ProgressView()
+                    .tint(.white)
+                Spacer()
+            } else if let service = classService, service.sessions.isEmpty {
+                Spacer()
+                VStack(spacing: 8) {
+                    Image(systemName: "calendar.badge.exclamationmark")
+                        .font(.largeTitle)
+                        .foregroundStyle(.secondary)
+                    Text("No classes today — check another day")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 16) {
+                        sessionSection("Morning", sessions: morningSessions)
+                        sessionSection("Afternoon", sessions: afternoonSessions)
+                        sessionSection("Evening", sessions: eveningSessions)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 24)
+                }
+                .refreshable {
+                    await loadCalendarData()
+                }
+            }
+        }
+    }
+
+    // MARK: - Bookings Content
+
+    @State private var bookingSegment: BookingSegment = .upcoming
+
+    enum BookingSegment: String, CaseIterable {
+        case upcoming = "Upcoming"
+        case past = "Past"
+    }
+
+    private var bookingsContent: some View {
+        VStack(spacing: 0) {
+            Picker("Segment", selection: $bookingSegment) {
+                ForEach(BookingSegment.allCases, id: \.self) { segment in
+                    Text(segment.rawValue).tag(segment)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+
+            let bookings = bookingSegment == .upcoming
+                ? (bookingService?.upcomingBookings ?? [])
+                : (bookingService?.pastBookings ?? [])
+
+            if bookingService?.isLoading == true && bookings.isEmpty {
+                Spacer()
+                ProgressView().tint(.white)
+                Spacer()
+            } else if bookings.isEmpty {
+                Spacer()
+                VStack(spacing: 8) {
+                    Image(systemName: bookingSegment == .upcoming ? "calendar.badge.clock" : "clock.arrow.circlepath")
+                        .font(.system(size: 40))
+                        .foregroundStyle(.secondary)
+                    Text(bookingSegment == .upcoming
+                         ? "You haven't booked any classes yet"
+                         : "No past bookings")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(32)
+                Spacer()
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(bookings) { booking in
+                            BookingRowView(
+                                booking: booking,
+                                isUpcoming: bookingSegment == .upcoming,
+                                onCancel: { await cancelBooking(booking) }
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 24)
+                }
+                .refreshable {
+                    await loadBookingsData()
+                }
+            }
         }
     }
 
@@ -140,6 +245,8 @@ struct ScheduleView: View {
                         onBook: { sessionId in
                             _ = try await classService!.bookClass(sessionId: sessionId)
                             await classService?.fetchBalance()
+                            // Refresh bookings after booking a class
+                            await loadBookingsData()
                         }
                     )
                 }
@@ -149,11 +256,55 @@ struct ScheduleView: View {
 
     // MARK: - Data Loading
 
-    private func loadData() async {
+    private func loadCalendarData() async {
         guard let service = classService else { return }
         async let schedule: () = service.fetchSchedule(for: selectedDate)
         async let balance: () = service.fetchBalance()
         _ = await (schedule, balance)
+    }
+
+    private func loadBookingsData() async {
+        guard let service = bookingService else { return }
+        async let bookings: () = service.fetchBookings()
+        async let balance: () = service.fetchBalance()
+        _ = await (bookings, balance)
+    }
+
+    private func cancelBooking(_ booking: ClientBooking) async {
+        guard let service = bookingService else { return }
+        do {
+            let result = try await service.cancelBooking(bookingId: booking.id)
+
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.warning)
+
+            withAnimation(.easeInOut(duration: 0.3)) {
+                service.upcomingBookings.removeAll { $0.id == booking.id }
+            }
+
+            if result.refunded {
+                service.errorMessage = nil
+                showBookingBanner("Cancelled \u{2014} credit refunded")
+            } else {
+                showBookingBanner("Cancelled \u{2014} no refund (late cancel)")
+            }
+
+            await service.fetchBalance()
+            // Also refresh credit balance in calendar view
+            await classService?.fetchBalance()
+        } catch {
+            withAnimation {
+                service.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func showBookingBanner(_ message: String) {
+        withAnimation { bookingService?.errorMessage = message }
+        Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            withAnimation { bookingService?.errorMessage = nil }
+        }
     }
 }
 
@@ -173,10 +324,6 @@ private struct DatePill: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "d"
         return formatter.string(from: date)
-    }
-
-    private var isToday: Bool {
-        Calendar.current.isDateInToday(date)
     }
 
     var body: some View {

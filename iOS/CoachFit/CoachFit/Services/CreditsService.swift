@@ -83,7 +83,7 @@ final class CreditsService {
     private func fetchWithRetry(path: String) async throws -> Data {
         do {
             return try await fetch(path: path)
-        } catch let error as URLError {
+        } catch is URLError {
             // Retry once on network error
             do {
                 return try await fetch(path: path)

@@ -1,0 +1,24 @@
+Every 3.0s: ls ~/.claude/tasks/ 2>/dev/null && echo "---" && cat ~/.claude/tasks/*/*.json 2>/dev/null | python3 -m json.tool 2>/dev/n… Adams-MacBook-Pro.local: 14:16:15
+                                                                                                                                                           in 0.207s (1)
+9a5a714a-9c0b-48c5-811f-813e2593b768                                                                                                                                    
+---                                                                                                                                                                     
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        
+                                                                                                                                                                        

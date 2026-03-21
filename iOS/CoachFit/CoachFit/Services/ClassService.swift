@@ -152,7 +152,7 @@ final class ClassService {
 
             let decoded = try Self.decoder.decode(ScheduleResponse.self, from: data)
             sessions = decoded.sessions
-        } catch let error as URLError {
+        } catch is URLError {
             // Auto-retry once on network error
             do {
                 let (data, response) = try await apiClient.authenticatedRequest(
