@@ -4,317 +4,205 @@ import * as path from "path"
 
 const prisma = new PrismaClient()
 
-// ─── Instructor Map (confirmed in DB) ────────────────────────────────────────
+// ─── Known Instructor Map (CoachFit DB UUID → used as instructorId) ─────────
 
-const INSTRUCTOR_MAP: Record<number, string> = {
-  111554: "892d7443-2b1b-4b0b-83e5-a0a477862234", // Gav Cunningham
-  139862: "866eed7d-91b5-4dbb-b7d4-1421de65bf4a", // Rory Stephens
-  145825: "7f133cf9-316d-4e39-8c68-c9d2599ac5fe", // Clare Cuming
-  158454: "7c6db9b1-192a-437a-9e47-a258e223a5c2", // Josh Bunting
-}
 const GAV_ID = "892d7443-2b1b-4b0b-83e5-a0a477862234"
 
-const ALL_INSTRUCTOR_IDS = [
-  "892d7443-2b1b-4b0b-83e5-a0a477862234", // Gav Cunningham
-  "866eed7d-91b5-4dbb-b7d4-1421de65bf4a", // Rory Stephens
-  "7f133cf9-316d-4e39-8c68-c9d2599ac5fe", // Clare Cuming
-  "7c6db9b1-192a-437a-9e47-a258e223a5c2", // Josh Bunting
-]
+// Maps appointment.json instructor names → CoachFit user IDs.
+// New instructors not yet in the DB will be created.
+const INSTRUCTOR_BY_NAME: Record<string, string> = {
+  "Gav Cunningham": "892d7443-2b1b-4b0b-83e5-a0a477862234",
+  "Rory Stephens": "866eed7d-91b5-4dbb-b7d4-1421de65bf4a",
+  "Clare Cuming": "7f133cf9-316d-4e39-8c68-c9d2599ac5fe",
+  "Josh Bunting": "7c6db9b1-192a-437a-9e47-a258e223a5c2",
+}
 
-// ─── TeamUp Event Shape ──────────────────────────────────────────────────────
+// ─── Appointment Shape ──────────────────────────────────────────────────────
 
-interface TeamUpEvent {
+interface Appointment {
   id: number
   name: string
   starts_at: string
   ends_at: string
   max_occupancy: number
-  instructors?: { staff: number; name: string }[]
   description?: string
+  instructors?: { id: number; name: string; staff: number }[]
+  active_registration_status?: {
+    late_cancels_after?: string
+    registrations_open_at?: string
+  }
 }
 
-// ─── Seed Function ───────────────────────────────────────────────────────────
+// ─── Seed Function ──────────────────────────────────────────────────────────
 
-/**
- * Ensure exactly one ClassTemplate exists per classType + ownerCoachId.
- * Creates if missing, updates if found, and deletes any duplicates
- * (reassigning their sessions to the canonical template first).
- */
-async function ensureTemplate(data: {
-  ownerCoachId: string
-  name: string
-  classType: string
-  description: string
-  locationLabel: string
-  capacity: number
-  cancelCutoffMinutes: number
-}) {
-  // Find ALL templates for this classType + owner (case-insensitive match)
-  const all = await prisma.classTemplate.findMany({
-    where: { classType: data.classType, ownerCoachId: data.ownerCoachId },
-    orderBy: { createdAt: "asc" }, // keep the oldest one
-  })
+export async function seedClasses() {
+  console.log("Seeding classes from appointments.json...\n")
 
-  let canonical = all[0] ?? null
-  const duplicates = all.slice(1)
+  // ── Step 1: Read appointment data ──────────────────────────────────────
 
-  if (!canonical) {
-    canonical = await prisma.classTemplate.create({
+  const dataPath = path.resolve(__dirname, "../../research/appointments.json")
+  if (!fs.existsSync(dataPath)) {
+    console.error(`  File not found: ${dataPath}`)
+    process.exit(1)
+  }
+
+  const raw = fs.readFileSync(dataPath, "utf8")
+  const data: { results: Appointment[] } = JSON.parse(raw)
+  const appointments = data.results
+
+  console.log(`  Loaded ${appointments.length} appointments`)
+
+  // ── Step 2: Ensure instructors exist ───────────────────────────────────
+
+  const uniqueInstructors = new Map<string, number>()
+  for (const appt of appointments) {
+    for (const inst of appt.instructors ?? []) {
+      if (!uniqueInstructors.has(inst.name)) {
+        uniqueInstructors.set(inst.name, inst.staff)
+      }
+    }
+  }
+
+  for (const [name, staffId] of uniqueInstructors) {
+    if (INSTRUCTOR_BY_NAME[name]) continue // Already mapped
+
+    // Check if user exists by name
+    const existing = await prisma.user.findFirst({
+      where: { name: { equals: name, mode: "insensitive" } },
+      select: { id: true },
+    })
+
+    if (existing) {
+      INSTRUCTOR_BY_NAME[name] = existing.id
+      console.log(`  Found instructor: ${name} → ${existing.id}`)
+    } else {
+      // Create a new user for this instructor
+      const newUser = await prisma.user.create({
+        data: {
+          email: `${name.toLowerCase().replace(/\s+/g, ".")}@hitsona.com`,
+          name,
+          roles: ["COACH"],
+        },
+      })
+      INSTRUCTOR_BY_NAME[name] = newUser.id
+      console.log(`  Created instructor: ${name} → ${newUser.id}`)
+    }
+  }
+
+  // ── Step 3: Delete existing sessions and bookings ──────────────────────
+
+  const deletedBookings = await prisma.classBooking.deleteMany({})
+  const deletedSessions = await prisma.classSession.deleteMany({})
+  const deletedTemplates = await prisma.classTemplate.deleteMany({})
+
+  console.log(`\n  Cleared: ${deletedTemplates.count} templates, ${deletedSessions.count} sessions, ${deletedBookings.count} bookings`)
+
+  // ── Step 4: Create templates from unique class types ───────────────────
+
+  const classTypes = [...new Set(appointments.map((a) => a.name))]
+  const templates: Record<string, { id: string; capacity: number }> = {}
+
+  for (const classType of classTypes) {
+    // Get typical values from first appointment of this type
+    const sample = appointments.find((a) => a.name === classType)!
+    const startsAt = new Date(sample.starts_at)
+    const endsAt = new Date(sample.ends_at)
+    const durationMinutes = Math.round(
+      (endsAt.getTime() - startsAt.getTime()) / (1000 * 60)
+    )
+
+    // Strip HTML tags from description
+    const rawDesc = sample.description ?? ""
+    const description = rawDesc.replace(/<[^>]*>/g, "").trim()
+
+    // Derive cancel cutoff from registration status
+    let cancelCutoffMinutes = 60
+    if (sample.active_registration_status?.late_cancels_after) {
+      const lateCancelAt = new Date(
+        sample.active_registration_status.late_cancels_after
+      )
+      cancelCutoffMinutes = Math.round(
+        (startsAt.getTime() - lateCancelAt.getTime()) / (1000 * 60)
+      )
+    }
+
+    const template = await prisma.classTemplate.create({
       data: {
-        ...data,
+        ownerCoachId: GAV_ID,
+        name: classType,
+        classType: classType.toUpperCase(),
+        description: description || `${durationMinutes}-minute ${classType} session`,
+        locationLabel: "Hitsona Bangor",
+        capacity: sample.max_occupancy,
         scope: "FACILITY",
         waitlistEnabled: true,
         waitlistCapacity: 5,
-        bookingOpenHoursBefore: 336,
+        bookingOpenHoursBefore: 336, // 14 days
         bookingCloseMinutesBefore: 0,
+        cancelCutoffMinutes,
         creditsRequired: 1,
         isActive: true,
       },
     })
-    console.log(`  Created ${data.classType} template: ${canonical.id}`)
-  } else {
-    canonical = await prisma.classTemplate.update({
-      where: { id: canonical.id },
-      data: {
-        description: data.description,
-        locationLabel: data.locationLabel,
-        capacity: data.capacity,
-        cancelCutoffMinutes: data.cancelCutoffMinutes,
-      },
-    })
-    console.log(`  Updated ${data.classType} template: ${canonical.id}`)
+
+    templates[classType] = { id: template.id, capacity: sample.max_occupancy }
+    console.log(
+      `  Template: ${classType} (${durationMinutes}min, capacity ${sample.max_occupancy}, cutoff ${cancelCutoffMinutes}min) → ${template.id}`
+    )
   }
 
-  // Remove duplicates — reassign their sessions first
-  for (const dup of duplicates) {
-    const moved = await prisma.classSession.updateMany({
-      where: { classTemplateId: dup.id },
-      data: { classTemplateId: canonical.id },
-    })
-    await prisma.classTemplate.delete({ where: { id: dup.id } })
-    console.log(`  Removed duplicate ${data.classType} template ${dup.id} (${moved.count} sessions reassigned)`)
-  }
-
-  return canonical
-}
-
-export async function seedClasses() {
-  console.log("Seeding ClassTemplates and ClassSessions from TeamUp data...\n")
-
-  // ── Step 1: Seed ClassTemplates (deduplicated) ─────────────────────────
-
-  const hiitTemplate = await ensureTemplate({
-    ownerCoachId: GAV_ID,
-    name: "HIIT",
-    classType: "HIIT",
-    description: "25-minute coach led small group sessions",
-    locationLabel: "Hitsona Bangor",
-    capacity: 10,
-    cancelCutoffMinutes: 120,
-  })
-
-  const coreTemplate = await ensureTemplate({
-    ownerCoachId: GAV_ID,
-    name: "CORE",
-    classType: "CORE",
-    description: "25-minute coach led CORE session",
-    locationLabel: "Hitsona Bangor",
-    capacity: 15,
-    cancelCutoffMinutes: 120,
-  })
-
-  const strengthTemplate = await ensureTemplate({
-    ownerCoachId: GAV_ID,
-    name: "Strength",
-    classType: "Strength",
-    description: "45-minute strength and resistance training",
-    locationLabel: "Hitsona Bangor",
-    capacity: 12,
-    cancelCutoffMinutes: 120,
-  })
-
-  // ── Seed window: 6 weeks from 2026-03-21 to 2026-05-01 ────────────────
-
-  const SEED_START = new Date("2026-03-21T00:00:00Z")
-  const SEED_END = new Date("2026-05-01T00:00:00Z")
-
-  // ── Cleanup: delete sessions beyond the 6-week window ─────────────────
-
-  const templateIds = [hiitTemplate.id, coreTemplate.id, strengthTemplate.id]
-  const deleted = await prisma.classSession.deleteMany({
-    where: {
-      classTemplateId: { in: templateIds },
-      startsAt: { gte: SEED_END },
-    },
-  })
-  if (deleted.count > 0) {
-    console.log(`\n  Cleanup: deleted ${deleted.count} sessions beyond ${SEED_END.toISOString().split("T")[0]}`)
-  }
-
-  // ── Step 2: Read TeamUp data ─────────────────────────────────────────────
-
-  const dataPath = path.resolve(__dirname, "../../research/teamupdata.json")
-  const raw = fs.readFileSync(dataPath, "utf8")
-  const data: { results: TeamUpEvent[] } = JSON.parse(raw)
-
-  const futureEvents = data.results.filter(
-    (e) => {
-      const d = new Date(e.starts_at)
-      return d >= SEED_START && d < SEED_END
-    }
-  )
-
-  console.log(`\n  TeamUp events: ${data.results.length} total, ${futureEvents.length} in 6-week window`)
-
-  // ── Step 3: Seed ClassSessions ───────────────────────────────────────────
+  // ── Step 5: Create sessions ────────────────────────────────────────────
 
   let created = 0
-  let skipped = 0
-  let hiitCount = 0
-  let coreCount = 0
-  let earliestDate: Date | null = null
-  let latestDate: Date | null = null
+  const countByType: Record<string, number> = {}
 
-  const BATCH_SIZE = 50
-  for (let i = 0; i < futureEvents.length; i += BATCH_SIZE) {
-    const batch = futureEvents.slice(i, i + BATCH_SIZE)
+  for (const appt of appointments) {
+    const template = templates[appt.name]
+    if (!template) continue
 
-    for (const event of batch) {
-      const isHiit = event.name === "HIIT"
-      const template = isHiit ? hiitTemplate : coreTemplate
-      const startsAt = new Date(event.starts_at)
-      const endsAt = new Date(event.ends_at)
+    const instructorName = appt.instructors?.[0]?.name
+    const instructorId = instructorName
+      ? INSTRUCTOR_BY_NAME[instructorName] ?? GAV_ID
+      : GAV_ID
 
-      // Resolve instructor
-      const staffId = event.instructors?.[0]?.staff
-      const instructorId = staffId ? (INSTRUCTOR_MAP[staffId] ?? GAV_ID) : GAV_ID
+    const capacityOverride =
+      appt.max_occupancy !== template.capacity ? appt.max_occupancy : null
 
-      // Idempotent: check if session already exists for this template + start time
-      const existing = await prisma.classSession.findFirst({
-        where: {
-          classTemplateId: template.id,
-          startsAt,
-        },
-      })
+    await prisma.classSession.create({
+      data: {
+        classTemplateId: template.id,
+        instructorId,
+        startsAt: new Date(appt.starts_at),
+        endsAt: new Date(appt.ends_at),
+        capacityOverride,
+        status: "SCHEDULED",
+      },
+    })
 
-      if (existing) {
-        skipped++
-        continue
-      }
-
-      // Create session — use capacityOverride only if different from template default
-      const templateCapacity = isHiit ? 10 : 15
-      const capacityOverride =
-        event.max_occupancy !== templateCapacity ? event.max_occupancy : null
-
-      await prisma.classSession.create({
-        data: {
-          classTemplateId: template.id,
-          instructorId,
-          startsAt,
-          endsAt,
-          capacityOverride,
-          status: "SCHEDULED",
-        },
-      })
-
-      created++
-      if (isHiit) hiitCount++
-      else coreCount++
-
-      if (!earliestDate || startsAt < earliestDate) earliestDate = startsAt
-      if (!latestDate || startsAt > latestDate) latestDate = startsAt
-    }
-
-    // Progress indicator every batch
-    if (i + BATCH_SIZE < futureEvents.length) {
-      process.stdout.write(`  Processing... ${Math.min(i + BATCH_SIZE, futureEvents.length)}/${futureEvents.length}\r`)
-    }
+    created++
+    countByType[appt.name] = (countByType[appt.name] ?? 0) + 1
   }
 
-  // ── Step 4: Seed Strength Sessions (programmatic — no TeamUp data) ─────
+  // ── Summary ────────────────────────────────────────────────────────────
 
-  console.log(`\n\n  Generating Strength sessions...`)
-
-  // Weekly pattern: Mon 18:00, Wed 18:00, Sat 11:15
-  const STRENGTH_SCHEDULE: { dayOfWeek: number; hour: number; minute: number }[] = [
-    { dayOfWeek: 1, hour: 18, minute: 0 },  // Monday
-    { dayOfWeek: 3, hour: 18, minute: 0 },  // Wednesday
-    { dayOfWeek: 6, hour: 11, minute: 15 }, // Saturday
-  ]
-  const STRENGTH_DURATION_MINUTES = 45
-
-  const strengthStart = new Date(SEED_START)
-  const strengthEnd = new Date(SEED_END)
-
-  let strengthCreatedCount = 0
-  let strengthSkipped = 0
-  let instructorIndex = 0
-
-  const cursor = new Date(strengthStart)
-  while (cursor <= strengthEnd) {
-    const dow = cursor.getUTCDay() // 0=Sun, 1=Mon, ...
-    const match = STRENGTH_SCHEDULE.find((s) => s.dayOfWeek === dow)
-
-    if (match) {
-      const startsAt = new Date(cursor)
-      startsAt.setUTCHours(match.hour, match.minute, 0, 0)
-
-      const endsAt = new Date(startsAt)
-      endsAt.setUTCMinutes(endsAt.getUTCMinutes() + STRENGTH_DURATION_MINUTES)
-
-      // Idempotent: check if session already exists for this template + start time
-      const existing = await prisma.classSession.findFirst({
-        where: {
-          classTemplateId: strengthTemplate.id,
-          startsAt,
-        },
-      })
-
-      if (existing) {
-        strengthSkipped++
-      } else {
-        const instructorId = ALL_INSTRUCTOR_IDS[instructorIndex % ALL_INSTRUCTOR_IDS.length]
-        instructorIndex++
-
-        await prisma.classSession.create({
-          data: {
-            classTemplateId: strengthTemplate.id,
-            instructorId,
-            startsAt,
-            endsAt,
-            status: "SCHEDULED",
-          },
-        })
-
-        strengthCreatedCount++
-
-        if (!earliestDate || startsAt < earliestDate) earliestDate = startsAt
-        if (!latestDate || startsAt > latestDate) latestDate = startsAt
-      }
-    }
-
-    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  const dates = appointments.map((a) => a.starts_at).sort()
+  console.log(`\n  Created ${created} sessions:`)
+  for (const [type, count] of Object.entries(countByType)) {
+    console.log(`    ${type}: ${count}`)
   }
-
-  created += strengthCreatedCount
-  skipped += strengthSkipped
-
-  // ── Summary ──────────────────────────────────────────────────────────────
-
-  console.log(`\n  Sessions: ${created} created, ${skipped} skipped (already exist)`)
-  console.log(`    HIIT: ${hiitCount} sessions`)
-  console.log(`    CORE: ${coreCount} sessions`)
-  console.log(`    Strength: ${strengthCreatedCount} sessions`)
-  if (earliestDate && latestDate) {
-    console.log(
-      `    Date range: ${earliestDate.toISOString().split("T")[0]} → ${latestDate.toISOString().split("T")[0]}`
-    )
+  console.log(
+    `  Date range: ${dates[0]?.split("T")[0]} → ${dates[dates.length - 1]?.split("T")[0]}`
+  )
+  console.log(`\n  Instructors used:`)
+  for (const [name, id] of Object.entries(INSTRUCTOR_BY_NAME)) {
+    if (uniqueInstructors.has(name)) {
+      console.log(`    ${name} → ${id}`)
+    }
   }
   console.log("\n✅ Class seed complete!")
 }
 
-// ─── Run ─────────────────────────────────────────────────────────────────────
+// ─── Run ────────────────────────────────────────────────────────────────────
 
 seedClasses()
   .then(async () => {
