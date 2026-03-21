@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useSession } from "@/lib/auth-client"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
@@ -13,10 +14,41 @@ interface ClientLayoutProps {
 export function ClientLayout({ children }: ClientLayoutProps) {
   const { data: session } = useSession()
   const pathname = usePathname()
+  const [hasChallenge, setHasChallenge] = useState(true) // optimistic — show by default
+  const [challengeCheckDone, setChallengeCheckDone] = useState(false)
+
+  useEffect(() => {
+    const checkChallenges = async () => {
+      try {
+        const res = await fetch("/api/challenges/active", { credentials: "include" })
+        if (res.ok) {
+          const data = await res.json()
+          const items = Array.isArray(data) ? data : data.challenges ?? []
+          setHasChallenge(items.length > 0)
+        }
+      } catch {
+        // On error, keep showing (optimistic)
+      } finally {
+        setChallengeCheckDone(true)
+      }
+    }
+
+    if (session?.user) {
+      checkChallenges()
+    }
+  }, [session?.user])
 
   if (!session) return null
 
   const firstName = session?.user?.name?.split(" ")[0] || "there"
+
+  const tabs = [
+    { name: "Dashboard", href: "/client-dashboard" },
+    { name: "Classes", href: "/client-dashboard/classes" },
+    ...(hasChallenge || !challengeCheckDone ? [{ name: "Challenges", href: "/client-dashboard/challenges" }] : []),
+    { name: "Credits", href: "/client-dashboard/credits" },
+    { name: "Settings", href: "/client-dashboard/settings" },
+  ]
 
   return (
     <div className="min-h-screen min-h-[100dvh] bg-neutral-50 flex flex-col">
@@ -39,13 +71,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
       {/* Navigation tabs */}
       <nav className="bg-white border-b border-neutral-200 sticky top-[49px] sm:top-[53px] z-20 px-3 sm:px-4 md:px-6">
         <div className="flex gap-1 overflow-x-auto scrollbar-none">
-          {[
-            { name: "Dashboard", href: "/client-dashboard" },
-            { name: "Classes", href: "/client-dashboard/classes" },
-            { name: "Challenges", href: "/client-dashboard/challenges" },
-            { name: "Credits", href: "/client-dashboard/credits" },
-            { name: "Settings", href: "/client-dashboard/settings" },
-          ].map((tab) => {
+          {tabs.map((tab) => {
             const isActive =
               tab.href === "/client-dashboard"
                 ? pathname === tab.href

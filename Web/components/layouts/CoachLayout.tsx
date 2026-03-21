@@ -153,11 +153,6 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
       { name: "Questionnaire Analytics", href: "/coach-dashboard/questionnaire-analytics", icon: CalendarIcon, hasDropdown: false, dropdownKey: "questionnaire-analytics" }
     )
     
-    // Add Weekly Review as a separate navigation item
-    navigation.push(
-      { name: "Weekly Review", href: "/coach-dashboard/weekly-review", icon: CalendarIcon, hasDropdown: false, dropdownKey: "weekly-review" }
-    )
-
     // Add Classes management
     navigation.push(
       { name: "Classes", href: "/coach-dashboard/classes", icon: ({ size, ...props }: any) => <svg {...props} width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>, hasDropdown: false, dropdownKey: "classes" }
@@ -171,21 +166,6 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     // Add Credits management
     navigation.push(
       { name: "Credits", href: "/coach-dashboard/credits", icon: ({ size, ...props }: any) => <svg {...props} width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" d="M12 6v1m0 10v1M9 12h6" /></svg>, hasDropdown: false, dropdownKey: "credits" }
-    )
-
-    // Add Classes management
-    navigation.push(
-      { name: "Classes", href: "/coach-dashboard/classes", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>, hasDropdown: false, dropdownKey: "classes" }
-    )
-
-    // Add Challenges management
-    navigation.push(
-      { name: "Challenges", href: "/coach-dashboard/challenges", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>, hasDropdown: false, dropdownKey: "challenges" }
-    )
-
-    // Add Credits management
-    navigation.push(
-      { name: "Credits", href: "/coach-dashboard/credits", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" d="M12 6v1m0 10v1M9 12h6" /></svg>, hasDropdown: false, dropdownKey: "credits" }
     )
 
     // Add Milestones management

@@ -71,10 +71,8 @@ export default function WrappedPage() {
         <div className="text-center max-w-md">
           <div className="text-6xl mb-6">😕</div>
           <h1 className="text-white text-3xl font-bold mb-4">Not Quite Yet!</h1>
-          <p className="text-white/90 text-lg mb-6">{error}</p>
-          <p className="text-white/70 text-sm mb-8">
-            Your Fitness Wrapped will be available when you complete a 6-week or 8-week challenge.
-            Keep tracking your progress!
+          <p className="text-white/90 text-lg mb-6">
+            Your Wrapped summary will appear here after you complete your first challenge.
           </p>
           <button
             onClick={() => router.push("/client-dashboard")}

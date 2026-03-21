@@ -58,6 +58,7 @@ export async function GET(
     // Verify client exists
     const client = await db.user.findUnique({
       where: { id },
+      select: { id: true, invitedByCoachId: true },
     })
 
     if (!client) {
@@ -65,6 +66,7 @@ export async function GET(
     }
 
     // Authorization: If COACH, verify client is in at least one cohort owned by coach
+    // or was invited by this coach
     if (isCoach && !isAdminUser) {
       const membership = await db.cohortMembership.findFirst({
         where: {
@@ -76,10 +78,13 @@ export async function GET(
       })
 
       if (!membership) {
-        return NextResponse.json(
-          { error: "Forbidden: Client not in your cohorts" },
-          { status: 403 }
-        )
+        // Also allow if client was invited by this coach
+        if (client.invitedByCoachId !== session.user.id) {
+          return NextResponse.json(
+            { error: "Forbidden: Client not in your cohorts" },
+            { status: 403 }
+          )
+        }
       }
     }
 
@@ -176,6 +181,7 @@ export async function POST(
     // Verify client exists
     const client = await db.user.findUnique({
       where: { id },
+      select: { id: true, invitedByCoachId: true },
     })
 
     if (!client) {
@@ -183,6 +189,7 @@ export async function POST(
     }
 
     // Authorization: If COACH, verify client is in at least one cohort owned by coach
+    // or was invited by this coach
     if (isCoach && !isAdminUser) {
       const membership = await db.cohortMembership.findFirst({
         where: {
@@ -194,10 +201,13 @@ export async function POST(
       })
 
       if (!membership) {
-        return NextResponse.json(
-          { error: "Forbidden: Client not in your cohorts" },
-          { status: 403 }
-        )
+        // Also allow if client was invited by this coach
+        if (client.invitedByCoachId !== session.user.id) {
+          return NextResponse.json(
+            { error: "Forbidden: Client not in your cohorts" },
+            { status: 403 }
+          )
+        }
       }
     }
 
