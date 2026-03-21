@@ -6,34 +6,83 @@ struct HomeView: View {
 
     var body: some View {
         TabView {
-            Tab("Today", systemImage: "checkmark.circle") {
-                TodayTab()
-            }
-            Tab("Log Food", systemImage: "plus.circle") {
-                FoodLogEntryView()
-            }
-            Tab("Food", systemImage: "fork.knife") {
-                NavigationStack {
-                    FoodLogView()
-                        .navigationTitle("Food Log")
+            ScheduleView()
+                .tabItem {
+                    Label("Schedule", systemImage: "calendar")
                 }
-            }
-            Tab("Health", systemImage: "heart.text.square") {
-                NavigationStack {
-                    HealthDashboardView()
-                        .navigationTitle("Health")
+
+            BookingsView()
+                .tabItem {
+                    Label("Bookings", systemImage: "list.clipboard")
                 }
-            }
-            Tab("More", systemImage: "ellipsis.circle") {
-                MoreTab()
-            }
+
+            CreditsView()
+                .tabItem {
+                    Label("Credits", systemImage: "creditcard")
+                }
+
+            ChallengesView()
+                .tabItem {
+                    Label("Challenges", systemImage: "flame")
+                }
+
+            AccountTab()
+                .tabItem {
+                    Label("Account", systemImage: "person.circle")
+                }
         }
     }
 }
 
-// MARK: - More Tab
+// MARK: - Account Tab (combines previous tabs + settings)
 
-private struct MoreTab: View {
+private struct AccountTab: View {
+    @Environment(AppState.self) private var appState
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    NavigationLink {
+                        TodayTab()
+                    } label: {
+                        Label("Daily Check-in", systemImage: "checkmark.circle")
+                    }
+
+                    NavigationLink {
+                        FoodLogEntryView()
+                    } label: {
+                        Label("Log Food", systemImage: "plus.circle")
+                    }
+
+                    NavigationLink {
+                        FoodLogView()
+                            .navigationTitle("Food Log")
+                    } label: {
+                        Label("Food Log", systemImage: "fork.knife")
+                    }
+
+                    NavigationLink {
+                        HealthDashboardView()
+                            .navigationTitle("Health")
+                    } label: {
+                        Label("Health Dashboard", systemImage: "heart.text.square")
+                    }
+                } header: {
+                    Text("Tracking")
+                }
+
+                // Delegate the rest to MoreTab's content
+                MoreTabContent()
+            }
+            .navigationTitle("Account")
+        }
+    }
+}
+
+// MARK: - MoreTab Content (extracted for reuse in Account tab)
+
+private struct MoreTabContent: View {
     @Environment(AppState.self) private var appState
 
     @State private var showUnpairConfirmation = false
@@ -41,123 +90,120 @@ private struct MoreTab: View {
 
     private var syncIsStale: Bool {
         guard let lastSync = appState.syncEngine.lastSyncTime else { return false }
-        return lastSync.timeIntervalSinceNow < -12 * 3600 // More than 12 hours ago
+        return lastSync.timeIntervalSinceNow < -12 * 3600
     }
 
     var body: some View {
-        NavigationStack {
-            List {
-                if let streak = streakData, !streak.milestones.isEmpty {
-                    Section("Recent Milestones") {
-                        ForEach(streak.milestones.prefix(3)) { milestone in
-                            MilestoneCard(milestone: milestone)
-                                .listRowInsets(EdgeInsets())
-                                .listRowBackground(Color.clear)
-                        }
+        Group {
+            if let streak = streakData, !streak.milestones.isEmpty {
+                Section("Recent Milestones") {
+                    ForEach(streak.milestones.prefix(3)) { milestone in
+                        MilestoneCard(milestone: milestone)
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
                     }
                 }
+            }
 
-                if let coachName = appState.coachName {
-                    Section {
-                        LabeledContent("Coach", value: coachName)
-                    }
-                }
-
+            if let coachName = appState.coachName {
                 Section {
-                    if appState.syncEngine.isSyncing {
-                        HStack {
-                            Text("Syncing...")
-                            Spacer()
-                            ProgressView()
-                        }
-                    } else if let lastSync = appState.syncEngine.lastSyncTime {
-                        LabeledContent("Last Sync", value: lastSync.formatted(.relative(presentation: .named)))
-                    } else {
-                        LabeledContent("HealthKit Sync", value: "Not yet synced")
-                            .foregroundStyle(.secondary)
+                    LabeledContent("Coach", value: coachName)
+                }
+            }
+
+            Section {
+                if appState.syncEngine.isSyncing {
+                    HStack {
+                        Text("Syncing...")
+                        Spacer()
+                        ProgressView()
                     }
+                } else if let lastSync = appState.syncEngine.lastSyncTime {
+                    LabeledContent("Last Sync", value: lastSync.formatted(.relative(presentation: .named)))
+                } else {
+                    LabeledContent("HealthKit Sync", value: "Not yet synced")
+                        .foregroundStyle(.secondary)
+                }
 
-                    SyncTypeRow(label: "Steps", systemImage: "figure.walk", status: appState.syncEngine.stepsStatus)
-                    SyncTypeRow(label: "Workouts", systemImage: "dumbbell", status: appState.syncEngine.workoutsStatus)
-                    SyncTypeRow(label: "Sleep", systemImage: "moon.zzz", status: appState.syncEngine.sleepStatus)
-                    SyncTypeRow(label: "Weight", systemImage: "scalemass", status: appState.syncEngine.weightStatus)
+                SyncTypeRow(label: "Steps", systemImage: "figure.walk", status: appState.syncEngine.stepsStatus)
+                SyncTypeRow(label: "Workouts", systemImage: "dumbbell", status: appState.syncEngine.workoutsStatus)
+                SyncTypeRow(label: "Sleep", systemImage: "moon.zzz", status: appState.syncEngine.sleepStatus)
+                SyncTypeRow(label: "Weight", systemImage: "scalemass", status: appState.syncEngine.weightStatus)
 
-                    Button {
-                        Task { await appState.syncEngine.syncAll() }
-                    } label: {
-                        Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
-                    }
-                    .disabled(appState.syncEngine.isSyncing)
+                Button {
+                    Task { await appState.syncEngine.syncAll() }
+                } label: {
+                    Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
+                }
+                .disabled(appState.syncEngine.isSyncing)
 
-                    if !appState.healthKit.isAvailable {
-                        Label("HealthKit not available on this device", systemImage: "exclamationmark.triangle")
-                            .font(.caption)
+                if !appState.healthKit.isAvailable {
+                    Label("HealthKit not available on this device", systemImage: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            } header: {
+                Text("Sync Status")
+            } footer: {
+                if syncIsStale {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Label("Sync may have stopped", systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption.bold())
                             .foregroundStyle(.orange)
-                    }
-                } header: {
-                    Text("Sync Status")
-                } footer: {
-                    if syncIsStale {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Label("Sync may have stopped", systemImage: "exclamationmark.triangle.fill")
-                                .font(.caption.bold())
-                                .foregroundStyle(.orange)
-                            Text("If you force-quit the app (swipe up from the app switcher), background syncing stops. Just open the app occasionally or avoid force-quitting to keep your data up to date.")
-                                .font(.caption)
-                        }
-                        .padding(.top, 4)
-                    } else {
-                        Text("Your health data syncs automatically in the background. Avoid force-quitting the app to keep syncing active.")
+                        Text("If you force-quit the app (swipe up from the app switcher), background syncing stops. Just open the app occasionally or avoid force-quitting to keep your data up to date.")
                             .font(.caption)
                     }
-                }
-
-                Section {
-                    Button {
-                        Task { await openInSafari(path: "/client-dashboard") }
-                    } label: {
-                        Label("View Full Dashboard", systemImage: "safari")
-                    }
-
-                    Button {
-                        Task { await openInSafari(path: "/client-dashboard") }
-                    } label: {
-                        Label("Answer Questionnaire", systemImage: "list.clipboard")
-                    }
-                }
-
-                Section {
-                    Button(role: .destructive) {
-                        showUnpairConfirmation = true
-                    } label: {
-                        Label("Unpair Device", systemImage: "xmark.circle")
-                    }
-                }
-
-                Section {
-                    LabeledContent("Version", value: Bundle.main.appVersion)
-                } footer: {
-                    Text("CoachFit for iOS")
+                    .padding(.top, 4)
+                } else {
+                    Text("Your health data syncs automatically in the background. Avoid force-quitting the app to keep syncing active.")
+                        .font(.caption)
                 }
             }
-            .navigationTitle("More")
-            .confirmationDialog(
-                "Unpair this device?",
-                isPresented: $showUnpairConfirmation,
-                titleVisibility: .visible
-            ) {
-                Button("Unpair", role: .destructive) {
-                    appState.signOut()
+
+            Section {
+                Button {
+                    Task { await openInSafari(path: "/client-dashboard") }
+                } label: {
+                    Label("View Full Dashboard", systemImage: "safari")
                 }
-            } message: {
-                Text("You'll need to sign in again to reconnect.")
+
+                Button {
+                    Task { await openInSafari(path: "/client-dashboard") }
+                } label: {
+                    Label("Answer Questionnaire", systemImage: "list.clipboard")
+                }
             }
-            .task(id: "streak") {
-                await refreshStreak()
+
+            Section {
+                Button(role: .destructive) {
+                    showUnpairConfirmation = true
+                } label: {
+                    Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                }
             }
-            .onAppear {
-                Task { await refreshStreak() }
+
+            Section {
+                LabeledContent("Version", value: Bundle.main.appVersion)
+            } footer: {
+                Text("CoachFit for iOS")
             }
+        }
+        .confirmationDialog(
+            "Sign out?",
+            isPresented: $showUnpairConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Sign Out", role: .destructive) {
+                appState.signOut()
+            }
+        } message: {
+            Text("You'll need to sign in again to reconnect.")
+        }
+        .task(id: "streak") {
+            await refreshStreak()
+        }
+        .onAppear {
+            Task { await refreshStreak() }
         }
     }
 
@@ -169,14 +215,12 @@ private struct MoreTab: View {
 
     private func openInSafari(path: String) async {
         guard let token = await appState.getSessionToken() else {
-            // Fallback: open without token
             if let url = URL(string: "https://gcgyms.com\(path)") {
                 await UIApplication.shared.open(url)
             }
             return
         }
 
-        // Build handoff URL with token and redirect
         var components = URLComponents(string: "https://gcgyms.com/api/auth/mobile-handoff")!
         components.queryItems = [
             URLQueryItem(name: "token", value: token),
@@ -188,6 +232,7 @@ private struct MoreTab: View {
         }
     }
 }
+
 
 // MARK: - Sync Type Row
 
