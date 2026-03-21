@@ -97,7 +97,7 @@ model CohortMembership {
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, cohortId])
-  @@unique([userId, cohortId])
+  @@unique([userId])
   @@index([userId])
   @@index([cohortId])
 }

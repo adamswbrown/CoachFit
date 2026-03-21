@@ -26,7 +26,7 @@ async function main() {
   console.log()
 
   // Find membership
-  const membership = await db.cohortMembership.findFirst({
+  const membership = await db.cohortMembership.findUnique({
     where: { userId: client.id },
     include: {
       Cohort: true

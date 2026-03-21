@@ -32,15 +32,16 @@ export interface ChallengeWithMembership {
 
 /**
  * Enroll a client into a CHALLENGE cohort.
- * Validates the cohort type and prevents duplicate memberships.
- * Runs inside a db.$transaction() for atomicity.
+ *
+ * Business rule: a user can only be in ONE cohort at a time (@@unique([userId])).
+ * If already in a cohort, throws an error — must leave current cohort first.
  */
 export async function enrollInChallenge(
   clientId: string,
   cohortId: string
 ): Promise<void> {
   await db.$transaction(async (tx) => {
-    // Fetch and validate the cohort
+    // Validate the cohort
     const cohort = await tx.cohort.findUnique({
       where: { id: cohortId },
       select: { id: true, type: true, name: true, coachId: true },
@@ -54,18 +55,16 @@ export async function enrollInChallenge(
       throw new Error("Cohort is not a challenge")
     }
 
-    // Check if user is already a member of THIS cohort
+    // Check if user is already in ANY cohort (single-cohort model)
     const existing = await tx.cohortMembership.findUnique({
-      where: {
-        userId_cohortId: {
-          userId: clientId,
-          cohortId,
-        },
-      },
+      where: { userId: clientId },
     })
 
     if (existing) {
-      throw new Error("Already enrolled in this challenge")
+      if (existing.cohortId === cohortId) {
+        throw new Error("Already enrolled in this challenge")
+      }
+      throw new Error("Already in a cohort — leave your current cohort before joining a challenge")
     }
 
     // Create the membership
@@ -129,13 +128,8 @@ export async function completeChallenge(
 /**
  * Calculate a client's progress within a specific CHALLENGE cohort.
  *
- * Returns:
- *  - daysCompleted: number of days in range that have an Entry
- *  - totalDays: durationWeeks * 7 (capped at days elapsed if challenge ongoing)
- *  - streak: consecutive days with entries counting back from today
- *  - weeklyEntries: { [weekNumber]: entryCount }
- *  - checkInRate: daysCompleted / totalDays (0–1)
- *  - percentComplete: checkInRate * 100
+ * Works regardless of whether the client is still a member (supports
+ * viewing progress after membership removal for historical challenges).
  */
 export async function getChallengeProgress(
   clientId: string,
@@ -155,9 +149,8 @@ export async function getChallengeProgress(
   if (cohort.type !== "CHALLENGE") throw new Error("Cohort is not a challenge")
 
   const startDate = cohort.cohortStartDate
-  const durationWeeks = cohort.durationWeeks ?? 6 // default to 6 weeks if unset
+  const durationWeeks = cohort.durationWeeks ?? 6
 
-  // Determine date range
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -168,30 +161,22 @@ export async function getChallengeProgress(
   rangeEnd.setDate(rangeEnd.getDate() + durationWeeks * 7 - 1)
 
   const effectiveEnd = rangeEnd < today ? rangeEnd : today
-
   const totalDays = durationWeeks * 7
 
-  // Fetch entries within the challenge window
   const entries = await db.entry.findMany({
     where: {
       userId: clientId,
-      date: {
-        gte: rangeStart,
-        lte: effectiveEnd,
-      },
+      date: { gte: rangeStart, lte: effectiveEnd },
     },
     select: { date: true },
     orderBy: { date: "asc" },
   })
 
-  const entryDates = entries.map(
-    (e) => e.date.toISOString().split("T")[0]
-  )
+  const entryDates = entries.map((e) => e.date.toISOString().split("T")[0])
   const entryDateSet = new Set(entryDates)
-
   const daysCompleted = entryDates.length
 
-  // Calculate streak (consecutive days backwards from today)
+  // Streak: consecutive days backwards from today
   let streak = 0
   {
     const cursor = new Date(today)
@@ -201,7 +186,6 @@ export async function getChallengeProgress(
         streak++
         cursor.setDate(cursor.getDate() - 1)
       } else if (streak === 0 && cursor.toDateString() === today.toDateString()) {
-        // Forgive today — check yesterday
         cursor.setDate(cursor.getDate() - 1)
         continue
       } else {
@@ -237,13 +221,15 @@ export async function getChallengeProgress(
 // ---------------------------------------------------------------------------
 
 /**
- * Return CHALLENGE cohorts the client is currently enrolled in where the
- * challenge period has not yet ended.
+ * Return the client's current CHALLENGE cohort if it hasn't ended yet.
+ *
+ * Single-cohort model: user has at most one CohortMembership at a time.
+ * Returns an array (0 or 1 items) for API consistency.
  */
 export async function getActiveChallenges(
   clientId: string
 ): Promise<ChallengeWithMembership[]> {
-  const memberships = await db.cohortMembership.findMany({
+  const membership = await db.cohortMembership.findUnique({
     where: { userId: clientId },
     include: {
       Cohort: {
@@ -254,25 +240,23 @@ export async function getActiveChallenges(
     },
   })
 
+  if (!membership) return []
+
+  const c = membership.Cohort
+  if (c.type !== "CHALLENGE") return []
+
+  // Check if challenge is still active
   const now = new Date()
   now.setHours(0, 0, 0, 0)
 
-  const active: ChallengeWithMembership[] = []
+  if (c.cohortStartDate) {
+    const end = new Date(c.cohortStartDate)
+    end.setDate(end.getDate() + (c.durationWeeks ?? 6) * 7)
+    if (end <= now) return [] // ended
+  }
 
-  for (const m of memberships) {
-    const c = m.Cohort
-    if (c.type !== "CHALLENGE") continue
-
-    const start = c.cohortStartDate ? new Date(c.cohortStartDate) : null
-    const weeks = c.durationWeeks ?? 6
-
-    if (start) {
-      const end = new Date(start)
-      end.setDate(end.getDate() + weeks * 7)
-      if (end <= now) continue // already ended
-    }
-
-    active.push({
+  return [
+    {
       id: c.id,
       name: c.name,
       coachId: c.coachId,
@@ -282,10 +266,8 @@ export async function getActiveChallenges(
       membershipDurationMonths: c.membershipDurationMonths,
       checkInFrequencyDays: c.checkInFrequencyDays,
       memberCount: c._count.memberships,
-    })
-  }
-
-  return active
+    },
+  ]
 }
 
 // ---------------------------------------------------------------------------
@@ -293,41 +275,68 @@ export async function getActiveChallenges(
 // ---------------------------------------------------------------------------
 
 /**
- * Return CHALLENGE cohorts the client was enrolled in where the challenge
- * period has already ended.
+ * Return past CHALLENGE cohorts the client participated in.
+ *
+ * Since a user can only be in one cohort at a time, past challenge memberships
+ * are discovered via the audit log (CHALLENGE_ENROLL events). When a challenge
+ * ends and the membership is removed, the audit trail preserves the history.
  */
 export async function getChallengeHistory(
   clientId: string
 ): Promise<ChallengeWithMembership[]> {
-  const memberships = await db.cohortMembership.findMany({
-    where: { userId: clientId },
+  // Find all CHALLENGE_ENROLL audit entries for this client
+  const enrollActions = await db.adminAction.findMany({
+    where: {
+      adminId: clientId, // actor.id is stored as adminId
+      actionType: "CHALLENGE_ENROLL",
+    },
+    select: { targetId: true },
+    orderBy: { createdAt: "desc" },
+  })
+
+  const cohortIds = enrollActions
+    .map((a) => a.targetId)
+    .filter((id): id is string => id !== null)
+
+  if (cohortIds.length === 0) return []
+
+  // Deduplicate
+  const uniqueIds = [...new Set(cohortIds)]
+
+  // Fetch those cohorts
+  const cohorts = await db.cohort.findMany({
+    where: {
+      id: { in: uniqueIds },
+      type: "CHALLENGE",
+    },
     include: {
-      Cohort: {
-        include: {
-          _count: { select: { memberships: true } },
-        },
-      },
+      _count: { select: { memberships: true } },
     },
   })
 
   const now = new Date()
   now.setHours(0, 0, 0, 0)
 
+  // Exclude the user's current active challenge (if any)
+  const currentMembership = await db.cohortMembership.findUnique({
+    where: { userId: clientId },
+    select: { cohortId: true },
+  })
+  const currentCohortId = currentMembership?.cohortId
+
   const history: ChallengeWithMembership[] = []
 
-  for (const m of memberships) {
-    const c = m.Cohort
-    if (c.type !== "CHALLENGE") continue
+  for (const c of cohorts) {
+    // Skip current cohort — that's "active", not history
+    if (c.id === currentCohortId) continue
 
-    const start = c.cohortStartDate ? new Date(c.cohortStartDate) : null
-    const weeks = c.durationWeeks ?? 6
-
-    if (start) {
-      const end = new Date(start)
-      end.setDate(end.getDate() + weeks * 7)
-      if (end > now) continue // still active
+    // Only include ended challenges
+    if (c.cohortStartDate) {
+      const end = new Date(c.cohortStartDate)
+      end.setDate(end.getDate() + (c.durationWeeks ?? 6) * 7)
+      if (end > now) continue // still running
     } else {
-      continue // no start date — cannot determine if ended
+      continue // can't determine if ended
     }
 
     history.push({

@@ -34,7 +34,7 @@ export async function GET() {
     console.log("✅ User is client")
 
     // Find user's cohort
-    const membership = await db.cohortMembership.findFirst({
+    const membership = await db.cohortMembership.findUnique({
       where: { userId: session.user.id },
       include: {
         Cohort: {
