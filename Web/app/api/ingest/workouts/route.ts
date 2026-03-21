@@ -24,6 +24,7 @@ import {
   createIngestSuccessResponse,
   handleIngestPreflight,
 } from "@/lib/security/ingest-auth"
+import { normalizeWorkoutType } from "@/lib/workout-types"
 
 export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin")
@@ -76,14 +77,25 @@ export async function POST(req: NextRequest) {
       const workout = validated.workouts[i]
 
       try {
-        // Check for duplicate (same user, type, and start time)
-        const existing = await db.workout.findFirst({
+        const startTime = new Date(workout.start_time)
+        const normalizedType = normalizeWorkoutType(workout.workout_type)
+
+        // Check for duplicate: same user, same normalized type, start time within 60s
+        // This catches duplicates from different sources (e.g. Apple Watch "hiit"
+        // vs HealthKit batch sync "highIntensityIntervalTraining") where timestamps
+        // may differ by milliseconds
+        const windowStart = new Date(startTime.getTime() - 60_000)
+        const windowEnd = new Date(startTime.getTime() + 60_000)
+
+        const allCandidates = await db.workout.findMany({
           where: {
             userId: validated.client_id,
-            workoutType: workout.workout_type,
-            startTime: new Date(workout.start_time),
+            startTime: { gte: windowStart, lte: windowEnd },
           },
         })
+        const existing = allCandidates.find(
+          (w) => normalizeWorkoutType(w.workoutType) === normalizedType
+        )
 
         // Cast metadata to Prisma-compatible JSON type
         const metadataValue = workout.metadata
@@ -91,18 +103,26 @@ export async function POST(req: NextRequest) {
           : null
 
         if (existing) {
-          // Update existing workout
+          // Merge: prefer the most accurate value for each field.
+          // Apple Watch entries (sourceDevice set) are more accurate than
+          // HealthKit batch sync entries (sourceDevice null).
+          const incomingHasDevice = !!workout.source_device
+          const existingHasDevice = !!existing.sourceDevice
+          const incomingMoreAccurate = incomingHasDevice && !existingHasDevice
+
           await db.workout.update({
             where: { id: existing.id },
             data: {
               endTime: new Date(workout.end_time),
-              durationSecs: workout.duration_seconds,
-              caloriesActive: workout.calories_active ?? null,
-              distanceMeters: workout.distance_meters ?? null,
-              avgHeartRate: workout.avg_heart_rate ?? null,
-              maxHeartRate: workout.max_heart_rate ?? null,
-              sourceDevice: workout.source_device ?? null,
-              metadata: metadataValue,
+              durationSecs: incomingMoreAccurate ? workout.duration_seconds : existing.durationSecs,
+              caloriesActive: workout.calories_active ?? existing.caloriesActive,
+              distanceMeters: incomingMoreAccurate
+                ? (workout.distance_meters ?? existing.distanceMeters)
+                : (existing.distanceMeters ?? workout.distance_meters),
+              avgHeartRate: workout.avg_heart_rate ?? existing.avgHeartRate,
+              maxHeartRate: workout.max_heart_rate ?? existing.maxHeartRate,
+              sourceDevice: workout.source_device ?? existing.sourceDevice,
+              metadata: metadataValue ?? (existing.metadata as Record<string, unknown> | null),
             },
           })
         } else {
