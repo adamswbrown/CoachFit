@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Fragment } from "react"
+import { useState, useEffect, Fragment, Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useSession } from "@/lib/auth-client"
@@ -185,7 +185,7 @@ function formatDateTime(value: string | null): string {
   return parsed.toLocaleString()
 }
 
-export default function WeeklyReviewPage() {
+function WeeklyReviewContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
   const isAdmin = session?.user?.roles?.includes(Role.ADMIN) ?? false
@@ -1416,5 +1416,20 @@ export default function WeeklyReviewPage() {
         )}
       </div>
     </CoachLayout>
+  )
+}
+
+export default function WeeklyReviewPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <WeeklyReviewContent />
+    </Suspense>
   )
 }
