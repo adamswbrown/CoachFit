@@ -18,9 +18,8 @@ export const updateCreditProductSchema = createCreditProductSchema.partial()
 
 export const creditSubmissionSchema = z.object({
   creditProductId: z.string().uuid("creditProductId must be a valid UUID"),
-  revolutReference: z.string().optional(),
+  revolutReference: z.string().max(200).optional(),
   note: z.string().max(500, "Note must be 500 characters or less").optional(),
-  paymentMethod: z.enum(["revolut_checkout", "manual_transfer"]).default("revolut_checkout"),
 })
 
 export const creditAdjustmentSchema = z.object({
