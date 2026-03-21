@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect, Fragment } from "react"
+import { useState, useEffect, Fragment, Suspense } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useSession } from "@/lib/auth-client"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 import { generateWeeklyEmailDraft } from "@/lib/utils/email-draft"
@@ -118,6 +119,15 @@ interface CohortOption {
   coachId: string
   coachName: string | null
   coachEmail: string
+  type: string | null
+}
+
+interface ChallengeProgressData {
+  daysCompleted: number
+  totalDays: number
+  streak: number
+  checkInRate: number
+  percentComplete: number
 }
 
 interface OwnerOption {
@@ -175,8 +185,9 @@ function formatDateTime(value: string | null): string {
   return parsed.toLocaleString()
 }
 
-export default function WeeklyReviewPage() {
+function WeeklyReviewContent() {
   const { data: session } = useSession()
+  const searchParams = useSearchParams()
   const isAdmin = session?.user?.roles?.includes(Role.ADMIN) ?? false
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<WeeklySummariesResponse | null>(null)
@@ -210,10 +221,20 @@ export default function WeeklyReviewPage() {
   const [sendingReminder, setSendingReminder] = useState(false)
   const [reminderToast, setReminderToast] = useState<string | null>(null)
   const [bulkToast, setBulkToast] = useState<string | null>(null)
+  const [challengeProgressData, setChallengeProgressData] = useState<Record<string, ChallengeProgressData>>({})
+  const isChallengeSelected = (() => {
+    if (!selectedCohortId) return false
+    const selected = cohortOptions.find((c) => c.id === selectedCohortId)
+    return selected?.type === "CHALLENGE"
+  })()
 
-  // Initialize week on mount
+  // Initialize week on mount + read cohortId from URL
   useEffect(() => {
     setSelectedWeekStart(formatDate(getMonday(new Date())))
+    const urlCohortId = searchParams.get("cohortId")
+    if (urlCohortId) {
+      setSelectedCohortId(urlCohortId)
+    }
   }, [])
 
   useEffect(() => {
@@ -254,6 +275,27 @@ export default function WeeklyReviewPage() {
   useEffect(() => {
     setSelectedCohortId("")
   }, [selectedOwnerId])
+
+  // Fetch challenge progress when a CHALLENGE cohort is selected
+  useEffect(() => {
+    if (!isChallengeSelected || !selectedCohortId) {
+      setChallengeProgressData({})
+      return
+    }
+
+    const fetchChallengeProgress = async () => {
+      try {
+        const res = await fetch(`/api/challenges/${selectedCohortId}/progress/batch`)
+        if (res.ok) {
+          const data = await res.json()
+          setChallengeProgressData(data.progress || {})
+        }
+      } catch (err) {
+        console.error("Failed to fetch challenge progress:", err)
+      }
+    }
+    fetchChallengeProgress()
+  }, [selectedCohortId, isChallengeSelected])
 
   // Fetch adherence thresholds (coach-accessible)
   useEffect(() => {
@@ -1044,6 +1086,9 @@ export default function WeeklyReviewPage() {
                       >
                         Streak
                       </th>
+                      {isChallengeSelected && (
+                        <th className="text-left px-4 py-3 font-medium">Challenge</th>
+                      )}
                       <th
                         className="text-left px-4 py-3 font-medium cursor-pointer"
                         onClick={() => handleSort("lastCheckIn")}
@@ -1140,6 +1185,31 @@ export default function WeeklyReviewPage() {
                                 <span className="text-neutral-400">—</span>
                               )}
                             </td>
+                            {isChallengeSelected && (
+                              <td className="px-4 py-3">
+                                {challengeProgressData[client.clientId] ? (
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-16 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full ${
+                                          challengeProgressData[client.clientId].checkInRate >= 0.7
+                                            ? "bg-green-500"
+                                            : challengeProgressData[client.clientId].checkInRate >= 0.4
+                                            ? "bg-amber-500"
+                                            : "bg-red-500"
+                                        }`}
+                                        style={{ width: `${challengeProgressData[client.clientId].percentComplete}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-xs text-neutral-600">
+                                      {challengeProgressData[client.clientId].percentComplete}%
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-neutral-400">—</span>
+                                )}
+                              </td>
+                            )}
                             <td className="px-4 py-3 text-neutral-700">
                               {client.lastCheckInDate
                                 ? new Date(client.lastCheckInDate).toLocaleDateString()
@@ -1169,7 +1239,7 @@ export default function WeeklyReviewPage() {
                           </tr>
                           {isExpanded && (
                             <tr className="border-t border-neutral-100">
-                              <td colSpan={11} className="p-4 bg-white">
+                              <td colSpan={isChallengeSelected ? 12 : 11} className="p-4 bg-white">
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                   <div className="lg:col-span-2 space-y-4">
                                     <div>
@@ -1248,6 +1318,32 @@ export default function WeeklyReviewPage() {
                                         ))}
                                       </div>
                                     ) : null}
+
+                                    {isChallengeSelected && challengeProgressData[client.clientId] && (
+                                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                        <div className="text-sm font-semibold text-blue-900 mb-2">Challenge Progress</div>
+                                        <div className="grid grid-cols-3 gap-3 text-sm">
+                                          <div>
+                                            <span className="text-blue-700">Days:</span>{" "}
+                                            <span className="font-medium">
+                                              {challengeProgressData[client.clientId].daysCompleted}/{challengeProgressData[client.clientId].totalDays}
+                                            </span>
+                                          </div>
+                                          <div>
+                                            <span className="text-blue-700">Check-in Rate:</span>{" "}
+                                            <span className="font-medium">
+                                              {challengeProgressData[client.clientId].percentComplete}%
+                                            </span>
+                                          </div>
+                                          <div>
+                                            <span className="text-blue-700">Streak:</span>{" "}
+                                            <span className="font-medium">
+                                              {challengeProgressData[client.clientId].streak}d
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
 
                                   <div className="space-y-4">
@@ -1320,5 +1416,20 @@ export default function WeeklyReviewPage() {
         )}
       </div>
     </CoachLayout>
+  )
+}
+
+export default function WeeklyReviewPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <WeeklyReviewContent />
+    </Suspense>
   )
 }

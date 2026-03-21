@@ -169,7 +169,7 @@ export default function PlatformInvitesPage() {
           {pendingInvites.length === 0 ? (
             <div className="p-6 text-neutral-500 text-sm">No pending invites.</div>
           ) : (
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="overflow-x-auto">
               <table className="w-full min-w-full">
                 <thead>
                   <tr className="border-b bg-neutral-50">
@@ -211,7 +211,7 @@ export default function PlatformInvitesPage() {
             <div className="p-4 border-b border-neutral-200">
               <h2 className="text-lg font-semibold">Used Invites ({usedInvites.length})</h2>
             </div>
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="overflow-x-auto">
               <table className="w-full min-w-full">
                 <thead>
                   <tr className="border-b bg-neutral-50">

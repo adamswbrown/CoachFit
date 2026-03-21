@@ -55,7 +55,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans">
+      <body className="font-sans antialiased safe-area-inset-left safe-area-inset-right">
         <ClerkProvider
           signInUrl="/login"
           signUpUrl="/signup"

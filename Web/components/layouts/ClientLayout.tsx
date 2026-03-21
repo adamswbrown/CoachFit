@@ -19,7 +19,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
   const firstName = session?.user?.name?.split(" ")[0] || "there"
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen min-h-[100dvh] bg-neutral-50 flex flex-col">
       {/* Top header */}
       <header className="bg-white border-b border-neutral-200 sticky top-0 z-30">
         <div className="px-3 sm:px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
@@ -27,7 +27,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
             CoachFit
           </Link>
           <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
-            <UserProfileMenu 
+            <UserProfileMenu
               userName={firstName}
               showRoleSwitcher={false}
               showAdminLink={session?.user && isAdmin(session.user)}
@@ -37,8 +37,8 @@ export function ClientLayout({ children }: ClientLayoutProps) {
       </header>
 
       {/* Navigation tabs */}
-      <nav className="bg-white border-b border-neutral-200 px-3 sm:px-4 md:px-6">
-        <div className="flex gap-1 overflow-x-auto">
+      <nav className="bg-white border-b border-neutral-200 sticky top-[49px] sm:top-[53px] z-20 px-3 sm:px-4 md:px-6">
+        <div className="flex gap-1 overflow-x-auto scrollbar-none">
           {[
             { name: "Dashboard", href: "/client-dashboard" },
             { name: "Classes", href: "/client-dashboard/classes" },
@@ -68,7 +68,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
       </nav>
 
       {/* Main content */}
-      <main className="p-4 sm:p-6 md:p-8">{children}</main>
+      <main className="flex-1 p-4 sm:p-6 md:p-8 pb-20 sm:pb-6 overflow-x-hidden">{children}</main>
     </div>
   )
 }

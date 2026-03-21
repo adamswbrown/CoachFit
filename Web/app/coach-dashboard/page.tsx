@@ -554,7 +554,7 @@ function CoachDashboardContent() {
                     View all
                   </Link>
                 </div>
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="overflow-x-auto">
                   <table className="w-full min-w-full">
                     <thead>
                       <tr className="border-b">
@@ -616,7 +616,7 @@ function CoachDashboardContent() {
                 <p className="text-sm text-neutral-600 mb-4">
                   These clients have been invited but haven't signed up yet.
                 </p>
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="overflow-x-auto">
                   <table className="w-full min-w-full">
                     <thead>
                       <tr className="border-b">
@@ -701,7 +701,7 @@ function CoachDashboardContent() {
                 <p className="text-sm text-orange-700 mb-4">
                   These clients have signed up but aren't in any cohort yet. Assign them to a cohort to get started.
                 </p>
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="overflow-x-auto">
                   <table className="w-full min-w-full">
                     <thead>
                       <tr className="border-b border-amber-200">
@@ -814,7 +814,7 @@ function CoachDashboardContent() {
                   />
                 </div>
 
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="overflow-x-auto">
                   <table className="w-full min-w-full">
                     <thead>
                       <tr className="border-b border-neutral-200">
