@@ -185,7 +185,7 @@ export default function CohortsPage() {
                   No cohorts found matching "{searchQuery}"
                 </div>
               ) : (
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="overflow-x-auto">
                   <table className="w-full min-w-full">
                     <thead>
                       <tr className="border-b bg-neutral-50">

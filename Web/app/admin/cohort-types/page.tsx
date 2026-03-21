@@ -211,7 +211,7 @@ export default function CustomCohortTypesPage() {
           {types.length === 0 ? (
             <div className="p-6 text-neutral-500 text-sm">No custom cohort types yet.</div>
           ) : (
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="overflow-x-auto">
               <table className="w-full min-w-full">
                 <thead>
                   <tr className="border-b bg-neutral-50">

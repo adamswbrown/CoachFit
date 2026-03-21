@@ -430,7 +430,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="border-b border-neutral-200 mb-4">
-          <div className="flex gap-1 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex gap-1 overflow-x-auto">
             <button
               onClick={() => setActiveTab("users")}
               className={`px-3 sm:px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${

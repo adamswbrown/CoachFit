@@ -450,7 +450,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
 
         {/* Main content */}
         <main className="flex-1 w-full lg:w-auto overflow-y-auto overflow-x-hidden">
-          <div className="p-4 sm:p-6 md:p-8">{children}</div>
+          <div className="p-4 sm:p-6 md:p-8 pb-20 sm:pb-6 md:pb-8">{children}</div>
         </main>
       </div>
     </div>

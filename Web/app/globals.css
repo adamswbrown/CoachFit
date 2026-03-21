@@ -74,6 +74,15 @@
   }
 }
 
+/* Hide scrollbar for tab navigation */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* Prevent pull-to-refresh on PWA pages with forms */
 .no-pull-refresh {
   overscroll-behavior-y: contain;
