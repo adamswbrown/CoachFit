@@ -322,6 +322,192 @@ function CreateSessionForm({ templates, onClose, onCreated }: CreateSessionFormP
   )
 }
 
+// ─── Attendance Section ──────────────────────────────────────────────────────
+
+interface AttendanceBooking {
+  id: string
+  clientId: string
+  clientName: string
+  clientEmail: string
+  status: "BOOKED" | "ATTENDED" | "NO_SHOW"
+  attendanceMarkedAt: string | null
+}
+
+function AttendanceStatusPill({ status }: { status: string }) {
+  const config: Record<string, { label: string; className: string }> = {
+    ATTENDED: { label: "Attended", className: "bg-green-100 text-green-700" },
+    NO_SHOW: { label: "No Show", className: "bg-red-100 text-red-700" },
+    BOOKED: { label: "Booked", className: "bg-neutral-100 text-neutral-600" },
+  }
+  const { label, className } = config[status] ?? { label: status, className: "bg-neutral-100 text-neutral-600" }
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${className}`}>
+      {label}
+    </span>
+  )
+}
+
+function AttendanceSection({ sessionId }: { sessionId: string }) {
+  const [bookings, setBookings] = useState<AttendanceBooking[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function fetchAttendance() {
+      setLoading(true)
+      setError(null)
+      try {
+        const res = await fetch(`/api/classes/sessions/${sessionId}/attendance`, {
+          credentials: "include",
+        })
+        if (!res.ok) throw new Error("Failed to load attendance")
+        const data = await res.json()
+        if (!cancelled) setBookings(data.bookings || [])
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load")
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    fetchAttendance()
+    return () => { cancelled = true }
+  }, [sessionId])
+
+  const handleMarkAttendance = useCallback(
+    async (bookingId: string, newStatus: "ATTENDED" | "NO_SHOW" | "BOOKED") => {
+      // Optimistic update
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === bookingId
+            ? { ...b, status: newStatus, attendanceMarkedAt: newStatus === "BOOKED" ? null : new Date().toISOString() }
+            : b
+        )
+      )
+      try {
+        const res = await fetch(`/api/classes/sessions/${sessionId}/attendance`, {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId, status: newStatus }),
+        })
+        if (!res.ok) {
+          throw new Error("Failed to update attendance")
+        }
+      } catch {
+        // Revert on error — re-fetch
+        try {
+          const res = await fetch(`/api/classes/sessions/${sessionId}/attendance`, {
+            credentials: "include",
+          })
+          if (res.ok) {
+            const data = await res.json()
+            setBookings(data.bookings || [])
+          }
+        } catch {
+          // silent
+        }
+      }
+    },
+    [sessionId]
+  )
+
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-neutral-700">Attendance</h3>
+        <div className="space-y-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-10 bg-neutral-100 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-neutral-700">Attendance</h3>
+        <p className="text-xs text-red-600">{error}</p>
+      </div>
+    )
+  }
+
+  if (bookings.length === 0) {
+    return (
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-neutral-700">Attendance</h3>
+        <p className="text-xs text-neutral-400">No bookings for this session</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold text-neutral-700">
+        Attendance ({bookings.filter((b) => b.status === "ATTENDED").length}/{bookings.length})
+      </h3>
+      <div className="space-y-1.5">
+        {bookings.map((booking) => (
+          <div
+            key={booking.id}
+            className="flex items-center justify-between gap-2 bg-neutral-50 rounded-lg px-3 py-2"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-6 h-6 rounded-full bg-neutral-200 flex items-center justify-center text-[9px] font-semibold text-neutral-600 flex-shrink-0">
+                {getInitials(booking.clientName || "?")}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-neutral-800 truncate">{booking.clientName}</p>
+              </div>
+              <AttendanceStatusPill status={booking.status} />
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => handleMarkAttendance(booking.id, "ATTENDED")}
+                disabled={booking.status === "ATTENDED"}
+                className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                  booking.status === "ATTENDED"
+                    ? "bg-green-600 text-white"
+                    : "bg-white border border-neutral-200 text-neutral-600 hover:bg-green-50 hover:text-green-700 hover:border-green-200"
+                }`}
+                title="Mark attended"
+              >
+                Present
+              </button>
+              <button
+                type="button"
+                onClick={() => handleMarkAttendance(booking.id, "NO_SHOW")}
+                disabled={booking.status === "NO_SHOW"}
+                className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                  booking.status === "NO_SHOW"
+                    ? "bg-red-600 text-white"
+                    : "bg-white border border-neutral-200 text-neutral-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                }`}
+                title="Mark no-show"
+              >
+                No Show
+              </button>
+              {booking.status !== "BOOKED" && (
+                <button
+                  type="button"
+                  onClick={() => handleMarkAttendance(booking.id, "BOOKED")}
+                  className="px-2 py-1 rounded text-[10px] font-medium bg-white border border-neutral-200 text-neutral-500 hover:bg-neutral-100 transition-colors"
+                  title="Reset to booked"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Edit Session Panel ───────────────────────────────────────────────────────
 
 interface EditSessionPanelProps {
@@ -412,6 +598,13 @@ function EditSessionPanel({ session, onClose, onUpdated }: EditSessionPanelProps
               <p className="text-xs text-neutral-500 mt-0.5">Capacity</p>
             </div>
           </div>
+
+          {/* Attendance (for past sessions or completed) */}
+          {(new Date(session.startsAt) < new Date() || session.status === "COMPLETED") && (
+            <div className="mb-5">
+              <AttendanceSection sessionId={session.id} />
+            </div>
+          )}
 
           {/* Edit form */}
           <form onSubmit={handleUpdate} className="space-y-4">

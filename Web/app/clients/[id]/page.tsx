@@ -13,6 +13,7 @@ import type { AttentionQueueItem } from "@/lib/admin/attention"
 import { ClientComplianceCard } from "@/components/streak/ClientComplianceCard"
 import { CoachNoteEditor } from "@/components/coach/CoachNoteEditor"
 import { CoachNoteTimeline } from "@/components/coach/CoachNoteTimeline"
+import { ProgressTimeline } from "@/components/charts/ProgressTimeline"
 
 interface Client {
   id: string
@@ -637,6 +638,10 @@ export default function ClientOverviewPage() {
                   )}
                 </div>
               </div>
+            )}
+
+            {analytics?.entries && analytics.entries.length > 0 && (
+              <ProgressTimeline entries={analytics.entries} />
             )}
 
             {!hasEntries && (

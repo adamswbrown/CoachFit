@@ -207,7 +207,10 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
       { name: "Cohort Types", href: "/admin/cohort-types", icon: (props: any) => <span className="text-xl">🏷️</span>, hasDropdown: false, dropdownKey: "admin-cohort-types" },
       { name: "Audit Log", href: "/admin/audit-log", icon: (props: any) => <span className="text-xl">🧾</span>, hasDropdown: false, dropdownKey: "admin-audit-log" },
       { name: "Email Templates", href: "/admin/email-templates", icon: (props: any) => <span className="text-xl">✉️</span>, hasDropdown: false, dropdownKey: "admin-email-templates" },
-      { name: "Credits", href: "/admin/credits", icon: (props: any) => <span className="text-xl">🪙</span>, hasDropdown: false, dropdownKey: "admin-credits" }
+      { name: "Credits", href: "/admin/credits", icon: (props: any) => <span className="text-xl">🪙</span>, hasDropdown: false, dropdownKey: "admin-credits" },
+      { name: "Credit Products", href: "/admin/credits/products", icon: (props: any) => <span className="text-xl">🏷️</span>, hasDropdown: false, dropdownKey: "admin-credit-products" },
+      { name: "Classes", href: "/admin/classes", icon: (props: any) => <span className="text-xl">📅</span>, hasDropdown: false, dropdownKey: "admin-classes" },
+      { name: "Memberships", href: "/admin/memberships", icon: (props: any) => <span className="text-xl">🏷️</span>, hasDropdown: false, dropdownKey: "admin-memberships" }
     )
   }
 

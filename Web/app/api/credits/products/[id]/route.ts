@@ -45,7 +45,7 @@ export async function PATCH(
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    if (!isAdminOrCoach(session.user)) {
+    if (!isAdmin(session.user)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -53,10 +53,6 @@ export async function PATCH(
     const product = await db.creditProduct.findUnique({ where: { id } })
     if (!product) {
       return NextResponse.json({ error: "Credit product not found" }, { status: 404 })
-    }
-
-    if (product.ownerCoachId !== session.user.id && !isAdmin(session.user)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const body = await req.json()
@@ -109,7 +105,7 @@ export async function DELETE(
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    if (!isAdminOrCoach(session.user)) {
+    if (!isAdmin(session.user)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -117,10 +113,6 @@ export async function DELETE(
     const product = await db.creditProduct.findUnique({ where: { id } })
     if (!product) {
       return NextResponse.json({ error: "Credit product not found" }, { status: 404 })
-    }
-
-    if (product.ownerCoachId !== session.user.id && !isAdmin(session.user)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     // Soft-delete: set isActive = false
