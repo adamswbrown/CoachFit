@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSession } from "@/lib/auth"
+import { getSessionWithMobile } from "@/lib/auth-mobile"
 import { getChallengeProgress } from "@/lib/challenges"
 import { isAdminOrCoach } from "@/lib/permissions"
 
@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ cohortId: string }> }
 ) {
   try {
-    const session = await getSession()
+    const session = await getSessionWithMobile()
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

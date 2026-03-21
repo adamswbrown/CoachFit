@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSession } from "@/lib/auth"
+import { getSessionWithMobile } from "@/lib/auth-mobile"
 import { getClientBookings } from "@/lib/booking"
 import { clientBookingsQuerySchema } from "@/lib/validations/booking"
 import { BookingStatus } from "@prisma/client"
@@ -7,7 +7,7 @@ import { z } from "zod"
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getSession()
+    const session = await getSessionWithMobile()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }

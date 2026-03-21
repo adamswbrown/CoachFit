@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSession } from "@/lib/auth"
+import { getSessionWithMobile } from "@/lib/auth-mobile"
 import { logAuditAction } from "@/lib/audit-log"
 import { createBooking } from "@/lib/booking"
 import { bookClassSchema } from "@/lib/validations/booking"
@@ -7,7 +7,7 @@ import { z } from "zod"
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getSession()
+    const session = await getSessionWithMobile()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }

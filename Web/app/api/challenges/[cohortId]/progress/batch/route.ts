@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/auth"
-import { getBatchChallengeProgress } from "@/lib/challenges"
+import { getChallengeProgress } from "@/lib/challenges"
 import { isAdminOrCoach } from "@/lib/permissions"
+import { db } from "@/lib/db"
 
 export async function GET(
   req: NextRequest,
@@ -20,9 +21,25 @@ export async function GET(
 
     const { cohortId } = await params
 
-    const result = await getBatchChallengeProgress(cohortId)
+    // Get all members of this cohort
+    const memberships = await db.cohortMembership.findMany({
+      where: { cohortId },
+      select: { userId: true },
+    })
 
-    return NextResponse.json(result, { status: 200 })
+    // Fetch progress for each member in parallel
+    const results = await Promise.all(
+      memberships.map(async (m) => {
+        try {
+          const progress = await getChallengeProgress(m.userId, cohortId)
+          return { clientId: m.userId, ...progress }
+        } catch {
+          return { clientId: m.userId, error: "Failed to fetch progress" }
+        }
+      })
+    )
+
+    return NextResponse.json(results, { status: 200 })
   } catch (error: any) {
     if (
       error.message === "Challenge not found" ||

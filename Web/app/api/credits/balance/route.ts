@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSession } from "@/lib/auth"
+import { getSessionWithMobile } from "@/lib/auth-mobile"
 import { isAdminOrCoach } from "@/lib/permissions"
 import { getBalance } from "@/lib/credits"
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getSession()
+    const session = await getSessionWithMobile()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
