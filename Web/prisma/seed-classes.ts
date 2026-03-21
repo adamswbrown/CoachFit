@@ -35,134 +35,103 @@ interface TeamUpEvent {
 
 // ─── Seed Function ───────────────────────────────────────────────────────────
 
+/**
+ * Ensure exactly one ClassTemplate exists per classType + ownerCoachId.
+ * Creates if missing, updates if found, and deletes any duplicates
+ * (reassigning their sessions to the canonical template first).
+ */
+async function ensureTemplate(data: {
+  ownerCoachId: string
+  name: string
+  classType: string
+  description: string
+  locationLabel: string
+  capacity: number
+  cancelCutoffMinutes: number
+}) {
+  // Find ALL templates for this classType + owner (case-insensitive match)
+  const all = await prisma.classTemplate.findMany({
+    where: { classType: data.classType, ownerCoachId: data.ownerCoachId },
+    orderBy: { createdAt: "asc" }, // keep the oldest one
+  })
+
+  let canonical = all[0] ?? null
+  const duplicates = all.slice(1)
+
+  if (!canonical) {
+    canonical = await prisma.classTemplate.create({
+      data: {
+        ...data,
+        scope: "FACILITY",
+        waitlistEnabled: true,
+        waitlistCapacity: 5,
+        bookingOpenHoursBefore: 336,
+        bookingCloseMinutesBefore: 0,
+        creditsRequired: 1,
+        isActive: true,
+      },
+    })
+    console.log(`  Created ${data.classType} template: ${canonical.id}`)
+  } else {
+    canonical = await prisma.classTemplate.update({
+      where: { id: canonical.id },
+      data: {
+        description: data.description,
+        locationLabel: data.locationLabel,
+        capacity: data.capacity,
+        cancelCutoffMinutes: data.cancelCutoffMinutes,
+      },
+    })
+    console.log(`  Updated ${data.classType} template: ${canonical.id}`)
+  }
+
+  // Remove duplicates — reassign their sessions first
+  for (const dup of duplicates) {
+    const moved = await prisma.classSession.updateMany({
+      where: { classTemplateId: dup.id },
+      data: { classTemplateId: canonical.id },
+    })
+    await prisma.classTemplate.delete({ where: { id: dup.id } })
+    console.log(`  Removed duplicate ${data.classType} template ${dup.id} (${moved.count} sessions reassigned)`)
+  }
+
+  return canonical
+}
+
 export async function seedClasses() {
   console.log("Seeding ClassTemplates and ClassSessions from TeamUp data...\n")
 
-  // ── Step 1: Seed ClassTemplates ──────────────────────────────────────────
+  // ── Step 1: Seed ClassTemplates (deduplicated) ─────────────────────────
 
-  let hiitCreated = false
-  let coreCreated = false
-
-  let hiitTemplate = await prisma.classTemplate.findFirst({
-    where: { classType: "HIIT", ownerCoachId: GAV_ID },
+  const hiitTemplate = await ensureTemplate({
+    ownerCoachId: GAV_ID,
+    name: "HIIT",
+    classType: "HIIT",
+    description: "25-minute coach led small group sessions",
+    locationLabel: "Hitsona Bangor",
+    capacity: 10,
+    cancelCutoffMinutes: 120,
   })
 
-  if (!hiitTemplate) {
-    hiitTemplate = await prisma.classTemplate.create({
-      data: {
-        ownerCoachId: GAV_ID,
-        name: "HIIT",
-        classType: "HIIT",
-        description: "25-minute coach led small group sessions",
-        scope: "FACILITY",
-        locationLabel: "Hitsona Bangor",
-        capacity: 10,
-        waitlistEnabled: true,
-        waitlistCapacity: 5,
-        bookingOpenHoursBefore: 336, // 14 days
-        bookingCloseMinutesBefore: 0,
-        cancelCutoffMinutes: 120, // 2 hours
-        creditsRequired: 1,
-        isActive: true,
-      },
-    })
-    hiitCreated = true
-    console.log("  Created HIIT template:", hiitTemplate.id)
-  } else {
-    // Update to ensure correct values
-    hiitTemplate = await prisma.classTemplate.update({
-      where: { id: hiitTemplate.id },
-      data: {
-        description: "25-minute coach led small group sessions",
-        locationLabel: "Hitsona Bangor",
-        capacity: 10,
-        cancelCutoffMinutes: 120,
-      },
-    })
-    console.log("  Updated HIIT template:", hiitTemplate.id)
-  }
-
-  let coreTemplate = await prisma.classTemplate.findFirst({
-    where: { classType: "CORE", ownerCoachId: GAV_ID },
+  const coreTemplate = await ensureTemplate({
+    ownerCoachId: GAV_ID,
+    name: "CORE",
+    classType: "CORE",
+    description: "25-minute coach led CORE session",
+    locationLabel: "Hitsona Bangor",
+    capacity: 15,
+    cancelCutoffMinutes: 120,
   })
 
-  if (!coreTemplate) {
-    coreTemplate = await prisma.classTemplate.create({
-      data: {
-        ownerCoachId: GAV_ID,
-        name: "CORE",
-        classType: "CORE",
-        description: "25-minute coach led CORE session",
-        scope: "FACILITY",
-        locationLabel: "Hitsona Bangor",
-        capacity: 15,
-        waitlistEnabled: true,
-        waitlistCapacity: 5,
-        bookingOpenHoursBefore: 336,
-        bookingCloseMinutesBefore: 0,
-        cancelCutoffMinutes: 120,
-        creditsRequired: 1,
-        isActive: true,
-      },
-    })
-    coreCreated = true
-    console.log("  Created CORE template:", coreTemplate.id)
-  } else {
-    coreTemplate = await prisma.classTemplate.update({
-      where: { id: coreTemplate.id },
-      data: {
-        description: "25-minute coach led CORE session",
-        locationLabel: "Hitsona Bangor",
-        capacity: 15,
-        cancelCutoffMinutes: 120,
-      },
-    })
-    console.log("  Updated CORE template:", coreTemplate.id)
-  }
-
-  let strengthCreated = false
-
-  let strengthTemplate = await prisma.classTemplate.findFirst({
-    where: { classType: "Strength", ownerCoachId: GAV_ID },
+  const strengthTemplate = await ensureTemplate({
+    ownerCoachId: GAV_ID,
+    name: "Strength",
+    classType: "Strength",
+    description: "45-minute strength and resistance training",
+    locationLabel: "Hitsona Bangor",
+    capacity: 12,
+    cancelCutoffMinutes: 120,
   })
-
-  if (!strengthTemplate) {
-    strengthTemplate = await prisma.classTemplate.create({
-      data: {
-        ownerCoachId: GAV_ID,
-        name: "Strength",
-        classType: "Strength",
-        description: "45-minute strength and resistance training",
-        scope: "FACILITY",
-        locationLabel: "Hitsona Bangor",
-        capacity: 12,
-        waitlistEnabled: true,
-        waitlistCapacity: 5,
-        bookingOpenHoursBefore: 336,
-        bookingCloseMinutesBefore: 0,
-        cancelCutoffMinutes: 120,
-        creditsRequired: 1,
-        isActive: true,
-      },
-    })
-    strengthCreated = true
-    console.log("  Created Strength template:", strengthTemplate.id)
-  } else {
-    strengthTemplate = await prisma.classTemplate.update({
-      where: { id: strengthTemplate.id },
-      data: {
-        description: "45-minute strength and resistance training",
-        locationLabel: "Hitsona Bangor",
-        capacity: 12,
-        cancelCutoffMinutes: 120,
-      },
-    })
-    console.log("  Updated Strength template:", strengthTemplate.id)
-  }
-
-  const templatesCreated = (hiitCreated ? 1 : 0) + (coreCreated ? 1 : 0) + (strengthCreated ? 1 : 0)
-  const templatesUpdated = (!hiitCreated ? 1 : 0) + (!coreCreated ? 1 : 0) + (!strengthCreated ? 1 : 0)
-  console.log(`\n  Templates: ${templatesCreated} created, ${templatesUpdated} updated`)
 
   // ── Seed window: 6 weeks from 2026-03-21 to 2026-05-01 ────────────────
 
