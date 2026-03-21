@@ -41,10 +41,15 @@ export function ClientLayout({ children }: ClientLayoutProps) {
         <div className="flex gap-1 overflow-x-auto">
           {[
             { name: "Dashboard", href: "/client-dashboard" },
+            { name: "Classes", href: "/client-dashboard/classes" },
+            { name: "Challenges", href: "/client-dashboard/challenges" },
             { name: "Credits", href: "/client-dashboard/credits" },
             { name: "Settings", href: "/client-dashboard/settings" },
           ].map((tab) => {
-            const isActive = pathname === tab.href
+            const isActive =
+              tab.href === "/client-dashboard"
+                ? pathname === tab.href
+                : pathname === tab.href || pathname?.startsWith(tab.href + "/")
             return (
               <Link
                 key={tab.href}
