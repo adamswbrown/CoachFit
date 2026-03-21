@@ -749,7 +749,7 @@ Assign coach to cohort.
 
 List all platform invites (pending and used).
 
-**Auth Required**: ADMIN or COACH role
+**Auth Required**: ADMIN role
 
 **Response**:
 ```json
@@ -770,7 +770,7 @@ List all platform invites (pending and used).
 
 Create a platform invite. Sends an invite email to the specified address.
 
-**Auth Required**: ADMIN or COACH role
+**Auth Required**: ADMIN role
 
 **Request Body**:
 ```json
@@ -800,7 +800,7 @@ Create a platform invite. Sends an invite email to the specified address.
 
 Revoke a pending platform invite. Cannot revoke invites that have already been used.
 
-**Auth Required**: ADMIN or COACH role
+**Auth Required**: ADMIN role
 
 **Response**:
 ```json

@@ -142,7 +142,7 @@ CoachFit uses an **invite-only** signup model. Only users whose email has been i
 
 ### How It Works
 
-1. An admin or coach creates a **Platform Invite** for an email at `/admin/invites` (or via `POST /api/admin/platform-invites`)
+1. An admin creates a **Platform Invite** for an email at `/admin/invites` (or via `POST /api/admin/platform-invites`)
 2. The user receives an invite email and signs up via Clerk (Google, email/password, etc.)
 3. The webhook handler checks for a pending invite before creating the local User record
 4. If **no invite exists**: the Clerk user is deleted and no local account is created — the user is effectively rejected
@@ -152,7 +152,7 @@ CoachFit uses an **invite-only** signup model. Only users whose email has been i
 
 | Invite Type | Created By | Purpose |
 |---|---|---|
-| `PlatformInvite` | Admin or Coach | General platform access (no coach link) |
+| `PlatformInvite` | Admin | General platform access (no coach link) |
 | `CoachInvite` | Coach | Platform access + coach-client link |
 | `CohortInvite` | Coach | Platform access + cohort membership |
 
@@ -160,7 +160,7 @@ Any of these invites is sufficient to allow signup. Platform invites are the sim
 
 ### Admin UI
 
-Admins and coaches can manage platform invites at `/admin/invites`:
+Admins can manage platform invites at `/admin/invites`:
 - Send new invites by email
 - View pending and used invites
 - Revoke pending invites

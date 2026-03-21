@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSession } from "@/lib/auth-client"
 import { useRouter } from "next/navigation"
-import { isAdminOrCoach } from "@/lib/permissions"
+import { isAdmin } from "@/lib/permissions"
 import { Role } from "@/lib/types"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
 
@@ -28,13 +28,13 @@ export default function PlatformInvitesPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
-    } else if (session?.user && !isAdminOrCoach(session.user)) {
+    } else if (session?.user && !isAdmin(session.user)) {
       router.push("/client-dashboard")
     }
   }, [status, session, router])
 
   useEffect(() => {
-    if (session?.user && isAdminOrCoach(session.user)) {
+    if (session?.user && isAdmin(session.user)) {
       fetchInvites()
     }
   }, [session])
@@ -108,7 +108,7 @@ export default function PlatformInvitesPage() {
     )
   }
 
-  if (!session || !isAdminOrCoach(session.user)) {
+  if (!session || !isAdmin(session.user)) {
     return null
   }
 
@@ -119,9 +119,10 @@ export default function PlatformInvitesPage() {
     <CoachLayout>
       <div className="max-w-5xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-neutral-900">Platform Invites</h1>
+          <h1 className="text-2xl font-semibold text-neutral-900">Platform Access</h1>
           <p className="text-sm text-neutral-600 mt-1">
-            Only invited emails can create an account. Invite users here to grant them access.
+            Control who can sign up. Users need a platform invite before they can create an account.
+            This is separate from coach/cohort invites, which link users to specific coaches or programmes.
           </p>
         </div>
 

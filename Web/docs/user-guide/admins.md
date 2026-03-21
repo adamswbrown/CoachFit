@@ -87,15 +87,16 @@ Once revoked, the user will no longer be able to sign up with that email.
 
 ### Who Can Invite?
 
-Both **Admins** and **Coaches** can send platform invites.
+Only **Admins** can send platform invites. This is separate from coach invites.
 
-### Other Invite Types
+### Platform Invites vs Coach/Cohort Invites
 
-In addition to platform invites, coaches can also invite users through:
-- **Coach Invites** - Links the user directly to the coach
-- **Cohort Invites** - Adds the user to a specific cohort
+These are two different things:
 
-All three invite types grant platform access. Platform invites are the simplest — they just allow the user to sign up without linking to a specific coach or cohort.
+- **Platform Invites** (admin) — Controls who can sign up. "You're allowed on the platform." No coach or programme link.
+- **Coach/Cohort Invites** (coach) — Links a user to a coach or programme. These also grant platform access as a side effect, so if a coach invites someone, that person can sign up without needing a separate platform invite.
+
+Both types grant signup access, but they serve different purposes.
 
 ---
 

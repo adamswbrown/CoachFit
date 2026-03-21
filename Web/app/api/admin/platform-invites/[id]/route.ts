@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { isAdminOrCoach } from "@/lib/permissions"
+import { isAdmin } from "@/lib/permissions"
 import { logAuditAction } from "@/lib/audit-log"
 
 // DELETE /api/admin/platform-invites/[id] - Revoke a pending invite
@@ -14,7 +14,7 @@ export async function DELETE(
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    if (!isAdminOrCoach(session.user)) {
+    if (!isAdmin(session.user)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
