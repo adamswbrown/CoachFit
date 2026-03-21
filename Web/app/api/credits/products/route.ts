@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { getSession } from "@/lib/auth"
+import { getSessionWithMobile } from "@/lib/auth-mobile"
 import { db } from "@/lib/db"
 import { isAdminOrCoach, isAdmin, isCoach } from "@/lib/permissions"
 import { logAuditAction } from "@/lib/audit-log"
@@ -23,7 +23,7 @@ const createCreditProductSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getSession()
+    const session = await getSessionWithMobile()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getSession()
+    const session = await getSessionWithMobile()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }

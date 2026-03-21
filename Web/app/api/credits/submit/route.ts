@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { getSession } from "@/lib/auth"
+import { getSessionWithMobile } from "@/lib/auth-mobile"
 import { db } from "@/lib/db"
 import { logAuditAction } from "@/lib/audit-log"
 import { CreditSubmissionStatus } from "@prisma/client"
@@ -13,7 +13,7 @@ const submitSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getSession()
+    const session = await getSessionWithMobile()
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
