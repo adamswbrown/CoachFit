@@ -1,1 +1,5268 @@
-{"count":218,"next":null,"previous":"https://goteamup.com/api/v2/events?category=&expand=instructors%2Cactive_registration_status%2Ccategory%2Coffering_type%2Coffering_type.category%2Cvenue&fields=id%2Cname%2Cmax_occupancy%2Coccupancy%2Cattending_count%2Cstarts_at%2Cends_at%2Cwaiting_count%2Cwaitlist_max_override%2Cactive_registration_status%2Ccategory.name%2Coffering_type.background_color%2Coffering_type.waitlist_max%2Coffering_type.schedule_type%2Coffering_type.category.name%2Coffering_type.max_allowed_age%2Coffering_type.min_allowed_age%2Cvenue%2Ccustomer_url%2Cdescription%2Cis_appointment%2Cis_full&instructors=&offering_types=&page=2&page_size=100&sort=start&starts_at_gte=2025-12-28T00%3A00%2B00%3A00&starts_at_lte=2026-01-31T23%3A59%2B00%3A00&status=active&venues=","results":[{"id":90784755,"name":"HIIT","starts_at":"2026-01-29T06:30:00Z","ends_at":"2026-01-29T06:55:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":3,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90784755-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-15T06:30:00Z","registrations_close_at":"2026-01-29T06:30:00Z","late_cancels_after":"2026-01-29T04:30:00Z"},"category":null,"instructors":[{"id":132655,"object":"instructor","name":"Rory Stephens","picture_url":null,"description":"","staff":139862}],"occupancy":10},{"id":90785109,"name":"HIIT","starts_at":"2026-01-29T07:00:00Z","ends_at":"2026-01-29T07:25:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":5,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90785109-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-15T07:00:00Z","registrations_close_at":"2026-01-29T07:00:00Z","late_cancels_after":"2026-01-29T05:00:00Z"},"category":null,"instructors":[{"id":132655,"object":"instructor","name":"Rory Stephens","picture_url":null,"description":"","staff":139862}],"occupancy":10},{"id":90784813,"name":"HIIT","starts_at":"2026-01-29T09:30:00Z","ends_at":"2026-01-29T09:55:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":7,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90784813-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-15T09:30:00Z","registrations_close_at":"2026-01-29T09:30:00Z","late_cancels_after":"2026-01-29T07:30:00Z"},"category":null,"instructors":[{"id":132655,"object":"instructor","name":"Rory Stephens","picture_url":null,"description":"","staff":139862}],"occupancy":10},{"id":90784761,"name":"HIIT","starts_at":"2026-01-29T10:05:00Z","ends_at":"2026-01-29T10:30:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":6,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90784761-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-15T10:05:00Z","registrations_close_at":"2026-01-29T10:05:00Z","late_cancels_after":"2026-01-29T08:05:00Z"},"category":null,"instructors":[{"id":132655,"object":"instructor","name":"Rory Stephens","picture_url":null,"description":"","staff":139862}],"occupancy":10},{"id":90713304,"name":"CORE","starts_at":"2026-01-29T10:30:00Z","ends_at":"2026-01-29T10:55:00Z","max_occupancy":15,"waitlist_max_override":-1,"attending_count":5,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"f2de24","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90713304-core/","description":"<p>25-minute coach led session</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-15T10:30:00Z","registrations_close_at":"2026-01-29T10:30:00Z","late_cancels_after":"2026-01-29T08:30:00Z"},"category":null,"instructors":[{"id":104380,"object":"instructor","name":"Gav Cunningham","picture_url":"https://teamupstatic.com/staff/111554-7c7df13f-eb40-4029-8a5a-148b42d9d564.png","description":"","staff":111554}],"occupancy":15},{"id":90725272,"name":"HIIT","starts_at":"2026-01-29T12:30:00Z","ends_at":"2026-01-29T12:55:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":2,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90725272-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-15T12:30:00Z","registrations_close_at":"2026-01-29T12:30:00Z","late_cancels_after":"2026-01-29T10:30:00Z"},"category":null,"instructors":[{"id":132655,"object":"instructor","name":"Rory Stephens","picture_url":null,"description":"","staff":139862}],"occupancy":10},{"id":90893193,"name":"HIIT","starts_at":"2026-01-29T17:30:00Z","ends_at":"2026-01-29T17:55:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":8,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90893193-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-15T17:30:00Z","registrations_close_at":"2026-01-29T17:30:00Z","late_cancels_after":"2026-01-29T15:30:00Z"},"category":null,"instructors":[{"id":132655,"object":"instructor","name":"Rory Stephens","picture_url":null,"description":"","staff":139862}],"occupancy":10},{"id":90785684,"name":"HIIT","starts_at":"2026-01-30T06:30:00Z","ends_at":"2026-01-30T06:55:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":4,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90785684-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-16T06:30:00Z","registrations_close_at":"2026-01-30T06:30:00Z","late_cancels_after":"2026-01-30T04:30:00Z"},"category":null,"instructors":[{"id":104380,"object":"instructor","name":"Gav Cunningham","picture_url":"https://teamupstatic.com/staff/111554-7c7df13f-eb40-4029-8a5a-148b42d9d564.png","description":"","staff":111554}],"occupancy":10},{"id":90785033,"name":"HIIT","starts_at":"2026-01-30T07:00:00Z","ends_at":"2026-01-30T07:25:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":2,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90785033-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-16T07:00:00Z","registrations_close_at":"2026-01-30T07:00:00Z","late_cancels_after":"2026-01-30T05:00:00Z"},"category":null,"instructors":[{"id":104380,"object":"instructor","name":"Gav Cunningham","picture_url":"https://teamupstatic.com/staff/111554-7c7df13f-eb40-4029-8a5a-148b42d9d564.png","description":"","staff":111554}],"occupancy":10},{"id":90785622,"name":"HIIT","starts_at":"2026-01-30T09:30:00Z","ends_at":"2026-01-30T09:55:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":8,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90785622-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-16T09:30:00Z","registrations_close_at":"2026-01-30T09:30:00Z","late_cancels_after":"2026-01-30T07:30:00Z"},"category":null,"instructors":[{"id":104380,"object":"instructor","name":"Gav Cunningham","picture_url":"https://teamupstatic.com/staff/111554-7c7df13f-eb40-4029-8a5a-148b42d9d564.png","description":"","staff":111554}],"occupancy":10},{"id":90785110,"name":"HIIT","starts_at":"2026-01-30T10:05:00Z","ends_at":"2026-01-30T10:30:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":4,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90785110-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-16T10:05:00Z","registrations_close_at":"2026-01-30T10:05:00Z","late_cancels_after":"2026-01-30T08:05:00Z"},"category":null,"instructors":[{"id":104380,"object":"instructor","name":"Gav Cunningham","picture_url":"https://teamupstatic.com/staff/111554-7c7df13f-eb40-4029-8a5a-148b42d9d564.png","description":"","staff":111554}],"occupancy":10},{"id":90722955,"name":"HIIT","starts_at":"2026-01-30T12:30:00Z","ends_at":"2026-01-30T12:55:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":2,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90722955-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-16T12:30:00Z","registrations_close_at":"2026-01-30T12:30:00Z","late_cancels_after":"2026-01-30T10:30:00Z"},"category":null,"instructors":[{"id":104380,"object":"instructor","name":"Gav Cunningham","picture_url":"https://teamupstatic.com/staff/111554-7c7df13f-eb40-4029-8a5a-148b42d9d564.png","description":"","staff":111554}],"occupancy":10},{"id":90713553,"name":"HIIT","starts_at":"2026-01-30T17:30:00Z","ends_at":"2026-01-30T17:55:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":10,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90713553-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":true,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":"join_waitlist","registrations_open_at":"2026-01-16T17:30:00Z","registrations_close_at":"2026-01-30T17:30:00Z","late_cancels_after":"2026-01-30T15:30:00Z"},"category":null,"instructors":[{"id":132655,"object":"instructor","name":"Rory Stephens","picture_url":null,"description":"","staff":139862}],"occupancy":10},{"id":90952350,"name":"HIIT","starts_at":"2026-01-31T08:45:00Z","ends_at":"2026-01-31T09:10:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":10,"waiting_count":1,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90952350-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":true,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":"join_waitlist","registrations_open_at":"2026-01-17T08:45:00Z","registrations_close_at":"2026-01-31T08:45:00Z","late_cancels_after":"2026-01-31T06:45:00Z"},"category":null,"instructors":[{"id":104380,"object":"instructor","name":"Gav Cunningham","picture_url":"https://teamupstatic.com/staff/111554-7c7df13f-eb40-4029-8a5a-148b42d9d564.png","description":"","staff":111554}],"occupancy":10},{"id":90951998,"name":"CORE","starts_at":"2026-01-31T09:15:00Z","ends_at":"2026-01-31T09:40:00Z","max_occupancy":15,"waitlist_max_override":-1,"attending_count":11,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"f2de24","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90951998-core/","description":"<p>25-minute coach led session</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-17T09:15:00Z","registrations_close_at":"2026-01-31T09:15:00Z","late_cancels_after":"2026-01-31T07:15:00Z"},"category":null,"instructors":[{"id":132655,"object":"instructor","name":"Rory Stephens","picture_url":null,"description":"","staff":139862}],"occupancy":15},{"id":90951600,"name":"HIIT","starts_at":"2026-01-31T09:45:00Z","ends_at":"2026-01-31T10:10:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":10,"waiting_count":1,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90951600-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":true,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":"join_waitlist","registrations_open_at":"2026-01-17T09:45:00Z","registrations_close_at":"2026-01-31T09:45:00Z","late_cancels_after":"2026-01-31T07:45:00Z"},"category":null,"instructors":[{"id":104380,"object":"instructor","name":"Gav Cunningham","picture_url":"https://teamupstatic.com/staff/111554-7c7df13f-eb40-4029-8a5a-148b42d9d564.png","description":"","staff":111554}],"occupancy":10},{"id":90951709,"name":"CORE","starts_at":"2026-01-31T10:15:00Z","ends_at":"2026-01-31T10:40:00Z","max_occupancy":15,"waitlist_max_override":-1,"attending_count":7,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"f2de24","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90951709-core/","description":"<p>25-minute coach led session</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-17T10:15:00Z","registrations_close_at":"2026-01-31T10:15:00Z","late_cancels_after":"2026-01-31T08:15:00Z"},"category":null,"instructors":[{"id":132655,"object":"instructor","name":"Rory Stephens","picture_url":null,"description":"","staff":139862}],"occupancy":15},{"id":90951807,"name":"HIIT","starts_at":"2026-01-31T10:45:00Z","ends_at":"2026-01-31T11:10:00Z","max_occupancy":10,"waitlist_max_override":-1,"attending_count":6,"waiting_count":0,"is_appointment":false,"venue":{"id":40935,"object":"venue","name":"Hitsona Bangor","description":"","address":"UNIT 54 3 BALLOO DRIVE, BANGOR, Down, BT19 7QY, GB","physical_address":{"street":"UNIT 54 3 BALLOO DRIVE","street_secondary":null,"city":"BANGOR","region":"Down","postal_code":"BT19 7QY","country":"GB","lat":54.6429315,"lng":-5.666843},"timezone":"Europe/London","video_url":"","zoom_user":null,"venue_type":"physical","venue_rooms":"https://goteamup.com/api/v2/venue_rooms?venue=40935","lat":54.6429315,"lng":-5.666843,"archived":false,"is_online":false,"video_url_type":"static"},"offering_type":{"background_color":"452ddb","category":null,"max_allowed_age":null,"min_allowed_age":null,"schedule_type":"class","waitlist_max":null},"customer_url":"/p/5289026-hitsona-bangor/e/90951807-hiit/","description":"<p>25-minute coach led small group sessions&nbsp;</p>","is_full":false,"active_registration_status":{"current_status":null,"restriction_codes":[],"suggested_action":null,"registrations_open_at":"2026-01-17T10:45:00Z","registrations_close_at":"2026-01-31T10:45:00Z","late_cancels_after":"2026-01-31T08:45:00Z"},"category":null,"instructors":[{"id":104380,"object":"instructor","name":"Gav Cunningham","picture_url":"https://teamupstatic.com/staff/111554-7c7df13f-eb40-4029-8a5a-148b42d9d564.png","description":"","staff":111554}],"occupancy":10}]}
+{
+  "results": [
+    {
+      "id": 90000001,
+      "name": "HIIT",
+      "starts_at": "2026-03-21T07:00:00Z",
+      "ends_at": "2026-03-21T07:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000001-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-07T07:00:00Z",
+        "registrations_close_at": "2026-03-21T07:00:00Z",
+        "late_cancels_after": "2026-03-21T06:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000002,
+      "name": "HIIT",
+      "starts_at": "2026-03-21T07:30:00Z",
+      "ends_at": "2026-03-21T07:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 3,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000002-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-07T07:30:00Z",
+        "registrations_close_at": "2026-03-21T07:30:00Z",
+        "late_cancels_after": "2026-03-21T06:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 106260,
+          "object": "instructor",
+          "name": "Conor Bates",
+          "picture_url": "",
+          "description": "",
+          "staff": 106260
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000003,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-21T08:00:00Z",
+      "ends_at": "2026-03-21T08:25:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000003-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-07T08:00:00Z",
+        "registrations_close_at": "2026-03-21T08:00:00Z",
+        "late_cancels_after": "2026-03-21T07:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 129678,
+          "object": "instructor",
+          "name": "Jacki Montgomery",
+          "picture_url": "",
+          "description": "",
+          "staff": 129678
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000004,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-21T09:00:00Z",
+      "ends_at": "2026-03-21T09:25:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000004-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-07T09:00:00Z",
+        "registrations_close_at": "2026-03-21T09:00:00Z",
+        "late_cancels_after": "2026-03-21T08:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 138610,
+          "object": "instructor",
+          "name": "Clare Cuming",
+          "picture_url": "",
+          "description": "",
+          "staff": 138610
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000005,
+      "name": "HIIT",
+      "starts_at": "2026-03-21T09:30:00Z",
+      "ends_at": "2026-03-21T09:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000005-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-07T09:30:00Z",
+        "registrations_close_at": "2026-03-21T09:30:00Z",
+        "late_cancels_after": "2026-03-21T08:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 151226,
+          "object": "instructor",
+          "name": "Josh Bunting",
+          "picture_url": "",
+          "description": "",
+          "staff": 151226
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000006,
+      "name": "HIIT",
+      "starts_at": "2026-03-21T10:00:00Z",
+      "ends_at": "2026-03-21T10:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 5,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000006-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-07T10:00:00Z",
+        "registrations_close_at": "2026-03-21T10:00:00Z",
+        "late_cancels_after": "2026-03-21T09:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000007,
+      "name": "HIIT",
+      "starts_at": "2026-03-23T06:00:00Z",
+      "ends_at": "2026-03-23T06:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000007-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-09T06:00:00Z",
+        "registrations_close_at": "2026-03-23T06:00:00Z",
+        "late_cancels_after": "2026-03-23T05:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000008,
+      "name": "HIIT",
+      "starts_at": "2026-03-23T06:30:00Z",
+      "ends_at": "2026-03-23T06:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000008-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-09T06:30:00Z",
+        "registrations_close_at": "2026-03-23T06:30:00Z",
+        "late_cancels_after": "2026-03-23T05:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000009,
+      "name": "HIIT",
+      "starts_at": "2026-03-23T07:00:00Z",
+      "ends_at": "2026-03-23T07:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000009-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-09T07:00:00Z",
+        "registrations_close_at": "2026-03-23T07:00:00Z",
+        "late_cancels_after": "2026-03-23T06:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000010,
+      "name": "CORE",
+      "starts_at": "2026-03-23T09:30:00Z",
+      "ends_at": "2026-03-23T09:55:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 3,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000010-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-09T09:30:00Z",
+        "registrations_close_at": "2026-03-23T09:30:00Z",
+        "late_cancels_after": "2026-03-23T08:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000011,
+      "name": "CORE",
+      "starts_at": "2026-03-23T10:00:00Z",
+      "ends_at": "2026-03-23T10:25:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 3,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000011-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-09T10:00:00Z",
+        "registrations_close_at": "2026-03-23T10:00:00Z",
+        "late_cancels_after": "2026-03-23T09:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000012,
+      "name": "HIIT",
+      "starts_at": "2026-03-23T10:30:00Z",
+      "ends_at": "2026-03-23T10:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000012-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-09T10:30:00Z",
+        "registrations_close_at": "2026-03-23T10:30:00Z",
+        "late_cancels_after": "2026-03-23T09:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000013,
+      "name": "HIIT",
+      "starts_at": "2026-03-23T12:00:00Z",
+      "ends_at": "2026-03-23T12:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000013-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-09T12:00:00Z",
+        "registrations_close_at": "2026-03-23T12:00:00Z",
+        "late_cancels_after": "2026-03-23T11:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000014,
+      "name": "HIIT",
+      "starts_at": "2026-03-23T17:30:00Z",
+      "ends_at": "2026-03-23T17:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000014-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-09T17:30:00Z",
+        "registrations_close_at": "2026-03-23T17:30:00Z",
+        "late_cancels_after": "2026-03-23T16:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000015,
+      "name": "HIIT",
+      "starts_at": "2026-03-23T18:00:00Z",
+      "ends_at": "2026-03-23T18:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 3,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000015-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-09T18:00:00Z",
+        "registrations_close_at": "2026-03-23T18:00:00Z",
+        "late_cancels_after": "2026-03-23T17:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000016,
+      "name": "HIIT",
+      "starts_at": "2026-03-23T18:30:00Z",
+      "ends_at": "2026-03-23T18:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000016-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-09T18:30:00Z",
+        "registrations_close_at": "2026-03-23T18:30:00Z",
+        "late_cancels_after": "2026-03-23T17:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000017,
+      "name": "HIIT",
+      "starts_at": "2026-03-24T06:00:00Z",
+      "ends_at": "2026-03-24T06:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000017-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-10T06:00:00Z",
+        "registrations_close_at": "2026-03-24T06:00:00Z",
+        "late_cancels_after": "2026-03-24T05:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000018,
+      "name": "HIIT",
+      "starts_at": "2026-03-24T06:30:00Z",
+      "ends_at": "2026-03-24T06:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000018-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-10T06:30:00Z",
+        "registrations_close_at": "2026-03-24T06:30:00Z",
+        "late_cancels_after": "2026-03-24T05:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 138610,
+          "object": "instructor",
+          "name": "Clare Cuming",
+          "picture_url": "",
+          "description": "",
+          "staff": 138610
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000019,
+      "name": "HIIT",
+      "starts_at": "2026-03-24T07:00:00Z",
+      "ends_at": "2026-03-24T07:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 10,
+      "waiting_count": 2,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000019-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": true,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-10T07:00:00Z",
+        "registrations_close_at": "2026-03-24T07:00:00Z",
+        "late_cancels_after": "2026-03-24T06:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000020,
+      "name": "HIIT",
+      "starts_at": "2026-03-24T09:30:00Z",
+      "ends_at": "2026-03-24T09:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 3,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000020-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-10T09:30:00Z",
+        "registrations_close_at": "2026-03-24T09:30:00Z",
+        "late_cancels_after": "2026-03-24T08:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 138610,
+          "object": "instructor",
+          "name": "Clare Cuming",
+          "picture_url": "",
+          "description": "",
+          "staff": 138610
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000021,
+      "name": "HIIT",
+      "starts_at": "2026-03-24T10:00:00Z",
+      "ends_at": "2026-03-24T10:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 5,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000021-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-10T10:00:00Z",
+        "registrations_close_at": "2026-03-24T10:00:00Z",
+        "late_cancels_after": "2026-03-24T09:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000022,
+      "name": "HIIT",
+      "starts_at": "2026-03-24T10:30:00Z",
+      "ends_at": "2026-03-24T10:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000022-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-10T10:30:00Z",
+        "registrations_close_at": "2026-03-24T10:30:00Z",
+        "late_cancels_after": "2026-03-24T09:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 138610,
+          "object": "instructor",
+          "name": "Clare Cuming",
+          "picture_url": "",
+          "description": "",
+          "staff": 138610
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000023,
+      "name": "HIIT",
+      "starts_at": "2026-03-24T12:00:00Z",
+      "ends_at": "2026-03-24T12:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000023-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-10T12:00:00Z",
+        "registrations_close_at": "2026-03-24T12:00:00Z",
+        "late_cancels_after": "2026-03-24T11:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000024,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-24T17:30:00Z",
+      "ends_at": "2026-03-24T17:55:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000024-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-10T17:30:00Z",
+        "registrations_close_at": "2026-03-24T17:30:00Z",
+        "late_cancels_after": "2026-03-24T16:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 151226,
+          "object": "instructor",
+          "name": "Josh Bunting",
+          "picture_url": "",
+          "description": "",
+          "staff": 151226
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000025,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-24T18:00:00Z",
+      "ends_at": "2026-03-24T18:25:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 5,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000025-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-10T18:00:00Z",
+        "registrations_close_at": "2026-03-24T18:00:00Z",
+        "late_cancels_after": "2026-03-24T17:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000026,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-24T18:30:00Z",
+      "ends_at": "2026-03-24T18:55:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000026-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-10T18:30:00Z",
+        "registrations_close_at": "2026-03-24T18:30:00Z",
+        "late_cancels_after": "2026-03-24T17:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 151226,
+          "object": "instructor",
+          "name": "Josh Bunting",
+          "picture_url": "",
+          "description": "",
+          "staff": 151226
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000027,
+      "name": "HIIT",
+      "starts_at": "2026-03-25T06:00:00Z",
+      "ends_at": "2026-03-25T06:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000027-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-11T06:00:00Z",
+        "registrations_close_at": "2026-03-25T06:00:00Z",
+        "late_cancels_after": "2026-03-25T05:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000028,
+      "name": "HIIT",
+      "starts_at": "2026-03-25T06:30:00Z",
+      "ends_at": "2026-03-25T06:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000028-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-11T06:30:00Z",
+        "registrations_close_at": "2026-03-25T06:30:00Z",
+        "late_cancels_after": "2026-03-25T05:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 106260,
+          "object": "instructor",
+          "name": "Conor Bates",
+          "picture_url": "",
+          "description": "",
+          "staff": 106260
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000029,
+      "name": "HIIT",
+      "starts_at": "2026-03-25T07:00:00Z",
+      "ends_at": "2026-03-25T07:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000029-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-11T07:00:00Z",
+        "registrations_close_at": "2026-03-25T07:00:00Z",
+        "late_cancels_after": "2026-03-25T06:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000030,
+      "name": "CORE",
+      "starts_at": "2026-03-25T09:30:00Z",
+      "ends_at": "2026-03-25T09:55:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000030-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-11T09:30:00Z",
+        "registrations_close_at": "2026-03-25T09:30:00Z",
+        "late_cancels_after": "2026-03-25T08:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 106260,
+          "object": "instructor",
+          "name": "Conor Bates",
+          "picture_url": "",
+          "description": "",
+          "staff": 106260
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000031,
+      "name": "CORE",
+      "starts_at": "2026-03-25T10:00:00Z",
+      "ends_at": "2026-03-25T10:25:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000031-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-11T10:00:00Z",
+        "registrations_close_at": "2026-03-25T10:00:00Z",
+        "late_cancels_after": "2026-03-25T09:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000032,
+      "name": "CORE",
+      "starts_at": "2026-03-25T10:30:00Z",
+      "ends_at": "2026-03-25T10:55:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000032-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-11T10:30:00Z",
+        "registrations_close_at": "2026-03-25T10:30:00Z",
+        "late_cancels_after": "2026-03-25T09:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 106260,
+          "object": "instructor",
+          "name": "Conor Bates",
+          "picture_url": "",
+          "description": "",
+          "staff": 106260
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000033,
+      "name": "HIIT",
+      "starts_at": "2026-03-25T12:00:00Z",
+      "ends_at": "2026-03-25T12:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000033-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-11T12:00:00Z",
+        "registrations_close_at": "2026-03-25T12:00:00Z",
+        "late_cancels_after": "2026-03-25T11:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000034,
+      "name": "HIIT",
+      "starts_at": "2026-03-25T17:30:00Z",
+      "ends_at": "2026-03-25T17:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000034-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-11T17:30:00Z",
+        "registrations_close_at": "2026-03-25T17:30:00Z",
+        "late_cancels_after": "2026-03-25T16:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 106260,
+          "object": "instructor",
+          "name": "Conor Bates",
+          "picture_url": "",
+          "description": "",
+          "staff": 106260
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000035,
+      "name": "HIIT",
+      "starts_at": "2026-03-25T18:00:00Z",
+      "ends_at": "2026-03-25T18:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 3,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000035-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-11T18:00:00Z",
+        "registrations_close_at": "2026-03-25T18:00:00Z",
+        "late_cancels_after": "2026-03-25T17:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000036,
+      "name": "HIIT",
+      "starts_at": "2026-03-25T18:30:00Z",
+      "ends_at": "2026-03-25T18:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 10,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000036-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": true,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-11T18:30:00Z",
+        "registrations_close_at": "2026-03-25T18:30:00Z",
+        "late_cancels_after": "2026-03-25T17:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 106260,
+          "object": "instructor",
+          "name": "Conor Bates",
+          "picture_url": "",
+          "description": "",
+          "staff": 106260
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000037,
+      "name": "HIIT",
+      "starts_at": "2026-03-26T06:00:00Z",
+      "ends_at": "2026-03-26T06:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000037-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-12T06:00:00Z",
+        "registrations_close_at": "2026-03-26T06:00:00Z",
+        "late_cancels_after": "2026-03-26T05:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000038,
+      "name": "HIIT",
+      "starts_at": "2026-03-26T06:30:00Z",
+      "ends_at": "2026-03-26T06:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000038-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-12T06:30:00Z",
+        "registrations_close_at": "2026-03-26T06:30:00Z",
+        "late_cancels_after": "2026-03-26T05:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 129678,
+          "object": "instructor",
+          "name": "Jacki Montgomery",
+          "picture_url": "",
+          "description": "",
+          "staff": 129678
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000039,
+      "name": "HIIT",
+      "starts_at": "2026-03-26T07:00:00Z",
+      "ends_at": "2026-03-26T07:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000039-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-12T07:00:00Z",
+        "registrations_close_at": "2026-03-26T07:00:00Z",
+        "late_cancels_after": "2026-03-26T06:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000040,
+      "name": "HIIT",
+      "starts_at": "2026-03-26T09:30:00Z",
+      "ends_at": "2026-03-26T09:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000040-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-12T09:30:00Z",
+        "registrations_close_at": "2026-03-26T09:30:00Z",
+        "late_cancels_after": "2026-03-26T08:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 129678,
+          "object": "instructor",
+          "name": "Jacki Montgomery",
+          "picture_url": "",
+          "description": "",
+          "staff": 129678
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000041,
+      "name": "HIIT",
+      "starts_at": "2026-03-26T10:00:00Z",
+      "ends_at": "2026-03-26T10:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000041-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-12T10:00:00Z",
+        "registrations_close_at": "2026-03-26T10:00:00Z",
+        "late_cancels_after": "2026-03-26T09:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000042,
+      "name": "HIIT",
+      "starts_at": "2026-03-26T10:30:00Z",
+      "ends_at": "2026-03-26T10:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000042-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-12T10:30:00Z",
+        "registrations_close_at": "2026-03-26T10:30:00Z",
+        "late_cancels_after": "2026-03-26T09:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 129678,
+          "object": "instructor",
+          "name": "Jacki Montgomery",
+          "picture_url": "",
+          "description": "",
+          "staff": 129678
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000043,
+      "name": "HIIT",
+      "starts_at": "2026-03-26T12:00:00Z",
+      "ends_at": "2026-03-26T12:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 3,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000043-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-12T12:00:00Z",
+        "registrations_close_at": "2026-03-26T12:00:00Z",
+        "late_cancels_after": "2026-03-26T11:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000044,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-26T17:30:00Z",
+      "ends_at": "2026-03-26T17:55:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000044-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-12T17:30:00Z",
+        "registrations_close_at": "2026-03-26T17:30:00Z",
+        "late_cancels_after": "2026-03-26T16:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000045,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-26T18:00:00Z",
+      "ends_at": "2026-03-26T18:25:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000045-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-12T18:00:00Z",
+        "registrations_close_at": "2026-03-26T18:00:00Z",
+        "late_cancels_after": "2026-03-26T17:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000046,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-26T18:30:00Z",
+      "ends_at": "2026-03-26T18:55:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000046-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-12T18:30:00Z",
+        "registrations_close_at": "2026-03-26T18:30:00Z",
+        "late_cancels_after": "2026-03-26T17:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000047,
+      "name": "HIIT",
+      "starts_at": "2026-03-27T06:00:00Z",
+      "ends_at": "2026-03-27T06:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000047-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-13T06:00:00Z",
+        "registrations_close_at": "2026-03-27T06:00:00Z",
+        "late_cancels_after": "2026-03-27T05:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000048,
+      "name": "HIIT",
+      "starts_at": "2026-03-27T06:30:00Z",
+      "ends_at": "2026-03-27T06:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000048-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-13T06:30:00Z",
+        "registrations_close_at": "2026-03-27T06:30:00Z",
+        "late_cancels_after": "2026-03-27T05:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 151226,
+          "object": "instructor",
+          "name": "Josh Bunting",
+          "picture_url": "",
+          "description": "",
+          "staff": 151226
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000049,
+      "name": "HIIT",
+      "starts_at": "2026-03-27T07:00:00Z",
+      "ends_at": "2026-03-27T07:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000049-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-13T07:00:00Z",
+        "registrations_close_at": "2026-03-27T07:00:00Z",
+        "late_cancels_after": "2026-03-27T06:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000050,
+      "name": "CORE",
+      "starts_at": "2026-03-27T09:30:00Z",
+      "ends_at": "2026-03-27T09:55:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000050-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-13T09:30:00Z",
+        "registrations_close_at": "2026-03-27T09:30:00Z",
+        "late_cancels_after": "2026-03-27T08:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 138610,
+          "object": "instructor",
+          "name": "Clare Cuming",
+          "picture_url": "",
+          "description": "",
+          "staff": 138610
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000051,
+      "name": "CORE",
+      "starts_at": "2026-03-27T10:00:00Z",
+      "ends_at": "2026-03-27T10:25:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 10,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000051-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-13T10:00:00Z",
+        "registrations_close_at": "2026-03-27T10:00:00Z",
+        "late_cancels_after": "2026-03-27T09:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000052,
+      "name": "HIIT",
+      "starts_at": "2026-03-27T10:30:00Z",
+      "ends_at": "2026-03-27T10:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000052-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-13T10:30:00Z",
+        "registrations_close_at": "2026-03-27T10:30:00Z",
+        "late_cancels_after": "2026-03-27T09:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 151226,
+          "object": "instructor",
+          "name": "Josh Bunting",
+          "picture_url": "",
+          "description": "",
+          "staff": 151226
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000053,
+      "name": "HIIT",
+      "starts_at": "2026-03-27T12:00:00Z",
+      "ends_at": "2026-03-27T12:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 5,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000053-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-13T12:00:00Z",
+        "registrations_close_at": "2026-03-27T12:00:00Z",
+        "late_cancels_after": "2026-03-27T11:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000054,
+      "name": "HIIT",
+      "starts_at": "2026-03-27T17:30:00Z",
+      "ends_at": "2026-03-27T17:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000054-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-13T17:30:00Z",
+        "registrations_close_at": "2026-03-27T17:30:00Z",
+        "late_cancels_after": "2026-03-27T16:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 138610,
+          "object": "instructor",
+          "name": "Clare Cuming",
+          "picture_url": "",
+          "description": "",
+          "staff": 138610
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000055,
+      "name": "HIIT",
+      "starts_at": "2026-03-27T18:00:00Z",
+      "ends_at": "2026-03-27T18:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000055-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-13T18:00:00Z",
+        "registrations_close_at": "2026-03-27T18:00:00Z",
+        "late_cancels_after": "2026-03-27T17:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000056,
+      "name": "HIIT",
+      "starts_at": "2026-03-27T18:30:00Z",
+      "ends_at": "2026-03-27T18:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000056-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-13T18:30:00Z",
+        "registrations_close_at": "2026-03-27T18:30:00Z",
+        "late_cancels_after": "2026-03-27T17:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 151226,
+          "object": "instructor",
+          "name": "Josh Bunting",
+          "picture_url": "",
+          "description": "",
+          "staff": 151226
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000057,
+      "name": "HIIT",
+      "starts_at": "2026-03-28T07:00:00Z",
+      "ends_at": "2026-03-28T07:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000057-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-14T07:00:00Z",
+        "registrations_close_at": "2026-03-28T07:00:00Z",
+        "late_cancels_after": "2026-03-28T06:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000058,
+      "name": "HIIT",
+      "starts_at": "2026-03-28T07:30:00Z",
+      "ends_at": "2026-03-28T07:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000058-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-14T07:30:00Z",
+        "registrations_close_at": "2026-03-28T07:30:00Z",
+        "late_cancels_after": "2026-03-28T06:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 106260,
+          "object": "instructor",
+          "name": "Conor Bates",
+          "picture_url": "",
+          "description": "",
+          "staff": 106260
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000059,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-28T08:00:00Z",
+      "ends_at": "2026-03-28T08:25:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 12,
+      "waiting_count": 1,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000059-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": true,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-14T08:00:00Z",
+        "registrations_close_at": "2026-03-28T08:00:00Z",
+        "late_cancels_after": "2026-03-28T07:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 129678,
+          "object": "instructor",
+          "name": "Jacki Montgomery",
+          "picture_url": "",
+          "description": "",
+          "staff": 129678
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000060,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-28T09:00:00Z",
+      "ends_at": "2026-03-28T09:25:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 11,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000060-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-14T09:00:00Z",
+        "registrations_close_at": "2026-03-28T09:00:00Z",
+        "late_cancels_after": "2026-03-28T08:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 138610,
+          "object": "instructor",
+          "name": "Clare Cuming",
+          "picture_url": "",
+          "description": "",
+          "staff": 138610
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000061,
+      "name": "HIIT",
+      "starts_at": "2026-03-28T09:30:00Z",
+      "ends_at": "2026-03-28T09:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000061-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-14T09:30:00Z",
+        "registrations_close_at": "2026-03-28T09:30:00Z",
+        "late_cancels_after": "2026-03-28T08:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 151226,
+          "object": "instructor",
+          "name": "Josh Bunting",
+          "picture_url": "",
+          "description": "",
+          "staff": 151226
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000062,
+      "name": "HIIT",
+      "starts_at": "2026-03-28T10:00:00Z",
+      "ends_at": "2026-03-28T10:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 5,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000062-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-14T10:00:00Z",
+        "registrations_close_at": "2026-03-28T10:00:00Z",
+        "late_cancels_after": "2026-03-28T09:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000063,
+      "name": "HIIT",
+      "starts_at": "2026-03-30T06:00:00Z",
+      "ends_at": "2026-03-30T06:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 10,
+      "waiting_count": 3,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000063-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": true,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-16T06:00:00Z",
+        "registrations_close_at": "2026-03-30T06:00:00Z",
+        "late_cancels_after": "2026-03-30T05:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000064,
+      "name": "HIIT",
+      "starts_at": "2026-03-30T06:30:00Z",
+      "ends_at": "2026-03-30T06:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000064-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-16T06:30:00Z",
+        "registrations_close_at": "2026-03-30T06:30:00Z",
+        "late_cancels_after": "2026-03-30T05:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000065,
+      "name": "HIIT",
+      "starts_at": "2026-03-30T07:00:00Z",
+      "ends_at": "2026-03-30T07:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000065-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-16T07:00:00Z",
+        "registrations_close_at": "2026-03-30T07:00:00Z",
+        "late_cancels_after": "2026-03-30T06:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000066,
+      "name": "CORE",
+      "starts_at": "2026-03-30T09:30:00Z",
+      "ends_at": "2026-03-30T09:55:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 13,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000066-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-16T09:30:00Z",
+        "registrations_close_at": "2026-03-30T09:30:00Z",
+        "late_cancels_after": "2026-03-30T08:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000067,
+      "name": "CORE",
+      "starts_at": "2026-03-30T10:00:00Z",
+      "ends_at": "2026-03-30T10:25:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000067-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-16T10:00:00Z",
+        "registrations_close_at": "2026-03-30T10:00:00Z",
+        "late_cancels_after": "2026-03-30T09:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000068,
+      "name": "HIIT",
+      "starts_at": "2026-03-30T10:30:00Z",
+      "ends_at": "2026-03-30T10:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 3,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000068-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-16T10:30:00Z",
+        "registrations_close_at": "2026-03-30T10:30:00Z",
+        "late_cancels_after": "2026-03-30T09:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000069,
+      "name": "HIIT",
+      "starts_at": "2026-03-30T12:00:00Z",
+      "ends_at": "2026-03-30T12:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000069-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-16T12:00:00Z",
+        "registrations_close_at": "2026-03-30T12:00:00Z",
+        "late_cancels_after": "2026-03-30T11:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000070,
+      "name": "HIIT",
+      "starts_at": "2026-03-30T17:30:00Z",
+      "ends_at": "2026-03-30T17:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 3,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000070-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-16T17:30:00Z",
+        "registrations_close_at": "2026-03-30T17:30:00Z",
+        "late_cancels_after": "2026-03-30T16:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000071,
+      "name": "HIIT",
+      "starts_at": "2026-03-30T18:00:00Z",
+      "ends_at": "2026-03-30T18:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000071-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-16T18:00:00Z",
+        "registrations_close_at": "2026-03-30T18:00:00Z",
+        "late_cancels_after": "2026-03-30T17:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000072,
+      "name": "HIIT",
+      "starts_at": "2026-03-30T18:30:00Z",
+      "ends_at": "2026-03-30T18:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000072-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-16T18:30:00Z",
+        "registrations_close_at": "2026-03-30T18:30:00Z",
+        "late_cancels_after": "2026-03-30T17:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000073,
+      "name": "HIIT",
+      "starts_at": "2026-03-31T06:00:00Z",
+      "ends_at": "2026-03-31T06:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000073-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-17T06:00:00Z",
+        "registrations_close_at": "2026-03-31T06:00:00Z",
+        "late_cancels_after": "2026-03-31T05:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000074,
+      "name": "HIIT",
+      "starts_at": "2026-03-31T06:30:00Z",
+      "ends_at": "2026-03-31T06:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000074-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-17T06:30:00Z",
+        "registrations_close_at": "2026-03-31T06:30:00Z",
+        "late_cancels_after": "2026-03-31T05:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 138610,
+          "object": "instructor",
+          "name": "Clare Cuming",
+          "picture_url": "",
+          "description": "",
+          "staff": 138610
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000075,
+      "name": "HIIT",
+      "starts_at": "2026-03-31T07:00:00Z",
+      "ends_at": "2026-03-31T07:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000075-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-17T07:00:00Z",
+        "registrations_close_at": "2026-03-31T07:00:00Z",
+        "late_cancels_after": "2026-03-31T06:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000076,
+      "name": "HIIT",
+      "starts_at": "2026-03-31T09:30:00Z",
+      "ends_at": "2026-03-31T09:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000076-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-17T09:30:00Z",
+        "registrations_close_at": "2026-03-31T09:30:00Z",
+        "late_cancels_after": "2026-03-31T08:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 138610,
+          "object": "instructor",
+          "name": "Clare Cuming",
+          "picture_url": "",
+          "description": "",
+          "staff": 138610
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000077,
+      "name": "HIIT",
+      "starts_at": "2026-03-31T10:00:00Z",
+      "ends_at": "2026-03-31T10:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000077-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-17T10:00:00Z",
+        "registrations_close_at": "2026-03-31T10:00:00Z",
+        "late_cancels_after": "2026-03-31T09:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000078,
+      "name": "HIIT",
+      "starts_at": "2026-03-31T10:30:00Z",
+      "ends_at": "2026-03-31T10:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 10,
+      "waiting_count": 3,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000078-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": true,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-17T10:30:00Z",
+        "registrations_close_at": "2026-03-31T10:30:00Z",
+        "late_cancels_after": "2026-03-31T09:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 138610,
+          "object": "instructor",
+          "name": "Clare Cuming",
+          "picture_url": "",
+          "description": "",
+          "staff": 138610
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000079,
+      "name": "HIIT",
+      "starts_at": "2026-03-31T12:00:00Z",
+      "ends_at": "2026-03-31T12:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 10,
+      "waiting_count": 1,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000079-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": true,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-17T12:00:00Z",
+        "registrations_close_at": "2026-03-31T12:00:00Z",
+        "late_cancels_after": "2026-03-31T11:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000080,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-31T17:30:00Z",
+      "ends_at": "2026-03-31T17:55:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000080-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-17T17:30:00Z",
+        "registrations_close_at": "2026-03-31T17:30:00Z",
+        "late_cancels_after": "2026-03-31T16:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 151226,
+          "object": "instructor",
+          "name": "Josh Bunting",
+          "picture_url": "",
+          "description": "",
+          "staff": 151226
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000081,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-31T18:00:00Z",
+      "ends_at": "2026-03-31T18:25:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 5,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000081-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-17T18:00:00Z",
+        "registrations_close_at": "2026-03-31T18:00:00Z",
+        "late_cancels_after": "2026-03-31T17:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000082,
+      "name": "STRENGTH",
+      "starts_at": "2026-03-31T18:30:00Z",
+      "ends_at": "2026-03-31T18:55:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000082-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-17T18:30:00Z",
+        "registrations_close_at": "2026-03-31T18:30:00Z",
+        "late_cancels_after": "2026-03-31T17:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 151226,
+          "object": "instructor",
+          "name": "Josh Bunting",
+          "picture_url": "",
+          "description": "",
+          "staff": 151226
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000083,
+      "name": "HIIT",
+      "starts_at": "2026-04-01T06:00:00Z",
+      "ends_at": "2026-04-01T06:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000083-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-18T06:00:00Z",
+        "registrations_close_at": "2026-04-01T06:00:00Z",
+        "late_cancels_after": "2026-04-01T05:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000084,
+      "name": "HIIT",
+      "starts_at": "2026-04-01T06:30:00Z",
+      "ends_at": "2026-04-01T06:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000084-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-18T06:30:00Z",
+        "registrations_close_at": "2026-04-01T06:30:00Z",
+        "late_cancels_after": "2026-04-01T05:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 106260,
+          "object": "instructor",
+          "name": "Conor Bates",
+          "picture_url": "",
+          "description": "",
+          "staff": 106260
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000085,
+      "name": "HIIT",
+      "starts_at": "2026-04-01T07:00:00Z",
+      "ends_at": "2026-04-01T07:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000085-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-18T07:00:00Z",
+        "registrations_close_at": "2026-04-01T07:00:00Z",
+        "late_cancels_after": "2026-04-01T06:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000086,
+      "name": "CORE",
+      "starts_at": "2026-04-01T09:30:00Z",
+      "ends_at": "2026-04-01T09:55:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000086-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-18T09:30:00Z",
+        "registrations_close_at": "2026-04-01T09:30:00Z",
+        "late_cancels_after": "2026-04-01T08:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 106260,
+          "object": "instructor",
+          "name": "Conor Bates",
+          "picture_url": "",
+          "description": "",
+          "staff": 106260
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000087,
+      "name": "CORE",
+      "starts_at": "2026-04-01T10:00:00Z",
+      "ends_at": "2026-04-01T10:25:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 6,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000087-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-18T10:00:00Z",
+        "registrations_close_at": "2026-04-01T10:00:00Z",
+        "late_cancels_after": "2026-04-01T09:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000088,
+      "name": "CORE",
+      "starts_at": "2026-04-01T10:30:00Z",
+      "ends_at": "2026-04-01T10:55:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 5,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000088-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-18T10:30:00Z",
+        "registrations_close_at": "2026-04-01T10:30:00Z",
+        "late_cancels_after": "2026-04-01T09:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 106260,
+          "object": "instructor",
+          "name": "Conor Bates",
+          "picture_url": "",
+          "description": "",
+          "staff": 106260
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000089,
+      "name": "HIIT",
+      "starts_at": "2026-04-01T12:00:00Z",
+      "ends_at": "2026-04-01T12:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 10,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000089-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": true,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-18T12:00:00Z",
+        "registrations_close_at": "2026-04-01T12:00:00Z",
+        "late_cancels_after": "2026-04-01T11:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000090,
+      "name": "HIIT",
+      "starts_at": "2026-04-01T17:30:00Z",
+      "ends_at": "2026-04-01T17:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 3,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000090-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-18T17:30:00Z",
+        "registrations_close_at": "2026-04-01T17:30:00Z",
+        "late_cancels_after": "2026-04-01T16:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 106260,
+          "object": "instructor",
+          "name": "Conor Bates",
+          "picture_url": "",
+          "description": "",
+          "staff": 106260
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000091,
+      "name": "HIIT",
+      "starts_at": "2026-04-01T18:00:00Z",
+      "ends_at": "2026-04-01T18:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000091-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-18T18:00:00Z",
+        "registrations_close_at": "2026-04-01T18:00:00Z",
+        "late_cancels_after": "2026-04-01T17:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000092,
+      "name": "HIIT",
+      "starts_at": "2026-04-01T18:30:00Z",
+      "ends_at": "2026-04-01T18:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 5,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000092-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-18T18:30:00Z",
+        "registrations_close_at": "2026-04-01T18:30:00Z",
+        "late_cancels_after": "2026-04-01T17:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 106260,
+          "object": "instructor",
+          "name": "Conor Bates",
+          "picture_url": "",
+          "description": "",
+          "staff": 106260
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000093,
+      "name": "HIIT",
+      "starts_at": "2026-04-02T06:00:00Z",
+      "ends_at": "2026-04-02T06:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 5,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000093-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-19T06:00:00Z",
+        "registrations_close_at": "2026-04-02T06:00:00Z",
+        "late_cancels_after": "2026-04-02T05:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000094,
+      "name": "HIIT",
+      "starts_at": "2026-04-02T06:30:00Z",
+      "ends_at": "2026-04-02T06:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000094-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-19T06:30:00Z",
+        "registrations_close_at": "2026-04-02T06:30:00Z",
+        "late_cancels_after": "2026-04-02T05:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 129678,
+          "object": "instructor",
+          "name": "Jacki Montgomery",
+          "picture_url": "",
+          "description": "",
+          "staff": 129678
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000095,
+      "name": "HIIT",
+      "starts_at": "2026-04-02T07:00:00Z",
+      "ends_at": "2026-04-02T07:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000095-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-19T07:00:00Z",
+        "registrations_close_at": "2026-04-02T07:00:00Z",
+        "late_cancels_after": "2026-04-02T06:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000096,
+      "name": "HIIT",
+      "starts_at": "2026-04-02T09:30:00Z",
+      "ends_at": "2026-04-02T09:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000096-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-19T09:30:00Z",
+        "registrations_close_at": "2026-04-02T09:30:00Z",
+        "late_cancels_after": "2026-04-02T08:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 129678,
+          "object": "instructor",
+          "name": "Jacki Montgomery",
+          "picture_url": "",
+          "description": "",
+          "staff": 129678
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000097,
+      "name": "HIIT",
+      "starts_at": "2026-04-02T10:00:00Z",
+      "ends_at": "2026-04-02T10:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000097-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-19T10:00:00Z",
+        "registrations_close_at": "2026-04-02T10:00:00Z",
+        "late_cancels_after": "2026-04-02T09:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000098,
+      "name": "HIIT",
+      "starts_at": "2026-04-02T10:30:00Z",
+      "ends_at": "2026-04-02T10:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 10,
+      "waiting_count": 2,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000098-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": true,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-19T10:30:00Z",
+        "registrations_close_at": "2026-04-02T10:30:00Z",
+        "late_cancels_after": "2026-04-02T09:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 129678,
+          "object": "instructor",
+          "name": "Jacki Montgomery",
+          "picture_url": "",
+          "description": "",
+          "staff": 129678
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000099,
+      "name": "HIIT",
+      "starts_at": "2026-04-02T12:00:00Z",
+      "ends_at": "2026-04-02T12:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 3,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000099-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-19T12:00:00Z",
+        "registrations_close_at": "2026-04-02T12:00:00Z",
+        "late_cancels_after": "2026-04-02T11:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000100,
+      "name": "STRENGTH",
+      "starts_at": "2026-04-02T17:30:00Z",
+      "ends_at": "2026-04-02T17:55:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000100-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-19T17:30:00Z",
+        "registrations_close_at": "2026-04-02T17:30:00Z",
+        "late_cancels_after": "2026-04-02T16:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000101,
+      "name": "STRENGTH",
+      "starts_at": "2026-04-02T18:00:00Z",
+      "ends_at": "2026-04-02T18:25:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 11,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000101-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-19T18:00:00Z",
+        "registrations_close_at": "2026-04-02T18:00:00Z",
+        "late_cancels_after": "2026-04-02T17:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 104380,
+          "object": "instructor",
+          "name": "Gav Cunningham",
+          "picture_url": "",
+          "description": "",
+          "staff": 104380
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000102,
+      "name": "STRENGTH",
+      "starts_at": "2026-04-02T18:30:00Z",
+      "ends_at": "2026-04-02T18:55:00Z",
+      "max_occupancy": 12,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "e63946",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000102-strength/",
+      "description": "<p>25-minute strength training with guided resistance work</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-19T18:30:00Z",
+        "registrations_close_at": "2026-04-02T18:30:00Z",
+        "late_cancels_after": "2026-04-02T17:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 12
+    },
+    {
+      "id": 90000103,
+      "name": "HIIT",
+      "starts_at": "2026-04-03T06:00:00Z",
+      "ends_at": "2026-04-03T06:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 8,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000103-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-20T06:00:00Z",
+        "registrations_close_at": "2026-04-03T06:00:00Z",
+        "late_cancels_after": "2026-04-03T05:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000104,
+      "name": "HIIT",
+      "starts_at": "2026-04-03T06:30:00Z",
+      "ends_at": "2026-04-03T06:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000104-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-20T06:30:00Z",
+        "registrations_close_at": "2026-04-03T06:30:00Z",
+        "late_cancels_after": "2026-04-03T05:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 151226,
+          "object": "instructor",
+          "name": "Josh Bunting",
+          "picture_url": "",
+          "description": "",
+          "staff": 151226
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000105,
+      "name": "HIIT",
+      "starts_at": "2026-04-03T07:00:00Z",
+      "ends_at": "2026-04-03T07:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000105-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-20T07:00:00Z",
+        "registrations_close_at": "2026-04-03T07:00:00Z",
+        "late_cancels_after": "2026-04-03T06:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000106,
+      "name": "CORE",
+      "starts_at": "2026-04-03T09:30:00Z",
+      "ends_at": "2026-04-03T09:55:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 9,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000106-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-20T09:30:00Z",
+        "registrations_close_at": "2026-04-03T09:30:00Z",
+        "late_cancels_after": "2026-04-03T08:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 138610,
+          "object": "instructor",
+          "name": "Clare Cuming",
+          "picture_url": "",
+          "description": "",
+          "staff": 138610
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000107,
+      "name": "CORE",
+      "starts_at": "2026-04-03T10:00:00Z",
+      "ends_at": "2026-04-03T10:25:00Z",
+      "max_occupancy": 15,
+      "waitlist_max_override": -1,
+      "attending_count": 5,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "f2de24",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000107-core/",
+      "description": "<p>25-minute core strength and stability session</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-20T10:00:00Z",
+        "registrations_close_at": "2026-04-03T10:00:00Z",
+        "late_cancels_after": "2026-04-03T09:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 15
+    },
+    {
+      "id": 90000108,
+      "name": "HIIT",
+      "starts_at": "2026-04-03T10:30:00Z",
+      "ends_at": "2026-04-03T10:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 10,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000108-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": true,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-20T10:30:00Z",
+        "registrations_close_at": "2026-04-03T10:30:00Z",
+        "late_cancels_after": "2026-04-03T09:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 151226,
+          "object": "instructor",
+          "name": "Josh Bunting",
+          "picture_url": "",
+          "description": "",
+          "staff": 151226
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000109,
+      "name": "HIIT",
+      "starts_at": "2026-04-03T12:00:00Z",
+      "ends_at": "2026-04-03T12:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000109-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-20T12:00:00Z",
+        "registrations_close_at": "2026-04-03T12:00:00Z",
+        "late_cancels_after": "2026-04-03T11:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000110,
+      "name": "HIIT",
+      "starts_at": "2026-04-03T17:30:00Z",
+      "ends_at": "2026-04-03T17:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 5,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000110-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-20T17:30:00Z",
+        "registrations_close_at": "2026-04-03T17:30:00Z",
+        "late_cancels_after": "2026-04-03T16:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 138610,
+          "object": "instructor",
+          "name": "Clare Cuming",
+          "picture_url": "",
+          "description": "",
+          "staff": 138610
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000111,
+      "name": "HIIT",
+      "starts_at": "2026-04-03T18:00:00Z",
+      "ends_at": "2026-04-03T18:25:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 4,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000111-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-20T18:00:00Z",
+        "registrations_close_at": "2026-04-03T18:00:00Z",
+        "late_cancels_after": "2026-04-03T17:00:00Z"
+      },
+      "instructors": [
+        {
+          "id": 132655,
+          "object": "instructor",
+          "name": "Rory Stephens",
+          "picture_url": "",
+          "description": "",
+          "staff": 132655
+        }
+      ],
+      "occupancy": 10
+    },
+    {
+      "id": 90000112,
+      "name": "HIIT",
+      "starts_at": "2026-04-03T18:30:00Z",
+      "ends_at": "2026-04-03T18:55:00Z",
+      "max_occupancy": 10,
+      "waitlist_max_override": -1,
+      "attending_count": 7,
+      "waiting_count": 0,
+      "is_appointment": false,
+      "venue": {
+        "id": 40935,
+        "name": "Hitsona Bangor",
+        "timezone": "Europe/London"
+      },
+      "offering_type": {
+        "background_color": "452ddb",
+        "category": null,
+        "schedule_type": "class",
+        "waitlist_max": null,
+        "max_allowed_age": null,
+        "min_allowed_age": null
+      },
+      "customer_url": "/p/5289026-hitsona-bangor/e/90000112-hiit/",
+      "description": "<p>25-minute coach led small group HIIT sessions</p>",
+      "is_full": false,
+      "category": null,
+      "active_registration_status": {
+        "current_status": null,
+        "restriction_codes": [],
+        "suggested_action": null,
+        "registrations_open_at": "2026-03-20T18:30:00Z",
+        "registrations_close_at": "2026-04-03T18:30:00Z",
+        "late_cancels_after": "2026-04-03T17:30:00Z"
+      },
+      "instructors": [
+        {
+          "id": 151226,
+          "object": "instructor",
+          "name": "Josh Bunting",
+          "picture_url": "",
+          "description": "",
+          "staff": 151226
+        }
+      ],
+      "occupancy": 10
+    }
+  ]
+}

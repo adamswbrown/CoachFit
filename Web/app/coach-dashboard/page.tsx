@@ -85,6 +85,8 @@ function CoachDashboardContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [inviteActionId, setInviteActionId] = useState<string | null>(null)
   const [inviteAction, setInviteAction] = useState<"resend" | "remove" | null>(null)
+  const [members, setMembers] = useState<any[]>([])
+  const [membersLoading, setMembersLoading] = useState(true)
 
   const currentFilter = (searchParams.get("filter") as ClientFilter) || "all"
 
@@ -150,6 +152,27 @@ function CoachDashboardContent() {
       setLoading(false)
     }
   }
+
+  const fetchMembers = async () => {
+    setMembersLoading(true)
+    try {
+      const res = await fetch("/api/coach-dashboard/my-members", { credentials: "include" })
+      if (res.ok) {
+        const data = await res.json()
+        setMembers(data.members || [])
+      }
+    } catch (err) {
+      console.error("Failed to fetch members", err)
+    } finally {
+      setMembersLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (session) {
+      fetchMembers()
+    }
+  }, [session])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -713,7 +736,15 @@ function CoachDashboardContent() {
                     <tbody>
                       {unassignedClients.map((client) => (
                         <tr key={client.email} className="border-b border-amber-100">
-                          <td className="p-2 sm:p-3 text-sm">{client.name || "No name"}</td>
+                          <td className="p-2 sm:p-3 text-sm">
+                            {client.id ? (
+                              <Link href={`/clients/${client.id}`} className="font-medium text-neutral-900 hover:text-blue-600 hover:underline">
+                                {client.name || "No name"}
+                              </Link>
+                            ) : (
+                              <span>{client.name || "No name"}</span>
+                            )}
+                          </td>
                           <td className="hidden sm:table-cell p-2 sm:p-3 text-sm">{client.email}</td>
                           <td className="p-2 sm:p-3">
                             {data.cohorts.length > 0 ? (
@@ -950,6 +981,67 @@ function CoachDashboardContent() {
                 </div>
               </div>
             )}
+
+            {/* My Members Section */}
+            <div className="mt-8">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">My Members</h2>
+              <p className="text-sm text-neutral-500 mb-4">All clients you are responsible for — cohort members and invited clients.</p>
+
+              {membersLoading ? (
+                <div className="animate-pulse space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white rounded-lg border border-neutral-200 p-4 h-16" />
+                  ))}
+                </div>
+              ) : members.length === 0 ? (
+                <div className="bg-white rounded-lg border border-neutral-200 p-6 text-center text-neutral-500 text-sm">
+                  No members yet. Invite clients to get started.
+                </div>
+              ) : (
+                <div className="bg-white rounded-lg border border-neutral-200 divide-y divide-neutral-100">
+                  {members.map((member) => (
+                    <div key={member.id} className="p-4 flex items-center gap-4 hover:bg-neutral-50 transition-colors">
+                      <div className="w-9 h-9 rounded-full bg-neutral-200 flex items-center justify-center text-xs font-medium text-neutral-600 flex-shrink-0">
+                        {(member.name || member.email).split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <Link href={`/clients/${member.id}`} className="text-sm font-medium text-neutral-900 hover:text-blue-600 truncate block">
+                          {member.name || member.email}
+                        </Link>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {member.cohortName ? (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">{member.cohortName}</span>
+                          ) : (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-500">No cohort</span>
+                          )}
+                          {member.lastEntryDate && (
+                            <span className="text-xs text-neutral-400">
+                              Last entry: {new Date(member.lastEntryDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-700">
+                          {member.creditBalance} credits
+                        </span>
+                        {(member.daysSinceLastNote === null || member.daysSinceLastNote > 14) && (
+                          <span className="text-xs font-medium px-2 py-1 rounded-full bg-amber-50 text-amber-700">
+                            Check-in due
+                          </span>
+                        )}
+                        <Link
+                          href={`/clients/${member.id}?tab=notes`}
+                          className="text-xs text-blue-600 hover:text-blue-800 whitespace-nowrap"
+                        >
+                          Write note
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
           </>
         )}

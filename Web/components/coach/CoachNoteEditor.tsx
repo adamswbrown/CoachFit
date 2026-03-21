@@ -9,24 +9,20 @@ interface CoachNoteEditorProps {
 
 export function CoachNoteEditor({ clientId, onSaved }: CoachNoteEditorProps) {
   const [note, setNote] = useState("")
-  const [noteDate, setNoteDate] = useState(() => new Date().toISOString().split("T")[0])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSave = async () => {
     if (!note.trim()) return
 
     setSaving(true)
     setError(null)
-    setSuccess(false)
 
     try {
       const res = await fetch(`/api/clients/${clientId}/coach-notes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ noteDate, note: note.trim() }),
+        body: JSON.stringify({ note: note.trim() }),
       })
 
       if (!res.ok) {
@@ -35,8 +31,6 @@ export function CoachNoteEditor({ clientId, onSaved }: CoachNoteEditorProps) {
       }
 
       setNote("")
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
       onSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save note")
@@ -46,33 +40,23 @@ export function CoachNoteEditor({ clientId, onSaved }: CoachNoteEditorProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="flex gap-3">
-        <input
-          type="date"
-          value={noteDate}
-          onChange={(e) => setNoteDate(e.target.value)}
-          className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
+    <div className="space-y-3">
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="Write a check-in note for this client..."
-        rows={3}
-        className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+        placeholder="Add a note about this client..."
+        className="w-full min-h-[100px] p-3 border border-neutral-200 rounded-lg text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent resize-y"
       />
-      <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={saving || !note.trim()}
-          className="px-4 py-2 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {saving ? "Saving..." : "Save Note"}
-        </button>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {success && <p className="text-sm text-green-600">Note saved</p>}
-      </div>
-    </form>
+      {error && (
+        <p className="text-sm text-red-600">{error}</p>
+      )}
+      <button
+        onClick={handleSave}
+        disabled={saving || !note.trim()}
+        className="px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        {saving ? "Saving..." : "Save Note"}
+      </button>
+    </div>
   )
 }

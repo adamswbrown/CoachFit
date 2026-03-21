@@ -11,6 +11,9 @@ import { Role } from "@/lib/types"
 import { cmToInches, kgToLbs } from "@/lib/utils/unit-conversions"
 import type { AttentionQueueItem } from "@/lib/admin/attention"
 import { ClientComplianceCard } from "@/components/streak/ClientComplianceCard"
+import { CoachNoteEditor } from "@/components/coach/CoachNoteEditor"
+import { CoachNoteTimeline } from "@/components/coach/CoachNoteTimeline"
+import { ProgressTimeline } from "@/components/charts/ProgressTimeline"
 
 interface Client {
   id: string
@@ -267,8 +270,9 @@ export default function ClientOverviewPage() {
 
   const fetchCoachNotes = async () => {
     try {
-      const data = await fetchWithRetry<{ notes: CoachNote[] }>(`/api/clients/${clientId}/coach-notes`)
-      setCoachNotes(data.notes || [])
+      const data = await fetchWithRetry<CoachNote[] | { notes: CoachNote[] }>(`/api/clients/${clientId}/coach-notes`)
+      const notes = Array.isArray(data) ? data : data.notes || []
+      setCoachNotes(notes)
     } catch (err) {
       // Coach notes are optional, don't fail if they don't exist
       setCoachNotes([])
@@ -423,7 +427,11 @@ export default function ClientOverviewPage() {
           <nav className="flex gap-6 overflow-x-auto">
             <Link
               href={`/clients/${clientId}`}
-              className="px-1 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600 -mb-px whitespace-nowrap"
+              className={`px-1 py-3 text-sm font-medium -mb-px whitespace-nowrap ${
+                searchParams.get("tab") !== "notes"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-neutral-600 hover:text-neutral-900"
+              }`}
             >
               Overview
             </Link>
@@ -447,6 +455,16 @@ export default function ClientOverviewPage() {
             >
               Training
             </Link>
+            <Link
+              href={`/clients/${clientId}?tab=notes`}
+              className={`px-1 py-3 text-sm font-medium -mb-px whitespace-nowrap ${
+                searchParams.get("tab") === "notes"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-neutral-600 hover:text-neutral-900"
+              }`}
+            >
+              Notes
+            </Link>
             <span className="px-1 py-3 text-sm font-medium text-neutral-400 -mb-px whitespace-nowrap">
               Tasks
             </span>
@@ -462,6 +480,15 @@ export default function ClientOverviewPage() {
           </nav>
         </div>
 
+        {searchParams.get("tab") === "notes" ? (
+        <div className="max-w-3xl">
+          <h2 className="text-lg font-semibold text-neutral-900 mb-4">Coach Notes</h2>
+          <CoachNoteEditor clientId={clientId} onSaved={fetchCoachNotes} />
+          <div className="mt-6">
+            <CoachNoteTimeline notes={coachNotes} />
+          </div>
+        </div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-6">
@@ -611,6 +638,10 @@ export default function ClientOverviewPage() {
                   )}
                 </div>
               </div>
+            )}
+
+            {analytics?.entries && analytics.entries.length > 0 && (
+              <ProgressTimeline entries={analytics.entries} />
             )}
 
             {!hasEntries && (
@@ -876,6 +907,7 @@ export default function ClientOverviewPage() {
             </div>
           </div>
         </div>
+        )}
       </div>
     </CoachLayout>
   )

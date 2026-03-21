@@ -238,6 +238,7 @@ export default function ChallengeDetailPage() {
 
   const [challenge, setChallenge] = useState<ActiveChallenge | null>(null)
   const [challengeLoading, setChallengeLoading] = useState(true)
+  const [unauthorized, setUnauthorized] = useState(false)
 
   // ── Auth guard ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -303,7 +304,11 @@ export default function ChallengeDetailPage() {
         ...mapToActive(historyItems),
       ]
       const found = allChallenges.find((c) => c.cohortId === cohortId)
-      if (found) setChallenge(found)
+      if (found) {
+        setChallenge(found)
+      } else {
+        setUnauthorized(true)
+      }
     } catch (err) {
       console.error("Could not load challenge details", err)
     } finally {
@@ -357,6 +362,21 @@ export default function ChallengeDetailPage() {
   }
 
   if (!session?.user) return null
+
+  if (unauthorized) {
+    return (
+      <ClientLayout>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+          <div className="bg-white border border-neutral-200 rounded-xl p-8 text-center">
+            <p className="text-sm font-medium text-neutral-700">This challenge is not your active challenge.</p>
+            <Link href="/client-dashboard/challenges" className="text-sm text-green-600 hover:text-green-700 mt-2 inline-block">
+              &larr; Back to Challenges
+            </Link>
+          </div>
+        </div>
+      </ClientLayout>
+    )
+  }
 
   return (
     <ClientLayout>

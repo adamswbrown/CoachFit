@@ -138,8 +138,6 @@ export async function GET() {
           member.daysSinceLastNote = Math.floor(diffMs / (1000 * 60 * 60 * 24))
         }
       }
-
-      // For members with no notes at all, daysSinceLastNote stays null (will show "never")
     }
 
     const members = Array.from(memberMap.values())

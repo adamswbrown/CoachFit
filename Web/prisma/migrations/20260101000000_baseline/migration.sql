@@ -1,0 +1,1 @@
+-- Baseline: existing database state. No SQL needed.
