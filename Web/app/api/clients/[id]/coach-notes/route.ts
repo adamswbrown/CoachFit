@@ -33,6 +33,8 @@ const upsertCoachNoteSchema = z.object({
     { message: "noteDate must be a valid date" }
   ),
   note: z.string().min(1, "Note cannot be empty").max(10000, "Note must be 10,000 characters or less"),
+  sharedWithClient: z.boolean().optional(),
+  weekNumber: z.coerce.number().int().positive().optional(),
 })
 
 export async function GET(
@@ -249,6 +251,11 @@ export async function POST(
         data: {
           noteDate: noteDate,
           note: validated.note,
+          ...(validated.sharedWithClient !== undefined && {
+            sharedWithClient: validated.sharedWithClient,
+            ...(validated.sharedWithClient && !existingNote.sharedAt && { sharedAt: new Date() }),
+          }),
+          ...(validated.weekNumber !== undefined && { weekNumber: validated.weekNumber }),
         },
       })
 
@@ -262,6 +269,9 @@ export async function POST(
           weekStart: weekStart,
           noteDate: noteDate,
           note: validated.note,
+          sharedWithClient: validated.sharedWithClient ?? false,
+          ...(validated.sharedWithClient && { sharedAt: new Date() }),
+          ...(validated.weekNumber !== undefined && { weekNumber: validated.weekNumber }),
         },
       })
 

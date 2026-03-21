@@ -269,9 +269,12 @@ model CoachNote {
   note      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  noteDate  DateTime @db.Date
-  client    User     @relation("ClientNotes", fields: [clientId], references: [id], onDelete: Cascade)
-  coach     User     @relation("CoachNotes", fields: [coachId], references: [id], onDelete: Cascade)
+  noteDate          DateTime  @db.Date
+  sharedWithClient  Boolean   @default(false)
+  sharedAt          DateTime?
+  weekNumber        Int?
+  client            User      @relation("ClientNotes", fields: [clientId], references: [id], onDelete: Cascade)
+  coach             User      @relation("CoachNotes", fields: [coachId], references: [id], onDelete: Cascade)
 
   @@unique([coachId, clientId, weekStart])
   @@index([coachId, clientId])

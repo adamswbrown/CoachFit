@@ -5,12 +5,15 @@ import { useState } from "react"
 interface CoachNoteEditorProps {
   clientId: string
   onSaved: () => void
+  defaultSharedWithClient?: boolean
+  weekNumber?: number
 }
 
-export function CoachNoteEditor({ clientId, onSaved }: CoachNoteEditorProps) {
+export function CoachNoteEditor({ clientId, onSaved, defaultSharedWithClient, weekNumber }: CoachNoteEditorProps) {
   const [note, setNote] = useState("")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sharedWithClient, setSharedWithClient] = useState(defaultSharedWithClient ?? false)
 
   const handleSave = async () => {
     if (!note.trim()) return
@@ -22,7 +25,12 @@ export function CoachNoteEditor({ clientId, onSaved }: CoachNoteEditorProps) {
       const res = await fetch(`/api/clients/${clientId}/coach-notes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note: note.trim() }),
+        body: JSON.stringify({
+          note: note.trim(),
+          noteDate: new Date().toISOString().split("T")[0],
+          sharedWithClient,
+          ...(weekNumber !== undefined && { weekNumber }),
+        }),
       })
 
       if (!res.ok) {
@@ -31,6 +39,7 @@ export function CoachNoteEditor({ clientId, onSaved }: CoachNoteEditorProps) {
       }
 
       setNote("")
+      setSharedWithClient(defaultSharedWithClient ?? false)
       onSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save note")
@@ -47,6 +56,16 @@ export function CoachNoteEditor({ clientId, onSaved }: CoachNoteEditorProps) {
         placeholder="Add a note about this client..."
         className="w-full min-h-[100px] p-3 border border-neutral-200 rounded-lg text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent resize-y"
       />
+      <label className="flex items-center gap-2 text-sm text-neutral-700">
+        <input
+          type="checkbox"
+          checked={sharedWithClient}
+          onChange={(e) => setSharedWithClient(e.target.checked)}
+          className="rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
+        />
+        <span>Share with member</span>
+        <span className="text-neutral-400 text-xs">— Member will see this in their app</span>
+      </label>
       {error && (
         <p className="text-sm text-red-600">{error}</p>
       )}

@@ -25,6 +25,7 @@ final class AppState {
     private(set) var registrationError: String?
     var hasActiveChallenge = false
     private(set) var challengeCheckComplete = false
+    var coachMessageCount = 0
 
     let apiClient = APIClient()
     let healthKit = HealthKitManager()
@@ -188,6 +189,7 @@ final class AppState {
         guard currentScreen == .home else { return }
         await syncEngine.syncAll()
         await checkActiveChallenge()
+        await checkCoachMessages()
     }
 
     // MARK: - Challenge Check
@@ -204,5 +206,52 @@ final class AppState {
             // Keep previous state on error
         }
         challengeCheckComplete = true
+        await checkCoachMessages()
+    }
+
+    // MARK: - Coach Messages
+
+    func checkCoachMessages() async {
+        guard KeychainService.deviceToken != nil,
+              let userId = clientId else { return }
+
+        do {
+            let (data, response) = try await apiClient.authenticatedRequest(
+                path: "api/clients/\(userId)/shared-notes"
+            )
+
+            guard (200...299).contains(response.statusCode) else { return }
+
+            struct SharedNotesResponse: Decodable {
+                let notes: [SharedNoteItem]
+            }
+            struct SharedNoteItem: Decodable {
+                let sharedAt: String?
+            }
+
+            let decoded = try JSONDecoder().decode(SharedNotesResponse.self, from: data)
+            let lastReadTimestamp = UserDefaults.standard.double(forKey: "lastCoachMessageReadAt")
+
+            if lastReadTimestamp > 0 {
+                let lastRead = Date(timeIntervalSince1970: lastReadTimestamp)
+                let isoFormatter = ISO8601DateFormatter()
+                isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+                let unreadCount = decoded.notes.filter { note in
+                    guard let sharedAtStr = note.sharedAt,
+                          let sharedAt = isoFormatter.date(from: sharedAtStr) else {
+                        return true // If no sharedAt, treat as unread
+                    }
+                    return sharedAt > lastRead
+                }.count
+
+                coachMessageCount = unreadCount
+            } else {
+                // Never opened messages — all are unread
+                coachMessageCount = decoded.notes.count
+            }
+        } catch {
+            // Keep previous count on error
+        }
     }
 }

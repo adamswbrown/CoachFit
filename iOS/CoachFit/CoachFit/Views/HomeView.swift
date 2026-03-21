@@ -70,6 +70,26 @@ private struct AccountTab: View {
 
                 Section {
                     NavigationLink {
+                        CoachMessagesView()
+                    } label: {
+                        HStack {
+                            Label("Messages from Coach", systemImage: "bubble.left.fill")
+                            Spacer()
+                            if appState.coachMessageCount > 0 {
+                                Text("\(appState.coachMessageCount)")
+                                    .font(.caption2.weight(.bold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.red)
+                                    .clipShape(Capsule())
+                            }
+                        }
+                    }
+                }
+
+                Section {
+                    NavigationLink {
                         HealthDashboardView()
                             .navigationTitle("Health")
                     } label: {
@@ -173,11 +193,7 @@ private struct MoreTabContent: View {
                     Label("View Full Dashboard", systemImage: "safari")
                 }
 
-                Button {
-                    Task { await openInSafari(path: "/client-dashboard") }
-                } label: {
-                    Label("Answer Questionnaire", systemImage: "list.clipboard")
-                }
+                // Questionnaire is now available natively in the Challenges tab
             }
 
             Section {

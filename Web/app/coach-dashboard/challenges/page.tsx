@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "@/lib/auth-client"
 import { CoachLayout } from "@/components/layouts/CoachLayout"
+import { CoachNoteEditor } from "@/components/coach/CoachNoteEditor"
 import { generateWeeklyEmailDraft } from "@/lib/utils/email-draft"
 import { Role } from "@/lib/types"
 
@@ -94,6 +95,7 @@ interface CohortOption {
   coachName: string | null
   coachEmail: string
   type: string | null
+  cohortStartDate: string | null
 }
 
 interface ChallengeProgressData {
@@ -239,6 +241,21 @@ function formatDateTime(value: string | null): string {
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return "\u2014"
   return parsed.toLocaleString()
+}
+
+/**
+ * Calculate the current challenge week number from cohort start date and selected week.
+ * Returns 1-based week number, or null if cohort has no start date or selected week is before start.
+ */
+function getChallengeWeekNumber(cohortStartDate: string | null, selectedWeekStart: string): number | null {
+  if (!cohortStartDate) return null
+  const start = new Date(cohortStartDate)
+  const selected = new Date(selectedWeekStart)
+  start.setHours(0, 0, 0, 0)
+  selected.setHours(0, 0, 0, 0)
+  const diffMs = selected.getTime() - start.getTime()
+  if (diffMs < 0) return null
+  return Math.floor(diffMs / (7 * 24 * 3600 * 1000)) + 1
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -487,6 +504,8 @@ function WeeklyReviewTabContent() {
   const [reminderToast, setReminderToast] = useState<string | null>(null)
   const [bulkToast, setBulkToast] = useState<string | null>(null)
   const [challengeProgressData, setChallengeProgressData] = useState<Record<string, ChallengeProgressData>>({})
+  const [respondingToClient, setRespondingToClient] = useState<string | null>(null)
+  const [sharedNotesByClient, setSharedNotesByClient] = useState<Record<string, any[]>>({})
   const isChallengeSelected = (() => {
     if (!selectedCohortId) return false
     const selected = cohortOptions.find((c) => c.id === selectedCohortId)
@@ -694,6 +713,41 @@ function WeeklyReviewTabContent() {
         } catch (err) {
           console.error('Failed to fetch client streaks:', err)
         }
+
+        // Fetch shared notes for each client to show "Responded" indicator
+        try {
+          const selectedCohort = cohortOptions.find((c) => c.id === selectedCohortId)
+          const weekNum = getChallengeWeekNumber(selectedCohort?.cohortStartDate ?? null, selectedWeekStart)
+          const sharedNotesMap: Record<string, any[]> = {}
+
+          await Promise.all(
+            responseData.clients.map(async (client) => {
+              try {
+                const notesRes = await fetch(
+                  `/api/clients/${client.clientId}/coach-notes`
+                )
+                if (notesRes.ok) {
+                  const allNotes = await notesRes.json()
+                  const notesArr = Array.isArray(allNotes) ? allNotes : []
+                  const shared = notesArr.filter(
+                    (n: any) =>
+                      n.sharedWithClient === true &&
+                      (weekNum === null || n.weekNumber === weekNum)
+                  )
+                  if (shared.length > 0) {
+                    sharedNotesMap[client.clientId] = shared
+                  }
+                }
+              } catch (err) {
+                console.error(`Failed to fetch shared notes for ${client.clientId}:`, err)
+              }
+            })
+          )
+
+          setSharedNotesByClient(sharedNotesMap)
+        } catch (err) {
+          console.error('Failed to fetch shared notes:', err)
+        }
       } catch (err) {
         console.error("Error fetching data:", err)
         setData(null)
@@ -852,6 +906,41 @@ function WeeklyReviewTabContent() {
         }
       } catch (err) {
         console.error('Failed to fetch client streaks:', err)
+      }
+
+      // Fetch shared notes for responded indicator
+      try {
+        const selectedCohort = cohortOptions.find((c) => c.id === selectedCohortId)
+        const weekNum = getChallengeWeekNumber(selectedCohort?.cohortStartDate ?? null, selectedWeekStart)
+        const sharedNotesMap: Record<string, any[]> = {}
+
+        await Promise.all(
+          responseData.clients.map(async (client) => {
+            try {
+              const notesRes = await fetch(
+                `/api/clients/${client.clientId}/coach-notes`
+              )
+              if (notesRes.ok) {
+                const allNotes = await notesRes.json()
+                const notesArr = Array.isArray(allNotes) ? allNotes : []
+                const shared = notesArr.filter(
+                  (n: any) =>
+                    n.sharedWithClient === true &&
+                    (weekNum === null || n.weekNumber === weekNum)
+                )
+                if (shared.length > 0) {
+                  sharedNotesMap[client.clientId] = shared
+                }
+              }
+            } catch (err) {
+              console.error(`Failed to fetch shared notes for ${client.clientId}:`, err)
+            }
+          })
+        )
+
+        setSharedNotesByClient(sharedNotesMap)
+      } catch (err) {
+        console.error('Failed to fetch shared notes:', err)
       }
     } catch (err) {
       console.error("Error recalculating:", err)
@@ -1488,6 +1577,22 @@ function WeeklyReviewTabContent() {
                               >
                                 Full Review
                               </Link>
+                              {sharedNotesByClient[client.clientId]?.length > 0 ? (
+                                <span className="px-3 py-1 text-xs font-medium text-green-700 bg-green-50 rounded whitespace-nowrap">
+                                  Responded &#x2713;
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() =>
+                                    setRespondingToClient(
+                                      respondingToClient === client.clientId ? null : client.clientId
+                                    )
+                                  }
+                                  className="px-3 py-1 text-xs font-medium text-purple-600 bg-purple-50 rounded hover:bg-purple-100 transition-colors whitespace-nowrap"
+                                >
+                                  {respondingToClient === client.clientId ? "Cancel" : "Write Response"}
+                                </button>
+                              )}
                               <button
                                 onClick={() =>
                                   setExpandedClient(isExpanded ? null : client.clientId)
@@ -1499,6 +1604,41 @@ function WeeklyReviewTabContent() {
                             </div>
                           </td>
                         </tr>
+                        {respondingToClient === client.clientId && (
+                          <tr className="border-t border-neutral-100">
+                            <td colSpan={isChallengeSelected ? 12 : 11} className="p-4 bg-purple-50/30">
+                              <div className="max-w-xl">
+                                <div className="text-sm font-medium text-neutral-700 mb-2">
+                                  Write a shared response for {client.name || client.email}
+                                </div>
+                                <CoachNoteEditor
+                                  clientId={client.clientId}
+                                  defaultSharedWithClient={true}
+                                  weekNumber={
+                                    getChallengeWeekNumber(
+                                      cohortOptions.find((c) => c.id === selectedCohortId)?.cohortStartDate ?? null,
+                                      selectedWeekStart
+                                    ) ?? undefined
+                                  }
+                                  onSaved={() => {
+                                    setRespondingToClient(null)
+                                    // Optimistically mark as responded
+                                    setSharedNotesByClient((prev) => ({
+                                      ...prev,
+                                      [client.clientId]: [
+                                        ...(prev[client.clientId] || []),
+                                        { sharedWithClient: true, weekNumber: getChallengeWeekNumber(
+                                          cohortOptions.find((c) => c.id === selectedCohortId)?.cohortStartDate ?? null,
+                                          selectedWeekStart
+                                        ) },
+                                      ],
+                                    }))
+                                  }}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        )}
                         {isExpanded && (
                           <tr className="border-t border-neutral-100">
                             <td colSpan={isChallengeSelected ? 12 : 11} className="p-4 bg-white">

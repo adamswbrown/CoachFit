@@ -26,6 +26,7 @@ struct ChallengeProgressView: View {
                 progressRingSection
                 statsRow
                 weeklyGrid
+                questionnaireSection
                 datesSection
             }
             .padding(16)
@@ -35,11 +36,27 @@ struct ChallengeProgressView: View {
 
     // MARK: - Header
 
+    private var currentWeekNumber: Int {
+        guard let start = startDate else { return 0 }
+        let cal = Calendar.current
+        let startDay = cal.startOfDay(for: start)
+        let today = cal.startOfDay(for: .now)
+        let days = cal.dateComponents([.day], from: startDay, to: today).day ?? 0
+        if days < 0 { return 0 }
+        return min(totalWeeks, days / 7 + 1)
+    }
+
     private var headerSection: some View {
         VStack(spacing: 4) {
             Text(challenge.name)
                 .font(.title2.bold())
                 .foregroundStyle(.white)
+
+            if currentWeekNumber > 0 {
+                Text("Week \(currentWeekNumber) of \(totalWeeks)")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Color(hex: "#452ddb"))
+            }
 
             if let remaining = daysRemaining {
                 Text("\(remaining) days remaining")
@@ -201,6 +218,20 @@ struct ChallengeProgressView: View {
             return Color(hex: "#22c55e")
         } else {
             return Color.white.opacity(0.1)
+        }
+    }
+
+    // MARK: - Questionnaire Section
+
+    private var questionnaireSection: some View {
+        Group {
+            if let start = startDate {
+                QuestionnaireProgressView(
+                    cohortId: challenge.id,
+                    totalWeeks: totalWeeks,
+                    cohortStartDate: start
+                )
+            }
         }
     }
 
