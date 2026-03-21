@@ -100,6 +100,11 @@ struct ScheduleView: View {
         .onChange(of: selectedDate) {
             Task { await loadCalendarData() }
         }
+        .onChange(of: viewMode) {
+            // Clear stale banners when switching views
+            bookingService?.errorMessage = nil
+            classService?.errorMessage = nil
+        }
     }
 
     // MARK: - Calendar Content
@@ -187,19 +192,20 @@ struct ScheduleView: View {
                 .padding(32)
                 Spacer()
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(bookings) { booking in
-                            BookingRowView(
-                                booking: booking,
-                                isUpcoming: bookingSegment == .upcoming,
-                                onCancel: { await cancelBooking(booking) }
-                            )
-                        }
+                List {
+                    ForEach(bookings) { booking in
+                        BookingRowView(
+                            booking: booking,
+                            isUpcoming: bookingSegment == .upcoming,
+                            onCancel: { await cancelBooking(booking) }
+                        )
+                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 24)
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
                 .refreshable {
                     await loadBookingsData()
                 }
