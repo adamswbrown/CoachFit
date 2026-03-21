@@ -24,6 +24,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { name: "Invites", href: "/admin/invites", icon: "✉️" },
     { name: "Overview", href: "/admin/overview", icon: "📈" },
     { name: "Attention", href: "/admin/attention", icon: "🔔" },
+    { name: "Credits", href: "/admin/credits", icon: "🪙" },
     { name: "System", href: "/admin/system", icon: "⚙️" },
     { name: "Email Events", href: "/admin/email-events", icon: "📧" },
   ]

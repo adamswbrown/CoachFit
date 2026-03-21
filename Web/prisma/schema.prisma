@@ -452,6 +452,8 @@ model CreditProduct {
   purchasableByProviderOnly Boolean                    @default(false)
   classEligible             Boolean                    @default(true)
   isActive                  Boolean                    @default(true)
+  allowRepeatPurchase       Boolean                    @default(true)
+  rolloverPolicy            String                     @default("NONE")
   externalSource            String?
   externalId                String?
   createdAt                 DateTime                   @default(now())
@@ -503,7 +505,11 @@ model CreditSubmission {
   id                  String                 @id @default(uuid())
   clientId            String
   creditProductId     String
-  revolutReference    String
+  revolutReference    String?
+  revolutOrderId      String?                @unique
+  revolutCheckoutUrl  String?
+  paymentMethod       String?
+  paidAt              DateTime?
   note                String?
   status              CreditSubmissionStatus @default(PENDING)
   reviewedByUserId    String?

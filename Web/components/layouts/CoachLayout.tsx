@@ -159,6 +159,21 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
       { name: "Compliance", href: "/coach-dashboard/compliance", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>, hasDropdown: false, dropdownKey: "compliance" }
     )
 
+    // Add Classes management
+    navigation.push(
+      { name: "Classes", href: "/coach-dashboard/classes", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>, hasDropdown: false, dropdownKey: "classes" }
+    )
+
+    // Add Challenges management
+    navigation.push(
+      { name: "Challenges", href: "/coach-dashboard/challenges", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>, hasDropdown: false, dropdownKey: "challenges" }
+    )
+
+    // Add Credits management
+    navigation.push(
+      { name: "Credits", href: "/coach-dashboard/credits", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" d="M12 6v1m0 10v1M9 12h6" /></svg>, hasDropdown: false, dropdownKey: "credits" }
+    )
+
     // Add Milestones management
     navigation.push(
       { name: "Milestones", href: "/coach-dashboard/milestones", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>, hasDropdown: false, dropdownKey: "milestones" }
@@ -197,7 +212,8 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
       { name: "Settings", href: "/admin/settings", icon: (props: any) => <span className="text-xl">⚡</span>, hasDropdown: false, dropdownKey: "admin-settings" },
       { name: "Cohort Types", href: "/admin/cohort-types", icon: (props: any) => <span className="text-xl">🏷️</span>, hasDropdown: false, dropdownKey: "admin-cohort-types" },
       { name: "Audit Log", href: "/admin/audit-log", icon: (props: any) => <span className="text-xl">🧾</span>, hasDropdown: false, dropdownKey: "admin-audit-log" },
-      { name: "Email Templates", href: "/admin/email-templates", icon: (props: any) => <span className="text-xl">✉️</span>, hasDropdown: false, dropdownKey: "admin-email-templates" }
+      { name: "Email Templates", href: "/admin/email-templates", icon: (props: any) => <span className="text-xl">✉️</span>, hasDropdown: false, dropdownKey: "admin-email-templates" },
+      { name: "Credits", href: "/admin/credits", icon: (props: any) => <span className="text-xl">🪙</span>, hasDropdown: false, dropdownKey: "admin-credits" }
     )
   }
 
