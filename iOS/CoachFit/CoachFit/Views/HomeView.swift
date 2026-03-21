@@ -16,6 +16,13 @@ struct HomeView: View {
                     Label("Check-in", systemImage: "checkmark.circle")
                 }
 
+            NavigationStack {
+                FoodLogEntryView()
+            }
+            .tabItem {
+                Label("Log Food", systemImage: "plus.circle")
+            }
+
             if appState.hasActiveChallenge || !appState.challengeCheckComplete {
                 ChallengesView()
                     .tabItem {

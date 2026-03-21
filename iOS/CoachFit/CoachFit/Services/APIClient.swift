@@ -127,7 +127,13 @@ final class APIClient {
             throw APIError.notPaired
         }
 
-        let url = baseURL.appendingPathComponent(path)
+        // Build URL using string concatenation to preserve query parameters.
+        // appendingPathComponent would percent-encode the '?' in paths like
+        // "api/classes/schedule?date=2026-03-21", causing 404s.
+        let separator = path.hasPrefix("/") ? "" : "/"
+        guard let url = URL(string: baseURL.absoluteString + separator + path) else {
+            throw APIError.server(statusCode: 0, message: "Invalid URL path: \(path)")
+        }
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
