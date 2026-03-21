@@ -745,6 +745,74 @@ Assign coach to cohort.
 }
 ```
 
+### GET /api/admin/platform-invites
+
+List all platform invites (pending and used).
+
+**Auth Required**: ADMIN or COACH role
+
+**Response**:
+```json
+{
+  "invites": [
+    {
+      "id": "uuid",
+      "email": "user@example.com",
+      "invitedBy": { "id": "uuid", "name": "Admin Name", "email": "admin@example.com" },
+      "createdAt": "2026-03-21T00:00:00Z",
+      "usedAt": null
+    }
+  ]
+}
+```
+
+### POST /api/admin/platform-invites
+
+Create a platform invite. Sends an invite email to the specified address.
+
+**Auth Required**: ADMIN or COACH role
+
+**Request Body**:
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response** (201):
+```json
+{
+  "invite": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "invitedBy": "uuid",
+    "createdAt": "2026-03-21T00:00:00Z",
+    "usedAt": null
+  }
+}
+```
+
+**Errors**:
+- `409` - Email already invited or user already has an account
+- `400` - Invalid email format
+
+### DELETE /api/admin/platform-invites/[id]
+
+Revoke a pending platform invite. Cannot revoke invites that have already been used.
+
+**Auth Required**: ADMIN or COACH role
+
+**Response**:
+```json
+{
+  "success": true
+}
+```
+
+**Errors**:
+- `404` - Invite not found
+- `400` - Invite already used
+
 ---
 
 ## iOS Companion App Endpoints (Device Token Auth)

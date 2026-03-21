@@ -43,6 +43,36 @@ export async function POST(req: NextRequest) {
           })
         }
       } else {
+        // Check for any invite (platform, coach, or cohort) before creating
+        const [platformInvite, coachInviteCount, cohortInviteCount] = await Promise.all([
+          db.platformInvite.findUnique({ where: { email: normalizedEmail } }),
+          db.coachInvite.count({ where: { email: normalizedEmail } }),
+          db.cohortInvite.count({ where: { email: normalizedEmail } }),
+        ])
+
+        const hasInvite = platformInvite || coachInviteCount > 0 || cohortInviteCount > 0
+
+        if (!hasInvite) {
+          // No invite — reject by deleting the Clerk user and not creating a local record
+          console.warn(`[WEBHOOK] Rejected signup for uninvited email: ${normalizedEmail}`)
+          try {
+            const { clerkClient } = await import("@clerk/nextjs/server")
+            const client = await clerkClient()
+            await client.users.deleteUser(clerkId)
+          } catch (delErr) {
+            console.error("[WEBHOOK] Failed to delete uninvited Clerk user:", delErr)
+          }
+          return NextResponse.json({ success: true, rejected: true })
+        }
+
+        // Mark platform invite as used
+        if (platformInvite) {
+          await db.platformInvite.update({
+            where: { id: platformInvite.id },
+            data: { usedAt: new Date() },
+          })
+        }
+
         // Create new user
         user = await db.user.create({
           data: {

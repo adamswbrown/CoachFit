@@ -10,6 +10,7 @@ export const EMAIL_TEMPLATE_KEYS = {
   PASSWORD_RESET: "password_reset",
   WEEKLY_QUESTIONNAIRE_REMINDER: "weekly_questionnaire_reminder",
   OAUTH_PROVIDER_LINKED: "oauth_provider_linked",
+  PLATFORM_INVITE: "platform_invite",
 } as const
 
 export type EmailTemplateKey = (typeof EMAIL_TEMPLATE_KEYS)[keyof typeof EMAIL_TEMPLATE_KEYS]

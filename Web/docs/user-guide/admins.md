@@ -8,10 +8,11 @@ Complete guide for administrators managing the CoachFit platform.
 
 1. [Introduction](#introduction)
 2. [Dashboard Overview](#dashboard-overview)
-3. [Managing Users](#managing-users)
-4. [Managing Cohorts](#managing-cohorts)
-5. [System Management](#system-management)
-6. [Best Practices](#best-practices)
+3. [Platform Invites](#platform-invites-invite-only-access)
+4. [Managing Users](#managing-users)
+5. [Managing Cohorts](#managing-cohorts)
+6. [System Management](#system-management)
+7. [Best Practices](#best-practices)
 
 ---
 
@@ -21,6 +22,7 @@ As an administrator, you have full access to manage users, roles, cohorts, and s
 
 ### What You Can Do
 
+- ✅ **Invite users** to the platform (required before they can sign up)
 - ✅ Manage all users and roles
 - ✅ Create coach accounts
 - ✅ Reset user passwords
@@ -50,6 +52,50 @@ At the top of your dashboard:
 - **Cohorts** - View and manage all cohorts
 - **Attention** - View insights and attention scores
 - **System** - Platform-wide settings and monitoring
+
+---
+
+## Platform Invites (Invite-Only Access)
+
+CoachFit uses an **invite-only** signup model. Users must be invited before they can create an account. This ensures only authorized people have access to the platform.
+
+### Inviting a User
+
+1. Navigate to **Invites** in the admin sidebar
+2. Enter the user's email address
+3. Click **Send Invite**
+4. The user receives an email with a link to sign up
+
+### Viewing Invites
+
+The Invites page shows two sections:
+- **Pending Invites** - Users who have been invited but haven't signed up yet
+- **Used Invites** - Users who have accepted their invite and created an account
+
+Each invite shows who sent it and when.
+
+### Revoking an Invite
+
+To revoke a pending invite (before the user signs up):
+1. Find the invite in the Pending Invites list
+2. Click **Revoke**
+3. Confirm the action
+
+Once revoked, the user will no longer be able to sign up with that email.
+
+**Note**: You cannot revoke an invite that has already been used (the user already has an account).
+
+### Who Can Invite?
+
+Both **Admins** and **Coaches** can send platform invites.
+
+### Other Invite Types
+
+In addition to platform invites, coaches can also invite users through:
+- **Coach Invites** - Links the user directly to the coach
+- **Cohort Invites** - Adds the user to a specific cohort
+
+All three invite types grant platform access. Platform invites are the simplest — they just allow the user to sign up without linking to a specific coach or cohort.
 
 ---
 

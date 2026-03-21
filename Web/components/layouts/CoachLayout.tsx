@@ -190,6 +190,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   if (showAdminNav && userHasAdminRole) {
     navigation.push(
       { name: "Users", href: "/admin", icon: (props: any) => <span className="text-xl">👤</span>, hasDropdown: false, dropdownKey: "admin-users" },
+      { name: "Invites", href: "/admin/invites", icon: (props: any) => <span className="text-xl">✉️</span>, hasDropdown: false, dropdownKey: "admin-invites" },
       { name: "Overview", href: "/admin/overview", icon: (props: any) => <span className="text-xl">📈</span>, hasDropdown: false, dropdownKey: "admin-overview" },
       { name: "Attention", href: "/admin/attention", icon: (props: any) => <span className="text-xl">🔔</span>, hasDropdown: false, dropdownKey: "admin-attention" },
       { name: "System", href: "/admin/system", icon: (props: any) => <span className="text-xl">⚙️</span>, hasDropdown: false, dropdownKey: "admin-system" },

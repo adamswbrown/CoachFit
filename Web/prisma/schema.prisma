@@ -24,6 +24,18 @@ model CoachInvite {
   @@index([email])
 }
 
+model PlatformInvite {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  invitedBy String
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
+  User      User      @relation("PlatformInviter", fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([invitedBy])
+}
+
 model Cohort {
   id                           String                        @id @default(uuid())
   name                         String
@@ -239,6 +251,7 @@ model User {
   CustomCohortType             CustomCohortType[]
   MilestonesAsCoach            Milestone[]                   @relation("MilestoneCoach")
   MilestonesAsClient           Milestone[]                   @relation("MilestoneClient")
+  PlatformInvitesSent          PlatformInvite[]              @relation("PlatformInviter")
 
   @@index([invitedByCoachId])
   @@index([createdAt])

@@ -136,12 +136,46 @@ function LogoutButton() {
 
 ---
 
+## Platform Invite Gate
+
+CoachFit uses an **invite-only** signup model. Only users whose email has been invited (via a `PlatformInvite`, `CoachInvite`, or `CohortInvite`) can create an account.
+
+### How It Works
+
+1. An admin or coach creates a **Platform Invite** for an email at `/admin/invites` (or via `POST /api/admin/platform-invites`)
+2. The user receives an invite email and signs up via Clerk (Google, email/password, etc.)
+3. The webhook handler checks for a pending invite before creating the local User record
+4. If **no invite exists**: the Clerk user is deleted and no local account is created — the user is effectively rejected
+5. If an invite exists: the account is created normally and the `PlatformInvite` is marked as used
+
+### Invite Types That Grant Access
+
+| Invite Type | Created By | Purpose |
+|---|---|---|
+| `PlatformInvite` | Admin or Coach | General platform access (no coach link) |
+| `CoachInvite` | Coach | Platform access + coach-client link |
+| `CohortInvite` | Coach | Platform access + cohort membership |
+
+Any of these invites is sufficient to allow signup. Platform invites are the simplest — they just grant access without linking to a coach or cohort.
+
+### Admin UI
+
+Admins and coaches can manage platform invites at `/admin/invites`:
+- Send new invites by email
+- View pending and used invites
+- Revoke pending invites
+
+---
+
 ## User Sync Flow
 
 When a user signs up via Clerk:
 
 1. Clerk creates the user and fires a `user.created` webhook
 2. Our webhook handler (`app/api/webhooks/route.ts`):
+   - **Checks for a pending invite** (`PlatformInvite`, `CoachInvite`, or `CohortInvite`)
+   - If no invite exists: deletes the Clerk user and returns (signup rejected)
+   - If invite exists: marks `PlatformInvite` as used (if applicable)
    - Creates a local `User` record with `clerkId`
    - Sets default `CLIENT` role
    - Processes pending coach/cohort invites

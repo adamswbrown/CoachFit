@@ -43,7 +43,11 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const [coachInviteCount, cohortInviteCount] = await Promise.all([
+    const [platformInvite, coachInviteCount, cohortInviteCount] = await Promise.all([
+      db.platformInvite.findUnique({
+        where: { email: normalizedEmail },
+        select: { id: true, usedAt: true },
+      }),
       db.coachInvite.count({
         where: { email: normalizedEmail },
       }),
@@ -52,8 +56,10 @@ export async function GET(req: NextRequest) {
       }),
     ])
 
+    const hasPlatformInvite = platformInvite && !platformInvite.usedAt
+
     return NextResponse.json(
-      { hasInvite: coachInviteCount > 0 || cohortInviteCount > 0 },
+      { hasInvite: hasPlatformInvite || coachInviteCount > 0 || cohortInviteCount > 0 },
       { status: 200 }
     )
   } catch (error) {

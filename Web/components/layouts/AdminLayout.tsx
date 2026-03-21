@@ -21,6 +21,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const navigation = [
     { name: "Users", href: "/admin", icon: "👤" },
+    { name: "Invites", href: "/admin/invites", icon: "✉️" },
     { name: "Overview", href: "/admin/overview", icon: "📈" },
     { name: "Attention", href: "/admin/attention", icon: "🔔" },
     { name: "System", href: "/admin/system", icon: "⚙️" },
