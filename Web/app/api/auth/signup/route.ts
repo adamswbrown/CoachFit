@@ -96,9 +96,10 @@ export async function POST(req: NextRequest) {
         skipPasswordChecks: true,
       })
       clerkUserId = clerkUser.id
-    } catch (clerkErr: any) {
+    } catch (clerkErr: unknown) {
       // If Clerk is not configured (dev mode), continue without Clerk user
-      if (clerkErr?.errors?.[0]?.code === "form_identifier_exists") {
+      const clerkErrObj = clerkErr as { errors?: { code?: string }[] } | null
+      if (clerkErrObj?.errors?.[0]?.code === "form_identifier_exists") {
         return NextResponse.json(
           { error: "An account with this email already exists" },
           { status: 409 }
@@ -211,15 +212,16 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     )
-  } catch (error: any) {
-    if (error.name === "ZodError") {
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "name" in error && error.name === "ZodError") {
+      const zodErr = error as { issues?: { message?: string }[] }
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: zodErr.issues?.[0]?.message || "Invalid signup data provided" },
         { status: 400 }
       )
     }
 
-    if (error.code === "P2002") {
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
       return NextResponse.json(
         { error: "An account with this email already exists" },
         { status: 409 }
