@@ -17,6 +17,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "npx tsx prisma/seed.ts",
+    "seed:classes": "npx tsx prisma/seed-classes.ts",
     "db:seed-email-templates": "npx tsx scripts/seed-email-templates.ts",
     "db:migration:resolve": "npx tsx scripts/resolve-migration.ts",
     "test:generate": "npx tsx scripts/generate-test-data.ts",

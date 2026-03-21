@@ -139,7 +139,15 @@ async function main() {
     },
   })
 
-  console.log("✅ Test users seeded successfully!")
+  // Seed class templates and sessions from TeamUp data
+  try {
+    const { seedClasses } = await import("./seed-classes")
+    await seedClasses()
+  } catch (e) {
+    console.warn("⚠️  Class seeding skipped (may need TeamUp data file):", (e as Error).message)
+  }
+
+  console.log("\n✅ Test users seeded successfully!")
   console.log("   - admin@test.local (ADMIN role)")
   console.log("   - coach@test.local (COACH role)")
   console.log("   - client@test.local (CLIENT role)")
