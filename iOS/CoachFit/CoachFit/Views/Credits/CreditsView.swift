@@ -7,23 +7,21 @@ struct CreditsView: View {
     @State private var showPurchaseSheet = false
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color(hex: "#111111")
-                    .ignoresSafeArea()
+        ZStack {
+            Color(hex: "#111111")
+                .ignoresSafeArea()
 
-                if let service {
-                    contentView(service)
-                } else {
-                    ProgressView()
-                }
+            if let service {
+                contentView(service)
+            } else {
+                ProgressView()
             }
-            .navigationTitle("Credits")
-            .navigationBarTitleDisplayMode(.large)
-            .sheet(isPresented: $showPurchaseSheet) {
-                if let service {
-                    PurchaseRequestView(service: service)
-                }
+        }
+        .navigationTitle("Credits")
+        .navigationBarTitleDisplayMode(.large)
+        .sheet(isPresented: $showPurchaseSheet) {
+            if let service {
+                PurchaseRequestView(service: service)
             }
         }
         .task {

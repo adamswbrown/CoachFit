@@ -23,6 +23,8 @@ final class AppState {
     private(set) var coachName: String?
     private(set) var clientId: String?
     private(set) var registrationError: String?
+    var hasActiveChallenge = false
+    private(set) var challengeCheckComplete = false
 
     let apiClient = APIClient()
     let healthKit = HealthKitManager()
@@ -185,5 +187,22 @@ final class AppState {
     func onForegroundEntry() async {
         guard currentScreen == .home else { return }
         await syncEngine.syncAll()
+        await checkActiveChallenge()
+    }
+
+    // MARK: - Challenge Check
+
+    func checkActiveChallenge() async {
+        guard KeychainService.deviceToken != nil else { return }
+        do {
+            let (data, response) = try await apiClient.authenticatedRequest(path: "/api/challenges/active")
+            if (200...299).contains(response.statusCode) {
+                let challenges = try JSONDecoder().decode([ActiveChallenge].self, from: data)
+                hasActiveChallenge = !challenges.isEmpty
+            }
+        } catch {
+            // Keep previous state on error
+        }
+        challengeCheckComplete = true
     }
 }

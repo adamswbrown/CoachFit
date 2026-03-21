@@ -11,30 +11,52 @@ struct HomeView: View {
                     Label("Schedule", systemImage: "calendar")
                 }
 
-            BookingsView()
+            CheckInTab()
                 .tabItem {
-                    Label("Bookings", systemImage: "list.clipboard")
+                    Label("Check-in", systemImage: "checkmark.circle")
                 }
 
-            CreditsView()
-                .tabItem {
-                    Label("Credits", systemImage: "creditcard")
-                }
-
-            ChallengesView()
-                .tabItem {
-                    Label("Challenges", systemImage: "flame")
-                }
+            if appState.hasActiveChallenge || !appState.challengeCheckComplete {
+                ChallengesView()
+                    .tabItem {
+                        Label("Challenges", systemImage: "flame")
+                    }
+            }
 
             AccountTab()
                 .tabItem {
                     Label("Account", systemImage: "person.circle")
                 }
         }
+        .task {
+            await appState.checkActiveChallenge()
+        }
     }
 }
 
-// MARK: - Account Tab (combines previous tabs + settings)
+// MARK: - Check-in Tab
+
+private struct CheckInTab: View {
+    @Environment(AppState.self) private var appState
+
+    var body: some View {
+        NavigationStack {
+            TodayTab()
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink {
+                            FoodLogView()
+                                .navigationTitle("Food Log")
+                        } label: {
+                            Label("Food Log", systemImage: "fork.knife")
+                        }
+                    }
+                }
+        }
+    }
+}
+
+// MARK: - Account Tab
 
 private struct AccountTab: View {
     @Environment(AppState.self) private var appState
@@ -44,11 +66,16 @@ private struct AccountTab: View {
             List {
                 Section {
                     NavigationLink {
-                        TodayTab()
+                        CreditsView()
                     } label: {
-                        Label("Daily Check-in", systemImage: "checkmark.circle")
+                        HStack {
+                            Label("Credits", systemImage: "creditcard")
+                            Spacer()
+                        }
                     }
+                }
 
+                Section {
                     NavigationLink {
                         FoodLogEntryView()
                     } label: {
@@ -72,7 +99,6 @@ private struct AccountTab: View {
                     Text("Tracking")
                 }
 
-                // Delegate the rest to MoreTab's content
                 MoreTabContent()
             }
             .navigationTitle("Account")
@@ -232,7 +258,6 @@ private struct MoreTabContent: View {
         }
     }
 }
-
 
 // MARK: - Sync Type Row
 
