@@ -265,7 +265,7 @@ export default function AuditLogPage() {
           {filteredActions.length === 0 ? (
             <div className="p-6 text-neutral-500 text-sm">No audit actions found.</div>
           ) : (
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="overflow-x-auto">
               <table className="w-full min-w-full">
                 <thead>
                   <tr className="border-b bg-neutral-50">

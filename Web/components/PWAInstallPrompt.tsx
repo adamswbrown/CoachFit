@@ -46,7 +46,7 @@ export function PWAInstallPrompt() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white border-t border-gray-200 shadow-lg safe-area-inset-bottom">
+      <div className="fixed bottom-0 left-0 right-0 z-50 p-3 sm:p-4 bg-white border-t border-gray-200 shadow-lg safe-area-inset-bottom">
         <div className="flex items-center justify-between max-w-lg mx-auto gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-900 flex items-center justify-center">
