@@ -90,7 +90,7 @@ struct FoodTab: View {
                     }
                 }
             }
-            .fullScreenCover(isPresented: $showAddFood) {
+            .sheet(isPresented: $showAddFood) {
                 FoodLogEntryView()
             }
         }

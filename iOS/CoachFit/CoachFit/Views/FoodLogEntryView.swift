@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct FoodLogEntryView: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var selectedOption: FoodEntryOption?
 
     enum FoodEntryOption: Identifiable {
@@ -71,6 +72,11 @@ struct FoodLogEntryView: View {
             }
             .navigationTitle("Log Food")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
             .fullScreenCover(item: $selectedOption) { option in
                 switch option {
                 case .scan:
