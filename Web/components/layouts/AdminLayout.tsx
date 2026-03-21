@@ -3,7 +3,7 @@
 import { useSession } from "@/lib/auth-client"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { UserProfileMenu } from "@/components/UserProfileMenu"
 
 interface AdminLayoutProps {
@@ -14,6 +14,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { data: session } = useSession()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false) // Sidebar starts closed for cleaner mobile UX, users can toggle if needed
+
+  // Close sidebar on route change (mobile navigation)
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [pathname])
 
   if (!session) return null
 
@@ -30,7 +35,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   ]
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen min-h-[100dvh] bg-neutral-50 flex flex-col">
       {/* Top header */}
       <header className="bg-white border-b border-neutral-200 sticky top-0 z-30">
         <div className="px-3 sm:px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
@@ -50,7 +55,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </Link>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
-            <UserProfileMenu 
+            <UserProfileMenu
               userName={firstName}
               showRoleSwitcher={false}
               showAdminLink={false}
@@ -59,10 +64,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex flex-1 min-h-0">
         {/* Left sidebar - mobile overlay on small screens */}
         {sidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
@@ -94,7 +99,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 w-full lg:w-auto">
+        <main className="flex-1 w-full lg:w-auto overflow-y-auto overflow-x-hidden">
           <div className="p-4 sm:p-6 md:p-8">{children}</div>
         </main>
       </div>

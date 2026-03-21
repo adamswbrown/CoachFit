@@ -77,6 +77,11 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     fetchCohorts()
   }, [session?.user?.id])
 
+  // Close sidebar on route change (mobile navigation)
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [pathname])
+
   // Close dropdowns when clicking outside
   // IMPORTANT: This hook must be before any early returns to maintain consistent hook count
   useEffect(() => {
@@ -145,7 +150,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
     navigation.push(
       { name: "Clients", href: "/coach-dashboard", icon: ClientsIcon, hasDropdown: true, dropdownKey: "clients" },
       { name: "Cohorts", href: "/cohorts", icon: CohortsIcon, hasDropdown: true, dropdownKey: "cohorts" },
-      { name: "Gym Members", href: "/coach-dashboard/members", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>, hasDropdown: false, dropdownKey: "members" },
+      { name: "Gym Members", href: "/coach-dashboard/members", icon: ({ size, ...props }: any) => <svg {...props} width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>, hasDropdown: false, dropdownKey: "members" },
       { name: "Questionnaire Analytics", href: "/coach-dashboard/questionnaire-analytics", icon: CalendarIcon, hasDropdown: false, dropdownKey: "questionnaire-analytics" }
     )
     
@@ -156,33 +161,33 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
 
     // Add Compliance dashboard
     navigation.push(
-      { name: "Compliance", href: "/coach-dashboard/compliance", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>, hasDropdown: false, dropdownKey: "compliance" }
+      { name: "Compliance", href: "/coach-dashboard/compliance", icon: ({ size, ...props }: any) => <svg {...props} width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>, hasDropdown: false, dropdownKey: "compliance" }
     )
 
     // Add Classes management
     navigation.push(
-      { name: "Classes", href: "/coach-dashboard/classes", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>, hasDropdown: false, dropdownKey: "classes" }
+      { name: "Classes", href: "/coach-dashboard/classes", icon: ({ size, ...props }: any) => <svg {...props} width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>, hasDropdown: false, dropdownKey: "classes" }
     )
 
     // Add Challenges management
     navigation.push(
-      { name: "Challenges", href: "/coach-dashboard/challenges", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>, hasDropdown: false, dropdownKey: "challenges" }
+      { name: "Challenges", href: "/coach-dashboard/challenges", icon: ({ size, ...props }: any) => <svg {...props} width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>, hasDropdown: false, dropdownKey: "challenges" }
     )
 
     // Add Credits management
     navigation.push(
-      { name: "Credits", href: "/coach-dashboard/credits", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" d="M12 6v1m0 10v1M9 12h6" /></svg>, hasDropdown: false, dropdownKey: "credits" }
+      { name: "Credits", href: "/coach-dashboard/credits", icon: ({ size, ...props }: any) => <svg {...props} width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" d="M12 6v1m0 10v1M9 12h6" /></svg>, hasDropdown: false, dropdownKey: "credits" }
     )
 
     // Add Milestones management
     navigation.push(
-      { name: "Milestones", href: "/coach-dashboard/milestones", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>, hasDropdown: false, dropdownKey: "milestones" }
+      { name: "Milestones", href: "/coach-dashboard/milestones", icon: ({ size, ...props }: any) => <svg {...props} width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>, hasDropdown: false, dropdownKey: "milestones" }
     )
     
     // Add Measurement Tracker for Gav
     if (session?.user?.email === "coachgav@gcgyms.com") {
       navigation.push(
-        { name: "Measurements", href: "/measurement-tracker/", icon: (props: any) => <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M3 12h18M3 18h18" /><circle cx="7" cy="6" r="1.5" fill="currentColor" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /><circle cx="17" cy="18" r="1.5" fill="currentColor" /></svg>, hasDropdown: false, dropdownKey: "measurements", external: true }
+        { name: "Measurements", href: "/measurement-tracker/", icon: ({ size, ...props }: any) => <svg {...props} width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M3 12h18M3 18h18" /><circle cx="7" cy="6" r="1.5" fill="currentColor" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /><circle cx="17" cy="18" r="1.5" fill="currentColor" /></svg>, hasDropdown: false, dropdownKey: "measurements", external: true }
       )
     }
 
@@ -218,7 +223,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen min-h-[100dvh] bg-neutral-50 flex flex-col">
       {/* Top header */}
       <header className="bg-white border-b border-neutral-200 sticky top-0 z-30">
         <div className="px-3 sm:px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
@@ -246,7 +251,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex flex-1 min-h-0">
         {/* Left sidebar - mobile overlay on small screens */}
         {sidebarOpen && (
           <div 
@@ -444,7 +449,7 @@ function CoachLayoutContent({ children }: CoachLayoutProps) {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 w-full lg:w-auto">
+        <main className="flex-1 w-full lg:w-auto overflow-y-auto overflow-x-hidden">
           <div className="p-4 sm:p-6 md:p-8">{children}</div>
         </main>
       </div>

@@ -81,16 +81,14 @@
 
 /* iOS-specific fixes */
 @supports (-webkit-touch-callout: none) {
-  /* Fix for iOS rubber-banding */
-  html, body {
+  /* Use dvh for proper iOS viewport height */
+  html {
     height: 100%;
-    overflow: hidden;
   }
 
-  #__next,
-  main {
-    height: 100%;
-    overflow: auto;
+  body {
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
     -webkit-overflow-scrolling: touch;
   }
 }
